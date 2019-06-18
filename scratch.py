@@ -3,22 +3,23 @@ import time
 import torch
 import argparse
 import numpy as np
-import torch.optim as optim
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from models import LCALSTM
 from utils.params import P
-from utils.utils import to_sqnp
+from utils.utils import to_sqnp, to_np
 # from data import get_data_tz, run_exp_tz
 # from utils.constants import TZ_CONDS
 # from utils.io import build_log_path, save_ckpt, save_all_params
-# from scipy.stats import sem
+from scipy.stats import sem
 # from plt_helper import plot_tz_pred_acc
-# from analysis import compute_predacc, compute_dks, compute_performance_metrics
+from analysis import compute_acc, compute_dk, average_by_part
+# from analysis.utils import get_tps_for_ith_part
 from task import TwilightZone
 from models import get_reward, compute_returns, compute_a2c_loss
-plt.switch_backend('agg')
+# plt.switch_backend('agg')
 
 '''learning to tz with a2c. e.g. cmd:
 python -u train-tz.py --exp_name multi-lures --subj_id 99 \
@@ -60,13 +61,13 @@ subj_id = 0
 penalty = 4
 p_rm_ob_enc = 0
 supervised_epoch = 50
-n_epoch = 300
+n_epoch = 200
 n_examples = 256
 log_root = '../log/'
 n_param = 6
 n_hidden = 64
 learning_rate = 1e-3
-rm_ob_probabilistic = True
+gamma = .9
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -74,103 +75,129 @@ torch.manual_seed(subj_id)
 p = P(
     exp_name=exp_name,
     n_param=n_param, penalty=penalty, n_hidden=n_hidden, lr=learning_rate,
-    p_rm_ob_enc=p_rm_ob_enc, rm_ob_probabilistic=rm_ob_probabilistic,
+    p_rm_ob_enc=p_rm_ob_enc,
 )
 
 '''init'''
-# init env
-tz = TwilightZone(
-    n_param, p.env.n_branch, p_rm_ob_enc=p_rm_ob_enc
-)
 
 # init agent
-n_action = tz.y_dim+1
 agent = LCALSTM(
-    tz.x_dim, p.net.n_hidden, n_action,
+    p.net.x_dim, p.net.n_hidden, p.net.a_dim,
     recall_func=p.net.recall_func, kernel=p.net.kernel,
 )
-optimizer = optim.Adam(agent.parameters(), lr=p.net.lr)
+optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/3, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True
+)
+# init env
+tz = TwilightZone(
+    p.env.n_param, p.env.n_branch,
+    p_rm_ob_enc=p.env.p_rm_ob_enc
 )
 
 '''task definition'''
 
 
-def allow_dk(t, tz_cond, t_allowed):
-    if t < t_allowed or tz_cond is 'NM':
-        return True
-    return False
+# def allow_dk(t, tz_cond, t_allowed):
+#     if t < t_allowed or tz_cond is 'NM':
+#         return True
+#     return False
 
 
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_critic = np.zeros(n_epoch,)
+Log_loss_sup = np.zeros(n_epoch,)
 Log_mistakes = np.zeros(n_epoch,)
+Log_return = np.zeros(n_epoch,)
 
-epoch_id, i, t = 0, 0, 0
+# epoch_id, i, t = 0, 0, 0
 
 for epoch_id in range(n_epoch):
-
+    time0 = time.time()
     X, Y = tz.sample(n_examples, to_torch=True)
     # logger
-    log_adist = np.zeros((n_examples, tz.T_total, n_action))
     log_return = 0
-    log_loss = np.zeros(3,)
+    log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
+    log_dist_a = np.zeros((n_examples, tz.T_total, p.a_dim))
+
     tz_cond = 'RM'
     supervised = epoch_id < supervised_epoch
 
     for i in range(n_examples):
-
         # pg calculation cache
         probs, rewards, values = [], [], []
-        # logging
-        action_dists = []
-        loss_sup = 0
-
         # init model wm and em
         hc_t = agent.get_init_states()
         agent.init_em_config()
         for t in range(tz.T_total):
-
             # get next state and action target
             y_t_targ = torch.squeeze(Y[i][t])
             a_t_targ = torch.argmax(y_t_targ)
             # forward
-            action_dist_t, v_t, hc_t, cache_t = agent(
-                X[i][t].view(1, 1, -1), hc_t, beta=1)
-            a_t, prob_a_t = agent.pick_action(action_dist_t)
+            pi_a_t, v_t, hc_t, cache_t = agent(X[i][t].view(1, 1, -1), hc_t)
+            a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(
-                a_t, a_t_targ, n_action, p.env.penalty,
-                allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
+                a_t, a_t_targ, p.a_dim, p.env.penalty,
+                allow_dk=True
+                # allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
             )
             # cache the results for later RL loss computation
-            probs.append(prob_a_t)
+            probs.append(p_a_t)
             rewards.append(r_t)
             values.append(v_t)
             # cache results for later analysis
-            action_dists.append(to_sqnp(action_dist_t))
+            log_dist_a[i, t, :] = to_sqnp(pi_a_t)
 
             # compute supervised loss
-            yhat_t = torch.squeeze(action_dist_t)[:n_action-1]
-            # no cost for the last (dummy) event
-            if t not in p.env.tz.event_ends:
-                loss_sup += torch.nn.functional.mse_loss(yhat_t, y_t_targ)
+            yhat_t = torch.squeeze(pi_a_t)[:-1]
+            loss_sup_it = F.mse_loss(yhat_t, y_t_targ)
+            log_loss_sup += loss_sup_it.item() / (tz.T_total*n_examples)
+            if supervised:
+                optimizer.zero_grad()
+                loss_sup_it.backward(retain_graph=True)
+                optimizer.step()
 
-        # calculate sample return
-        returns = compute_returns(rewards)
-        # compute loss
+        # compute RL loss
+        returns = compute_returns(rewards, gamma=gamma)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
-        loss = loss_actor + loss_critic
-
-        # update weights
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if not supervised:
+            loss_rl = loss_actor + loss_critic
+            optimizer.zero_grad()
+            loss_rl.backward()
+            optimizer.step()
 
         # after every event sequence, log stuff
-        log_adist[i] = np.stack(action_dists)
         log_return += torch.stack(rewards).sum().item()/n_examples
-        log_loss += np.array(
-            [loss_actor.item(), loss_critic.item(), loss_sup.item()]
-        )/n_examples
+        log_loss_actor += loss_actor.item()/n_examples
+        log_loss_critic += loss_critic.item()/n_examples
+
+    # log
+    Log_return[epoch_id] = log_return
+    Log_loss_sup[epoch_id] = log_loss_sup
+    Log_loss_actor[epoch_id] = log_loss_actor
+    Log_loss_critic[epoch_id] = log_loss_critic
+
+    # update lr scheduler
+    if not supervised:
+        scheduler.step(Log_return[epoch_id])
+
+    # compute performance
+    acc_mu_ = compute_acc(Y, log_dist_a)
+    dk_mu_ = compute_dk(log_dist_a)
+    # split by movie parts
+    acc_mu_parts = average_by_part(acc_mu_, p)
+    dk_mu_parts = average_by_part(dk_mu_, p)
+
+    # log message
+    runtime = time.time()-time0
+    acc_mu_parts_str = " ".join('%.2f' % i for i in acc_mu_parts)
+    dk_mu_parts_str = " ".join('%.2f' % i for i in dk_mu_parts)
+    print('%3d | R: %.2f, acc: %s, dk: %s | L: a: %.2f c: %.2f, s:%.2f | t: %.2f s' % (
+        epoch_id, Log_return[epoch_id], acc_mu_parts_str, dk_mu_parts_str,
+        Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
+        Log_loss_sup[epoch_id], runtime
+    ))
+
+
+# np.mean(np.mean(log_dist_a, axis=0), axis=0)

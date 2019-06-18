@@ -1,6 +1,6 @@
 '''parameter config class'''
 
-from data.utils import sample_rand_path
+from task.utils import sample_rand_path
 from utils.constants import ALL_ENC_MODE
 
 # RM, DM, NM
@@ -13,8 +13,7 @@ class P():
         self,
         exp_name='rnr',
         n_param=11,
-        n_branch=3,
-        pad_len=1,
+        n_branch=2,
         def_path=None,
         def_prob=None,
         penalty=1,
@@ -35,23 +34,17 @@ class P():
         gamma=0,
     ):
         # set encoding size to be maximal
-        event_len = n_param + pad_len
+        T_part = n_param
         if enc_size is None:
-            enc_size = event_len
+            enc_size = T_part
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
         if def_prob is None:
             def_prob = 1/n_branch
-
-        # infer params
-        self.ohv_dim = n_param * n_branch
-        state_dim = self.ohv_dim * 2
-        n_action = self.ohv_dim + 1
-        dk_id = n_action-1
-
+        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         # init param classes
         self.env = env(
-            exp_name, n_param, n_branch, pad_len,
+            exp_name, n_param, n_branch,
             def_path, def_prob, penalty,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -62,7 +55,7 @@ class P():
         self.net = net(
             recall_func, kernel, enc_mode, enc_size,
             n_hidden, lr, gamma,
-            state_dim, n_action, dk_id
+            n_param, n_branch
         )
 
     def __repr__(self):
@@ -75,7 +68,7 @@ class env():
     def __init__(
             self,
             exp_name,
-            n_param, n_branch, pad_len,
+            n_param, n_branch,
             def_path, def_prob,
             penalty,
             rm_ob_probabilistic,
@@ -87,7 +80,7 @@ class env():
         self.exp_name = exp_name
         self.n_param = n_param
         self.n_branch = n_branch
-        self.pad_len = pad_len
+        self.T_part = n_param
         self.rm_ob_probabilistic = rm_ob_probabilistic
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.p_rm_ob_enc = p_rm_ob_enc
@@ -97,22 +90,20 @@ class env():
         self.def_prob = def_prob
         self.penalty = penalty
         #
-        self.event_len = n_param + pad_len
+        self.T_part = n_param
         self.chance = 1 / n_branch
         #
-        self.tz = tz(n_mvs_tz, self.event_len, p_tz_cond)
-        self.rnr = rnr(n_mvs_rnr, self.event_len)
+        self.tz = tz(n_mvs_tz, self.T_part, p_tz_cond)
+        self.rnr = rnr(n_mvs_rnr, self.T_part)
         self.validate_args()
 
     def validate_args(self):
         assert self.penalty >= 0
-        assert self.pad_len >= 1
 
     def __repr__(self):
         repr_ = f'''
         exp_name = {self.exp_name}
         n_param = {self.n_param}, n_branch = {self.n_branch},
-        pad_len = {self.pad_len}
         p_remove_observation = {self.p_rm_ob_rcl}
         def_prob = {self.def_prob}
         penalty = {self.penalty}
@@ -124,20 +115,20 @@ class env():
 
 
 class tz():
-    def __init__(self, n_mvs, event_len, p_cond):
+    def __init__(self, n_mvs, T_part, p_cond):
         self.n_mvs = n_mvs
-        self.event_len = event_len
-        self.total_len = n_mvs * event_len
-        self.event_ends = get_event_ends(event_len, n_mvs)
+        self.T_part = T_part
+        self.T_total = n_mvs * T_part
+        self.event_ends = get_event_ends(T_part, n_mvs)
         self.p_cond = p_cond
 
 
 class rnr():
-    def __init__(self, n_mvs, event_len):
+    def __init__(self, n_mvs, T_part):
         self.n_mvs = n_mvs
-        self.event_len = event_len
-        self.total_len = n_mvs * event_len
-        self.event_ends = get_event_ends(event_len, n_mvs)
+        self.T_part = T_part
+        self.T_total = n_mvs * T_part
+        self.event_ends = get_event_ends(T_part, n_mvs)
 
 
 class net():
@@ -146,7 +137,7 @@ class net():
         recall_func, kernel,
         enc_mode, enc_size,
         n_hidden, lr, gamma,
-        state_dim, n_action, dk_id
+        n_param, n_branch
     ):
         self.recall_func = recall_func
         self.kernel = kernel
@@ -156,9 +147,7 @@ class net():
         self.lr = lr
         self.gamma = gamma
         # inferred params
-        self.state_dim = state_dim
-        self.n_action = n_action
-        self.dk_id = dk_id
+        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.validate_args()
 
     def validate_args(self):
@@ -179,7 +168,7 @@ class net():
 """helper functions"""
 
 
-def get_event_ends(event_len, n_repeats):
+def get_event_ends(T_part, n_repeats):
     """get the end points for a event sequence, with lenth T, and k repeats
     - event ends need to be removed for prediction accuracy calculation, since
     there is nothing to predict there
@@ -187,7 +176,7 @@ def get_event_ends(event_len, n_repeats):
 
     Parameters
     ----------
-    event_len : int
+    T_part : int
         the length of an event sequence (one repeat)
     n_repeats : int
         number of repeats
@@ -198,4 +187,12 @@ def get_event_ends(event_len, n_repeats):
         the end points of event seqs
 
     """
-    return [event_len * (k+1)-1 for k in range(n_repeats)]
+    return [T_part * (k+1)-1 for k in range(n_repeats)]
+
+
+def _infer_data_dims(n_param, n_branch):
+    # infer params
+    x_dim = (n_param * n_branch) * 2 + n_branch
+    y_dim = n_branch
+    a_dim = n_branch+1
+    return x_dim, y_dim, a_dim
