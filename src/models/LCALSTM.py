@@ -28,6 +28,7 @@ class LCALSTM(nn.Module):
             init_state_trainable=False,
             layernorm=False,
             mode='train',
+            a2c_linear=True,
             bias=True
     ):
         super(LCALSTM, self).__init__()
@@ -46,8 +47,10 @@ class LCALSTM(nn.Module):
         # memory
         self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
         # the RL mechanism
-        self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
-        # self.a2c = A2C_linear(hidden_dim, output_dim)
+        if a2c_linear:
+            self.a2c = A2C_linear(hidden_dim, output_dim)
+        else:
+            self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
         #
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
