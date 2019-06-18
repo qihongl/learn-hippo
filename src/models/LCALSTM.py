@@ -46,8 +46,8 @@ class LCALSTM(nn.Module):
         # memory
         self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
         # the RL mechanism
-        # self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
-        self.a2c = A2C_linear(hidden_dim, output_dim)
+        self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
+        # self.a2c = A2C_linear(hidden_dim, output_dim)
         #
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable

@@ -59,17 +59,17 @@ python -u train-tz.py --exp_name multi-lures --subj_id 99 \
 
 exp_name = 'test-linear'
 subj_id = 0
-penalty = 4
+penalty = 2
 p_rm_ob_enc = 0
-supervised_epoch = 50
+supervised_epoch = 30
 n_epoch = 200
 n_examples = 256
 log_root = '../log/'
-n_param = 6
+n_param = 5
 n_hidden = 64
 learning_rate = 1e-3
 gamma = 0
-eta = .1
+eta = .05
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -103,10 +103,11 @@ log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 save_all_params(log_subpath['data'], p, args=None)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
-# load model
-epoch_load = 50
-agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
-epoch_id = epoch_load
+# # load model
+# epoch_load = 50
+# agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
+# epoch_id = epoch_load
+epoch_id = 0
 
 '''task definition'''
 
@@ -169,7 +170,7 @@ cond = None
 learning = True
 # epoch_id, i, t = 0, 0, 0
 
-# epoch_id = 0
+
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
 
@@ -224,7 +225,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
             loss_sup_it = F.mse_loss(yhat_t, y_t_targ)
-            log_loss_sup += loss_sup_it.item() / (tz.T_total*n_examples)
+            log_loss_sup += loss_sup_it.item() / (tz.T_total * n_examples)
             if learning and supervised:
                 optimizer.zero_grad()
                 loss_sup_it.backward(retain_graph=True)
@@ -236,7 +237,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
                     tz_cond, t, p.env.tz.event_ends[0], p, hc_t, agent)
 
         # compute RL loss
-        returns = compute_returns(rewards, gamma=gamma)
+        returns = compute_returns(rewards, gamma=gamma, normalize=True)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         if learning and not supervised:
@@ -288,6 +289,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
 # plt.plot(acc_mu_)
 
-for name, w, in agent.named_parameters():
-    print(name)
-    print(w)
+# for name, w, in agent.named_parameters():
+#     print(name)
+#     print(w)
