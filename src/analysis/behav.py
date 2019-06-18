@@ -1,9 +1,31 @@
 import numpy as np
+import torch
 from scipy.stats import sem
 from utils.utils import to_sqnp, to_np
 
 
 def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
+    """compute the accuracy of the prediction, over time
+    - optionally return the standard error
+    - assume n_action == y_dim + 1
+
+    Parameters
+    ----------
+    Y : 3d tensor
+        [n_examples, T_total, y_dim]
+    log_dist_a : 3d tensor
+        [n_examples, T_total, n_action]
+    n_se : int
+        number of SE
+    return_er : bool
+        whether to return SEs
+
+    Returns
+    -------
+    1d array(s)
+        stats for state prediction accuracy
+
+    """
     # argmax the action distribution (don't know unit included)
     argmax_dist_a = np.argmax(log_dist_a, axis=2)
     # argmax the targets one hot vecs
@@ -19,9 +41,29 @@ def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
 
 
 def compute_dk(log_dist_a, n_se=2, return_er=False):
+    """compute P(don't know) over time
+    - optionally return the standard error
+    - assume don't know is the last action dimension
+    - assume n_action == y_dim + 1
+
+    Parameters
+    ----------
+    log_dist_a : 3d tensor
+        [n_examples, T_total, n_action]
+    n_se : int
+        number of SE
+    return_er : bool
+        whether to return SEs
+
+    Returns
+    -------
+    1d array(s)
+        stats for P(don't know)
+
+    """
     a_dim = np.shape(log_dist_a)[-1]
     argmax_dist_a = np.argmax(log_dist_a, axis=2)
-    dk = argmax_dist_a == a_dim
+    dk = argmax_dist_a == (a_dim-1)
     dk_mu_ = np.mean(dk, axis=0)
     dk_er_ = sem(dk, axis=0)*n_se
     if return_er:
@@ -30,85 +72,81 @@ def compute_dk(log_dist_a, n_se=2, return_er=False):
 
 
 def average_by_part(time_course, p):
+    """take average within each part of the (multi-part) sequence
+
+    Parameters
+    ----------
+    time_course : 1d array
+        a sequence of values; e.g. accuracy
+    p : the param class
+        simulation parameters
+
+    Returns
+    -------
+    list
+        a list of averaged values
+
+    """
     return [np.mean(time_course[get_tps_for_ith_part(ip, p.env.tz.T_part)])
             for ip in range(p.env.tz.n_mvs)]
 
 
 def get_tps_for_ith_part(ip, T_part):
+    """get the time range (a list of time points) for the i-th movie part
+
+    Parameters
+    ----------
+    ip : int
+        the index of movie part
+    T_part : int
+        the length of one movie part
+
+    Returns
+    -------
+    1d array
+        a range of time points
+
+    """
     return np.arange(T_part*ip, T_part*(ip+1))
 
-# def compute_dks(action_distribution):
-#     """compute the don't know indicator matrix
-#
-#     Assumptions:
-#     - don't know dimension is the last dimension in action space
-#
-#     Parameters
-#     ----------
-#     action_distribution : 3d array (n_examples, T, vec_dim)
-#         probability distribution over actions
-#
-#     Returns
-#     -------
-#     dks, 2d array (n_examples, T)
-#         binary matrix where 1 at i,t position means the model said don't know
-#         at time t in trial i
-#
-#     """
-#     n_examples, T, vec_dim = np.shape(action_distribution)
-#     dks = np.array([
-#         np.argmax(action_distribution[i, :, :], axis=1) == vec_dim-1
-#         for i in range(n_examples)
-#     ])
-#     return dks
-#
-#
-# def compute_predacc(Y, Yhat):
-#     """compute the prediction performance
-#
-#     Parameters
-#     ----------
-#     Y : np.array, (n_examples, total_event_len, ohv_dim)
-#         target, states vecs
-#     Yhat : np.array, (n_examples, total_event_len, ohv_dim)
-#         predicted states vecs
-#
-#     Returns
-#     -------
-#     np.array (n_examples, total_event_len)
-#         corrects
-#
-#     """
-#     n_examples, total_event_len, ohv_dim = np.shape(Y)
-#     corrects = np.zeros((n_examples, total_event_len))
-#     for m in range(n_examples):
-#         state_predictions = np.argmax(Yhat[m], axis=1)
-#         actual_states = np.argmax(Y[m], axis=1)
-#         corrects[m, :] = np.array(
-#             state_predictions == actual_states, dtype=float
-#         )
-#     return corrects
-#
-#
-# def get_baseline(T, chance):
-#     """compute the observation-only (no memory) baseline performance
-#
-#     Parameters
-#     ----------
-#     T : int
-#         event length
-#     chance : float [0,1]
-#         chance performance, 1 / n branches
-#
-#     Returns
-#     -------
-#     np.array (T+1,)
-#         baseline performance accuracy
-#
-#     """
-#     return np.array([chance * (T-t)/T + t/T for t in range(T+1)])
-#
-#
+
+def entropy(probs):
+    """calculate entropy.
+    I'm using log base 2!
+
+    Parameters
+    ----------
+    probs : a torch vector
+        a prob distribution
+
+    Returns
+    -------
+    torch scalar
+        the entropy of the distribution
+
+    """
+    return - torch.stack([pi * torch.log2(pi) for pi in probs]).sum()
+
+
+def get_baseline(T, chance):
+    """compute the observation-only (no memory) baseline performance
+
+    Parameters
+    ----------
+    T : int
+        event length
+    chance : float [0,1]
+        chance performance, 1 / n branches
+
+    Returns
+    -------
+    np.array (T+1,)
+        baseline performance accuracy
+
+    """
+    return np.array([chance * (T-t)/T + t/T for t in range(T+1)])
+
+
 # def compute_performance_metrics(Y, action_distribution, p):
 #     """compute performance metrics.
 #

@@ -19,7 +19,6 @@ def build_log_path(
     # create dir names
     exp_str = f'exp-{p.env.exp_name}'
     graph_str = f'p-{p.env.n_param}_b-{p.env.n_branch}'
-    delay_str = f'pad-{p.env.pad_len}'
     prob_str = 'tp-%.2f' % (p.env.def_prob)
     penalty_str = f'lp-{p.env.penalty}'
     obs_str = 'p_rm_ob_rcl-%.2f_enc-%.2f' % (
@@ -33,7 +32,7 @@ def build_log_path(
     # compute the path
     log_path = os.path.join(
         log_root,
-        exp_str, graph_str, delay_str, prob_str, obs_str, penalty_str,
+        exp_str, graph_str, prob_str, obs_str, penalty_str,
         enc_str, recall_str, network_str, train_str,
         subj_str
     )
@@ -127,7 +126,7 @@ def load_ckpt(
 
 def save_all_params(datapath, params, args=None):
     msg = f'''Write experiment params and metadata to...
-    - {datapath}
+    {datapath}
     '''
     print(msg)
 

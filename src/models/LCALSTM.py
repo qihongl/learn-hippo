@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from models.DND import DND
-from models.A2C import A2C
+from models.A2C import A2C, A2C_linear
 from models.initializer import ortho_init, xavier_uniform_init
 
 # constants
@@ -46,7 +46,8 @@ class LCALSTM(nn.Module):
         # memory
         self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
         # the RL mechanism
-        self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
+        # self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
+        self.a2c = A2C_linear(hidden_dim, output_dim)
         #
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable

@@ -2,61 +2,11 @@ import numpy as np
 import torch
 
 from torch.nn.functional import smooth_l1_loss
-from torch.distributions import Categorical
+# from torch.distributions import Categorical
 
 '''helpers'''
 
 eps = np.finfo(np.float32).eps.item()
-
-
-def compute_returns(rewards, gamma=0, normalize=False):
-    """compute return in the standard policy gradient setting.
-
-    Parameters
-    ----------
-    rewards : list, 1d array
-        immediate reward at time t, for all t
-    gamma : float, [0,1]
-        temporal discount factor
-    normalize : bool
-        whether to normalize the return
-        - default to false, because we care about absolute scales
-
-    Returns
-    -------
-    1d torch.tensor
-        the sequence of cumulative return
-
-    """
-    R = 0
-    returns = []
-    for r in rewards[::-1]:
-        R = r + gamma * R
-        returns.insert(0, R)
-    returns = torch.tensor(returns)
-    if normalize:
-        returns = (returns - returns.mean()) / (returns.std() + eps)
-    return returns
-
-
-def pick_action(action_distribution):
-    """action selection by sampling from a multinomial.
-
-    Parameters
-    ----------
-    action_distribution : 1d torch.tensor
-        action distribution, pi(a|s)
-
-    Returns
-    -------
-    torch.tensor(int), torch.tensor(float)
-        sampled action, log_prob(sampled action)
-
-    """
-    m = Categorical(action_distribution)
-    a_t = m.sample()
-    log_prob_a_t = m.log_prob(a_t)
-    return a_t, log_prob_a_t
 
 
 def get_reward(a_t, a_t_targ, dk_id, penalty, allow_dk=True):
@@ -88,6 +38,36 @@ def get_reward(a_t, a_t_targ, dk_id, penalty, allow_dk=True):
     else:
         r_t = -penalty
     return torch.tensor(r_t).type(torch.FloatTensor).data
+
+
+def compute_returns(rewards, gamma=0, normalize=False):
+    """compute return in the standard policy gradient setting.
+
+    Parameters
+    ----------
+    rewards : list, 1d array
+        immediate reward at time t, for all t
+    gamma : float, [0,1]
+        temporal discount factor
+    normalize : bool
+        whether to normalize the return
+        - default to false, because we care about absolute scales
+
+    Returns
+    -------
+    1d torch.tensor
+        the sequence of cumulative return
+
+    """
+    R = 0
+    returns = []
+    for r in rewards[::-1]:
+        R = r + gamma * R
+        returns.insert(0, R)
+    returns = torch.tensor(returns)
+    if normalize:
+        returns = (returns - returns.mean()) / (returns.std() + eps)
+    return returns
 
 
 def compute_a2c_loss(probs, values, returns):

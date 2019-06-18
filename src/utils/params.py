@@ -42,6 +42,7 @@ class P():
         if def_prob is None:
             def_prob = 1/n_branch
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
+        self.dk_id = self.a_dim-1
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch,
@@ -148,6 +149,7 @@ class net():
         self.gamma = gamma
         # inferred params
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
+        self.dk_id = self.a_dim-1
         self.validate_args()
 
     def validate_args(self):
