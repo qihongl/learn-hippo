@@ -11,7 +11,7 @@ VALID_SAMPLING_MODE = ['enumerative']
 # TODO: implement probabilistic sampling mode
 
 
-class EventSchema():
+class Schema():
     def __init__(
             self, n_param, n_branch,
             sampling_mode='enumerative'
@@ -62,7 +62,7 @@ class EventSchema():
 # # init a graph
 # n_param, n_branch = 7, 3
 # n_timesteps = n_param
-# es = EventSchema(n_param, n_branch)
+# es = Schema(n_param, n_branch)
 # states, param_vals = es._sample(n_timesteps)
 # states_vec, param_vals_vec = es.sample(n_timesteps)
 #

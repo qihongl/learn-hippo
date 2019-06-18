@@ -58,18 +58,18 @@ python -u train-tz.py --exp_name multi-lures --subj_id 99 \
 # log_root = args.log_root
 
 exp_name = 'test-linear'
-subj_id = 0
-penalty = 2
+subj_id = 1
+penalty = 4
 p_rm_ob_enc = 0
-supervised_epoch = 30
+supervised_epoch = 50
 n_epoch = 200
 n_examples = 256
 log_root = '../log/'
-n_param = 5
-n_hidden = 64
+n_param = 4
+n_hidden = 32
 learning_rate = 1e-3
 gamma = 0
-eta = .05
+eta = .1
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -85,6 +85,7 @@ p = P(
 agent = LCALSTM(
     p.net.x_dim, p.net.n_hidden, p.net.a_dim,
     recall_func=p.net.recall_func, kernel=p.net.kernel,
+    a2c_linear=True
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -184,8 +185,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     else:
         tz_cond = cond
 
-    tz_cond = 'NM'
-
     # logger
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
@@ -193,26 +192,23 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     for i in range(n_examples):
         # pg calculation cache
+        loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
         # init model wm and em
         hc_t = agent.get_init_states()
         agent.init_em_config()
 
         for t in range(tz.T_total):
-
             # whether to encode
             if not supervised:
                 set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
 
-            # get next state and action target
-            y_t_targ = torch.squeeze(Y[i][t])
-            a_t_targ = torch.argmax(y_t_targ)
             # forward
             pi_a_t, v_t, hc_t, cache_t = agent(X[i][t].view(1, 1, -1), hc_t)
             a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(
-                a_t, a_t_targ, p.dk_id, p.env.penalty,
-                allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
+                a_t, Y[i][t], p.env.penalty,
+                # allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
             )
             # cache the results for later RL loss computation
             probs.append(p_a_t)
@@ -224,12 +220,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
-            loss_sup_it = F.mse_loss(yhat_t, y_t_targ)
-            log_loss_sup += loss_sup_it.item() / (tz.T_total * n_examples)
-            if learning and supervised:
-                optimizer.zero_grad()
-                loss_sup_it.backward(retain_graph=True)
-                optimizer.step()
+            loss_sup += F.mse_loss(yhat_t, Y[i][t])
 
             if not supervised:
                 # update WM/EM bsaed on the condition
@@ -238,16 +229,26 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
         # compute RL loss
         returns = compute_returns(rewards, gamma=gamma, normalize=True)
+        # plt.plot(to_sqnp(torch.stack(values)))
+        # plt.plot(to_sqnp(returns))
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
-        if learning and not supervised:
-            loss_rl = loss_actor + loss_critic - pi_ent * eta
+        # if learning and not supervised:
+        if learning:
+            if supervised:
+                loss = loss_sup + loss_critic
+            else:
+                loss = loss_actor + loss_critic - pi_ent * eta
+                # loss = .2*loss_sup + loss_actor + loss_critic - pi_ent * eta
+            # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
+            # loss = loss_actor + loss_critic - pi_ent * eta
             optimizer.zero_grad()
-            loss_rl.backward()
+            loss.backward()
             optimizer.step()
 
         # after every event sequence, log stuff
-        log_pi_ent += pi_ent.item()/(n_examples * tz.T_total)
+        log_loss_sup += loss_sup / n_examples
+        log_pi_ent += pi_ent.item() / n_examples
         log_return += torch.stack(rewards).sum().item()/n_examples
         log_loss_actor += loss_actor.item()/n_examples
         log_loss_critic += loss_critic.item()/n_examples
@@ -261,7 +262,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     # update lr scheduler
     if not supervised:
-        scheduler.step(Log_return[epoch_id])
+        scheduler.step(-Log_return[epoch_id])
 
     # compute performance
     acc_mu_ = compute_acc(Y, log_dist_a)
@@ -274,12 +275,13 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     runtime = time.time() - time0
     acc_mu_parts_str = " ".join('%.2f' % i for i in acc_mu_parts)
     dk_mu_parts_str = " ".join('%.2f' % i for i in dk_mu_parts)
-    print('%3d | R: %.2f, acc: %s, dk: %s, ent: %.2f | L: a: %.2f c: %.2f, s: %.2f | t: %.2f s' % (
-        epoch_id, Log_return[epoch_id], acc_mu_parts_str, dk_mu_parts_str,
-        Log_pi_ent[epoch_id],
-        Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
-        Log_loss_sup[epoch_id], runtime
-    ))
+    print(
+        '%3d | R: %.2f, acc: %s, dk: %s, ent: %.2f | L: a: %.2f c: %.2f, s: %.2f | t: %.2fs' % (
+            epoch_id, Log_return[epoch_id], acc_mu_parts_str, dk_mu_parts_str,
+            Log_pi_ent[epoch_id],
+            Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
+            Log_loss_sup[epoch_id], runtime
+        ))
 
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
@@ -292,3 +294,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 # for name, w, in agent.named_parameters():
 #     print(name)
 #     print(w)
+
+plt.plot(acc_mu_)
+plt.plot(dk_mu_)

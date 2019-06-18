@@ -1,7 +1,7 @@
 # import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from task.MovieSampler import MovieSampler, _to_xy
+from task.StimSampler import StimSampler, _to_xy
 sns.set(style='white', palette='colorblind', context='talk')
 
 '''test'''
@@ -12,7 +12,7 @@ n_timesteps = n_param
 n_parts = 2
 p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 
-sampler = MovieSampler(n_param, n_branch)
+sampler = StimSampler(n_param, n_branch)
 sample_ = sampler.sample(
     n_timesteps, n_parts,
     p_rm_ob_enc, p_rm_ob_rcl, xy_format=False

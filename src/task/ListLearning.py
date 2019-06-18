@@ -4,7 +4,7 @@ from task.StimSampler import StimSampler
 # import matplotlib.pyplot as plts
 
 
-class TwilightZone():
+class ListLearning():
 
     def __init__(
             self,
@@ -12,17 +12,13 @@ class TwilightZone():
             n_branch,
             n_parts=2,
             n_timestep=None,
-            p_rm_ob_enc=0,
-            p_rm_ob_rcl=0,
             sampling_mode='enumerative'
     ):
         self.n_param = n_param
         self.n_branch = n_branch
         self.n_parts = n_parts
-        self.p_rm_ob_enc = p_rm_ob_enc
-        self.p_rm_ob_rcl = p_rm_ob_rcl
         # inferred params
-        self.x_dim = (n_param * n_branch) * 2 + n_branch
+        self.x_dim = n_param * n_branch + n_branch
         self.y_dim = n_branch
         if n_timestep is None:
             self.T_part = n_param
@@ -35,23 +31,20 @@ class TwilightZone():
             sampling_mode=sampling_mode
         )
 
-    def sample(self, n_samples, to_torch=False, stack=True):
+    def sample(self, n_samples, to_torch=False):
         # prealloc
-        if stack:
-            X = np.zeros((n_samples, self.T_total, self.x_dim))
-            Y = np.zeros((n_samples, self.T_total, self.y_dim))
-        else:
-            X = np.zeros((n_samples, self.n_parts, self.T_part, self.x_dim))
-            Y = np.zeros((n_samples, self.n_parts, self.T_part, self.y_dim))
+        # X = np.zeros((n_samples, self.T_total, self.x_dim))
+        # Y = np.zeros((n_samples, self.T_total, self.y_dim))
+        # X = np.zeros((n_samples, self.n_parts, self.T_part, self.x_dim))
+        # Y = np.zeros((n_samples, self.n_parts, self.T_part, self.y_dim))
         # generate samples
         for i in range(n_samples):
-            X[i], Y[i] = self.stim_sampler.sample(
+            [keys_vec, vals_vec], _ = self.stim_sampler.sample(
                 self.T_part,
                 n_parts=self.n_parts,
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
-                xy_format=True,
-                stack=stack
+                xy_format=False,
             )
         # formatting
         if to_torch:
@@ -67,7 +60,7 @@ class TwilightZone():
 # X, Y = tz.sample(n_samples, stack=True)
 # print(np.shape(X))
 # print(np.shape(Y))
-
+#
 # i = 0
 # cmap = 'bone'
 # f, axes = plt.subplots(
