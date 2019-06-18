@@ -9,7 +9,7 @@ from torch.nn.functional import smooth_l1_loss
 eps = np.finfo(np.float32).eps.item()
 
 
-def get_reward(a_t, a_t_targ, dk_id, penalty, allow_dk=True):
+def get_reward(a_t, y_t, penalty, allow_dk=True):
     """define the reward function at time t
 
     Parameters
@@ -18,8 +18,6 @@ def get_reward(a_t, a_t_targ, dk_id, penalty, allow_dk=True):
         action
     a_t_targ : int
         target action
-    dk_id : int
-        the action id of the don't know unit
     penalty : int
         the penalty magnitude of making incorrect state prediction
     allow_dk : bool
@@ -31,12 +29,14 @@ def get_reward(a_t, a_t_targ, dk_id, penalty, allow_dk=True):
         immediate reward at time t
 
     """
+    dk_id = y_t.size()[0]
+    a_t_targ = torch.argmax(y_t)
     if a_t == dk_id and allow_dk:
         r_t = 0
     elif a_t_targ == a_t:
         r_t = 1
     else:
-        r_t = -penalty
+        r_t = - penalty
     return torch.tensor(r_t).type(torch.FloatTensor).data
 
 
