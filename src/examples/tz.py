@@ -7,7 +7,7 @@ sns.set(style='white', palette='colorblind', context='talk')
 # init a graph
 n_param, n_branch = 3, 2
 n_samples = 5
-p_rm_ob_enc = .5
+p_rm_ob_enc = 0
 tz = TwilightZone(n_param, n_branch, p_rm_ob_enc=p_rm_ob_enc)
 
 '''stack the n_parts'''
