@@ -61,11 +61,16 @@ def compute_dk(log_dist_a, n_se=2, return_er=False):
         stats for P(don't know)
 
     """
+    # compute the dk dim
     a_dim = np.shape(log_dist_a)[-1]
+    dk_id = a_dim-1
+    # argmax to get the responses
     argmax_dist_a = np.argmax(log_dist_a, axis=2)
-    dk = argmax_dist_a == (a_dim-1)
+    # get don't know actions
+    dk = argmax_dist_a == dk_id
+    # compute stats
     dk_mu_ = np.mean(dk, axis=0)
-    dk_er_ = sem(dk, axis=0)*n_se
+    dk_er_ = sem(dk, axis=0) * n_se
     if return_er:
         return dk_mu_, dk_er_
     return dk_mu_
