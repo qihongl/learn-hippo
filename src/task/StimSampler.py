@@ -12,32 +12,17 @@ class StimSampler():
     def __init__(
             self,
             n_param, n_branch,
-            key_rep='node',
+            key_rep_type='node',
             sampling_mode='enumerative'
     ):
         self.n_param = n_param
         self.n_branch = n_branch
-        self._form_representation(key_rep=key_rep)
-        self.event_schema = Schema(
+        self.schema = Schema(
             n_param=n_param,
             n_branch=n_branch,
-            key_rep=key_rep,
+            key_rep_type=key_rep_type,
             sampling_mode=sampling_mode
         )
-
-    def _form_representation(self, key_rep):
-        # build state space and action space
-        if key_rep == 'node':
-            self.k_dim = self.n_param * self.n_branch
-            self.v_dim = self.n_branch
-        elif key_rep == 'time':
-            self.k_dim = self.n_param
-            self.v_dim = self.n_branch
-        else:
-            raise ValueError(f'unrecog representation type {key_rep}')
-        # form representation
-        self.key_rep = np.eye(self.k_dim)
-        self.val_rep = np.eye(self.v_dim)
 
     def _sample(self):
         """sample an event sequence, one-hot vector representation
@@ -49,10 +34,10 @@ class StimSampler():
 
         """
         # sample keys and parameter values, integer representation
-        keys, vals = self.event_schema.sample()
+        keys, vals = self.schema.sample()
         # translate to vector representation
-        keys_vec = np.vstack([self.key_rep[k_t, :] for k_t in keys])
-        vals_vec = np.vstack([self.val_rep[v_t, :] for v_t in vals])
+        keys_vec = np.vstack([self.schema.key_rep[k_t, :] for k_t in keys])
+        vals_vec = np.vstack([self.schema.val_rep[v_t, :] for v_t in vals])
         return keys_vec, vals_vec
 
     def sample(
@@ -103,7 +88,7 @@ class StimSampler():
         """given some raw key-val pairs, generate temporal permutation sets
         """
         T = self.n_param
-        keys_vec = np.zeros((n_perms, T, self.k_dim))
+        keys_vec = np.zeros((n_perms, T, self.schema.k_dim))
         vals_vec = np.zeros((n_perms, T, self.n_branch))
         for ip in range(n_perms):
             # unique permutation for each movie part
@@ -180,7 +165,7 @@ def _zero_out_random_rows(matrices, p_rm):
 # n_parts = 2
 # p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 #
-# sampler = StimSampler(n_param, n_branch, key_rep='node')
+# sampler = StimSampler(n_param, n_branch, key_rep_type='node')
 # sample_ = sampler.sample(
 #     n_parts, p_rm_ob_enc, p_rm_ob_rcl
 # )

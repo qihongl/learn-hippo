@@ -15,7 +15,7 @@ KEY_REPRESENTATION = ['node', 'time']
 class Schema():
     def __init__(
             self, n_param, n_branch,
-            key_rep='node',
+            key_rep_type='node',
             sampling_mode='enumerative'
             # def_path=None, def_prob=None,
     ):
@@ -24,9 +24,10 @@ class Schema():
         # self.def_prob = def_prob
         # self.def_path = def_path
         # sampling mode
-        self.key_rep = key_rep
+        self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
-        assert key_rep in KEY_REPRESENTATION
+        self._form_representation(key_rep_type)
+        assert key_rep_type in KEY_REPRESENTATION
         assert sampling_mode in VALID_SAMPLING_MODE
 
     def sample(self):
@@ -46,18 +47,31 @@ class Schema():
 
     def _sample_key(self):
         T = self.n_param
-        if self.key_rep == 'node':
+        if self.key_rep_type == 'node':
             key_branch_id = np.array([
                 np.random.choice(range(self.n_branch)) for _ in range(T)
             ])
             time_shifts = np.array([self.n_branch * t for t in range(T)])
             key = key_branch_id + time_shifts
-        elif self.key_rep == 'time':
+        elif self.key_rep_type == 'time':
             key = np.random.permutation(T)
         else:
-            raise ValueError(f'unrecog representation type {self.key_rep}')
+            raise ValueError(f'unrecog representation type {self.key_rep_type}')
         return key.astype(np.int16)
 
+    def _form_representation(self, key_rep_type):
+        # build state space and action space
+        if key_rep_type == 'node':
+            self.k_dim = self.n_param * self.n_branch
+            self.v_dim = self.n_branch
+        elif key_rep_type == 'time':
+            self.k_dim = self.n_param
+            self.v_dim = self.n_branch
+        else:
+            raise ValueError(f'unrecog representation type {key_rep_type}')
+        # form representation
+        self.key_rep = np.eye(self.k_dim)
+        self.val_rep = np.eye(self.v_dim)
 
 # # key_used_ = set()
 # #
@@ -67,8 +81,8 @@ class Schema():
 #
 # # init a graph
 # n_param, n_branch = 6, 2
-# schema = Schema(n_param, n_branch, key_rep='time')
-# schema.key_rep
+# schema = Schema(n_param, n_branch, key_rep_type='time')
+# schema.key_rep_type
 # key, val = schema.sample()
 # print(key)
 # print(val)
