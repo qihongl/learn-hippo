@@ -26,10 +26,12 @@ def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
         stats for state prediction accuracy
 
     """
+    if type(Y) is not np.ndarray:
+        Y = to_np(Y)
     # argmax the action distribution (don't know unit included)
     argmax_dist_a = np.argmax(log_dist_a, axis=2)
     # argmax the targets one hot vecs
-    argmax_Y = np.argmax(to_np(Y), axis=2)
+    argmax_Y = np.argmax(Y, axis=2)
     # compute matches
     corrects = argmax_Y == argmax_dist_a
     # compute stats across trials
@@ -41,10 +43,12 @@ def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
 
 
 def compute_mistake(Y, log_dist_a, n_se=2, return_er=False):
+    if type(Y) is not np.ndarray:
+        Y = to_np(Y)
     # argmax the action distribution (don't know unit included)
     argmax_dist_a = np.argmax(log_dist_a, axis=2)
     # argmax the targets one hot vecs
-    argmax_Y = np.argmax(to_np(Y), axis=2)
+    argmax_Y = np.argmax(Y, axis=2)
     # compute the difference
     diff = argmax_Y != argmax_dist_a
     # get don't knows

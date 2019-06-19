@@ -27,7 +27,7 @@ def build_log_path(
     enc_str = f'enc-{p.net.enc_mode}_size-{p.net.enc_size}'
     recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
     network_str = f'h-{p.net.n_hidden}'
-    train_str = f'lr-{p.net.lr}'
+    train_str = f'lr-{p.net.lr}-eta-{p.net.eta}'
     subj_str = f'subj-{subj_id}'
     # compute the path
     log_path = os.path.join(

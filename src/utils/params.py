@@ -28,6 +28,7 @@ class P():
         n_hidden=128,
         lr=1e-3,
         gamma=0,
+        eta=0,
     ):
         # set encoding size to be maximal
         T_part = n_param
@@ -51,7 +52,7 @@ class P():
         )
         self.net = net(
             recall_func, kernel, enc_mode, enc_size,
-            n_hidden, lr, gamma,
+            n_hidden, lr, gamma, eta,
             n_param, n_branch
         )
 
@@ -136,7 +137,7 @@ class net():
         self,
         recall_func, kernel,
         enc_mode, enc_size,
-        n_hidden, lr, gamma,
+        n_hidden, lr, gamma, eta,
         n_param, n_branch
     ):
         self.recall_func = recall_func
@@ -146,6 +147,7 @@ class net():
         self.n_hidden = n_hidden
         self.lr = lr
         self.gamma = gamma
+        self.eta = eta
         # inferred params
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.dk_id = self.a_dim-1
