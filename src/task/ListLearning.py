@@ -5,6 +5,8 @@ from task.StimSampler import StimSampler
 
 
 class ListLearning():
+    """a key-value assoc learning task with explicit query keys input
+    """
 
     def __init__(
             self,
