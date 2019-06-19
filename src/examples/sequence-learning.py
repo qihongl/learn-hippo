@@ -5,7 +5,7 @@ from task import SequenceLearning
 sns.set(style='white', palette='colorblind', context='talk')
 
 '''how to use'''
-n_param, n_branch = 3, 2
+n_param, n_branch = 3, 3
 n_parts = 2
 n_samples = 5
 sl = SequenceLearning(n_param, n_branch)

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models import LCALSTM
+from models import LCARNN as Agent
 from task import SequenceLearning
 from models import get_reward, compute_returns, compute_a2c_loss
 from analysis import compute_behav_metrics, compute_acc, compute_dk, entropy
@@ -75,7 +75,7 @@ torch.manual_seed(subj_id)
 p = P(
     exp_name=exp_name,
     n_param=n_param, penalty=penalty, n_hidden=n_hidden, lr=learning_rate,
-    p_rm_ob_enc=p_rm_ob_enc, eta=eta, gamma=.1,
+    p_rm_ob_enc=p_rm_ob_enc, eta=eta,
 )
 # init env
 task = SequenceLearning(p.env.n_param, p.env.n_branch)
@@ -83,10 +83,10 @@ task = SequenceLearning(p.env.n_param, p.env.n_branch)
 
 # init agent
 predict = False
-agent = LCALSTM(
-    task.x_dim, p.net.n_hidden, task.y_dim+1,
-    recall_func=p.net.recall_func, kernel=p.net.kernel,
-    a2c_linear=True, predict=predict
+a2c_linear = False
+agent = Agent(
+    task.x_dim, p.net.n_hidden, p.a_dim,
+    a2c_linear=a2c_linear, predict=predict, init_state_trainable=True,
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -100,7 +100,7 @@ log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 save_all_params(log_subpath['data'], p, args=None)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
-# # load model
+# load model
 # epoch_load = 50
 # agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
 # epoch_id = epoch_load
@@ -190,6 +190,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     for i in range(n_examples):
         # pick a condition
         tz_cond = pick_condition(supervised, p, fix_cond=cond)
+
         # pg calculation cache
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
@@ -201,14 +202,24 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             # whether to encode
             if not supervised:
                 set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
+                # agent.dnd.encoding_off
+                # agent.dnd.retrieval_off
+
+            h_t, hc_t = agent.rnn(X[i][t].view(1, 1, -1), hc_t)
+            theta = agent.hpc_ctrl(h_t).sigmoid()
+            [inps_t, leak_t, comp_t] = torch.squeeze(theta)
+            h_t, m_t = agent.recall(h_t, leak_t, comp_t, inps_t)
+            agent.encode(h_t)
+            pi_a_t, v_t = agent.a2c.forward(h_t, beta=1)
+            hc_t = (h_t, hc_t[1])
 
             # forward
-            pi_a_t, v_t, hc_t, cache_t = agent(
-                X[i][t].view(1, 1, -1), hc_t)
+            # pi_a_t, v_t, hc_t, cache_t = agent(
+            #     X[i][t].view(1, 1, -1), hc_t)
             a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(
                 a_t, Y[i][t], p.env.penalty,
-                allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
+                # allow_dk=allow_dk(t, tz_cond, p.env.tz.event_ends[0])
             )
             # cache the results for later RL loss computation
             probs.append(p_a_t)
@@ -219,8 +230,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
 
             # compute supervised loss
-            # yhat_t = torch.squeeze(pi_a_t)[:-1]
-            # loss_sup += F.mse_loss(yhat_t, Y[i][t])
+            yhat_t = torch.squeeze(pi_a_t)[:-1]
+            loss_sup += F.mse_loss(yhat_t, Y[i][t])
 
             if not supervised:
                 # update WM/EM bsaed on the condition
@@ -233,13 +244,14 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised:
         if learning:
-            # if supervised:
-            #     loss = loss_sup
-            # else:
-            #     loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
+            if supervised:
+                loss = loss_sup
+            else:
+                # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
+                loss = loss_actor + loss_critic - pi_ent * eta
                 # loss = .2*loss_sup + loss_actor + loss_critic - pi_ent * eta
             # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
-            loss = loss_actor + loss_critic - pi_ent * eta
+            # loss = loss_actor + loss_critic - pi_ent * eta
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -288,6 +300,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 f, axes = plt.subplots(2, 2, figsize=(12, 6), sharex=True)
 axes[0, 0].plot(Log_return)
 axes[0, 0].set_ylabel('return')
+
 axes[0, 1].plot(Log_pi_ent)
 axes[0, 1].set_ylabel('entropy')
 axes[1, 0].plot(Log_loss_actor, label='actor')
@@ -301,6 +314,7 @@ axes[1, 1].set_xlabel('Epoch')
 
 for i, ax in enumerate(f.axes):
     ax.axvline(supervised_epoch, color='grey', linestyle='--')
+    ax.axhline(0, color='grey', linestyle='--')
 sns.despine()
 f.tight_layout()
 fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
@@ -318,7 +332,7 @@ for cond_ in list(p.env.tz.cond_dict.values()):
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_tz_pred_acc(
         acc_mu, acc_er, acc_mu+dk_mu,
-        [p.env.tz.event_ends[0]], p,
+        [p.env.tz.event_ends[0]+1], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_}',
     )

@@ -1,6 +1,7 @@
 # agents
 from .LCALSTM import LCALSTM
-from .A2C import A2C_linear
+from .LCARNN import LCARNN
+from .A2C import A2C_linear, A2C
 from .LSTM import LSTM
 # modules
 from .ReplayBuffer import ReplayBuffer
