@@ -2,3 +2,4 @@
 # from .StimSampler import StimSampler
 from .TwilightZone import TwilightZone
 from .ListLearning import ListLearning
+from .SequenceLearning import SequenceLearning
