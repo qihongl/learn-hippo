@@ -25,6 +25,9 @@ axes[1].imshow(y, cmap=cmap)
 axes[0].set_title('x')
 axes[1].set_title('y')
 
+axes[0].set_xlabel('key/val')
+axes[1].set_xlabel('val')
+
 axes[0].set_ylabel('Time')
 
 n_timesteps = n_param
