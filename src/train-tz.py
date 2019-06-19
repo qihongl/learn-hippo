@@ -25,48 +25,48 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 --log_root ../log/
 '''
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-n', '--exp_name', default='test', type=str)
-parser.add_argument('--subj_id', default=99, type=int)
-parser.add_argument('--penalty', default=4, type=int)
-parser.add_argument('--p_rm_ob_enc', default=0, type=float)
-parser.add_argument('--n_param', default=6, type=int)
-parser.add_argument('--n_hidden', default=64, type=int)
-parser.add_argument('--lr', default=1e-3, type=float)
-parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--n_epoch', default=300, type=int)
-parser.add_argument('--sup_epoch', default=50, type=int)
-parser.add_argument('--n_examples', default=256, type=int)
-parser.add_argument('--log_root', default='../log/', type=str)
-args = parser.parse_args()
-print(args)
+# parser = argparse.ArgumentParser()
+# parser.add_argument('-n', '--exp_name', default='test', type=str)
+# parser.add_argument('--subj_id', default=99, type=int)
+# parser.add_argument('--penalty', default=4, type=int)
+# parser.add_argument('--p_rm_ob_enc', default=0, type=float)
+# parser.add_argument('--n_param', default=6, type=int)
+# parser.add_argument('--n_hidden', default=64, type=int)
+# parser.add_argument('--lr', default=1e-3, type=float)
+# parser.add_argument('--eta', default=0.1, type=float)
+# parser.add_argument('--n_epoch', default=300, type=int)
+# parser.add_argument('--sup_epoch', default=50, type=int)
+# parser.add_argument('--n_examples', default=256, type=int)
+# parser.add_argument('--log_root', default='../log/', type=str)
+# args = parser.parse_args()
+# print(args)
+#
+# # process args
+# exp_name = args.exp_name
+# subj_id = args.subj_id
+# penalty = args.penalty
+# p_rm_ob_enc = args.p_rm_ob_enc
+# n_param = args.n_param
+# n_hidden = args.n_hidden
+# learning_rate = args.lr
+# eta = args.eta
+# n_examples = args.n_examples
+# n_epoch = args.n_epoch
+# supervised_epoch = args.sup_epoch
+# log_root = args.log_root
 
-# process args
-exp_name = args.exp_name
-subj_id = args.subj_id
-penalty = args.penalty
-p_rm_ob_enc = args.p_rm_ob_enc
-n_param = args.n_param
-n_hidden = args.n_hidden
-learning_rate = args.lr
-eta = args.eta
-n_examples = args.n_examples
-n_epoch = args.n_epoch
-supervised_epoch = args.sup_epoch
-log_root = args.log_root
-
-# exp_name = 'test-linear'
-# subj_id = 1
-# penalty = 4
-# p_rm_ob_enc = 0
-# supervised_epoch = 50
-# n_epoch = 300
-# n_examples = 256
-# log_root = '../log/'
-# n_param = 4
-# n_hidden = 32
-# learning_rate = 5e-4
-# eta = .1
+exp_name = 'test-pred'
+subj_id = 1
+penalty = 4
+p_rm_ob_enc = 0
+supervised_epoch = 50
+n_epoch = 300
+n_examples = 256
+log_root = '../log/'
+n_param = 4
+n_hidden = 32
+learning_rate = 1e-3
+eta = .1
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -75,14 +75,14 @@ torch.manual_seed(subj_id)
 p = P(
     exp_name=exp_name,
     n_param=n_param, penalty=penalty, n_hidden=n_hidden, lr=learning_rate,
-    p_rm_ob_enc=p_rm_ob_enc, eta=eta
+    p_rm_ob_enc=p_rm_ob_enc, eta=eta, gamma=.1,
 )
 
 # init agent
 agent = LCALSTM(
     p.net.x_dim, p.net.n_hidden, p.net.a_dim,
     recall_func=p.net.recall_func, kernel=p.net.kernel,
-    a2c_linear=True
+    a2c_linear=True, predict=True
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -201,7 +201,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
                 set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
 
             # forward
-            pi_a_t, v_t, hc_t, cache_t = agent(X[i][t].view(1, 1, -1), hc_t)
+            pi_a_t, v_t, yhat_t, hc_t, cache_t = agent(
+                X[i][t].view(1, 1, -1), hc_t)
             a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(
                 a_t, Y[i][t], p.env.penalty,
@@ -216,7 +217,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
 
             # compute supervised loss
-            yhat_t = torch.squeeze(pi_a_t)[:-1]
+            # yhat_t = torch.squeeze(pi_a_t)[:-1]
             loss_sup += F.mse_loss(yhat_t, Y[i][t])
 
             if not supervised:
@@ -225,15 +226,15 @@ for epoch_id in np.arange(epoch_id, n_epoch):
                     tz_cond, t, p.env.tz.event_ends[0], hc_t, agent)
 
         # compute RL loss
-        returns = compute_returns(rewards, normalize=True)
+        returns = compute_returns(rewards)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised:
         if learning:
             if supervised:
-                loss = loss_sup + loss_critic
+                loss = loss_sup
             else:
-                loss = loss_actor + loss_critic - pi_ent * eta
+                loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
                 # loss = .2*loss_sup + loss_actor + loss_critic - pi_ent * eta
             # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
             # loss = loss_actor + loss_critic - pi_ent * eta
@@ -321,3 +322,7 @@ for cond_ in list(p.env.tz.cond_dict.values()):
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+
+# plt.plot(to_sqnp(torch.stack(values)))
+# plt.plot(to_sqnp(returns))

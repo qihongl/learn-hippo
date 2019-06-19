@@ -28,7 +28,7 @@ class LCALSTM(nn.Module):
             init_state_trainable=False,
             layernorm=False,
             mode='train',
-            a2c_linear=True,
+            a2c_linear=True, predict=False,
             bias=True
     ):
         super(LCALSTM, self).__init__()
@@ -52,6 +52,9 @@ class LCALSTM(nn.Module):
         else:
             self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
         #
+        self.predict = predict
+        if predict:
+            self.predictor = nn.Linear(hidden_dim, output_dim-1, bias=bias)
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
         self.init_model()
@@ -133,6 +136,9 @@ class LCALSTM(nn.Module):
         vector_signal = [f_t, i_t, o_t]
         misc = [m_t]
         cache = [vector_signal, scalar_signal, misc]
+        if self.predict:
+            yhat_t = self.predictor(h_t).sigmoid()
+            return action_dist_t, value_t, yhat_t, (h_t, c_t), cache
         return action_dist_t, value_t, (h_t, c_t), cache
 
     def recall(self, c_t, leak_t, comp_t, inps_t):
