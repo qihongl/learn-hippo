@@ -1,5 +1,6 @@
 import numpy as np
 from task.StimSampler import StimSampler
+from task.SequenceLearning import SequenceLearning
 
 
 def test_task_stim_sampler():
@@ -29,7 +30,27 @@ def test_task_stim_sampler_inter_part_consistency():
         ), 'different event parts should have the same set of parameter values'
 
 
+def test_task_sequence_learning():
+    '''test ordering k,v in x by time re-product y'''
+    n_param, n_branch = 6, 5
+    n_parts = 2
+    n_samples = 3
+    sl = SequenceLearning(n_param, n_branch, n_parts=n_parts)
+    X, Y = sl.sample(n_samples)
+    for i in range(n_samples):
+        x, y = X[i], Y[i]
+        # test
+        T_part = n_param
+        time_ids = np.argmax(x[:T_part, :sl.k_dim], axis=1)
+        sort_ids = np.argsort(time_ids)
+        x_sorted = x[:T_part, :sl.k_dim][sort_ids]
+        y_sorted = x[:T_part, sl.k_dim:][sort_ids]
+        assert np.all(x_sorted == np.eye(n_param))
+        assert np.all(y_sorted == y[:T_part])
+
+
 if __name__ == "__main__":
     test_task_stim_sampler()
     test_task_stim_sampler_inter_part_consistency()
+    test_task_sequence_learning()
     print("Everything passed")

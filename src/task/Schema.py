@@ -1,20 +1,21 @@
-'''
-a generative model of sequences
-- has integer representation of key and values
-- and corresponding representation
-'''
 import numpy as np
-# from data.utils import sample_rand_path
 # import matplotlib.pyplot as plt
 
 VALID_SAMPLING_MODE = ['enumerative']
 KEY_REPRESENTATION = ['node', 'time']
+# KEY_REPRESENTATION = ['node', 'time', 'gaussian']
 # VALID_SAMPLING_MODE = ['enumerative', 'probabilistic']
 # TODO: sample w.r.t to transition matrix
 # TODO: implement probabilistic sampling mode
 
 
 class Schema():
+    '''
+    a generative model of sequences
+    - has integer representation of key and values
+    - and corresponding representation
+    '''
+
     def __init__(
             self, n_param, n_branch,
             key_rep_type='node',
@@ -56,7 +57,8 @@ class Schema():
             time_shifts = np.array([self.n_branch * t for t in range(T)])
             key = key_branch_id + time_shifts
         elif self.key_rep_type == 'time':
-            key = np.random.permutation(T)
+            # key = np.random.permutation(T)
+            key = np.arange(T)
         else:
             raise ValueError(f'unrecog representation type {self.key_rep_type}')
         return key.astype(np.int16)

@@ -1,13 +1,13 @@
-'''
-a sampler of sequences
-'''
-
 import numpy as np
-# import matplotlib.pyplot as plt
 from task.Schema import Schema
+# import matplotlib.pyplot as plt
 
 
 class StimSampler():
+    '''
+    a sampler of sequences
+    '''
+
     def __init__(
             self,
             n_param, n_branch,
@@ -165,8 +165,9 @@ def _zero_out_random_rows(matrices, p_rm):
 # n_param, n_branch = 3, 2
 # n_parts = 2
 # p_rm_ob_enc, p_rm_ob_rcl = .25, 0
-#
-# sampler = StimSampler(n_param, n_branch, key_rep_type='node')
+# key_rep_type = 'time'
+# # key_rep_type = 'gaussian'
+# sampler = StimSampler(n_param, n_branch, key_rep_type=key_rep_type)
 # sample_ = sampler.sample(
 #     n_parts, p_rm_ob_enc, p_rm_ob_rcl
 # )
