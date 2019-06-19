@@ -10,7 +10,7 @@ import seaborn as sns
 from models import LCALSTM
 from task import TwilightZone
 from models import get_reward, compute_returns, compute_a2c_loss
-from analysis import compute_acc, compute_dk, average_by_part, entropy
+from analysis import compute_behav_metrics, average_by_part, entropy
 from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
@@ -21,6 +21,7 @@ from scipy.stats import sem
 # from analysis.utils import get_tps_for_ith_part
 # plt.switch_backend('agg')
 from utils.constants import TZ_CONDS
+sns.set(style='white', palette='colorblind', context='talk')
 
 '''learning to tz with a2c. e.g. cmd:
 python -u train-tz.py --exp_name multi-lures --subj_id 99 \
@@ -62,7 +63,7 @@ subj_id = 1
 penalty = 4
 p_rm_ob_enc = 0
 supervised_epoch = 50
-n_epoch = 200
+n_epoch = 300
 n_examples = 256
 log_root = '../log/'
 n_param = 4
@@ -119,12 +120,15 @@ def allow_dk(t, tz_cond, t_allowed):
     return False
 
 
-def pick_condition(supervised, p):
-    if supervised:
-        tz_cond = 'RM'
+def pick_condition(supervised, p, fix_cond=None):
+    if fix_cond is not None:
+        return fix_cond
     else:
-        tz_cond = np.random.choice(TZ_CONDS, p=p.env.tz.p_cond)
-    return tz_cond
+        if supervised:
+            tz_cond = 'RM'
+        else:
+            tz_cond = np.random.choice(TZ_CONDS, p=p.env.tz.p_cond)
+        return tz_cond
 
 
 def set_encoding_flag(t, enc_times, agent):
@@ -160,6 +164,9 @@ def tz_cond_manipulation(tz_cond, t, event_bond, p, hc_t, agent, n_lures=1):
 
 
 log_freq = 10
+Log_acc = np.zeros((n_epoch, tz.n_parts))
+Log_mis = np.zeros((n_epoch, tz.n_parts))
+Log_dk = np.zeros((n_epoch, tz.n_parts))
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_sup = np.zeros(n_epoch,)
@@ -180,10 +187,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     # training objective
     supervised = epoch_id < supervised_epoch
     # pick condition
-    if cond is None:
-        tz_cond = pick_condition(supervised, p)
-    else:
-        tz_cond = cond
+    tz_cond = pick_condition(supervised, p, fix_cond=cond)
 
     # logger
     log_return, log_pi_ent = 0, 0
@@ -260,28 +264,26 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     Log_loss_actor[epoch_id] = log_loss_actor
     Log_loss_critic[epoch_id] = log_loss_critic
 
-    # update lr scheduler
-    if not supervised:
-        scheduler.step(-Log_return[epoch_id])
-
-    # compute performance
-    acc_mu_ = compute_acc(Y, log_dist_a)
-    dk_mu_ = compute_dk(log_dist_a)
-    # split by movie parts
-    acc_mu_parts = average_by_part(acc_mu_, p)
-    dk_mu_parts = average_by_part(dk_mu_, p)
-
     # log message
     runtime = time.time() - time0
-    acc_mu_parts_str = " ".join('%.2f' % i for i in acc_mu_parts)
-    dk_mu_parts_str = " ".join('%.2f' % i for i in dk_mu_parts)
-    print(
-        '%3d | R: %.2f, acc: %s, dk: %s, ent: %.2f | L: a: %.2f c: %.2f, s: %.2f | t: %.2fs' % (
-            epoch_id, Log_return[epoch_id], acc_mu_parts_str, dk_mu_parts_str,
-            Log_pi_ent[epoch_id],
-            Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
-            Log_loss_sup[epoch_id], runtime
-        ))
+    # compute stats
+    bm_ = compute_behav_metrics(Y, log_dist_a, p)
+    Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
+    acc_mu_pts_str = " ".join('%.2f' % i for i in Log_acc[epoch_id])
+    mis_mu_pts_str = " ".join('%.2f' % i for i in Log_mis[epoch_id])
+    dk_mu_pts_str = " ".join('%.2f' % i for i in Log_dk[epoch_id])
+    # print
+    msg = '%3d | R: %.2f, acc: %s, dk: %s, mis: %s, ent: %.2f | ' % (
+        epoch_id, Log_return[epoch_id],
+        acc_mu_pts_str, dk_mu_pts_str, mis_mu_pts_str, Log_pi_ent[epoch_id])
+    msg += 'L: a: %.2f c: %.2f, s: %.2f | t: %.2fs' % (
+        Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
+        Log_loss_sup[epoch_id], runtime)
+    print(msg)
+
+    # update lr scheduler
+    if not supervised:
+        scheduler.step(np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id]))
 
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
@@ -295,5 +297,21 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 #     print(name)
 #     print(w)
 
-plt.plot(acc_mu_)
-plt.plot(dk_mu_)
+f, axes = plt.subplots(2, 2, figsize=(8, 6), sharex=True)
+axes[0, 0].plot(Log_return)
+axes[0, 0].set_ylabel('return')
+axes[0, 1].plot(Log_pi_ent)
+axes[0, 1].set_ylabel('entropy')
+axes[1, 0].plot(Log_loss_actor, label='actor')
+axes[1, 0].plot(Log_loss_critic, label='critic')
+axes[1, 0].legend()
+axes[1, 0].set_ylabel('loss, rl')
+axes[1, 1].plot(Log_loss_sup)
+axes[1, 1].set_ylabel('loss, sup')
+axes[1, 0].set_xlabel('Epoch')
+axes[1, 1].set_xlabel('Epoch')
+
+for i, ax in enumerate(f.axes):
+    ax.axvline(supervised_epoch, color='grey', linestyle='--')
+sns.despine()
+f.tight_layout()
