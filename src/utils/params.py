@@ -1,11 +1,8 @@
 '''parameter config class'''
 
 from task.utils import sample_rand_path
-from utils.constants import ALL_ENC_MODE
-
-# RM, DM, NM
-DISTRIBUTION_TZ_CONDITIONS = [.25, .25, .5]
-# DISTRIBUTION_TZ_CONDITIONS = [1, 0, 0]
+from utils.constants import ALL_ENC_MODE, TZ_COND_DICT, RNR_COND_DICT, \
+    P_TZ_CONDS, P_RNR_CONDS
 
 
 class P():
@@ -23,7 +20,6 @@ class P():
         mode_rm_ob_enc='partial',
         mode_rm_ob_rcl='all',
         n_mvs_tz=2,
-        p_tz_cond=DISTRIBUTION_TZ_CONDITIONS,
         n_mvs_rnr=3,
         enc_size=None,
         enc_mode='cum',
@@ -50,7 +46,7 @@ class P():
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
-            n_mvs_tz, p_tz_cond,
+            n_mvs_tz,
             n_mvs_rnr
         )
         self.net = net(
@@ -75,7 +71,7 @@ class env():
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
-            n_mvs_tz, p_tz_cond,
+            n_mvs_tz,
             n_mvs_rnr
     ):
         self.exp_name = exp_name
@@ -94,8 +90,8 @@ class env():
         self.T_part = n_param
         self.chance = 1 / n_branch
         #
-        self.tz = tz(n_mvs_tz, self.T_part, p_tz_cond)
-        self.rnr = rnr(n_mvs_rnr, self.T_part)
+        self.tz = tz(n_mvs_tz, self.T_part, TZ_COND_DICT, P_TZ_CONDS)
+        self.rnr = rnr(n_mvs_rnr, self.T_part, RNR_COND_DICT, P_RNR_CONDS)
         self.validate_args()
 
     def validate_args(self):
@@ -116,20 +112,23 @@ class env():
 
 
 class tz():
-    def __init__(self, n_mvs, T_part, p_cond):
+    def __init__(self, n_mvs, T_part, cond_dict, p_cond):
         self.n_mvs = n_mvs
         self.T_part = T_part
         self.T_total = n_mvs * T_part
         self.event_ends = get_event_ends(T_part, n_mvs)
+        self.cond_dict = cond_dict
         self.p_cond = p_cond
 
 
 class rnr():
-    def __init__(self, n_mvs, T_part):
+    def __init__(self, n_mvs, T_part, cond_dict, p_cond):
         self.n_mvs = n_mvs
         self.T_part = T_part
         self.T_total = n_mvs * T_part
         self.event_ends = get_event_ends(T_part, n_mvs)
+        self.cond_dict = cond_dict
+        self.p_cond = p_cond
 
 
 class net():
