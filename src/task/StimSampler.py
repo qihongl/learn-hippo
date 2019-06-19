@@ -1,6 +1,5 @@
 '''
-a generative model of event sequences, represented by one-hot vectors
-samples from this class are processed to NN-readable form
+a sampler of sequences
 '''
 
 import numpy as np
@@ -15,14 +14,16 @@ class StimSampler():
             key_rep_type='node',
             sampling_mode='enumerative'
     ):
-        self.n_param = n_param
-        self.n_branch = n_branch
         self.schema = Schema(
             n_param=n_param,
             n_branch=n_branch,
             key_rep_type=key_rep_type,
             sampling_mode=sampling_mode
         )
+        self.n_param = n_param
+        self.n_branch = n_branch
+        self.k_dim = self.schema.k_dim
+        self.v_dim = self.schema.v_dim
 
     def _sample(self):
         """sample an event sequence, one-hot vector representation
@@ -88,7 +89,7 @@ class StimSampler():
         """given some raw key-val pairs, generate temporal permutation sets
         """
         T = self.n_param
-        keys_vec = np.zeros((n_perms, T, self.schema.k_dim))
+        keys_vec = np.zeros((n_perms, T, self.k_dim))
         vals_vec = np.zeros((n_perms, T, self.n_branch))
         for ip in range(n_perms):
             # unique permutation for each movie part

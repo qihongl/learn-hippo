@@ -1,5 +1,7 @@
 '''
-a generative model of event sequences, represented by integers
+a generative model of sequences
+- has integer representation of key and values
+- and corresponding representation
 '''
 import numpy as np
 # from data.utils import sample_rand_path
