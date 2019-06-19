@@ -12,27 +12,35 @@ class StimSampler():
     def __init__(
             self,
             n_param, n_branch,
+            key_rep='node',
             sampling_mode='enumerative'
     ):
         self.n_param = n_param
         self.n_branch = n_branch
-        self.dim = n_branch * n_param
-        # build state space and action space
-        self.key_set = np.eye(n_param * n_branch)
-        self.val_set = np.eye(n_branch)
+        self._form_representation(key_rep=key_rep)
         self.event_schema = Schema(
             n_param=n_param,
             n_branch=n_branch,
+            key_rep=key_rep,
             sampling_mode=sampling_mode
         )
 
-    def _sample(self, n_timestep):
-        """sample an event sequence, one-hot vector representation
+    def _form_representation(self, key_rep):
+        # build state space and action space
+        if key_rep == 'node':
+            self.k_dim = self.n_param * self.n_branch
+            self.v_dim = self.n_branch
+        elif key_rep == 'time':
+            self.k_dim = self.n_param
+            self.v_dim = self.n_branch
+        else:
+            raise ValueError(f'unrecog representation type {key_rep}')
+        # form representation
+        self.key_rep = np.eye(self.k_dim)
+        self.val_rep = np.eye(self.v_dim)
 
-        Parameters
-        ----------
-        n_timestep : int
-            the number of time steps of an "event part"
+    def _sample(self):
+        """sample an event sequence, one-hot vector representation
 
         Returns
         -------
@@ -41,30 +49,23 @@ class StimSampler():
 
         """
         # sample keys and parameter values, integer representation
-        keys, vals = self.event_schema.sample(n_timestep)
-        # convert to one-hot vector representation
-        keys_vec, vals_vec = self.to_one_hot(keys, vals)
-        return keys_vec, vals_vec
-
-    def to_one_hot(self, keys, vals):
-        # convert to one-hot vector representation
-        keys_vec = np.vstack([self.key_set[s_t, :] for s_t in keys])
-        vals_vec = np.vstack([self.val_set[p_t, :] for p_t in vals])
+        keys, vals = self.event_schema.sample()
+        # translate to vector representation
+        keys_vec = np.vstack([self.key_rep[k_t, :] for k_t in keys])
+        vals_vec = np.vstack([self.val_rep[v_t, :] for v_t in vals])
         return keys_vec, vals_vec
 
     def sample(
-            self, n_timestep,
+            self,
             n_parts=1,
-            p_rm_ob_enc=0, p_rm_ob_rcl=0,
+            p_rm_ob_enc=0,
+            p_rm_ob_rcl=0,
             permute_queries=False,
-            xy_format=True, stack=True,
     ):
         """sample a multi-part "movie", with repetition structure
 
         Parameters
         ----------
-        n_timestep : int
-            the number of time steps of EACH PART
         n_parts : int
             the number of parts in this event sequence
         format: string
@@ -80,14 +81,14 @@ class StimSampler():
 
         """
         # sample the state-param associtations
-        keys_vec_, vals_vec_ = self._sample(n_timestep)
+        keys_vec_, vals_vec_ = self._sample()
         # sample for the observation phase
         o_keys_vec, o_vals_vec = self._sample_permutations(
-            keys_vec_, vals_vec_, n_timestep, n_parts)
+            keys_vec_, vals_vec_, n_parts)
         # sample for the query phase
         if permute_queries:
             q_keys_vec, q_vals_vec = self._sample_permutations(
-                keys_vec_, vals_vec_, n_timestep, n_parts)
+                keys_vec_, vals_vec_, n_parts)
         else:
             q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
             q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
@@ -96,24 +97,17 @@ class StimSampler():
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
         # pack sample
         sample_ = [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec]
-        if xy_format:
-            # return RNN readable form
-            return _to_xy(sample_, stack=stack)
-        # return human readable form
         return sample_
 
-    def _sample_permutations(
-            self,
-            keys_vec_raw, vals_vec_raw,
-            n_timestep, n_perms
-    ):
+    def _sample_permutations(self, keys_vec_raw, vals_vec_raw, n_perms):
         """given some raw key-val pairs, generate temporal permutation sets
         """
-        keys_vec = np.zeros((n_perms, n_timestep, self.dim))
-        vals_vec = np.zeros((n_perms, n_timestep, self.n_branch))
+        T = self.n_param
+        keys_vec = np.zeros((n_perms, T, self.k_dim))
+        vals_vec = np.zeros((n_perms, T, self.n_branch))
         for ip in range(n_perms):
             # unique permutation for each movie part
-            perm_op = np.random.permutation(n_timestep)
+            perm_op = np.random.permutation(T)
             keys_vec[ip] = keys_vec_raw[perm_op, :]
             vals_vec[ip] = vals_vec_raw[perm_op, :]
         return keys_vec, vals_vec
@@ -155,33 +149,6 @@ class StimSampler():
         return o_keys_vec, o_vals_vec
 
 
-def _to_xy(sample_, stack=True):
-    """to RNN readable form, where x/y is the input/target sequence
-
-    Parameters
-    ----------
-    sample_ : [list, list]
-        the output of self.sample
-
-    Returns
-    -------
-    2d array, 2d array
-        the input/target sequence to the RNN
-
-    """
-    [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
-    n_parts = len(o_keys_vec)
-    x = [None] * n_parts
-    y = [None] * n_parts
-    for ip in range(n_parts):
-        x[ip] = np.hstack([o_keys_vec[ip], o_vals_vec[ip], q_keys_vec[ip]])
-        y[ip] = np.hstack([q_vals_vec[ip]])
-    if stack:
-        x = np.vstack([x[ip] for ip in range(n_parts)])
-        y = np.vstack([y[ip] for ip in range(n_parts)])
-    return x, y
-
-
 def _zero_out_random_rows(matrices, p_rm):
     """zero out the same set of (randomly selected) rows for all input matrices
 
@@ -205,35 +172,27 @@ def _zero_out_random_rows(matrices, p_rm):
         matrices[i][rows_to0, :] = 0
     return matrices
 
-# keys_vec_, vals_vec_ = sampler._sample(n_timesteps)
-#
-# q_keys_vec_ = np.stack([keys_vec_ for _ in range(n_parts)])
-#
-# np.stack([keys_vec_ for _ in range(n_parts)])
 
-#
 # '''test'''
 #
 # # init a graph
 # n_param, n_branch = 3, 2
-# n_timesteps = n_param
 # n_parts = 2
 # p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 #
-#
-# sampler = StimSampler(n_param, n_branch)
+# sampler = StimSampler(n_param, n_branch, key_rep='node')
 # sample_ = sampler.sample(
-#     n_timesteps, n_parts, p_rm_ob_enc, p_rm_ob_rcl,
-#     xy_format=False, stack=True
+#     n_parts, p_rm_ob_enc, p_rm_ob_rcl
 # )
 # [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
 #
 # # plot
 # cmap = 'bone'
-# rk, rv = n_param * n_branch, n_branch
+# n_timesteps = n_param
+# width_ratios = [sampler.k_dim, sampler.v_dim]*2
 # f, axes = plt.subplots(
 #     n_parts, 4, figsize=(9, 4), sharey=True,
-#     gridspec_kw={'width_ratios': [rk, rv, rk, rv]}
+#     gridspec_kw={'width_ratios': width_ratios}
 # )
 # for ip in range(n_parts):
 #     axes[ip, 0].imshow(o_keys_vec[ip], cmap=cmap)
@@ -254,12 +213,3 @@ def _zero_out_random_rows(matrices, p_rm):
 #     axes[ip, 0].set_yticklabels(range(n_timesteps))
 #     axes[ip, 0].set_ylabel(f'Time, part {ip+1}')
 # f.tight_layout()
-#
-# # # x, y = sample_
-# # x, y = _to_xy(sample_)
-# # f, axes = plt.subplots(
-# #     1, 2, figsize=(9, 4), sharey=True,
-# #     gridspec_kw={'width_ratios': [rk+rv+rk, rv]}
-# # )
-# # axes[0].imshow(x, cmap=cmap)
-# # axes[1].imshow(y, cmap=cmap)

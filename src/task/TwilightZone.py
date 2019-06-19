@@ -1,7 +1,7 @@
 import numpy as np
 from utils.utils import to_pth
 from task.StimSampler import StimSampler
-# import matplotlib.pyplot as plts
+# import matplotlib.pyplot as plt
 
 
 class TwilightZone():
@@ -45,20 +45,46 @@ class TwilightZone():
             Y = np.zeros((n_samples, self.n_parts, self.T_part, self.y_dim))
         # generate samples
         for i in range(n_samples):
-            X[i], Y[i] = self.stim_sampler.sample(
-                self.T_part,
+            sample_ = self.stim_sampler.sample(
                 n_parts=self.n_parts,
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
-                xy_format=True,
-                stack=stack
             )
+            X[i], Y[i] = _to_xy(sample_, stack=stack)
         # formatting
         if to_torch:
             X, Y = to_pth(X), to_pth(Y)
         return X, Y
 
 
+def _to_xy(sample_, stack=True):
+    """to RNN readable form, where x/y is the input/target sequence
+
+    Parameters
+    ----------
+    sample_ : [list, list]
+        the output of self.sample
+
+    Returns
+    -------
+    2d array, 2d array
+        the input/target sequence to the RNN
+
+    """
+    [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
+    n_parts = len(o_keys_vec)
+    x = [None] * n_parts
+    y = [None] * n_parts
+    for ip in range(n_parts):
+        x[ip] = np.hstack([o_keys_vec[ip], o_vals_vec[ip], q_keys_vec[ip]])
+        y[ip] = np.hstack([q_vals_vec[ip]])
+    if stack:
+        x = np.vstack([x[ip] for ip in range(n_parts)])
+        y = np.vstack([y[ip] for ip in range(n_parts)])
+    return x, y
+
+
+# '''how to use'''
 # # init a graph
 # n_param, n_branch = 3, 2
 # n_samples = 5
@@ -67,7 +93,7 @@ class TwilightZone():
 # X, Y = tz.sample(n_samples, stack=True)
 # print(np.shape(X))
 # print(np.shape(Y))
-
+#
 # i = 0
 # cmap = 'bone'
 # f, axes = plt.subplots(

@@ -6,6 +6,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 
 VALID_SAMPLING_MODE = ['enumerative']
+KEY_REPRESENTATION = ['node', 'time']
 # VALID_SAMPLING_MODE = ['enumerative', 'probabilistic']
 # TODO: sample w.r.t to transition matrix
 # TODO: implement probabilistic sampling mode
@@ -14,6 +15,7 @@ VALID_SAMPLING_MODE = ['enumerative']
 class Schema():
     def __init__(
             self, n_param, n_branch,
+            key_rep='node',
             sampling_mode='enumerative'
             # def_path=None, def_prob=None,
     ):
@@ -22,54 +24,57 @@ class Schema():
         # self.def_prob = def_prob
         # self.def_path = def_path
         # sampling mode
+        self.key_rep = key_rep
         self.sampling_mode = sampling_mode
+        assert key_rep in KEY_REPRESENTATION
         assert sampling_mode in VALID_SAMPLING_MODE
 
-    def sample(self, n_timestep, sampling_mode='full'):
+    def sample(self):
         """sample an event sequence, integer representation
-
-        Parameters
-        ----------
-        n_timestep : int
-            the number of time steps of this event sequence
 
         Returns
         -------
         1d np array, 1d np array; T x 1, T x 1
-            sequence of states / parameter values over time
+            sequence of key / parameter values over time
 
         """
-        self._sample_input_validation(n_timestep)
-        # prealloc
-        states = np.zeros((n_timestep,), dtype=np.int16)
-        param_vals = np.zeros((n_timestep,), dtype=np.int16)
-        if self.sampling_mode == 'enumerative':
-            for t in range(n_timestep):
-                time_shift = self.n_branch * t
-                states[t] = np.random.choice(range(self.n_branch))+time_shift
-                param_vals[t] = np.random.choice(range(self.n_branch))
-        return states, param_vals
+        key = self._sample_key()
+        val = np.random.choice(
+            range(self.n_branch), size=self.n_param, replace=True
+        ).astype(np.int16)
+        return key, val
 
-    def _sample_input_validation(self, n_timestep):
-        assert n_timestep <= self.n_param
-        if self.sampling_mode == 'enumerative':
-            assert n_timestep == self.n_param,\
-                'n_timestep should = n_param when sampling_mode = `enumerative`'
+    def _sample_key(self):
+        T = self.n_param
+        if self.key_rep == 'node':
+            key_branch_id = np.array([
+                np.random.choice(range(self.n_branch)) for _ in range(T)
+            ])
+            time_shifts = np.array([self.n_branch * t for t in range(T)])
+            key = key_branch_id + time_shifts
+        elif self.key_rep == 'time':
+            key = np.random.permutation(T)
+        else:
+            raise ValueError(f'unrecog representation type {self.key_rep}')
+        return key.astype(np.int16)
 
 
+# # key_used_ = set()
+# #
+# # T = 3
+# # key_all = set(range(T))
 # '''tests'''
 #
 # # init a graph
-# n_param, n_branch = 7, 3
-# n_timesteps = n_param
-# es = Schema(n_param, n_branch)
-# states, param_vals = es._sample(n_timesteps)
-# states_vec, param_vals_vec = es.sample(n_timesteps)
-#
-# # np.shape(es.transition_matrix)
-# # print(es.transition_matrix)
-# # es.transition_matrix[0, :]
-#
-#
-# # plt.imshow(states_vec)
-# # plt.imshow(param_vals_vec)
+# n_param, n_branch = 6, 2
+# schema = Schema(n_param, n_branch, key_rep='time')
+# schema.key_rep
+# key, val = schema.sample()
+# print(key)
+# print(val)
+# np.shape(schema.transition_matrix)
+# print(schema.transition_matrix)
+# schema.transition_matrix[0, :]
+
+
+# np.random.choice(range(n_branch), 10).astype(np.int16)
