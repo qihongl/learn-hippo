@@ -35,4 +35,12 @@ axes[0].set_xlabel('x dim')
 axes[1].set_xlabel('y dim')
 axes[0].set_title('X')
 axes[1].set_title('Y')
+
+axes[0].axvline(n_param * n_branch-.5, color='red', linestyle='--')
+axes[0].axvline(n_param * n_branch + n_branch-.5, color='red', linestyle='--')
+
+n_timesteps = n_param
+for ax in axes:
+    ax.axhline(n_timesteps-.5, color='red', linestyle='--')
+
 # f.savefig('examples/figs/tz-rnn.png', dpi=100, bbox_inches='tight')
