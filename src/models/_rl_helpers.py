@@ -91,7 +91,6 @@ def compute_a2c_loss(probs, values, returns):
     policy_grads, value_losses = [], []
     for prob_t, v_t, R_t in zip(probs, values, returns):
         A_t = R_t - v_t.item()
-        # A_t = R_t
         policy_grads.append(-prob_t * A_t)
         value_losses.append(
             smooth_l1_loss(torch.squeeze(v_t), torch.squeeze(R_t))

@@ -23,7 +23,7 @@ class LCALSTM(nn.Module):
     def __init__(
             self,
             input_dim, hidden_dim, output_dim,
-            recall_func, kernel, dict_len=100,
+            recall_func='LCA', kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
             layernorm=False,
