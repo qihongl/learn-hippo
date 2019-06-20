@@ -85,7 +85,11 @@ p = P(
 task = SequenceLearning(p.env.n_param, p.env.n_branch)
 # init agent
 a2c_linear = True
-agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, a2c_linear=a2c_linear)
+agent = Agent(
+    task.x_dim, p.net.n_hidden, p.a_dim,
+    a2c_linear=a2c_linear,
+    init_state_trainable=True
+)
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/3, patience=30, threshold=1e-3, min_lr=1e-8,
