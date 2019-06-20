@@ -95,7 +95,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 )
 
 # create logging dirs
-log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
+log_path, log_subpath = build_log_path(subj_id, p, args, log_root=log_root)
 # save experiment params initial weights
 save_all_params(log_subpath['data'], p, args=None)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
