@@ -10,7 +10,7 @@ sns.set(style='white', palette='colorblind', context='talk')
 n_param, n_branch = 3, 2
 n_parts = 2
 n_samples = 5
-p_rm_ob_enc = 0
+p_rm_ob_enc = 1/3
 key_rep_type = 'time'
 sl = SequenceLearning(
     n_param, n_branch,

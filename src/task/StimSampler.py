@@ -12,6 +12,7 @@ class StimSampler():
             self,
             n_param, n_branch,
             key_rep_type='node',
+            rm_kv=False,
             sampling_mode='enumerative'
     ):
         self.schema = Schema(
@@ -22,6 +23,7 @@ class StimSampler():
         )
         self.n_param = n_param
         self.n_branch = n_branch
+        self.rm_kv = rm_kv
         self.k_dim = self.schema.k_dim
         self.v_dim = self.schema.v_dim
 
@@ -101,7 +103,7 @@ class StimSampler():
     def _corrupt_observations(
         self,
         o_keys_vec, o_vals_vec,
-        p_rm_ob_enc, p_rm_ob_rcl
+        p_rm_ob_enc, p_rm_ob_rcl,
     ):
         """corrupt observations
         currently I only implemented zero-ing out random rows, but this function
@@ -130,8 +132,12 @@ class StimSampler():
         p_rms = [p_rm_ob_enc] + [p_rm_ob_rcl] * (n_parts-1)
         # zero out random rows (time steps)
         for ip in range(n_parts):
-            [o_keys_vec[ip], o_vals_vec[ip]] = _zero_out_random_rows(
-                [o_keys_vec[ip], o_vals_vec[ip]], p_rms[ip])
+            if self.rm_kv:
+                [o_keys_vec[ip], o_vals_vec[ip]] = _zero_out_random_rows(
+                    [o_keys_vec[ip], o_vals_vec[ip]], p_rms[ip])
+            else:
+                [o_vals_vec[ip]] = _zero_out_random_rows(
+                    [o_vals_vec[ip]], p_rms[ip])
         return o_keys_vec, o_vals_vec
 
 
@@ -151,6 +157,7 @@ def _zero_out_random_rows(matrices, p_rm):
         a list of 2d arrays
     """
     assert 0 <= p_rm <= 1
+    # selection which row(s) to zero out
     n_rows, _ = np.shape(matrices[0])
     n_rows_to0 = int(np.ceil(p_rm * n_rows))
     rows_to0 = np.random.choice(range(n_rows), size=n_rows_to0, replace=False)
@@ -158,7 +165,7 @@ def _zero_out_random_rows(matrices, p_rm):
         matrices[i][rows_to0, :] = 0
     return matrices
 
-
+#
 # '''test'''
 #
 # # init a graph

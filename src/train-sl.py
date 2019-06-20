@@ -25,51 +25,51 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 --log_root ../log/
 '''
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', default='test', type=str)
-parser.add_argument('--subj_id', default=99, type=int)
-parser.add_argument('--penalty', default=4, type=int)
-parser.add_argument('--p_rm_ob_enc', default=0, type=float)
-parser.add_argument('--n_param', default=6, type=int)
-parser.add_argument('--n_branch', default=2, type=int)
-parser.add_argument('--n_hidden', default=64, type=int)
-parser.add_argument('--lr', default=1e-3, type=float)
-parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--n_epoch', default=300, type=int)
-parser.add_argument('--sup_epoch', default=100, type=int)
-parser.add_argument('--n_examples', default=256, type=int)
-parser.add_argument('--log_root', default='../log/', type=str)
-args = parser.parse_args()
-print(args)
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--exp_name', default='test', type=str)
+# parser.add_argument('--subj_id', default=99, type=int)
+# parser.add_argument('--penalty', default=4, type=int)
+# parser.add_argument('--p_rm_ob_enc', default=0, type=float)
+# parser.add_argument('--n_param', default=6, type=int)
+# parser.add_argument('--n_branch', default=2, type=int)
+# parser.add_argument('--n_hidden', default=64, type=int)
+# parser.add_argument('--lr', default=1e-3, type=float)
+# parser.add_argument('--eta', default=0.1, type=float)
+# parser.add_argument('--n_epoch', default=300, type=int)
+# parser.add_argument('--sup_epoch', default=100, type=int)
+# parser.add_argument('--n_examples', default=256, type=int)
+# parser.add_argument('--log_root', default='../log/', type=str)
+# args = parser.parse_args()
+# print(args)
+#
+# # process args
+# exp_name = args.exp_name
+# subj_id = args.subj_id
+# penalty = args.penalty
+# p_rm_ob_enc = args.p_rm_ob_enc
+# n_param = args.n_param
+# n_branch = args.n_branch
+# n_hidden = args.n_hidden
+# learning_rate = args.lr
+# eta = args.eta
+# n_examples = args.n_examples
+# n_epoch = args.n_epoch
+# supervised_epoch = args.sup_epoch
+# log_root = args.log_root
 
-# process args
-exp_name = args.exp_name
-subj_id = args.subj_id
-penalty = args.penalty
-p_rm_ob_enc = args.p_rm_ob_enc
-n_param = args.n_param
-n_branch = args.n_branch
-n_hidden = args.n_hidden
-learning_rate = args.lr
-eta = args.eta
-n_examples = args.n_examples
-n_epoch = args.n_epoch
-supervised_epoch = args.sup_epoch
-log_root = args.log_root
-
-# exp_name = 'sl-pred'
-# subj_id = 0
-# penalty = 2
-# supervised_epoch = 100
-# n_epoch = 300
-# n_examples = 256
-# log_root = '../log/'
-# n_param = 6
-# n_branch = 2
-# n_hidden = 64
-# learning_rate = 1e-3
-# eta = .1
-# p_rm_ob_enc = 0
+exp_name = 'sl-pred'
+subj_id = 0
+penalty = 2
+supervised_epoch = 100
+n_epoch = 300
+n_examples = 256
+log_root = '../log/'
+n_param = 6
+n_branch = 2
+n_hidden = 64
+learning_rate = 1e-3
+eta = .1
+p_rm_ob_enc = 1/n_param
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
