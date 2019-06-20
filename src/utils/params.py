@@ -9,8 +9,8 @@ class P():
     def __init__(
         self,
         exp_name='rnr',
-        n_param=11,
-        n_branch=2,
+        n_param=10,
+        n_branch=3,
         def_path=None,
         def_prob=None,
         penalty=1,
