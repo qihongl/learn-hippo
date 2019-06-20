@@ -32,14 +32,13 @@ class LCARNN(nn.Module):
             init_state_trainable=False,
             layernorm=False,
             mode='train',
-            a2c_linear=True, predict=False,
+            a2c_linear=True,
             bias=True
     ):
         super(LCARNN, self).__init__()
         self.input_dim = input_dim
         self.n_hidden = n_hidden
         self.bias = bias
-        # self.n_units_total = (N_VSIG+1) * n_hidden + N_SSIG
         self.rnn = nn.LSTM(input_dim, n_hidden)
         # hpc
         self.hpc_ctrl = nn.Linear(n_hidden, N_LCA_SIG)
@@ -50,9 +49,6 @@ class LCARNN(nn.Module):
             self.a2c = A2C_linear(n_hidden, n_action)
         else:
             self.a2c = A2C(n_hidden, n_hidden, n_action)
-        # self.predict = predict
-        # if predict:
-        #     self.predictor = nn.Linear(n_hidden, n_action-1, bias=bias)
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
         self.init_model()
@@ -95,6 +91,7 @@ class LCARNN(nn.Module):
             return h_0, c_0
 
     def forward(self, x_t, hc, beta=1):
+        # x_t = x_t.view(1, 1, -1)
         h_t, hc_t = self.rnn(x_t, hc)
         # memory actions
         theta = self.hpc_ctrl(h_t).sigmoid()
@@ -104,9 +101,6 @@ class LCARNN(nn.Module):
         self.encode(h_t)
         # policy
         action_dist_t, value_t = self.a2c.forward(h_t, beta=beta)
-        # if self.predict:
-        #     yhat_t = self.predictor(hc_t).sigmoid()
-        #     return action_dist_t, value_t, yhat_t, (hc_t, c_t), cache
         # scache results
         scalar_signal = [inps_t, leak_t, comp_t]
         misc = [m_t]

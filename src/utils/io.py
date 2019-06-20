@@ -12,7 +12,7 @@ from utils.constants import CKPT_TEMPLATE, ALL_SUBDIRS, NET_JSON_FNAME
 
 
 def build_log_path(
-        subj_id, p, args,
+        subj_id, p,
         log_root=None,
         verbose=True
 ):
@@ -28,7 +28,7 @@ def build_log_path(
     recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
     network_str = f'h-{p.net.n_hidden}'
     train_str = f'lr-{p.net.lr}-eta-{p.net.eta}'
-    curic_str = f'sup_epoch-{args.sup_epoch}'
+    curic_str = f'sup_epoch-{p.misc.sup_epoch}'
     subj_str = f'subj-{subj_id}'
     # compute the path
     log_path = os.path.join(

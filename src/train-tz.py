@@ -57,14 +57,14 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 
 exp_name = 'test-pred'
 subj_id = 1
-penalty = 4
+penalty = 2
 p_rm_ob_enc = 0
 supervised_epoch = 50
 n_epoch = 300
 n_examples = 256
 log_root = '../log/'
-n_param = 4
-n_hidden = 32
+n_param = 10
+n_hidden = 128
 learning_rate = 1e-3
 eta = .1
 
@@ -73,9 +73,9 @@ torch.manual_seed(subj_id)
 
 '''init'''
 p = P(
-    exp_name=exp_name,
+    exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, penalty=penalty, n_hidden=n_hidden, lr=learning_rate,
-    p_rm_ob_enc=p_rm_ob_enc, eta=eta, gamma=.1,
+    p_rm_ob_enc=p_rm_ob_enc, eta=eta,
 )
 
 # init agent

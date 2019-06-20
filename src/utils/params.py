@@ -29,6 +29,9 @@ class P():
         lr=1e-3,
         gamma=0,
         eta=0,
+        sup_epoch=None,
+        n_epoch=None,
+        n_example=None,
     ):
         # set encoding size to be maximal
         T_part = n_param
@@ -55,6 +58,7 @@ class P():
             n_hidden, lr, gamma, eta,
             n_param, n_branch
         )
+        self.misc = misc(sup_epoch, n_epoch, n_example)
 
     def __repr__(self):
         repr_ = str(self.env.__repr__) + '\n' + str(self.net.__repr__)
@@ -166,6 +170,14 @@ class net():
         gamma = {self.gamma}
         '''
         return repr_
+
+
+class misc():
+
+    def __init__(self, sup_epoch, n_epoch=None, n_example=None):
+        self.sup_epoch = sup_epoch
+        self.n_epoch = n_epoch
+        self.n_example = n_example
 
 
 """helper functions"""

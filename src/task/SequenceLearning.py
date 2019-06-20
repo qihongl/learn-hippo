@@ -16,6 +16,8 @@ class SequenceLearning():
             n_param,
             n_branch,
             n_parts=2,
+            p_rm_ob_enc=0,
+            p_rm_ob_rcl=0,
             key_rep_type='time',
             sampling_mode='enumerative'
     ):
@@ -28,6 +30,9 @@ class SequenceLearning():
         # graph param
         self.n_param = n_param
         self.n_branch = n_branch
+        # "noise" in the obseravtion
+        self.p_rm_ob_enc = p_rm_ob_enc
+        self.p_rm_ob_rcl = p_rm_ob_rcl
         # task duration
         self.T_part = n_param
         self.n_parts = n_parts
@@ -44,7 +49,11 @@ class SequenceLearning():
         Y = np.zeros((n_samples, self.T_total, self.y_dim))
         # generate samples
         for i in range(n_samples):
-            sample_i = self.stim_sampler.sample(n_parts=self.n_parts)
+            sample_i = self.stim_sampler.sample(
+                n_parts=self.n_parts,
+                p_rm_ob_enc=self.p_rm_ob_enc,
+                p_rm_ob_rcl=self.p_rm_ob_rcl,
+            )
             X[i], Y[i] = _to_xy(sample_i)
         # formatting
         if to_torch:
@@ -60,22 +69,6 @@ def _to_xy(sample_):
     ])
     y = np.vstack(q_vals_vec)
     return x, y
-
-    # sample_i = self.stim_sampler.sample(n_parts=self.n_parts)
-    # [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_i
-    # # to RNN form
-    # X[i] = np.hstack([
-    #     np.vstack([k for k in o_keys_vec]),
-    #     np.vstack([v for v in o_vals_vec])
-    # ])
-    # Y[i] = np.vstack(q_vals_vec)
-
-    #     # to RNN form
-    #     X[i], Y[i] = _to_xy(o_keys_vec, o_vals_vec)
-    # # formatting
-    # if to_torch:
-    #     X, Y = to_pth(X), to_pth(Y)
-    # return X, Y
 
 
 # '''scratch'''
