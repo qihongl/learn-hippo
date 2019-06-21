@@ -11,10 +11,12 @@ n_param, n_branch = 3, 2
 n_parts = 2
 n_samples = 5
 p_rm_ob_enc = 1/3
+n_rm_fixed = False
 key_rep_type = 'time'
 sl = SequenceLearning(
     n_param, n_branch,
     p_rm_ob_enc=p_rm_ob_enc,
+    n_rm_fixed=n_rm_fixed,
     key_rep_type=key_rep_type
 )
 # take sample

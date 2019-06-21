@@ -18,6 +18,7 @@ class SequenceLearning():
             n_parts=2,
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
+            n_rm_fixed=True,
             key_rep_type='time',
             sampling_mode='enumerative'
     ):
@@ -25,6 +26,7 @@ class SequenceLearning():
         self.stim_sampler = StimSampler(
             n_param, n_branch,
             key_rep_type=key_rep_type,
+            n_rm_fixed=n_rm_fixed,
             sampling_mode=sampling_mode
         )
         # graph param
@@ -33,6 +35,7 @@ class SequenceLearning():
         # "noise" in the obseravtion
         self.p_rm_ob_enc = p_rm_ob_enc
         self.p_rm_ob_rcl = p_rm_ob_rcl
+        self.n_rm_fixed = n_rm_fixed
         # task duration
         self.T_part = n_param
         self.n_parts = n_parts

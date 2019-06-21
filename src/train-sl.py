@@ -70,7 +70,7 @@ log_root = args.log_root
 # n_hidden = 64
 # learning_rate = 1e-3
 # eta = .1
-# p_rm_ob_enc = 1/n_param
+# p_rm_ob_enc = 0
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -83,7 +83,7 @@ p = P(
     n_hidden=n_hidden, lr=learning_rate, eta=eta,
 )
 # init env
-task = SequenceLearning(p.env.n_param, p.env.n_branch)
+task = SequenceLearning(p.env.n_param, p.env.n_branch, n_rm_fixed=False)
 # init agent
 a2c_linear = True
 state_dim = task.x_dim + 2
@@ -158,6 +158,13 @@ def tz_cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
+def append_prev_a_r(x_it_, a_prev, r_prev):
+    a_prev = a_prev.type(torch.FloatTensor).view(1)
+    r_prev = r_prev.type(torch.FloatTensor).view(1)
+    x_it = torch.cat([x_it_, a_prev, r_prev])
+    return x_it
+
+
 log_freq = 10
 Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
@@ -170,21 +177,15 @@ Log_mistakes = np.zeros(n_epoch,)
 Log_return = np.zeros(n_epoch,)
 Log_cond = np.zeros((n_epoch, n_examples))
 
+
 # cond = 'RM'
 cond = None
+n_lure = 0
 learning = True
-# epoch_id, i, t = 0, 0, 0
 a_t = torch.tensor(p.dk_id)
 r_t = torch.tensor(0)
 
-
-def append_prev_a_r(x_it_, a_prev, r_prev):
-    a_prev = a_prev.type(torch.FloatTensor).view(1)
-    r_prev = r_prev.type(torch.FloatTensor).view(1)
-    x_it = torch.cat([x_it_, a_prev, r_prev])
-    return x_it
-
-
+# epoch_id, i, t = 0, 0, 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     # sample data
@@ -233,10 +234,10 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             if not supervised:
                 # update WM/EM bsaed on the condition
                 hc_t = tz_cond_manipulation(
-                    tz_cond, t, p.env.tz.event_ends[0], hc_t, agent)
+                    tz_cond, t, p.env.tz.event_ends[0], hc_t, agent, n_lure)
 
         # compute RL loss
-        returns = compute_returns(rewards)
+        returns = compute_returns(rewards, normalize=True)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised:
@@ -321,6 +322,8 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 for cond_ in list(p.env.tz.cond_dict.values()):
     cond_id_ = p.env.tz.cond_dict.inverse[cond_]
     cond_sel_op = Log_cond[-1, :] == cond_id_
+    if np.sum(cond_sel_op) == 0:
+        continue
     Y_ = to_sqnp(Y)[cond_sel_op, :]
     log_dist_a_ = log_dist_a[cond_sel_op, :]
     # compute performance for this condition

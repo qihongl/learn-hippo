@@ -13,6 +13,7 @@ class StimSampler():
             n_param, n_branch,
             key_rep_type='node',
             rm_kv=False,
+            n_rm_fixed=True,
             sampling_mode='enumerative'
     ):
         self.schema = Schema(
@@ -24,6 +25,7 @@ class StimSampler():
         self.n_param = n_param
         self.n_branch = n_branch
         self.rm_kv = rm_kv
+        self.n_rm_fixed = n_rm_fixed
         self.k_dim = self.schema.k_dim
         self.v_dim = self.schema.v_dim
 
@@ -134,14 +136,18 @@ class StimSampler():
         for ip in range(n_parts):
             if self.rm_kv:
                 [o_keys_vec[ip], o_vals_vec[ip]] = _zero_out_random_rows(
-                    [o_keys_vec[ip], o_vals_vec[ip]], p_rms[ip])
+                    [o_keys_vec[ip], o_vals_vec[ip]], p_rms[ip],
+                    n_rm_fixed=self.n_rm_fixed
+                )
             else:
                 [o_vals_vec[ip]] = _zero_out_random_rows(
-                    [o_vals_vec[ip]], p_rms[ip])
+                    [o_vals_vec[ip]], p_rms[ip],
+                    n_rm_fixed=self.n_rm_fixed
+                )
         return o_keys_vec, o_vals_vec
 
 
-def _zero_out_random_rows(matrices, p_rm):
+def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
     """zero out the same set of (randomly selected) rows for all input matrices
 
     Parameters
@@ -159,13 +165,18 @@ def _zero_out_random_rows(matrices, p_rm):
     assert 0 <= p_rm <= 1
     # selection which row(s) to zero out
     n_rows, _ = np.shape(matrices[0])
-    n_rows_to0 = int(np.ceil(p_rm * n_rows))
-    rows_to0 = np.random.choice(range(n_rows), size=n_rows_to0, replace=False)
+    if n_rm_fixed:
+        n_rows_to0 = np.ceil(p_rm * n_rows)
+    else:
+        n_rows_to0 = np.round(np.random.uniform(high=p_rm*2) * n_rows)
+    rows_to0 = np.random.choice(
+        range(n_rows), size=int(n_rows_to0), replace=False
+    )
     for i in range(len(matrices)):
         matrices[i][rows_to0, :] = 0
     return matrices
 
-#
+
 # '''test'''
 #
 # # init a graph
