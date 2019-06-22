@@ -1,7 +1,6 @@
 import numpy as np
-import torch
-from scipy.stats import sem
-from utils.utils import to_sqnp, to_np
+from utils.utils import to_np
+from analysis.general import compute_stats
 
 
 def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
@@ -35,8 +34,7 @@ def compute_acc(Y, log_dist_a, n_se=2, return_er=False):
     # compute matches
     corrects = argmax_Y == argmax_dist_a
     # compute stats across trials
-    acc_mu_ = np.mean(corrects, axis=0)
-    acc_er_ = sem(corrects, axis=0) * n_se
+    acc_mu_, acc_er_ = compute_stats(corrects, axis=0, n_se=n_se)
     if return_er:
         return acc_mu_, acc_er_
     return acc_mu_
@@ -56,8 +54,7 @@ def compute_mistake(Y, log_dist_a, n_se=2, return_er=False):
     # mistake := different from target and not dk
     mistakes = np.logical_and(diff, ~dk)
     # compute stats across trials
-    mis_mu_ = np.mean(mistakes, axis=0)
-    mis_er_ = sem(mistakes, axis=0) * n_se
+    mis_mu_, mis_er_ = compute_stats(mistakes, axis=0, n_se=n_se)
     if return_er:
         return mis_mu_, mis_er_
     return mis_mu_
@@ -87,8 +84,7 @@ def compute_dk(log_dist_a, n_se=2, return_er=False):
     # get don't know actions
     dk = _compute_dk(log_dist_a)
     # compute stats
-    dk_mu_ = np.mean(dk, axis=0)
-    dk_er_ = sem(dk, axis=0) * n_se
+    dk_mu_, dk_er_ = compute_stats(dk, axis=0, n_se=n_se)
     if return_er:
         return dk_mu_, dk_er_
     return dk_mu_
@@ -142,24 +138,6 @@ def get_tps_for_ith_part(ip, T_part):
 
     """
     return np.arange(T_part*ip, T_part*(ip+1))
-
-
-def entropy(probs):
-    """calculate entropy.
-    I'm using log base 2!
-
-    Parameters
-    ----------
-    probs : a torch vector
-        a prob distribution
-
-    Returns
-    -------
-    torch scalar
-        the entropy of the distribution
-
-    """
-    return - torch.stack([pi * torch.log2(pi) for pi in probs]).sum()
 
 
 def compute_behav_metrics(Y, log_dist_a, p, average_bp=True):
