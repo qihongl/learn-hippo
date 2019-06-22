@@ -19,6 +19,7 @@ class SequenceLearning():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             n_rm_fixed=True,
+            reset_schema=False,
             key_rep_type='time',
             sampling_mode='enumerative'
     ):
@@ -36,6 +37,8 @@ class SequenceLearning():
         self.p_rm_ob_enc = p_rm_ob_enc
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.n_rm_fixed = n_rm_fixed
+        #
+        self.reset_schema = reset_schema
         # task duration
         self.T_part = n_param
         self.n_parts = n_parts
@@ -56,6 +59,7 @@ class SequenceLearning():
                 n_parts=self.n_parts,
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
+                reset_schema=self.reset_schema
             )
             X[i], Y[i] = _to_xy(sample_i)
         # formatting
@@ -65,7 +69,7 @@ class SequenceLearning():
 
 
 def _to_xy(sample_):
-    [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
+    [o_keys_vec, o_vals_vec, _], [q_keys_vec, q_vals_vec, _] = sample_
     x = np.hstack([
         np.vstack([k for k in o_keys_vec]),
         np.vstack([v for v in o_vals_vec])

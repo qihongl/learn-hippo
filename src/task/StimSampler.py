@@ -13,23 +13,42 @@ class StimSampler():
             n_param, n_branch,
             key_rep_type='node',
             rm_kv=False,
+            context_dim=1,
             n_rm_fixed=True,
             sampling_mode='enumerative'
     ):
-        self.schema = Schema(
-            n_param=n_param,
-            n_branch=n_branch,
-            key_rep_type=key_rep_type,
-            sampling_mode=sampling_mode
-        )
         self.n_param = n_param
         self.n_branch = n_branch
+        self.context_dim = context_dim
+        self.key_rep_type = key_rep_type
+        self.sampling_mode = sampling_mode
+        #
         self.rm_kv = rm_kv
         self.n_rm_fixed = n_rm_fixed
+        #
+        self.reset_schema()
+
+    def reset_schema(self):
+        """re initialize the schema
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
+        self.schema = Schema(
+            n_param=self.n_param,
+            n_branch=self.n_branch,
+            context_dim=self.context_dim,
+            key_rep_type=self.key_rep_type,
+            sampling_mode=self.sampling_mode
+        )
         self.k_dim = self.schema.k_dim
         self.v_dim = self.schema.v_dim
+        self.c_dim = self.schema.context_dim
 
-    def _sample(self):
+    def _sample(self, reset_schema=False):
         """sample an event sequence, one-hot vector representation
 
         Returns
@@ -38,12 +57,15 @@ class StimSampler():
             sequence of keys / parameter values over time
 
         """
+        if reset_schema:
+            self.reset_schema()
         # sample keys and parameter values, integer representation
         keys, vals = self.schema.sample()
         # translate to vector representation
         keys_vec = np.vstack([self.schema.key_rep[k_t, :] for k_t in keys])
         vals_vec = np.vstack([self.schema.val_rep[v_t, :] for v_t in vals])
-        return keys_vec, vals_vec
+        ctxs_vec = np.vstack([self.schema.ctx_rep[v_t, :] for v_t in vals])
+        return keys_vec, vals_vec, ctxs_vec
 
     def sample(
             self,
@@ -51,6 +73,7 @@ class StimSampler():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             permute_queries=False,
+            reset_schema=False,
     ):
         """sample a multi-part "movie", with repetition structure
 
@@ -71,36 +94,45 @@ class StimSampler():
 
         """
         # sample the state-param associtations
-        keys_vec_, vals_vec_ = self._sample()
+        keys_vec_, vals_vec_, ctxs_vec_ = self._sample(reset_schema)
         # sample for the observation phase
-        o_keys_vec, o_vals_vec = self._sample_permutations(
-            keys_vec_, vals_vec_, n_parts)
+        o_keys_vec, o_vals_vec, o_ctxs_vec = self._sample_permutations(
+            keys_vec_, vals_vec_, ctxs_vec_, n_parts)
         # sample for the query phase
         if permute_queries:
-            q_keys_vec, q_vals_vec = self._sample_permutations(
-                keys_vec_, vals_vec_, n_parts)
+            q_keys_vec, q_vals_vec, q_ctxs_vec = self._sample_permutations(
+                keys_vec_, vals_vec_, ctxs_vec_, n_parts)
         else:
             q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
             q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
+            q_ctxs_vec = np.stack([ctxs_vec_ for _ in range(n_parts)])
         # corrupt input during encoding
         o_keys_vec, o_vals_vec = self._corrupt_observations(
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
         # pack sample
-        sample_ = [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec]
+        o_sample_ = [o_keys_vec, o_vals_vec, o_ctxs_vec]
+        q_sample_ = [q_keys_vec, q_vals_vec, q_ctxs_vec]
+        sample_ = [o_sample_, q_sample_]
         return sample_
 
-    def _sample_permutations(self, keys_vec_raw, vals_vec_raw, n_perms):
+    def _sample_permutations(
+            self,
+            keys_vec_raw, vals_vec_raw, ctxs_vec_raw,
+            n_perms
+    ):
         """given some raw key-val pairs, generate temporal permutation sets
         """
         T = self.n_param
         keys_vec = np.zeros((n_perms, T, self.k_dim))
-        vals_vec = np.zeros((n_perms, T, self.n_branch))
+        vals_vec = np.zeros((n_perms, T, self.v_dim))
+        ctxs_vec = np.zeros((n_perms, T, self.c_dim))
         for ip in range(n_perms):
             # unique permutation for each movie part
             perm_op = np.random.permutation(T)
             keys_vec[ip] = keys_vec_raw[perm_op, :]
             vals_vec[ip] = vals_vec_raw[perm_op, :]
-        return keys_vec, vals_vec
+            ctxs_vec[ip] = ctxs_vec_raw[perm_op, :]
+        return keys_vec, vals_vec, ctxs_vec
 
     def _corrupt_observations(
         self,

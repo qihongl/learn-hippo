@@ -17,7 +17,7 @@ sample_ = sampler.sample(
     n_parts,
     p_rm_ob_enc, p_rm_ob_rcl,
 )
-[o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
+[o_keys_vec, o_vals_vec, _], [q_keys_vec, q_vals_vec, _] = sample_
 
 # plot
 cmap = 'bone'

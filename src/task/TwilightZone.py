@@ -71,7 +71,7 @@ def _to_xy(sample_, stack=True):
         the input/target sequence to the RNN
 
     """
-    [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
+    [o_keys_vec, o_vals_vec, _], [q_keys_vec, q_vals_vec, _] = sample_
     n_parts = len(o_keys_vec)
     x = [None] * n_parts
     y = [None] * n_parts

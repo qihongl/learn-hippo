@@ -1,4 +1,5 @@
 import numpy as np
+from task.utils import sample_nd_walk
 # import matplotlib.pyplot as plt
 
 VALID_SAMPLING_MODE = ['enumerative']
@@ -18,6 +19,7 @@ class Schema():
 
     def __init__(
             self, n_param, n_branch,
+            context_dim=0,
             key_rep_type='node',
             sampling_mode='enumerative'
             # def_path=None, def_prob=None,
@@ -27,6 +29,7 @@ class Schema():
         # self.def_prob = def_prob
         # self.def_path = def_path
         # sampling mode
+        self.context_dim = context_dim
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
         self._form_representation(key_rep_type)
@@ -46,6 +49,7 @@ class Schema():
         val = np.random.choice(
             range(self.n_branch), size=self.n_param, replace=True
         ).astype(np.int16)
+        # context id and values are consistent
         return key, val
 
     def _sample_key(self):
@@ -66,33 +70,50 @@ class Schema():
     def _form_representation(self, key_rep_type):
         # build state space and action space
         if key_rep_type == 'node':
-            self.k_dim = self.n_param * self.n_branch
-            self.v_dim = self.n_branch
+            self.key_rep = np.eye(self.n_param * self.n_branch)
+            self.val_rep = np.eye(self.n_branch)
         elif key_rep_type == 'time':
-            self.k_dim = self.n_param
-            self.v_dim = self.n_branch
+            self.key_rep = np.eye(self.n_param)
+            self.val_rep = np.eye(self.n_branch)
         else:
             raise ValueError(f'unrecog representation type {key_rep_type}')
-        # form representation
-        self.key_rep = np.eye(self.k_dim)
-        self.val_rep = np.eye(self.v_dim)
+        # form context
+        if self.context_dim > 0:
+            # self.ctx_rep = np.random.normal(size=(self.n_param, self.context_dim))
+            self.ctx_rep = sample_nd_walk(self.context_dim, self.n_param)
+        # get dimension
+        self.k_dim = np.shape(self.key_rep)[1]
+        self.v_dim = np.shape(self.val_rep)[1]
 
-# # key_used_ = set()
-# #
-# # T = 3
-# # key_all = set(range(T))
+
 # '''tests'''
 #
 # # init a graph
 # n_param, n_branch = 6, 2
-# schema = Schema(n_param, n_branch, key_rep_type='time')
+# schema = Schema(
+#     n_param, n_branch,
+#     context_dim=5,
+#     key_rep_type='time'
+# )
 # schema.key_rep_type
 # key, val = schema.sample()
 # print(key)
 # print(val)
-# np.shape(schema.transition_matrix)
-# print(schema.transition_matrix)
-# schema.transition_matrix[0, :]
-
-
-# np.random.choice(range(n_branch), 10).astype(np.int16)
+# # np.shape(schema.transition_matrix)
+# # print(schema.transition_matrix)
+# # schema.transition_matrix[0, :]
+# # np.shape(np.zeros((4, 3)))
+# # np.random.choice(range(n_branch), 10).astype(np.int16)
+#
+# # np.shape()
+#
+#
+# def sample_linear_trajectory(n_dim, n_points, end_loc=1, enc_scale=10):
+#     end_point = np.random.normal(loc=end_loc, scale=enc_scale, size=(n_dim,))
+#     ws = np.linspace(0, 1, n_points)
+#     path = np.array([w * end_point for w in ws])
+#     return path
+#
+#
+# n_timesteps = 10
+# context_dim = 2

@@ -42,7 +42,7 @@ class ListLearning():
         # generate samples
         for i in range(n_samples):
             sample_i = self.stim_sampler.sample(n_parts=self.n_parts)
-            [o_keys_vec, o_vals_vec], _ = sample_i
+            [o_keys_vec, o_vals_vec, _], _ = sample_i
             # to RNN form
             X[i], Y[i] = _to_xy(o_keys_vec, o_vals_vec)
         # formatting

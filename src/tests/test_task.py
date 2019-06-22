@@ -6,7 +6,7 @@ from task.SequenceLearning import SequenceLearning
 def test_task_stim_sampler():
     n_param, n_branch = 7, 3
     stim_sampler = StimSampler(n_param, n_branch)
-    states_vec, param_vals_vec = stim_sampler._sample()
+    states_vec, param_vals_vec, ctx = stim_sampler._sample()
     # tests
     assert np.all(np.sum(states_vec, axis=1) == 1), \
         'check no empty state for all t'
@@ -18,7 +18,7 @@ def test_task_stim_sampler_inter_part_consistency():
     n_param, n_branch = 7, 3
     n_parts = 2
     es = StimSampler(n_param, n_branch)
-    [states_vec, param_vals_vec], _ = es.sample(n_parts)
+    [states_vec, param_vals_vec, _], _ = es.sample(n_parts)
     s_feature_vec = np.sum(states_vec[0], axis=0)
     p_counts_vec = np.sum(param_vals_vec[0], axis=0)
     for ip in np.arange(1, n_parts):
