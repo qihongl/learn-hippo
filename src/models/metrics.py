@@ -6,12 +6,11 @@ from models.LCA_pytorch import LCA
 def lca_transform(similarities, leak=None, comp=None, w_input=None):
     # these parameters ensure the LCA process is not to short
     n_cycles = 10
-    dt_t = .6
     # run LCA
     stimuli = similarities.repeat(n_cycles, 1)
     lca = LCA(
-        n_units=len(similarities), dt_t=dt_t,
-        leak=leak, ltrl_inhib=comp, w_input=w_input
+        n_units=len(similarities),
+        leak=leak, ltrl_inhib=comp, w_input=w_input,
     )
     lca_outputs = lca.run(stimuli)
     # take the final valuse

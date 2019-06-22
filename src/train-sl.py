@@ -7,8 +7,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# from models import LCALSTM as Agent
-from models import LCARNN as Agent
+from models import LCALSTM as Agent
 from task import SequenceLearning
 from models import get_reward, compute_returns, compute_a2c_loss
 from analysis import compute_behav_metrics, compute_acc, compute_dk, entropy
@@ -16,7 +15,9 @@ from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 from plt_helper import plot_tz_pred_acc
-plt.switch_backend('agg')
+# plt.switch_backend('agg')
+# plt.switch_backend('module://ipykernel.pylab.backend_inline')
+
 sns.set(style='white', palette='colorblind', context='talk')
 
 '''learning to tz with a2c. e.g. cmd:
@@ -26,51 +27,52 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 --log_root ../log/
 '''
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', default='test', type=str)
-parser.add_argument('--subj_id', default=99, type=int)
-parser.add_argument('--penalty', default=4, type=int)
-parser.add_argument('--p_rm_ob_enc', default=0, type=float)
-parser.add_argument('--n_param', default=6, type=int)
-parser.add_argument('--n_branch', default=3, type=int)
-parser.add_argument('--n_hidden', default=64, type=int)
-parser.add_argument('--lr', default=1e-3, type=float)
-parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--n_epoch', default=300, type=int)
-parser.add_argument('--sup_epoch', default=100, type=int)
-parser.add_argument('--n_examples', default=256, type=int)
-parser.add_argument('--log_root', default='../log/', type=str)
-args = parser.parse_args()
-print(args)
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--exp_name', default='test', type=str)
+# parser.add_argument('--subj_id', default=99, type=int)
+# parser.add_argument('--penalty', default=4, type=int)
+# parser.add_argument('--p_rm_ob_enc', default=0, type=float)
+# parser.add_argument('--n_param', default=6, type=int)
+# parser.add_argument('--n_branch', default=3, type=int)
+# parser.add_argument('--n_hidden', default=64, type=int)
+# parser.add_argument('--lr', default=1e-3, type=float)
+# parser.add_argument('--eta', default=0.1, type=float)
+# parser.add_argument('--n_epoch', default=300, type=int)
+# parser.add_argument('--sup_epoch', default=100, type=int)
+# parser.add_argument('--n_examples', default=256, type=int)
+# parser.add_argument('--log_root', default='../log/', type=str)
+# args = parser.parse_args()
+# print(args)
+#
+# # process args
+# exp_name = args.exp_name
+# subj_id = args.subj_id
+# penalty = args.penalty
+# p_rm_ob_enc = args.p_rm_ob_enc
+# n_param = args.n_param
+# n_branch = args.n_branch
+# n_hidden = args.n_hidden
+# learning_rate = args.lr
+# eta = args.eta
+# n_examples = args.n_examples
+# n_epoch = args.n_epoch
+# supervised_epoch = args.sup_epoch
+# log_root = args.log_root
 
-# process args
-exp_name = args.exp_name
-subj_id = args.subj_id
-penalty = args.penalty
-p_rm_ob_enc = args.p_rm_ob_enc
-n_param = args.n_param
-n_branch = args.n_branch
-n_hidden = args.n_hidden
-learning_rate = args.lr
-eta = args.eta
-n_examples = args.n_examples
-n_epoch = args.n_epoch
-supervised_epoch = args.sup_epoch
-log_root = args.log_root
-
-# exp_name = 'sl-pred'
-# subj_id = 0
-# penalty = 2
-# supervised_epoch = 100
-# n_epoch = 300
-# n_examples = 256
-# log_root = '../log/'
-# n_param = 6
-# n_branch = 3
-# n_hidden = 64
-# learning_rate = 1e-3
-# eta = .1
-# p_rm_ob_enc = 0
+exp_name = 'rm-only'
+subj_id = 0
+penalty = 2
+supervised_epoch = 100
+n_epoch = 300
+n_examples = 256
+log_root = '../log/'
+n_param = 6
+n_branch = 3
+n_hidden = 64
+learning_rate = 1e-3
+eta = .1
+p_rm_ob_enc = 0
+p_rm_ob_rcl = 0
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -79,18 +81,23 @@ torch.manual_seed(subj_id)
 p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch,
-    penalty=penalty, p_rm_ob_enc=p_rm_ob_enc,
+    penalty=penalty,
+    p_rm_ob_enc=p_rm_ob_enc,
+    p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, lr=learning_rate, eta=eta,
 )
 # init env
-task = SequenceLearning(p.env.n_param, p.env.n_branch, n_rm_fixed=False)
+task = SequenceLearning(
+    p.env.n_param, p.env.n_branch, n_rm_fixed=False,
+    p_rm_ob_enc=p_rm_ob_enc,
+    p_rm_ob_rcl=p_rm_ob_rcl,
+)
 # init agent
 a2c_linear = True
 state_dim = task.x_dim + 2
 agent = Agent(
     state_dim, p.net.n_hidden, p.a_dim,
-    a2c_linear=a2c_linear,
-    init_state_trainable=True
+    a2c_linear=a2c_linear, init_state_trainable=True,
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -105,7 +112,7 @@ save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
 # load model
-# epoch_load = 50
+# epoch_load = 290
 # agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
 # epoch_id = epoch_load
 epoch_id = 0
@@ -153,14 +160,13 @@ def tz_cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
             agent.add_simple_lures(n_lures)
         else:
             raise ValueError('unrecog tz condition')
-    else:
-        pass
     return hc_t
 
 
-def append_prev_a_r(x_it_, a_prev, r_prev):
+def append_prev_info(x_it_, a_prev, r_prev):
     a_prev = a_prev.type(torch.FloatTensor).view(1)
     r_prev = r_prev.type(torch.FloatTensor).view(1)
+    # y_prev = y_prev.type(torch.FloatTensor)
     x_it = torch.cat([x_it_, a_prev, r_prev])
     return x_it
 
@@ -176,7 +182,7 @@ Log_pi_ent = np.zeros(n_epoch,)
 Log_mistakes = np.zeros(n_epoch,)
 Log_return = np.zeros(n_epoch,)
 Log_cond = np.zeros((n_epoch, n_examples))
-
+Log_cache = [[None] * task.T_total for _ in range(n_examples)]
 
 # cond = 'RM'
 cond = None
@@ -184,6 +190,7 @@ n_lure = 0
 learning = True
 a_t = torch.tensor(p.dk_id)
 r_t = torch.tensor(0)
+# y_it = torch.tensor([0, 0, 0])
 
 # epoch_id, i, t = 0, 0, 0
 for epoch_id in np.arange(epoch_id, n_epoch):
@@ -200,23 +207,23 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     for i in range(n_examples):
         # pick a condition
         tz_cond = pick_condition(p, rm_only=supervised, fix_cond=cond)
-
-        # pg calculation cache
-        loss_sup = 0
-        probs, rewards, values, ents = [], [], [], []
         # init model wm and em
         hc_t = agent.get_init_states()
         agent.init_em_config()
 
+        # pg calculation cache
+        loss_sup = 0
+        probs, rewards, values, ents = [], [], [], []
         for t in range(task.T_total):
             # whether to encode
             if not supervised:
                 set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
+            # agent.dnd.encoding_off
+            # agent.dnd.retrieval_off
             # forward
-            x_it = append_prev_a_r(X[i][t], a_t, r_t)
+            x_it = append_prev_info(X[i][t], a_t, r_t)
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
-                x_it.view(1, 1, -1), hc_t
-            )
+                x_it.view(1, 1, -1), hc_t)
             a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(a_t, Y[i][t], p.env.penalty)
             # cache the results for later RL loss computation
@@ -226,6 +233,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             ents.append(entropy(pi_a_t))
             # cache results for later analysis
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
+            Log_cache[i][t] = cache_t
 
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
@@ -244,6 +252,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         if learning:
             if supervised:
                 loss = loss_sup
+                # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
             else:
                 # loss = loss_sup + loss_actor + loss_critic - pi_ent * eta
                 loss = loss_actor + loss_critic - pi_ent * eta
@@ -340,5 +349,47 @@ for cond_ in list(p.env.tz.cond_dict.values()):
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
-# plt.plot(to_sqnp(torch.stack(values)))
-# plt.plot(to_sqnp(returns))
+plt.plot(to_sqnp(torch.stack(values)))
+plt.plot(to_sqnp(returns))
+
+i, t = 0, 0
+inpt = torch.zeros((n_examples, task.T_total))
+leak = torch.zeros((n_examples, task.T_total))
+comp = torch.zeros((n_examples, task.T_total))
+H = np.zeros((n_examples, task.T_total, p.net.n_hidden))
+M = np.zeros((n_examples, task.T_total, p.net.n_hidden))
+HM = np.zeros((n_examples, task.T_total, p.net.n_hidden))
+
+for i in range(n_examples):
+    for t in range(task.T_total):
+        [vector_signal, scalar_signal, misc] = Log_cache[i][t]
+        [inpt[i, t], leak[i, t], comp[i, t]] = scalar_signal
+        [rnn_out_t, m_t, des_act_t] = misc
+        H[i, t, :] = to_sqnp(rnn_out_t)
+        M[i, t, :] = to_sqnp(m_t)
+        HM[i, t, :] = to_sqnp(des_act_t)
+inpt = to_sqnp(inpt)
+leak = to_sqnp(leak)
+comp = to_sqnp(comp)
+
+cond_ = 'RM'
+for cond_ in list(p.env.tz.cond_dict.values()):
+    cond_id_ = p.env.tz.cond_dict.inverse[cond_]
+    cond_sel_op = Log_cond[-1, :] == cond_id_
+    if np.sum(cond_sel_op) == 0:
+        continue
+    plt.plot(np.mean(inpt[cond_sel_op, :], axis=0))
+    plt.plot(np.mean(leak[cond_sel_op, :], axis=0))
+    plt.plot(np.mean(comp[cond_sel_op, :], axis=0))
+
+
+i, t = 0, 0
+
+plt.imshow(M[i, :, :])
+
+H_i = H[i, :, :]
+
+sns.heatmap(np.corrcoef(H_i), cmap='viridis', square=True)
+
+h_0, c_0 = agent.get_init_states()
+h_0 = to_sqnp(h_0)

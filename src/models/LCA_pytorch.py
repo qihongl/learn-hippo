@@ -23,8 +23,10 @@ class LCA():
     """
 
     def __init__(
-        self, n_units, dt_t, leak, ltrl_inhib, self_excit=0,
-        w_input=1, w_cross=0, offset=0, noise_sd=0
+        self,
+        n_units, leak, ltrl_inhib,
+        self_excit=0, w_input=1, w_cross=0, offset=0,
+        dt_t=.6, noise_sd=0, threshold=1
     ):
         """Initialize a leaky competing accumulator.
 
@@ -59,13 +61,14 @@ class LCA():
         self.w_cross = w_cross
         self.offset = offset
         self.noise_sd = noise_sd
+        self.threshold = threshold
         # the input / recurrent weights
         self.W_i = make_weights(w_input, w_cross, n_units)
         self.W_r = make_weights(self_excit, -ltrl_inhib, n_units)
         # check params
         self._check_model_config()
 
-    def run(self, stimuli, threshold=1):
+    def run(self, stimuli):
         """Run LCA on some stimulus sequence
         the update formula:
             1. value =   prev value
@@ -89,7 +92,7 @@ class LCA():
 
         """
         # input validation
-        self._check_inputs(stimuli, threshold)
+        self._check_inputs(stimuli)
         T, _ = stimuli.size()
         # # precompute sqrt(dt/tao)
         # sqrt_dt_t = self.dt_t ** .5
@@ -99,7 +102,6 @@ class LCA():
         inp = torch.matmul(stimuli, self.W_i)
         # precompute offset for all units
         offset = self.offset * torch.ones(self.n_units,)
-
         # loop over n_cycles
         init_val = torch.zeros(self.n_units,)
         # prealloc values for the accumulators over time
@@ -114,28 +116,23 @@ class LCA():
             # output bounding
             # V_bd = V_cur.sigmoid()
             V_relu = torch.max(V_cur, torch.zeros(self.n_units,))
-            V_bd = torch.min(V_relu, torch.ones(self.n_units,) * threshold)
+            V_bd = torch.min(V_relu, torch.ones(self.n_units,) * self.threshold)
             V[t, :] = V_bd
         return V
 
     def _check_model_config(self):
-        assert 0 <= self.leak, \
-            f'Invalid leak = {self.leak}'
-        assert 0 <= self.ltrl_inhib,\
-            f'Invalid ltrl_inhib = {self.ltrl_inhib}'
-        assert 0 < self.dt_t, \
-            f'Invalid dt_t = {self.dt_t}'
-        assert 0 <= self.noise_sd, \
-            f'Invalid noise sd = {self.noise_sd}'
+        assert 0 <= self.leak, f'Invalid leak = {self.leak}'
+        assert 0 <= self.ltrl_inhib, f'Invalid ltrl_inhib = {self.ltrl_inhib}'
+        assert 0 < self.dt_t, f'Invalid dt_t = {self.dt_t}'
+        assert 0 <= self.noise_sd, f'Invalid noise sd = {self.noise_sd}'
+        assert 0 < self.threshold, f'Invalid threshold = {self.threshold}'
 
-    def _check_inputs(self, stimuli, threshold):
+    def _check_inputs(self, stimuli):
         assert torch.is_tensor(stimuli), \
             'stimuli has to be a pytorch tensor'
         _, n_units_ = stimuli.size()
         assert n_units_ == self.n_units,\
             f'stimuli shape inconsistent with the network size = {self.leak}'
-        assert threshold > 0,\
-            f'Invalid threshold = {threshold}'
 
     def __repr__(self):
         return f"""LCA

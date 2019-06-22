@@ -17,8 +17,10 @@ class LCA():
     """
 
     def __init__(
-        self, n_units, dt_t, leak, ltrl_inhib, self_excit=0,
-        w_input=1, w_cross=0, offset=0, noise_sd=0
+        self, n_units, leak, ltrl_inhib,
+        self_excit=0,
+        w_input=1, w_cross=0,
+        dt_t=.6, offset=0, noise_sd=0
     ):
         """Initialize a leaky competing accumulator.
 
@@ -83,7 +85,7 @@ class LCA():
 
         """
         # input validation
-        self._check_inputs(stimuli, threshold)
+        self._check_inputs(stimuli)
         T, _ = np.shape(stimuli)
         # precompute noise for all time points
         noise = np.random.normal(scale=self.noise_sd, size=(T, self.n_units))
