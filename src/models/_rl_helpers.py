@@ -95,6 +95,6 @@ def compute_a2c_loss(probs, values, returns):
         value_losses.append(
             smooth_l1_loss(torch.squeeze(v_t), torch.squeeze(R_t))
         )
-    loss_policy = torch.stack(policy_grads).sum()
-    loss_value = torch.stack(value_losses).sum()
-    return loss_policy, loss_value
+    policy_gradient = torch.stack(policy_grads).sum()
+    value_loss = torch.stack(value_losses).sum()
+    return policy_gradient, value_loss
