@@ -15,7 +15,7 @@ from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 from plt_helper import plot_tz_pred_acc
-plt.switch_backend('agg')
+# plt.switch_backend('agg')
 
 sns.set(style='white', palette='colorblind', context='talk')
 
@@ -62,9 +62,9 @@ supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
 # exp_name = 'rm-only'
-# subj_id = 2
+# subj_id = 3
 # penalty = 4
-# supervised_epoch = 120
+# supervised_epoch = 100
 # n_epoch = 300
 # n_examples = 256
 # log_root = '../log/'
@@ -73,8 +73,8 @@ log_root = args.log_root
 # n_hidden = 64
 # learning_rate = 1e-3
 # eta = .1
-# p_rm_ob_enc = 1/n_param
-# p_rm_ob_rcl = 0
+# p_rm_ob_enc = 2/n_param
+# p_rm_ob_rcl = 2/n_param
 n_rm_fixed = False
 
 np.random.seed(subj_id)
@@ -97,11 +97,10 @@ task = SequenceLearning(
     p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-a2c_linear = True
 state_dim = task.x_dim
 agent = Agent(
     state_dim, p.net.n_hidden, p.a_dim,
-    a2c_linear=a2c_linear, init_state_trainable=True,
+    a2c_linear=False, init_state_trainable=True,
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -116,10 +115,14 @@ save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
 # load model
-# epoch_load = 290
-# agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
-# epoch_id = epoch_load
-epoch_id = 0
+epoch_load = None
+# epoch_load = 300
+if epoch_load is not None:
+    agent, optimizer = load_ckpt(
+        epoch_load, log_subpath['ckpts'], agent, optimizer)
+    epoch_id = epoch_load-1
+else:
+    epoch_id = 0
 
 '''task definition'''
 
@@ -187,8 +190,8 @@ Log_return = np.zeros(n_epoch,)
 Log_cond = np.zeros((n_epoch, n_examples))
 Log_cache = [[None] * task.T_total for _ in range(n_examples)]
 
-# cond = 'RM'
-cond = None
+cond = 'RM'
+# cond = None
 n_lure = 0
 learning = True
 # a_t = torch.tensor(p.dk_id)
@@ -245,7 +248,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
                 tz_cond, t, p.env.tz.event_ends[0], hc_t, agent, n_lure)
 
         # compute RL loss
-        returns = compute_returns(rewards, normalize=True)
+        returns = compute_returns(rewards)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
@@ -388,7 +391,7 @@ for cond_ in list(p.env.tz.cond_dict.values()):
 #
 # event_bonds = [p.env.tz.event_ends[0]+1]
 # cond_ = 'RM'
-# cond_ = 'DM'
+# # cond_ = 'DM'
 # # for cond_ in list(p.env.tz.cond_dict.values()):
 # cond_id_ = p.env.tz.cond_dict.inverse[cond_]
 # cond_sel_op = Log_cond[-1, :] == cond_id_
@@ -438,7 +441,7 @@ for cond_ in list(p.env.tz.cond_dict.values()):
 # corr_b = np.zeros(task.T_total,)
 # corr_m = np.zeros(task.T_total,)
 #
-# cond_id_ = 1
+# cond_id_ = 0
 # cond_sel_op = Log_cond[-1, :] == cond_id_
 # H_cond_ = H[cond_sel_op, :, :]
 # for H_i in H_cond_:
