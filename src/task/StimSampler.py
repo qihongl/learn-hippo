@@ -64,7 +64,8 @@ class StimSampler():
         # translate to vector representation
         keys_vec = np.vstack([self.schema.key_rep[k_t, :] for k_t in keys])
         vals_vec = np.vstack([self.schema.val_rep[v_t, :] for v_t in vals])
-        ctxs_vec = np.vstack([self.schema.ctx_rep[v_t, :] for v_t in vals])
+        # ctxs_vec = np.vstack([self.schema.ctx_rep[v_t, :] for v_t in vals])
+        ctxs_vec = np.vstack([self.schema.ctx_rep])
         return keys_vec, vals_vec, ctxs_vec
 
     def sample(
@@ -96,43 +97,41 @@ class StimSampler():
         # sample the state-param associtations
         keys_vec_, vals_vec_, ctxs_vec_ = self._sample(reset_schema)
         # sample for the observation phase
-        o_keys_vec, o_vals_vec, o_ctxs_vec = self._sample_permutations(
-            keys_vec_, vals_vec_, ctxs_vec_, n_parts)
+        o_keys_vec, o_vals_vec = self._sample_permutations(
+            keys_vec_, vals_vec_, n_parts)
         # sample for the query phase
         if permute_queries:
-            q_keys_vec, q_vals_vec, q_ctxs_vec = self._sample_permutations(
-                keys_vec_, vals_vec_, ctxs_vec_, n_parts)
+            q_keys_vec, q_vals_vec = self._sample_permutations(
+                keys_vec_, vals_vec_, n_parts)
         else:
             q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
             q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
-            q_ctxs_vec = np.stack([ctxs_vec_ for _ in range(n_parts)])
         # corrupt input during encoding
         o_keys_vec, o_vals_vec = self._corrupt_observations(
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
         # pack sample
+        o_ctxs_vec = q_ctxs_vec = ctxs_vec_
         o_sample_ = [o_keys_vec, o_vals_vec, o_ctxs_vec]
         q_sample_ = [q_keys_vec, q_vals_vec, q_ctxs_vec]
         sample_ = [o_sample_, q_sample_]
         return sample_
 
     def _sample_permutations(
-            self,
-            keys_vec_raw, vals_vec_raw, ctxs_vec_raw,
-            n_perms
+            self, keys_vec_raw, vals_vec_raw, n_perms
     ):
         """given some raw key-val pairs, generate temporal permutation sets
         """
         T = self.n_param
         keys_vec = np.zeros((n_perms, T, self.k_dim))
         vals_vec = np.zeros((n_perms, T, self.v_dim))
-        ctxs_vec = np.zeros((n_perms, T, self.c_dim))
+        # ctxs_vec = np.zeros((n_perms, T, self.c_dim))
         for ip in range(n_perms):
             # unique permutation for each movie part
             perm_op = np.random.permutation(T)
             keys_vec[ip] = keys_vec_raw[perm_op, :]
             vals_vec[ip] = vals_vec_raw[perm_op, :]
-            ctxs_vec[ip] = ctxs_vec_raw[perm_op, :]
-        return keys_vec, vals_vec, ctxs_vec
+            # ctxs_vec[ip] = ctxs_vec_raw[perm_op, :]
+        return keys_vec, vals_vec
 
     def _corrupt_observations(
         self,
@@ -163,14 +162,19 @@ class StimSampler():
         # the 1st part is the encoding phase
         # all remaining parts are query phase
         n_parts = len(o_keys_vec)
+        # get a list of p_rm, only the 1st phase is the encoding phase
+        # the rest of phases are considered as recall phases
         p_rms = [p_rm_ob_enc] + [p_rm_ob_rcl] * (n_parts-1)
         # zero out random rows (time steps)
         for ip in range(n_parts):
+            # zero out both key and values
             if self.rm_kv:
                 [o_keys_vec[ip], o_vals_vec[ip]] = _zero_out_random_rows(
                     [o_keys_vec[ip], o_vals_vec[ip]], p_rms[ip],
                     n_rm_fixed=self.n_rm_fixed
                 )
+            # zero out values only
+            # in this case the agent know which state is unknown
             else:
                 [o_vals_vec[ip]] = _zero_out_random_rows(
                     [o_vals_vec[ip]], p_rms[ip],
@@ -200,10 +204,12 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
     if n_rm_fixed:
         n_rows_to0 = np.ceil(p_rm * n_rows)
     else:
-        n_rows_to0 = np.round(np.random.uniform(high=p_rm*2) * n_rows)
+        n_rows_to0 = np.round(np.random.uniform(high=p_rm) * n_rows)
+    # choose some rows to zero out
     rows_to0 = np.random.choice(
         range(n_rows), size=int(n_rows_to0), replace=False
     )
+    # zero out the same rows for all input matrices
     for i in range(len(matrices)):
         matrices[i][rows_to0, :] = 0
     return matrices
@@ -212,7 +218,7 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
 # '''test'''
 #
 # # init a graph
-# n_param, n_branch = 3, 2
+# n_param, n_branch = 6, 2
 # n_parts = 2
 # p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 # key_rep_type = 'time'
@@ -221,7 +227,9 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
 # sample_ = sampler.sample(
 #     n_parts, p_rm_ob_enc, p_rm_ob_rcl
 # )
-# [o_keys_vec, o_vals_vec], [q_keys_vec, q_vals_vec] = sample_
+# observations, queries = sample_
+# [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations
+# [q_keys_vec, q_vals_vec, q_ctxs_vec] = queries
 #
 # # plot
 # cmap = 'bone'

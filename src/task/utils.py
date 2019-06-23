@@ -1,47 +1,6 @@
 import numpy as np
 
 
-def sample_nd_walk(
-        n_dim, n_point,
-        end_loc=1, enc_scale=1,
-        noise_scale=.01,
-        normalize=True
-):
-    """sample n_dim random walk
-
-    Parameters
-    ----------
-    n_dim : type
-        Description of parameter `n_dim`.
-    n_point : type
-        Description of parameter `n_point`.
-    end_loc : type
-        Description of parameter `end_loc`.
-    enc_scale : type
-        Description of parameter `enc_scale`.
-    noise_scale : type
-        Description of parameter `noise_scale`.
-    normalize : type
-        Description of parameter `normalize`.
-
-    Returns
-    -------
-    type
-        Description of returned object.
-
-    """
-    sign = np.random.normal(size=(n_dim,))
-    end_point = np.random.normal(loc=end_loc, scale=enc_scale, size=(n_dim,))
-    end_point *= sign
-    if normalize:
-        end_point /= np.linalg.norm(end_point)
-    ws = np.linspace(0, 1, n_point)
-    path = np.array([
-        w * end_point + np.random.normal(scale=noise_scale) for w in ws
-    ])
-    return path
-
-
 def sample_rand_path(B, T):
     """sample a random path on the event graph
 

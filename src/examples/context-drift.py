@@ -1,7 +1,7 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from task.utils import sample_nd_walk
+from task.Schema import sample_context_drift
 sns.set(style='white', palette='colorblind', context='talk')
 np.random.seed(0)
 
@@ -40,23 +40,27 @@ def colored_line(x, y, z=None, linewidth=1, MAP='Blues'):
 
 
 '''make some path'''
-n_dim, n_point = 2, 10
+n_dim, n_point = 10, 5
 end_loc = 1
 enc_scale = 1
 noise_scale = 0.01
 normalize = True
+normalizer = 1
 n_path = 100
 
-f, ax = plt.subplots(1, 1, figsize=(7, 7))
-
+P = np.zeros((n_path, n_point, n_dim))
 for i in range(n_path):
-    P = sample_nd_walk(
+    P[i, :, :] = sample_context_drift(
         n_dim, n_point,
         end_loc=end_loc, enc_scale=enc_scale,
         noise_scale=noise_scale,
         normalize=normalize,
+        normalizer=normalizer,
     )
-    x, y = P[:, 0], P[:, 1]
+
+f, ax = plt.subplots(1, 1, figsize=(7, 7))
+for i in range(n_path):
+    x, y = P[i, :, 0], P[i, :, 1]
     colored_line(x, y, linewidth=.01)
 ax.axhline(0, linestyle='--', color='grey', alpha=.5)
 ax.axvline(0, linestyle='--', color='grey', alpha=.5)
@@ -64,4 +68,28 @@ ax.axvline(0, linestyle='--', color='grey', alpha=.5)
 ax.set_title('Some random walks')
 ax.set_xlabel('dim 1')
 ax.set_ylabel('dim 2')
+sns.despine()
+
+# similarity tensor
+rst = np.zeros((n_point, n_path, n_path))
+for t in range(n_point):
+    P_t = P[:, t, :]
+    rst[t] = np.corrcoef(P_t)
+
+
+# for t in np.arange(1, n_point):
+#     f, ax = plt.subplots(1, 1, figsize=(9, 7))
+#     sns.heatmap(rst[t], cmap='viridis', square=True, ax=ax)
+#     ax.set_title(f't={t}')
+#     # sns.clustermap(rst[t], cmap='viridis', square=True)
+
+
+off_diag_rs = rst[-1][np.tril_indices(n_path, k=-1)]
+f, ax = plt.subplots(1, 1, figsize=(6, 4))
+
+sns.distplot(off_diag_rs, ax=ax, norm_hist=True)
+ax.set_title(f'average inter-context similarity, t={t}')
+ax.set_xlabel('r')
+ax.set_ylabel('freq')
+ax.set_xlabel('r')
 sns.despine()

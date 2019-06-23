@@ -1,5 +1,4 @@
 import numpy as np
-from task.utils import sample_nd_walk
 # import matplotlib.pyplot as plt
 
 VALID_SAMPLING_MODE = ['enumerative']
@@ -79,20 +78,64 @@ class Schema():
             raise ValueError(f'unrecog representation type {key_rep_type}')
         # form context
         if self.context_dim > 0:
-            # self.ctx_rep = np.random.normal(size=(self.n_param, self.context_dim))
-            self.ctx_rep = sample_nd_walk(self.context_dim, self.n_param)
+            self.ctx_rep = sample_context_drift(self.context_dim, self.n_param)
         # get dimension
         self.k_dim = np.shape(self.key_rep)[1]
         self.v_dim = np.shape(self.val_rep)[1]
 
 
-# '''tests'''
-#
+def sample_context_drift(
+        n_dim, n_point,
+        end_loc=1, enc_scale=1,
+        noise_scale=.01,
+        normalize=True,
+        normalizer=1
+):
+    """sample n_dim random walk
+
+    Parameters
+    ----------
+    n_dim : type
+        Description of parameter `n_dim`.
+    n_point : type
+        Description of parameter `n_point`.
+    end_loc : type
+        Description of parameter `end_loc`.
+    enc_scale : type
+        Description of parameter `enc_scale`.
+    noise_scale : type
+        Description of parameter `noise_scale`.
+    normalize : type
+        Description of parameter `normalize`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    sign = np.random.normal(size=(n_dim,))
+    end_point = np.random.normal(
+        loc=np.random.normal(size=(n_dim,)),
+        scale=enc_scale, size=(n_dim,)
+    ) * end_loc
+    end_point *= sign
+    if normalize:
+        end_point /= np.linalg.norm(end_point, ord=normalizer)
+    ws = np.linspace(0, 1, n_point)
+    path = np.array([
+        w * end_point + np.random.normal(scale=noise_scale) for w in ws
+    ])
+    return path
+
+
+'''tests'''
+
 # # init a graph
 # n_param, n_branch = 6, 2
 # schema = Schema(
 #     n_param, n_branch,
-#     context_dim=5,
+#     context_dim=1,
 #     key_rep_type='time'
 # )
 # schema.key_rep_type
@@ -107,13 +150,7 @@ class Schema():
 #
 # # np.shape()
 #
-#
-# def sample_linear_trajectory(n_dim, n_points, end_loc=1, enc_scale=10):
-#     end_point = np.random.normal(loc=end_loc, scale=enc_scale, size=(n_dim,))
-#     ws = np.linspace(0, 1, n_points)
-#     path = np.array([w * end_point for w in ws])
-#     return path
-#
-#
 # n_timesteps = 10
 # context_dim = 2
+#
+# schema.ctx_rep
