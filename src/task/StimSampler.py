@@ -14,12 +14,15 @@ class StimSampler():
             key_rep_type='node',
             rm_kv=False,
             context_dim=1,
+            context_drift=False,
             n_rm_fixed=True,
             sampling_mode='enumerative'
     ):
         self.n_param = n_param
         self.n_branch = n_branch
         self.context_dim = context_dim
+        self.context_drift = context_drift
+        #
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
         #
@@ -41,14 +44,15 @@ class StimSampler():
             n_param=self.n_param,
             n_branch=self.n_branch,
             context_dim=self.context_dim,
+            context_drift=self.context_drift,
             key_rep_type=self.key_rep_type,
-            sampling_mode=self.sampling_mode
+            sampling_mode=self.sampling_mode,
         )
         self.k_dim = self.schema.k_dim
         self.v_dim = self.schema.v_dim
-        self.c_dim = self.schema.context_dim
+        self.c_dim = self.schema.c_dim
 
-    def _sample(self, reset_schema=False):
+    def _sample(self):
         """sample an event sequence, one-hot vector representation
 
         Returns
@@ -57,8 +61,6 @@ class StimSampler():
             sequence of keys / parameter values over time
 
         """
-        if reset_schema:
-            self.reset_schema()
         # sample keys and parameter values, integer representation
         keys, vals = self.schema.sample()
         # translate to vector representation
@@ -74,7 +76,6 @@ class StimSampler():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             permute_queries=False,
-            reset_schema=False,
     ):
         """sample a multi-part "movie", with repetition structure
 
@@ -95,7 +96,7 @@ class StimSampler():
 
         """
         # sample the state-param associtations
-        keys_vec_, vals_vec_, ctxs_vec_ = self._sample(reset_schema)
+        keys_vec_, vals_vec_, ctxs_vec_ = self._sample()
         # sample for the observation phase
         o_keys_vec, o_vals_vec = self._sample_permutations(
             keys_vec_, vals_vec_, n_parts)

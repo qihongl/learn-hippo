@@ -3,7 +3,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from task.Schema import sample_context_drift
 sns.set(style='white', palette='colorblind', context='talk')
-np.random.seed(0)
 
 
 def colored_line(x, y, z=None, linewidth=1, MAP='Blues'):
@@ -40,28 +39,30 @@ def colored_line(x, y, z=None, linewidth=1, MAP='Blues'):
 
 
 '''make some path'''
+np.random.seed(0)
 n_dim, n_point = 10, 5
-end_loc = 1
-enc_scale = 1
+end_scale = 1
 noise_scale = 0.01
 normalize = True
 normalizer = 1
-n_path = 100
+dynamic = True
 
+n_path = 100
 P = np.zeros((n_path, n_point, n_dim))
 for i in range(n_path):
     P[i, :, :] = sample_context_drift(
         n_dim, n_point,
-        end_loc=end_loc, enc_scale=enc_scale,
+        end_scale=end_scale,
         noise_scale=noise_scale,
         normalize=normalize,
         normalizer=normalizer,
+        dynamic=dynamic,
     )
 
 f, ax = plt.subplots(1, 1, figsize=(7, 7))
 for i in range(n_path):
     x, y = P[i, :, 0], P[i, :, 1]
-    colored_line(x, y, linewidth=.01)
+    colored_line(x, y, linewidth=.005)
 ax.axhline(0, linestyle='--', color='grey', alpha=.5)
 ax.axvline(0, linestyle='--', color='grey', alpha=.5)
 
@@ -76,14 +77,13 @@ for t in range(n_point):
     P_t = P[:, t, :]
     rst[t] = np.corrcoef(P_t)
 
+for t in np.arange(1, n_point):
+    f, ax = plt.subplots(1, 1, figsize=(9, 7))
+    sns.heatmap(rst[t], cmap='viridis', square=True, ax=ax)
+    ax.set_title(f't={t}')
+    # sns.clustermap(rst[t], cmap='viridis', square=True)
 
-# for t in np.arange(1, n_point):
-#     f, ax = plt.subplots(1, 1, figsize=(9, 7))
-#     sns.heatmap(rst[t], cmap='viridis', square=True, ax=ax)
-#     ax.set_title(f't={t}')
-#     # sns.clustermap(rst[t], cmap='viridis', square=True)
-
-
+# similarity distribution
 off_diag_rs = rst[-1][np.tril_indices(n_path, k=-1)]
 f, ax = plt.subplots(1, 1, figsize=(6, 4))
 

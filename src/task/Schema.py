@@ -18,7 +18,8 @@ class Schema():
 
     def __init__(
             self, n_param, n_branch,
-            context_dim=0,
+            context_dim=1,
+            context_drift=False,
             key_rep_type='node',
             sampling_mode='enumerative'
             # def_path=None, def_prob=None,
@@ -28,7 +29,8 @@ class Schema():
         # self.def_prob = def_prob
         # self.def_path = def_path
         # sampling mode
-        self.context_dim = context_dim
+        self.c_dim = context_dim
+        self.context_drift = context_drift
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
         self._form_representation(key_rep_type)
@@ -77,8 +79,9 @@ class Schema():
         else:
             raise ValueError(f'unrecog representation type {key_rep_type}')
         # form context
-        if self.context_dim > 0:
-            self.ctx_rep = sample_context_drift(self.context_dim, self.n_param)
+        self.ctx_rep = sample_context_drift(
+            self.c_dim, self.n_param, dynamic=self.context_drift
+        )
         # get dimension
         self.k_dim = np.shape(self.key_rep)[1]
         self.v_dim = np.shape(self.val_rep)[1]
@@ -86,10 +89,12 @@ class Schema():
 
 def sample_context_drift(
         n_dim, n_point,
-        end_loc=1, enc_scale=1,
+        norm=1,
+        end_scale=1,
         noise_scale=.01,
         normalize=True,
-        normalizer=1
+        normalizer=1,
+        dynamic=True,
 ):
     """sample n_dim random walk
 
@@ -101,8 +106,8 @@ def sample_context_drift(
         Description of parameter `n_point`.
     end_loc : type
         Description of parameter `end_loc`.
-    enc_scale : type
-        Description of parameter `enc_scale`.
+    end_scale : type
+        Description of parameter `end_scale`.
     noise_scale : type
         Description of parameter `noise_scale`.
     normalize : type
@@ -114,23 +119,28 @@ def sample_context_drift(
         Description of returned object.
 
     """
-    sign = np.random.normal(size=(n_dim,))
     end_point = np.random.normal(
         loc=np.random.normal(size=(n_dim,)),
-        scale=enc_scale, size=(n_dim,)
-    ) * end_loc
-    end_point *= sign
+        scale=end_scale, size=(n_dim,)
+    ) * norm
+    # normalize the context by some metric
     if normalize:
         end_point /= np.linalg.norm(end_point, ord=normalizer)
-    ws = np.linspace(0, 1, n_point)
-    path = np.array([
-        w * end_point + np.random.normal(scale=noise_scale) for w in ws
-    ])
+    # decide if the context is drifting or fixed
+    if dynamic:
+        # convec interpolation
+        ws = np.linspace(0, 1, n_point)
+        path = np.array([w * end_point for w in ws])
+    else:
+        # copy t times
+        path = np.tile(end_point, (n_point, 1))
+    if noise_scale > 0:
+        path += np.random.normal(scale=noise_scale)
     return path
 
 
-'''tests'''
-
+# '''tests'''
+#
 # # init a graph
 # n_param, n_branch = 6, 2
 # schema = Schema(
@@ -149,8 +159,12 @@ def sample_context_drift(
 # # np.random.choice(range(n_branch), 10).astype(np.int16)
 #
 # # np.shape()
-#
+# #
 # n_timesteps = 10
 # context_dim = 2
+# #
+# # schema.ctx_rep
+# P = sample_context_drift(context_dim, n_timesteps)
+# p = P[-1, :]
 #
-# schema.ctx_rep
+# np.tile(p, (n_timesteps, 1))

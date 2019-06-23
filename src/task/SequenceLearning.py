@@ -20,8 +20,8 @@ class SequenceLearning():
             p_rm_ob_rcl=0,
             n_rm_fixed=True,
             context_dim=1,
+            context_drift=False,
             append_context=False,
-            reset_schema=False,
             key_rep_type='time',
             sampling_mode='enumerative'
     ):
@@ -31,7 +31,8 @@ class SequenceLearning():
             context_dim=context_dim,
             key_rep_type=key_rep_type,
             n_rm_fixed=n_rm_fixed,
-            sampling_mode=sampling_mode
+            sampling_mode=sampling_mode,
+            context_drift=context_drift
         )
         # graph param
         self.n_param = n_param
@@ -41,8 +42,8 @@ class SequenceLearning():
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.n_rm_fixed = n_rm_fixed
         #
-        self.reset_schema = reset_schema
         self.append_context = append_context
+        self.context_drift = context_drift
         # task duration
         self.T_part = n_param
         self.n_parts = n_parts
@@ -67,7 +68,6 @@ class SequenceLearning():
                 n_parts=self.n_parts,
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
-                reset_schema=self.reset_schema
             )
             X[i], Y[i] = _to_xy(sample_i, self.append_context)
         # formatting
@@ -120,7 +120,7 @@ def _to_xy(sample_, append_context):
 # ])
 # y = np.vstack(q_vals_vec)
 
-
+#
 # '''how to use'''
 # n_param, n_branch = 6, 2
 # n_parts = 2
@@ -130,6 +130,7 @@ def _to_xy(sample_, append_context):
 # sl = SequenceLearning(
 #     n_param, n_branch,
 #     context_dim=context_dim,
+#     context_drift=False,
 #     append_context=append_context,
 # )
 # X, Y = sl.sample(n_samples)
