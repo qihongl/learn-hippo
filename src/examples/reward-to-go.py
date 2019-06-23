@@ -12,8 +12,8 @@ gammas = np.linspace(.1, .9, n_gs)
 normalize = True
 
 # some example r_t sequences
-# r = np.array([0, 0, 0, -1, 0, 0, 0, 1])
-r = np.array([0, 0, 1, 0, -2, 0, 0, 1])
+r = np.array([0, 0, 0, -1, 0, 0, 0, 1])
+# r = np.array([0, 0, 1, 0, -2, 0, 0, 1])
 # r = np.array([0, 0, 0, 1, 0, 0, 0, 1])
 # r = np.array([0, 0, 0, 0, 1, 1, 1, 1])
 # r = np.array([1, -1, 1, -1, 1, -1, 1, -1])
@@ -37,6 +37,7 @@ axes[0].legend(legend_gammas, title='gamma',
                bbox_to_anchor=legend_loc, frameon=False)
 
 # visualize the diffference: R_t vs r_t
+c_pals = sns.color_palette('Reds', n_colors=n_gs)
 for i, gamma in enumerate(gammas):
     returns = to_np(compute_returns(r, gamma=gamma, normalize=normalize))
     axes[1].plot(returns-r, color=c_pals[i])

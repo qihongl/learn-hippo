@@ -173,6 +173,9 @@ class LCALSTM(nn.Module):
     def retrieval_on(self):
         self.dnd.retrieval_off = False
 
+    # def __repr__(self):
+    #     return s
+
 
 def sample_random_vector(n_dim, scale=.1):
     return torch.randn(1, 1, n_dim) * scale
