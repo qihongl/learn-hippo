@@ -61,13 +61,13 @@ n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
+# log_root = '../log/'
 # exp_name = 'rm-only'
 # subj_id = 1
 # penalty = 2
 # supervised_epoch = 100
 # n_epoch = 300
 # n_examples = 256
-# log_root = '../log/'
 # n_param = 6
 # n_branch = 2
 # n_hidden = 64
@@ -75,9 +75,6 @@ log_root = args.log_root
 # eta = .1
 # p_rm_ob_enc = 2/n_param
 # p_rm_ob_rcl = 2/n_param
-# p_rm_ob_enc = 4/n_param
-# p_rm_ob_rcl = 4/n_param
-n_rm_fixed = False
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -89,24 +86,21 @@ p = P(
     penalty=penalty,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
-    n_hidden=n_hidden, lr=learning_rate, eta=eta,
+    n_hidden=n_hidden, lr=learning_rate, eta=eta
 )
 # init env
+context_dim = n_param + n_branch
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
-    context_onehot=False,
-    context_dim=10,
+    context_onehot=True,
     append_context=True,
+    context_dim=context_dim,
     n_rm_fixed=False,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-state_dim = task.x_dim
-agent = Agent(
-    state_dim, p.net.n_hidden, p.a_dim,
-    init_state_trainable=False,
-)
+agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim)
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
@@ -195,12 +189,8 @@ Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 Log_cache = [[None] * task.T_total for _ in range(n_examples)]
 
-# cond = 'RM'
 cond = None
 learning = True
-# a_t = torch.tensor(p.dk_id)
-# r_t = torch.tensor(0)
-# y_it = torch.tensor([0, 0, 0])
 
 # epoch_id, i, t = 0, 0, 0
 for epoch_id in np.arange(epoch_id, n_epoch):
@@ -228,8 +218,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             # whether to encode
             # if not supervised:
             set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
-            # agent.dnd.encoding_off
-            # axgent.dnd.retrieval_off
             # forwardxw
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 X[i][t].view(1, 1, -1), hc_t)
@@ -260,7 +248,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             if supervised:
                 loss = loss_sup
             else:
-                loss = loss_actor + loss_critic - pi_ent * eta
+                loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -379,7 +367,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 # ax.set_xlabel('Time')
 # ax.set_title('the critic can estimate the immediate reward')
 # sns.despine()
-#
+
 # i, t = 0, 0
 # inpt = torch.zeros((n_examples, task.T_total))
 # leak = torch.zeros((n_examples, task.T_total))
@@ -420,12 +408,6 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 # '''t-RDM'''
 #
 #
-# def compute_trsm(data_):
-#     n_examples, n_timepoints, n_dim = np.shape(data_)
-#     trsm_ = np.zeros((n_timepoints, n_timepoints))
-#     for data_i_ in data_:
-#         trsm_ += np.corrcoef(data_i_)
-#     return trsm_ / n_examples
 #
 #
 # data = C

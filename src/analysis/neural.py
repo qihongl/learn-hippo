@@ -7,6 +7,27 @@ from itertools import product
 from models.DND import compute_similarities, transform_similarities
 
 
+def compute_trsm(activation_tensor):
+    """compute TR-TR neural similarity for the input tensor
+
+    Parameters
+    ----------
+    activation_tensor : 3d array, (n_examples, n_timepoints, n_dim)
+        neural activity
+
+    Returns
+    -------
+    2d array, (n_timepoints, n_timepoints)
+        similarity array
+
+    """
+    n_examples, n_timepoints, n_dim = np.shape(activation_tensor)
+    trsm_ = np.zeros((n_timepoints, n_timepoints))
+    for data_i_ in activation_tensor:
+        trsm_ += np.corrcoef(data_i_)
+    return trsm_ / n_examples
+
+
 def _compute_evidence(
     cell_states, memories, leak_, comp_, inpw_,
     mrwt_func, kernel,
@@ -40,8 +61,6 @@ def compute_evidence(
             mrwt_func, kernel
         )
     return evidences_abs
-
-
 
 
 def compute_roc(distrib_noise, distrib_signal):
@@ -84,13 +103,31 @@ def compute_auc_over_time(
         acts_l, acts_r,
         n_bins=100, histrange=(0, 1)
 ):
-    """compute roc, auc
+    """compute roc, auc, over time
     - given the activity for the two conditions
     - compute roc, auc for all time points
+    *depends on analysis.neural.compute_roc()
+
+    Parameters
+    ----------
+    acts_l : 2d array, (T x ?)
+        the left distribution
+    acts_r : 2d array, (T x ?)
+        the right distribution
+    n_bins : int
+        histogram bin
+    histrange : 2-tuple
+        histogram range
+
+    Returns
+    -------
+    arrays
+        roc, auc, over time
+
     """
     event_len, n_examples = np.shape(acts_l)
     # compute fpr, tpr
-    tprs = np.zeros((event_len, n_bins)) 
+    tprs = np.zeros((event_len, n_bins))
     fprs = np.zeros((event_len, n_bins))
     for t in range(event_len):
         # compute the bin counts for each condition
@@ -100,6 +137,3 @@ def compute_auc_over_time(
     # compute area under roc cureves
     auc = [metrics.auc(fprs[t], tprs[t]) for t in range(event_len)]
     return tprs, fprs, auc
-
-
-

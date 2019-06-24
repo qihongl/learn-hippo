@@ -24,7 +24,7 @@ task = RNR(
 )
 
 # take sample
-stack = True
+stack = False
 data_batch_ = task._make_rnr_batch(stack=stack)
 x_batch, y_batch, rcl_mv_id_batch, cond_id_batch = data_batch_
 np.shape(x_batch)

@@ -28,7 +28,7 @@ class P():
         n_hidden=128,
         lr=1e-3,
         gamma=0,
-        eta=0,
+        eta=.1,
         sup_epoch=None,
         n_epoch=None,
         n_example=None,
