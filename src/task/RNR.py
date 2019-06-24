@@ -68,7 +68,7 @@ class RNR():
     def _class_config_validation(self):
         assert self.n_parts >= 3, 'n_parts >= 3'
 
-    def sample(self, n_sample, stack=True, to_torch=False):
+    def sample(self, n_sample=1, stack=False, to_torch=True):
         # compute batch size
         n_total = self.batch_size * n_sample
         # prealloc
@@ -83,7 +83,7 @@ class RNR():
         # sample data
         for i in range(n_sample):
             ii = np.arange(self.batch_size) + i * self.batch_size
-            data_batch_ = self._make_rnr_batch(self, stack)
+            data_batch_ = self._make_rnr_batch(stack)
             x_batch, y_batch, mem_id_batch, cond_id_batch = data_batch_
             # gather data
             X[ii] = x_batch
@@ -138,7 +138,7 @@ class RNR():
                     raise ValueError(
                         f'Unrecognizable RNR condition: {cond_name}')
                 # choose k out of K movies as the encoding movies
-                print(enc_mv_ids)
+                # print(enc_mv_ids)
                 # collect data for the encoding phase ...
                 x_enc = [x_pts[i][0] for i in enc_mv_ids]
                 y_enc = [y_pts[i][0] for i in enc_mv_ids]

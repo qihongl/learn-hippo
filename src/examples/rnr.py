@@ -13,24 +13,27 @@ n_parts = 3
 p_rm_ob_enc = 0
 p_rm_ob_rcl = 0
 n_samples = 5
-# context_dim = 10
+context_dim = 10
 append_context = True
 task = RNR(
     n_param, n_branch,
     context_onehot=False,
     context_drift=True,
-    context_dim=5,
+    context_dim=context_dim,
     append_context=append_context,
 )
 
 # take sample
 stack = False
-data_batch_ = task._make_rnr_batch(stack=stack)
-x_batch, y_batch, rcl_mv_id_batch, cond_id_batch = data_batch_
-np.shape(x_batch)
+n_sample = 1
+data_ = task.sample(n_sample, stack=stack, to_torch=False)
+[X, Y, [rcl_mv_id, cond_id]] = data_
+
+
+np.shape(X)
 i = 0
-x_i, y_i = x_batch[i], y_batch[i]
-rcl_mv_id_i, cond_id_i = rcl_mv_id_batch[i], cond_id_batch[i]
+x_i, y_i = X[i], Y[i]
+rcl_mv_id_i, cond_id_i = rcl_mv_id[i], cond_id[i]
 
 
 '''make a plot'''
