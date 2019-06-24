@@ -1,6 +1,15 @@
 import torch.nn as nn
 
 
+def initialize_weights(agent, option='ortho'):
+    if option == 'ortho':
+        ortho_init(agent)
+    elif option == 'xaiver_uniform':
+        xavier_uniform_init(agent)
+    else:
+        raise ValueError(f'unrecognizable weight init scheme {option}')
+
+
 def ortho_init(agent):
     """ortho init agent
 

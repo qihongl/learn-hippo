@@ -41,7 +41,7 @@ class A2C(nn.Module):
         self.critic = nn.Linear(dim_hidden, 1)
         ortho_init(self)
 
-    def forward(self, x, beta=1):
+    def forward(self, x, beta=1, return_h=False):
         """compute action distribution and value estimate, pi(a|s), v(s)
 
         Parameters
@@ -60,7 +60,11 @@ class A2C(nn.Module):
         h = F.relu(self.ih(x))
         action_distribution = _softmax(self.actor(h), beta)
         value_estimate = self.critic(h)
-        return action_distribution, value_estimate
+        # pack output
+        outputs_ = [action_distribution, value_estimate]
+        if return_h:
+            outputs_.append(torch.squeeze(h))
+        return outputs_
 
     def pick_action(self, action_distribution):
         a_t, log_prob_a_t = _pick_action(action_distribution)

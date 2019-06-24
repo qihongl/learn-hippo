@@ -15,7 +15,8 @@ from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 from plt_helper import plot_tz_pred_acc
-# plt.switch_backend('agg')
+# from sklearn.decomposition.pca import PCA
+plt.switch_backend('agg')
 
 sns.set(style='white', palette='colorblind', context='talk')
 
@@ -25,7 +26,6 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 --n_epoch 300 --sup_epoch 50 --train_init_state 0 \
 --log_root ../log/
 '''
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', default='test', type=str)
@@ -62,8 +62,8 @@ supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
 # exp_name = 'rm-only'
-# subj_id = 3
-# penalty = 4
+# subj_id = 1
+# penalty = 2
 # supervised_epoch = 100
 # n_epoch = 300
 # n_examples = 256
@@ -75,6 +75,8 @@ log_root = args.log_root
 # eta = .1
 # p_rm_ob_enc = 2/n_param
 # p_rm_ob_rcl = 2/n_param
+# p_rm_ob_enc = 4/n_param
+# p_rm_ob_rcl = 4/n_param
 n_rm_fixed = False
 
 np.random.seed(subj_id)
@@ -92,7 +94,10 @@ p = P(
 # init env
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
-    n_rm_fixed=n_rm_fixed,
+    context_onehot=False,
+    context_dim=10,
+    append_context=True,
+    n_rm_fixed=False,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
 )
@@ -100,7 +105,7 @@ task = SequenceLearning(
 state_dim = task.x_dim
 agent = Agent(
     state_dim, p.net.n_hidden, p.a_dim,
-    a2c_linear=False, init_state_trainable=True,
+    init_state_trainable=False,
 )
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -147,7 +152,7 @@ def set_encoding_flag(t, enc_times, agent):
         agent.encoding_off()
 
 
-def tz_cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
+def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     '''condition specific manipulation
     such as flushing, insert lure, etc.
     '''
@@ -179,20 +184,19 @@ def tz_cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
 
 
 log_freq = 10
-Log_acc = np.zeros((n_epoch, task.n_parts))
-Log_mis = np.zeros((n_epoch, task.n_parts))
-Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_sup = np.zeros(n_epoch,)
-Log_pi_ent = np.zeros(n_epoch,)
 Log_return = np.zeros(n_epoch,)
+Log_pi_ent = np.zeros(n_epoch,)
+Log_acc = np.zeros((n_epoch, task.n_parts))
+Log_mis = np.zeros((n_epoch, task.n_parts))
+Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 Log_cache = [[None] * task.T_total for _ in range(n_examples)]
 
-cond = 'RM'
-# cond = None
-n_lure = 0
+# cond = 'RM'
+cond = None
 learning = True
 # a_t = torch.tensor(p.dk_id)
 # r_t = torch.tensor(0)
@@ -212,7 +216,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
 
     for i in range(n_examples):
         # pick a condition
-        tz_cond = pick_condition(p, rm_only=supervised, fix_cond=cond)
+        cond_i = pick_condition(p, rm_only=supervised, fix_cond=cond)
         # init model wm and em
         hc_t = agent.get_init_states()
         agent.init_em_config()
@@ -244,8 +248,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
             loss_sup += F.mse_loss(yhat_t, Y[i][t])
             # if not supervised:
             # update WM/EM bsaed on the condition
-            hc_t = tz_cond_manipulation(
-                tz_cond, t, p.env.tz.event_ends[0], hc_t, agent, n_lure)
+            hc_t = cond_manipulation(
+                cond_i, t, p.env.tz.event_ends[0], hc_t, agent)
 
         # compute RL loss
         returns = compute_returns(rewards)
@@ -267,7 +271,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         log_return += torch.stack(rewards).sum().item()/n_examples
         log_loss_actor += loss_actor.item()/n_examples
         log_loss_critic += loss_critic.item()/n_examples
-        Log_cond[epoch_id, i] = p.env.tz.cond_dict.inverse[tz_cond]
+        Log_cond[epoch_id, i] = p.env.tz.cond_dict.inverse[cond_i]
 
     # log
     Log_pi_ent[epoch_id] = log_pi_ent
@@ -308,6 +312,7 @@ f, axes = plt.subplots(3, 2, figsize=(10, 9), sharex=True)
 axes[0, 0].plot(Log_return)
 axes[0, 0].set_ylabel('return')
 axes[0, 0].axhline(0, color='grey', linestyle='--')
+axes[0, 0].set_title(Log_return[-1])
 
 axes[0, 1].plot(Log_pi_ent)
 axes[0, 1].set_ylabel('entropy')
@@ -343,14 +348,16 @@ fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-# plot performance
-for cond_ in list(p.env.tz.cond_dict.values()):
-    cond_id_ = p.env.tz.cond_dict.inverse[cond_]
-    cond_sel_op = Log_cond[-1, :] == cond_id_
-    if np.sum(cond_sel_op) == 0:
-        continue
-    Y_ = to_sqnp(Y)[cond_sel_op, :]
-    log_dist_a_ = log_dist_a[cond_sel_op, :]
+
+'''plot performance'''
+cond_ids = {}
+for cond_name_ in list(p.env.tz.cond_dict.values()):
+    cond_id_ = p.env.tz.cond_dict.inverse[cond_name_]
+    cond_ids[cond_name_] = Log_cond[-1, :] == cond_id_
+
+for cond_name_ in list(p.env.tz.cond_dict.values()):
+    Y_ = to_sqnp(Y)[cond_ids[cond_name_], :]
+    log_dist_a_ = log_dist_a[cond_ids[cond_name_], :]
     # compute performance for this condition
     acc_mu, acc_er = compute_acc(Y_, log_dist_a_, return_er=True)
     dk_mu = compute_dk(log_dist_a_)
@@ -359,103 +366,183 @@ for cond_ in list(p.env.tz.cond_dict.values()):
         acc_mu, acc_er, acc_mu+dk_mu,
         [p.env.tz.event_ends[0]+1], p,
         f, ax,
-        title=f'Performance on the TZ task: {cond_}',
+        title=f'Performance on the TZ task: {cond_name_}',
     )
-    fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_}.png')
+    fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
-# plt.plot(to_sqnp(returns))
-# plt.plot(to_sqnp(torch.stack(values)))
-
-
+# f, ax = plt.subplots(1, 1, figsize=(7, 4))
+# ax.plot(to_sqnp(returns))
+# ax.plot(to_sqnp(torch.stack(values)))
+# ax.legend([r'$r_t$', 'value estimate'])
+# ax.set_xlabel('Time')
+# ax.set_title('the critic can estimate the immediate reward')
+# sns.despine()
+#
 # i, t = 0, 0
 # inpt = torch.zeros((n_examples, task.T_total))
 # leak = torch.zeros((n_examples, task.T_total))
 # comp = torch.zeros((n_examples, task.T_total))
+# C = np.zeros((n_examples, task.T_total, p.net.n_hidden))
 # H = np.zeros((n_examples, task.T_total, p.net.n_hidden))
 # M = np.zeros((n_examples, task.T_total, p.net.n_hidden))
-# HM = np.zeros((n_examples, task.T_total, p.net.n_hidden))
+# CM = np.zeros((n_examples, task.T_total, p.net.n_hidden))
+# DA = np.zeros((n_examples, task.T_total, p.net.n_hidden))
 #
 # for i in range(n_examples):
 #     for t in range(task.T_total):
 #         [vector_signal, scalar_signal, misc] = Log_cache[i][t]
 #         [inpt[i, t], leak[i, t], comp[i, t]] = scalar_signal
-#         [rnn_out_t, m_t, des_act_t] = misc
-#         H[i, t, :] = to_sqnp(rnn_out_t)
+#         [h_t, m_t, cm_t, des_act_t] = misc
+#         H[i, t, :] = to_sqnp(h_t)
 #         M[i, t, :] = to_sqnp(m_t)
-#         HM[i, t, :] = to_sqnp(des_act_t)
+#         CM[i, t, :] = to_sqnp(cm_t)
+#         DA[i, t, :] = to_sqnp(des_act_t)
+#
+# C = CM - M
 # inpt = to_sqnp(inpt)
 # leak = to_sqnp(leak)
 # comp = to_sqnp(comp)
 #
 # event_bonds = [p.env.tz.event_ends[0]+1]
-# cond_ = 'RM'
-# # cond_ = 'DM'
-# # for cond_ in list(p.env.tz.cond_dict.values()):
-# cond_id_ = p.env.tz.cond_dict.inverse[cond_]
-# cond_sel_op = Log_cond[-1, :] == cond_id_
-# # if np.sum(cond_sel_op) == 0:
-# #     continue
+#
+# cond_name = 'DM'
 # f, ax = plt.subplots(1, 1)
-# ax.plot(np.mean(inpt[cond_sel_op, :], axis=0), label='inpw')
-# ax.plot(np.mean(leak[cond_sel_op, :], axis=0), label='leak')
-# ax.plot(np.mean(comp[cond_sel_op, :], axis=0), label='comp')
-# ax.axvline(event_bonds, color='red', linestyle='--')
-# ax.set_title(f'{cond_}')
+# ax.plot(np.mean(inpt[cond_ids[cond_name], task.T_part:], axis=0), label='inpw')
+# ax.plot(np.mean(leak[cond_ids[cond_name], task.T_part:], axis=0), label='leak')
+# ax.plot(np.mean(comp[cond_ids[cond_name], task.T_part:], axis=0), label='comp')
+# # ax.axvline(event_bonds, color='red', linestyle='--')
+# ax.set_title(f'{cond_name}')
 # ax.legend()
 # sns.despine()
-
-# '''t-RDM'''
-# trdm = [
-#     np.zeros((task.T_total, task.T_total))
-#     for _ in range(len(p.env.tz.cond_dict))
-# ]
 #
-# for cond_ in list(p.env.tz.cond_dict.values()):
-#     cond_id_ = p.env.tz.cond_dict.inverse[cond_]
-#     cond_sel_op = Log_cond[-1, :] == cond_id_
-#     if np.sum(cond_sel_op) == 0:
+# '''t-RDM'''
+#
+#
+# def compute_trsm(data_):
+#     n_examples, n_timepoints, n_dim = np.shape(data_)
+#     trsm_ = np.zeros((n_timepoints, n_timepoints))
+#     for data_i_ in data_:
+#         trsm_ += np.corrcoef(data_i_)
+#     return trsm_ / n_examples
+#
+#
+# data = C
+# trsm = {}
+# for cond_name in cond_ids.keys():
+#     if np.sum(cond_ids[cond_name]) == 0:
 #         continue
 #     else:
-#         H_cond_ = H[cond_sel_op, :, :]
-#         for H_i in H_cond_:
-#             trdm[cond_id_] += np.corrcoef(H_i)
-#         trdm[cond_id_] /= np.sum(cond_sel_op)
+#         data_cond_ = data[cond_ids[cond_name], :, :]
+#         trsm[cond_name] = compute_trsm(data_cond_)
 #
-# cid = 0
+# cond_name = 'DM'
 # f, ax = plt.subplots(1, 1)
 # sns.heatmap(
-#     trdm[cid], cmap='RdYlBu_r', center=0, square=True,
+#     trsm[cond_name], cmap='RdBu_r', square=True,
+#     center=0,
 #     ax=ax
 # )
 # ax.axvline(event_bonds[0], color='red', linestyle='--')
 # ax.axhline(event_bonds[0], color='red', linestyle='--')
-# ax.set_title(f'{p.env.tz.cond_dict[cid]}')
-
-
+# ax.set_title(f'TR-TR, similarity, {cond_name}')
+#
+#
 # '''memory - cell state correlation'''
+#
+#
+# def cosine_similarity(u, v):
+#     return u @ v / np.linalg.norm(u) / np.linalg.norm(v)
+#
+#
 # h_0, _ = agent.get_init_states()
 # h_0 = to_sqnp(h_0)
+# h_0 = np.random.normal(size=(agent.hidden_dim,)) * .1
 #
 # corr_b = np.zeros(task.T_total,)
 # corr_m = np.zeros(task.T_total,)
 #
-# cond_id_ = 0
-# cond_sel_op = Log_cond[-1, :] == cond_id_
-# H_cond_ = H[cond_sel_op, :, :]
-# for H_i in H_cond_:
-#     mem = H_i[task.T_part-1, ]
-#     for t in range(task.T_total):
-#         corr_b[t] += np.corrcoef(h_0, H_i[t, :])[0, 1]
-#         corr_m[t] += np.corrcoef(mem, H_i[t, :])[0, 1]
-# corr_b[t] /= np.sum(cond_sel_op)
-# corr_m[t] /= np.sum(cond_sel_op)
 #
-# f, ax = plt.subplots(1, 1)
-# ax.plot(corr_m)
-# ax.plot(corr_b)
-# ax.axhline(0, color='grey', linestyle='--')
-# ax.axvline(event_bonds[0], color='red', linestyle='--')
-# ax.set_title(f'{p.env.tz.cond_dict[cond_id_]}')
-# sns.despine()
+# # data = C
+# # cond_name = 'RM'
+# # data_cond_ = data[cond_ids[cond_name], :, :]
+# #
+# # for i in range(len(data_cond_)):
+# #     H_i = data_cond_[i, :, :]
+# #     mem = H_i[task.T_part-1, ]
+# #     for t in range(task.T_total):
+# #         corr_b[t] += cosine_similarity(h_0, H_i[t, :])
+# #         # np.corrcoef(h_0, H_i[t, :])[0, 1]
+# #         corr_m[t] += cosine_similarity(mem, H_i[t, :])
+# #         # np.corrcoef(mem, H_i[t, :])[0, 1]
+# # corr_b /= len(data_cond_)
+# # corr_m /= len(data_cond_)
+# #
+# # f, ax = plt.subplots(1, 1, figsize=(7, 4))
+# # ax.plot(corr_m)
+# # ax.plot(corr_b)
+# # ax.axhline(0, color='grey', linestyle='--')
+# # ax.axvline(event_bonds[0], color='red', linestyle='--')
+# # ax.set_title(f'{p.env.tz.cond_dict[cond_id_]}')
+# # sns.despine()
+#
+# # f, ax = plt.subplots(1, 1, figsize=(6, 3))
+# # ax.plot(trsm[cond_id_][5, :])
+# # ax.axhline(0, color='grey', linestyle='--')
+# # ax.axvline(event_bonds[0]-1, color='red', linestyle='--')
+# # ax.set_xlabel('Time')
+# # ax.set_ylabel('Correlation')
+# # ax.set_title('similarity: cell state vs. memory, ' +
+# #              f'{p.env.tz.cond_dict[cond_id_]}')
+# # sns.despine()
+# #
+# #
+# # np.shape(log_dist_a)
+# # np.shape(H)
+#
+#
+# actions = np.argmax(log_dist_a[:, :, :], axis=-1)
+# targets = np.argmax(to_sqnp(Y), axis=-1)
+# dks = actions == p.dk_id
+# np.shape(dks)
+#
+# pca = PCA(10)
+# data = DA
+# cond_name = 'DM'
+# data_cond = data[cond_ids[cond_name], :, :]
+# targets_cond = targets[cond_ids[cond_name]]
+#
+# t = 5
+# alpha = .7
+# h_0 = to_sqnp(agent.get_init_states()[0]).reshape(1, -1)
+# for t in range(task.T_total):
+#
+#     H_pca = pca.fit_transform(data_cond[:, t, :])
+#     h_0_pca = pca.transform(h_0)
+#
+#     f, ax = plt.subplots(1, 1, figsize=(6, 5))
+#     for y_val in range(p.y_dim):
+#         y_sel_op = y_val == targets_cond
+#         sel_op_ = np.logical_and(~dks[cond_ids[cond_name], t], y_sel_op[:, t])
+#         ax.scatter(
+#             H_pca[sel_op_, 0], H_pca[sel_op_, 1],
+#             marker='o', alpha=alpha,
+#         )
+#         # f.legend(['0', '1'])
+#     ax.scatter(
+#         H_pca[dks[cond_ids[cond_name], t], 0],
+#         H_pca[dks[cond_ids[cond_name], t], 1],
+#         marker='x', color='black', alpha=alpha,
+#     )
+#
+#     ax.scatter(
+#         h_0_pca[:, 0], h_0_pca[:, 1], color='red'
+#     )
+#     ax.set_xlabel('PC 1')
+#     ax.set_ylabel('PC 2')
+#     ax.set_title(f'Pre-decision activity, time = {t}')
+#     sns.despine()
+#
+#
+# # plt.plot(np.cumsum(pca.explained_variance_ratio_))

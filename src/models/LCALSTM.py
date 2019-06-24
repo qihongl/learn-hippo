@@ -5,15 +5,15 @@ import torch
 import torch.nn as nn
 
 from models.DND import DND
-from models.A2C import A2C, A2C_linear
-from models.initializer import ortho_init, xavier_uniform_init, set_forget_gate_bias
+from models.A2C import A2C
+from torch.distributions import Categorical
+from models.initializer import initialize_weights
 
 # constants
 # number of vector signal (lstm gates)
 N_VSIG = 3
 # number of scalar signal (sigma)
 N_SSIG = 3
-N_LCA_SIG = 3
 # the ordering in the cache
 scalar_signal_names = ['input strength', 'leak', 'competition']
 vector_signal_names = ['f', 'i', 'o']
@@ -23,10 +23,8 @@ class LCALSTM(nn.Module):
 
     def __init__(
             self,
-            input_dim, n_hidden, n_action,
-            recall_func='LCA',
-            kernel='cosine',
-            dict_len=100,
+            input_dim, hidden_dim, output_dim,
+            recall_func='LCA', kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
             layernorm=False,
@@ -35,22 +33,24 @@ class LCALSTM(nn.Module):
             bias=True
     ):
         super(LCALSTM, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.bias = bias
+        self.n_units_total = (N_VSIG+1) * hidden_dim + N_SSIG
+        # input-hidden weights
+        self.i2h = nn.Linear(input_dim, self.n_units_total, bias=bias)
+        # hidden-hidden weights
+        self.h2h = nn.Linear(hidden_dim, self.n_units_total, bias=bias)
+        # normalization
+        self.layernorm = layernorm
+        if layernorm:
+            self.ln = nn.LayerNorm((1, hidden_dim))
+        # memory
+        self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
+        # the RL mechanism
+        self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
-        # dims
-        self.input_dim = input_dim
-        self.n_hidden = n_hidden
-        self.bias = bias
-        # rnn
-        self.lstm = nn.LSTM(input_dim, n_hidden)
-        # hpc control layer and episodic memory
-        self.hpc_ctrl = nn.Linear(n_hidden, N_LCA_SIG)
-        self.dnd = DND(dict_len, n_hidden, kernel, recall_func)
-        # the RL mechanism
-        if a2c_linear:
-            self.a2c = A2C_linear(n_hidden, n_action)
-        else:
-            self.a2c = A2C(n_hidden, n_hidden, n_action)
         self.init_model()
 
     def init_model(self):
@@ -60,67 +60,79 @@ class LCALSTM(nn.Module):
         self.vsig_names = vector_signal_names
         self.ssig_names = scalar_signal_names
         # init params
-        self.init_weights(option=self.weight_init_scheme)
+        initialize_weights(self, self.weight_init_scheme)
+        # self.init_weights(option=self.weight_init_scheme)
         if self.init_state_trainable:
             self.init_init_states()
 
-    def init_weights(self, option='ortho'):
-        if option == 'ortho':
-            ortho_init(self)
-        elif option == 'xaiver_uniform':
-            xavier_uniform_init(self)
-        else:
-            raise ValueError(f'unrecognizable weight init scheme {option}')
-        set_forget_gate_bias(self.lstm)
-
     def init_init_states(self):
-        scale = 1 / self.n_hidden
+        scale = 1 / self.hidden_dim
         self.h_0 = torch.nn.Parameter(
-            sample_random_vector(self.n_hidden, scale), requires_grad=True
+            sample_random_vector(self.hidden_dim, scale), requires_grad=True
         )
         self.c_0 = torch.nn.Parameter(
-            sample_random_vector(self.n_hidden, scale), requires_grad=True
+            sample_random_vector(self.hidden_dim, scale), requires_grad=True
         )
 
     def get_init_states(self, scale=.1, device='cpu'):
         if self.init_state_trainable:
             h_0_, c_0_ = self.h_0, self.c_0
         else:
-            h_0_ = sample_random_vector(self.n_hidden, scale)
-            c_0_ = sample_random_vector(self.n_hidden, scale)
+            h_0_ = sample_random_vector(self.hidden_dim, scale)
+            c_0_ = sample_random_vector(self.hidden_dim, scale)
         return (h_0_, c_0_)
 
-    def forward(self, x_t, hidden_state_prev, beta=1):
-        # recurrent
-        rnn_out_t, hidden_state_t = self.lstm(x_t, hidden_state_prev)
-        # memory actions
-        theta = self.hpc_ctrl(rnn_out_t).sigmoid()
-        [inps_t, leak_t, comp_t] = torch.squeeze(theta)
-        # recall / encode
-        mem_t = self.recall(rnn_out_t, leak_t, comp_t, inps_t)
-        des_act_t = rnn_out_t + mem_t
-        self.encode(des_act_t)
-        # policy
-        action_dist_t, value_t = self.a2c.forward(des_act_t, beta=beta)
+    def forward(self, x_t, hc, beta=1):
+        # unpack activity
+        (h, c) = hc
+        h = h.view(h.size(1), -1)
+        c = c.view(c.size(1), -1)
+        x_t = x_t.view(x_t.size(1), -1)
+        # transform the input info
+        preact = self.i2h(x_t) + self.h2h(h)
+        # get all gate values
+        gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
+        # split input(write) gate, forget gate, output(read) gate
+        f_t = gates[:, :self.hidden_dim]
+        o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
+        i_t = gates[:, -self.hidden_dim:]
+        # get kernel param
+        inps_t = preact[:, N_VSIG * self.hidden_dim+0].sigmoid()
+        leak_t = preact[:, N_VSIG * self.hidden_dim+1].sigmoid()
+        comp_t = preact[:, N_VSIG * self.hidden_dim+2].sigmoid()
+        # stuff to be written to cell state
+        c_t_new = preact[:, N_VSIG * self.hidden_dim+N_SSIG:].tanh()
+        # new cell state = gated(prev_c) + gated(new_stuff)
+        c_t = torch.mul(c, f_t) + torch.mul(i_t, c_t_new)
+        # recall
+        m_t = self.recall(c_t, leak_t, comp_t, inps_t)
+        cm_t = c_t + m_t
+        # encode
+        self.encode(cm_t)
+        # normalize activity
+        if self.layernorm:
+            cm_t = self.ln(cm_t)
+        # get gated hidden state from the cell state
+        h_t = torch.mul(o_t, cm_t.tanh())
+        # reshape data
+        h_t = h_t.view(1, h_t.size(0), -1)
+        cm_t = cm_t.view(1, cm_t.size(0), -1)
+        # produce action distribution and value estimate
+        a2c_outputs_ = self.a2c.forward(h_t, beta=beta, return_h=True)
+        [action_dist_t, value_t, decision_activity_t] = a2c_outputs_
         # scache results
-        vector_signal = []  # [gates]
         scalar_signal = [inps_t, leak_t, comp_t]
-        misc = [rnn_out_t, mem_t, des_act_t]
+        vector_signal = [f_t, i_t, o_t]
+        misc = [h_t, m_t, cm_t, decision_activity_t]
         cache = [vector_signal, scalar_signal, misc]
-        # update
-        hidden_state_t = (rnn_out_t, hidden_state_t[1])
-        return action_dist_t, value_t, hidden_state_t, cache
+        return action_dist_t, value_t, (h_t, cm_t), cache
 
-    def pick_action(self, action_distribution):
-        a_t, log_prob_a_t = self.a2c.pick_action(action_distribution)
-        return a_t, log_prob_a_t
-
-    def recall(self, input_pattern, leak_t, comp_t, inps_t):
+    def recall(self, c_t, leak_t, comp_t, inps_t):
         """run the "pattern completion" procedure
 
         Parameters
         ----------
-        input_pattern : torch.tensor, vector
+        c_t : torch.tensor, vector
             cell state
         leak_t : torch.tensor, scalar
             LCA param, leak
@@ -136,26 +148,48 @@ class LCALSTM(nn.Module):
 
         """
         if self.dnd.retrieval_off:
-            memory = torch.zeros_like(input_pattern).data
+            m_t = torch.zeros_like(c_t)
         else:
-            memory = self.dnd.get_memory(
-                input_pattern,
-                leak=leak_t, comp=comp_t, w_input=inps_t
+            # retrieve memory
+            m_t = self.dnd.get_memory(
+                c_t, leak=leak_t, comp=comp_t, w_input=inps_t
             )
-        return memory
+        return m_t
 
-    def encode(self, input_pattern):
+    def encode(self, cm_t):
         if not self.dnd.encoding_off:
-            self.dnd.save_memory(input_pattern, input_pattern)
+            self.dnd.save_memory(cm_t, cm_t)
 
     def init_em_config(self):
         self.flush_episodic_memory()
         self.encoding_off()
         self.retrieval_off()
 
+    def pick_action(self, action_distribution):
+        """action selection by sampling from a multinomial.
+
+        Parameters
+        ----------
+        action_distribution : 1d torch.tensor
+            action distribution, pi(a|s)
+
+        Returns
+        -------
+        torch.tensor(int), torch.tensor(float)
+            sampled action, log_prob(sampled action)
+
+        """
+        m = Categorical(action_distribution)
+        a_t = m.sample()
+        log_prob_a_t = m.log_prob(a_t)
+        return a_t, log_prob_a_t
+
+    def inject_memories(self, keys, vals):
+        self.dnd.inject_memories(keys, vals)
+
     def add_simple_lures(self, n_lures=1):
         for _ in range(n_lures):
-            lure_i = sample_random_vector(self.n_hidden)
+            lure_i = sample_random_vector(self.hidden_dim)
             self.dnd.inject_memories([lure_i], [lure_i])
 
     def flush_episodic_memory(self):
@@ -173,8 +207,11 @@ class LCALSTM(nn.Module):
     def retrieval_on(self):
         self.dnd.retrieval_off = False
 
-    # def __repr__(self):
-    #     return s
+    def to_train_mode(self):
+        self.train()
+
+    def to_test_mode(self):
+        self.eval()
 
 
 def sample_random_vector(n_dim, scale=.1):
