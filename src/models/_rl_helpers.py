@@ -70,7 +70,7 @@ def compute_returns(rewards, gamma=0, normalize=False):
     return returns
 
 
-def compute_a2c_loss(probs, values, returns):
+def compute_a2c_loss(probs, values, returns, use_V=True):
     """compute the objective node for policy/value networks
 
     Parameters
@@ -90,11 +90,16 @@ def compute_a2c_loss(probs, values, returns):
     """
     policy_grads, value_losses = [], []
     for prob_t, v_t, R_t in zip(probs, values, returns):
-        A_t = R_t - v_t.item()
+        if use_V:
+            A_t = R_t - v_t.item()
+            value_losses.append(
+                smooth_l1_loss(torch.squeeze(v_t), torch.squeeze(R_t))
+            )
+        else:
+            A_t = R_t
+            value_losses.append(torch.FloatTensor(0).data)
+        # accumulate policy gradient
         policy_grads.append(-prob_t * A_t)
-        value_losses.append(
-            smooth_l1_loss(torch.squeeze(v_t), torch.squeeze(R_t))
-        )
     policy_gradient = torch.stack(policy_grads).sum()
     value_loss = torch.stack(value_losses).sum()
     return policy_gradient, value_loss
