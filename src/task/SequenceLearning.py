@@ -19,6 +19,7 @@ class SequenceLearning():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             n_rm_fixed=True,
+            context_onehot=True,
             context_dim=1,
             context_drift=False,
             append_context=False,
@@ -28,6 +29,7 @@ class SequenceLearning():
         # build a sampler
         self.stim_sampler = StimSampler(
             n_param, n_branch,
+            context_onehot=context_onehot,
             context_dim=context_dim,
             key_rep_type=key_rep_type,
             n_rm_fixed=n_rm_fixed,
@@ -94,13 +96,15 @@ def _to_xy(sample_, append_context):
 
 # '''scratch'''
 # # init a graph
-# n_param, n_branch = 3, 2
+# n_param, n_branch = 6, 2
 # n_parts = 2
 # n_samples = 5
 # context_dim = 2
 # append_context = True
 # sl = SequenceLearning(
 #     n_param, n_branch,
+#     context_onehot=False,
+#     context_drift=True,
 #     context_dim=context_dim,
 #     append_context=append_context,
 # )
@@ -119,7 +123,7 @@ def _to_xy(sample_, append_context):
 #     np.vstack([v for v in o_vals_vec])
 # ])
 # y = np.vstack(q_vals_vec)
-
+#
 #
 # '''how to use'''
 # n_param, n_branch = 6, 2
@@ -129,8 +133,9 @@ def _to_xy(sample_, append_context):
 # append_context = True
 # sl = SequenceLearning(
 #     n_param, n_branch,
+#     context_onehot=False,
+#     context_drift=True,
 #     context_dim=context_dim,
-#     context_drift=False,
 #     append_context=append_context,
 # )
 # X, Y = sl.sample(n_samples)

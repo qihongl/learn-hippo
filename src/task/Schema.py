@@ -18,6 +18,7 @@ class Schema():
 
     def __init__(
             self, n_param, n_branch,
+            context_onehot=True,
             context_dim=1,
             context_drift=False,
             key_rep_type='node',
@@ -29,11 +30,12 @@ class Schema():
         # self.def_prob = def_prob
         # self.def_path = def_path
         # sampling mode
-        self.c_dim = context_dim
-        self.context_drift = context_drift
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
-        self._form_representation(key_rep_type)
+        self._form_key_val_representation(key_rep_type)
+        self._form_context_representation(
+            context_onehot, context_drift, context_dim
+        )
         assert key_rep_type in KEY_REPRESENTATION
         assert sampling_mode in VALID_SAMPLING_MODE
 
@@ -68,7 +70,7 @@ class Schema():
             raise ValueError(f'unrecog representation type {self.key_rep_type}')
         return key.astype(np.int16)
 
-    def _form_representation(self, key_rep_type):
+    def _form_key_val_representation(self, key_rep_type):
         # build state space and action space
         if key_rep_type == 'node':
             self.key_rep = np.eye(self.n_param * self.n_branch)
@@ -78,13 +80,31 @@ class Schema():
             self.val_rep = np.eye(self.n_branch)
         else:
             raise ValueError(f'unrecog representation type {key_rep_type}')
-        # form context
-        self.ctx_rep = sample_context_drift(
-            self.c_dim, self.n_param, dynamic=self.context_drift
-        )
+
         # get dimension
         self.k_dim = np.shape(self.key_rep)[1]
         self.v_dim = np.shape(self.val_rep)[1]
+
+    def _form_context_representation(
+            self,
+            context_onehot, context_drift, context_dim
+    ):
+        self.context_onehot = context_onehot
+        self.context_drift = context_drift
+        if context_onehot:
+            self.c_dim = self.n_param
+        else:
+            self.c_dim = context_dim
+        # form context representation
+        if self.context_onehot:
+            self.ctx_rep = np.eye(self.n_param)
+        else:
+            norm_heuristic = 2
+            self.ctx_rep = sample_context_drift(
+                self.c_dim, self.n_param,
+                norm=norm_heuristic,
+                dynamic=self.context_drift
+            )
 
 
 def sample_context_drift(
@@ -121,11 +141,12 @@ def sample_context_drift(
     """
     end_point = np.random.normal(
         loc=np.random.normal(size=(n_dim,)),
-        scale=end_scale, size=(n_dim,)
-    ) * norm
+        scale=end_scale, size=(n_dim,))
     # normalize the context by some metric
     if normalize:
         end_point /= np.linalg.norm(end_point, ord=normalizer)
+    # set the norm
+    end_point *= norm
     # decide if the context is drifting or fixed
     if dynamic:
         # convec interpolation
@@ -135,7 +156,7 @@ def sample_context_drift(
         # copy t times
         path = np.tile(end_point, (n_point, 1))
     if noise_scale > 0:
-        path += np.random.normal(scale=noise_scale)
+        path += np.random.normal(scale=noise_scale, size=np.shape(path))
     return path
 
 

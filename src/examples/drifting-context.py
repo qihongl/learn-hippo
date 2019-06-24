@@ -40,11 +40,11 @@ def colored_line(x, y, z=None, linewidth=1, MAP='Blues'):
 
 '''make some path'''
 np.random.seed(0)
-n_dim, n_point = 10, 5
+n_dim, n_point = 2, 10
 end_scale = 1
 noise_scale = 0.01
 normalize = True
-normalizer = 1
+normalizer = 2
 dynamic = True
 
 n_path = 100
@@ -62,11 +62,11 @@ for i in range(n_path):
 f, ax = plt.subplots(1, 1, figsize=(7, 7))
 for i in range(n_path):
     x, y = P[i, :, 0], P[i, :, 1]
-    colored_line(x, y, linewidth=.005)
+    colored_line(x, y, linewidth=.001)
 ax.axhline(0, linestyle='--', color='grey', alpha=.5)
 ax.axvline(0, linestyle='--', color='grey', alpha=.5)
 
-ax.set_title('Some random walks')
+ax.set_title('Some context drift trajectories')
 ax.set_xlabel('dim 1')
 ax.set_ylabel('dim 2')
 sns.despine()

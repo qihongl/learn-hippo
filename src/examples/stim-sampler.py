@@ -12,7 +12,9 @@ n_timesteps = n_param
 n_parts = 2
 p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 
-sampler = StimSampler(n_param, n_branch)
+sampler = StimSampler(
+    n_param, n_branch
+)
 sample_ = sampler.sample(
     n_parts,
     p_rm_ob_enc, p_rm_ob_rcl,

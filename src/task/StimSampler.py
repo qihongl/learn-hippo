@@ -13,6 +13,7 @@ class StimSampler():
             n_param, n_branch,
             key_rep_type='node',
             rm_kv=False,
+            context_onehot=True,
             context_dim=1,
             context_drift=False,
             n_rm_fixed=True,
@@ -20,6 +21,8 @@ class StimSampler():
     ):
         self.n_param = n_param
         self.n_branch = n_branch
+        #
+        self.context_onehot = context_onehot
         self.context_dim = context_dim
         self.context_drift = context_drift
         #
@@ -32,7 +35,7 @@ class StimSampler():
         self.reset_schema()
 
     def reset_schema(self):
-        """re initialize the schema
+        """re-initialize the schema
 
         Returns
         -------
@@ -43,6 +46,7 @@ class StimSampler():
         self.schema = Schema(
             n_param=self.n_param,
             n_branch=self.n_branch,
+            context_onehot=self.context_onehot,
             context_dim=self.context_dim,
             context_drift=self.context_drift,
             key_rep_type=self.key_rep_type,
@@ -72,7 +76,7 @@ class StimSampler():
 
     def sample(
             self,
-            n_parts=1,
+            n_parts=2,
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             permute_queries=False,
@@ -224,7 +228,9 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
 # p_rm_ob_enc, p_rm_ob_rcl = .25, 0
 # key_rep_type = 'time'
 # # key_rep_type = 'gaussian'
-# sampler = StimSampler(n_param, n_branch, key_rep_type=key_rep_type)
+# sampler = StimSampler(
+#     n_param, n_branch, key_rep_type=key_rep_type
+# )
 # sample_ = sampler.sample(
 #     n_parts, p_rm_ob_enc, p_rm_ob_rcl
 # )
