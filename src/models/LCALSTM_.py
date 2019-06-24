@@ -28,7 +28,7 @@ class LCALSTM(nn.Module):
             init_state_trainable=False,
             layernorm=False,
             mode='train',
-            a2c_linear=True, predict=False,
+            a2c_linear=False, predict=False,
             bias=True
     ):
         super(LCALSTM, self).__init__()
