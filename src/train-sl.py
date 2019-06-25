@@ -3,21 +3,19 @@ import time
 import torch
 import argparse
 import numpy as np
-import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from models import LCALSTM as Agent
 from task import SequenceLearning
-from models import get_reward, compute_returns, compute_a2c_loss
-from analysis import compute_behav_metrics, compute_acc, compute_dk, entropy
-from utils.params import P
-from utils.utils import to_sqnp
-from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
-from plt_helper import plot_tz_pred_acc
 from exp_tz import run_tz
+from analysis import compute_behav_metrics, compute_acc, compute_dk
+from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
+from utils.utils import to_sqnp
+from utils.params import P
+from plt_helper import plot_tz_pred_acc
 # from sklearn.decomposition.pca import PCA
-# plt.switch_backend('agg')
+plt.switch_backend('agg')
 
 sns.set(style='white', palette='colorblind', context='talk')
 
@@ -28,54 +26,55 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 --log_root ../log/
 '''
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument('--exp_name', default='test', type=str)
-# parser.add_argument('--subj_id', default=99, type=int)
-# parser.add_argument('--penalty', default=4, type=int)
-# parser.add_argument('--p_rm_ob_enc', default=0, type=float)
-# parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
-# parser.add_argument('--n_param', default=6, type=int)
-# parser.add_argument('--n_branch', default=3, type=int)
-# parser.add_argument('--n_hidden', default=64, type=int)
-# parser.add_argument('--lr', default=1e-3, type=float)
-# parser.add_argument('--eta', default=0.1, type=float)
-# parser.add_argument('--sup_epoch', default=100, type=int)
-# parser.add_argument('--n_epoch', default=300, type=int)
-# parser.add_argument('--n_examples', default=256, type=int)
-# parser.add_argument('--log_root', default='../log/', type=str)
-# args = parser.parse_args()
-# print(args)
-#
-# # process args
-# exp_name = args.exp_name
-# subj_id = args.subj_id
-# penalty = args.penalty
-# p_rm_ob_enc = args.p_rm_ob_enc
-# p_rm_ob_rcl = args.p_rm_ob_rcl
-# n_param = args.n_param
-# n_branch = args.n_branch
-# n_hidden = args.n_hidden
-# learning_rate = args.lr
-# eta = args.eta
-# n_examples = args.n_examples
-# n_epoch = args.n_epoch
-# supervised_epoch = args.sup_epoch
-# log_root = args.log_root
+parser = argparse.ArgumentParser()
+parser.add_argument('--exp_name', default='test', type=str)
+parser.add_argument('--subj_id', default=99, type=int)
+parser.add_argument('--penalty', default=4, type=int)
+parser.add_argument('--p_rm_ob_enc', default=0, type=float)
+parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
+parser.add_argument('--n_param', default=6, type=int)
+parser.add_argument('--n_branch', default=3, type=int)
+parser.add_argument('--n_hidden', default=64, type=int)
+parser.add_argument('--lr', default=1e-3, type=float)
+parser.add_argument('--eta', default=0.1, type=float)
+parser.add_argument('--sup_epoch', default=100, type=int)
+parser.add_argument('--n_epoch', default=300, type=int)
+parser.add_argument('--n_examples', default=256, type=int)
+parser.add_argument('--log_root', default='../log/', type=str)
+args = parser.parse_args()
+print(args)
 
-log_root = '../log/'
-exp_name = 'rm-only'
-subj_id = 2
-penalty = 2
-supervised_epoch = 100
-n_epoch = 300
-n_examples = 256
-n_param = 6
-n_branch = 2
-n_hidden = 64
-learning_rate = 1e-3
-eta = .1
-p_rm_ob_enc = 2/n_param
-p_rm_ob_rcl = 2/n_param
+# process args
+exp_name = args.exp_name
+subj_id = args.subj_id
+penalty = args.penalty
+p_rm_ob_enc = args.p_rm_ob_enc
+p_rm_ob_rcl = args.p_rm_ob_rcl
+n_param = args.n_param
+n_branch = args.n_branch
+n_hidden = args.n_hidden
+learning_rate = args.lr
+eta = args.eta
+n_examples = args.n_examples
+n_epoch = args.n_epoch
+supervised_epoch = args.sup_epoch
+log_root = args.log_root
+
+# log_root = '../log/'
+# exp_name = 'rm-only'
+# subj_id = 3
+# penalty = 2
+# supervised_epoch = 100
+# n_epoch = 300
+# n_examples = 256
+# n_param = 6
+# n_branch = 3
+# n_hidden = 64
+# learning_rate = 1e-3
+# eta = .1
+# p_rm_ob_enc = 2/n_param
+# p_rm_ob_rcl = 2/n_param
+n_mems = 2
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -101,7 +100,7 @@ task = SequenceLearning(
     p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim)
+agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=n_mems)
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
@@ -125,8 +124,6 @@ else:
     epoch_id = 0
 
 '''task definition'''
-
-
 log_freq = 10
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_actor = np.zeros(n_epoch,)
@@ -138,10 +135,7 @@ Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 
-
 cond = None
-learning = True
-
 # epoch_id, i, t = 0, 0, 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
@@ -149,13 +143,11 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     supervised = epoch_id < supervised_epoch
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        cond=cond, learning=learning
+        cond=cond, learning=True
     )
     [log_dist_a, Y, log_cache, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-
-    # log message
     # compute stats
     bm_ = compute_behav_metrics(Y, log_dist_a, p)
     Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
@@ -171,12 +163,10 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
         Log_loss_sup[epoch_id], runtime)
     print(msg)
-
     # update lr scheduler
     if not supervised:
         neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
         scheduler.step(neg_pol_score)
-
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
         save_ckpt(epoch_id+1, log_subpath['ckpts'], agent, optimizer)
@@ -254,7 +244,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 # ax.set_xlabel('Time')
 # ax.set_title('the critic can estimate the immediate reward')
 # sns.despine()
-
+#
 # i, t = 0, 0
 # inpt = torch.zeros((n_examples, task.T_total))
 # leak = torch.zeros((n_examples, task.T_total))
@@ -269,7 +259,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 #     for t in range(task.T_total):
 #         [vector_signal, scalar_signal, misc] = log_cache[i][t]
 #         [inpt[i, t], leak[i, t], comp[i, t]] = scalar_signal
-#         [h_t, m_t, cm_t, des_act_t] = misc
+#         [h_t, m_t, cm_t, des_act_t, V] = misc
 #         H[i, t, :] = to_sqnp(h_t)
 #         M[i, t, :] = to_sqnp(m_t)
 #         CM[i, t, :] = to_sqnp(cm_t)
@@ -282,7 +272,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 #
 # event_bonds = [p.env.tz.event_ends[0]+1]
 #
-# cond_name = 'DM'
+# cond_name = 'NM'
 # f, ax = plt.subplots(1, 1)
 # ax.plot(np.mean(inpt[cond_ids[cond_name], task.T_part:], axis=0), label='inpw')
 # ax.plot(np.mean(leak[cond_ids[cond_name], task.T_part:], axis=0), label='leak')
@@ -291,7 +281,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
 # ax.set_title(f'{cond_name}')
 # ax.legend()
 # sns.despine()
-#
+
 # '''t-RDM'''
 #
 #

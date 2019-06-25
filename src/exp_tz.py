@@ -20,21 +20,22 @@ def run_tz(
     log_cond = np.zeros(n_examples,)
     log_dist_a = np.zeros((n_examples, task.T_total, p.a_dim))
     log_cache = [[None] * task.T_total for _ in range(n_examples)]
-
     for i in range(n_examples):
         # pick a condition
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=cond)
         # init model wm and em
         hc_t = agent.get_init_states()
-        agent.init_em_config()
+        # agent.flush_episodic_memory()
+        agent.retrieval_off()
+        agent.encoding_off()
 
         # pg calculation cache
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
         for t in range(task.T_total):
             # whether to encode
-            # if not supervised:
-            set_encoding_flag(t, [p.env.tz.event_ends[0]], agent)
+            if not supervised:
+                set_encoding_flag(t, [p.env.tz.event_ends[0]], cond_i, agent)
             # forwardxw
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 X[i][t].view(1, 1, -1), hc_t)
@@ -51,10 +52,10 @@ def run_tz(
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
             loss_sup += F.mse_loss(yhat_t, Y[i][t])
-            # if not supervised:
-            # update WM/EM bsaed on the condition
-            hc_t = cond_manipulation(
-                cond_i, t, p.env.tz.event_ends[0], hc_t, agent)
+            if not supervised:
+                # update WM/EM bsaed on the condition
+                hc_t = cond_manipulation(
+                    cond_i, t, p.env.tz.event_ends[0], hc_t, agent)
 
         # compute RL loss
         returns = compute_returns(rewards)
@@ -77,6 +78,7 @@ def run_tz(
         log_loss_actor += loss_actor.item()/n_examples
         log_loss_critic += loss_critic.item()/n_examples
         log_cond[i] = p.env.tz.cond_dict.inverse[cond_i]
+
     # return cache
     results = [log_dist_a, Y, log_cache, log_cond]
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
@@ -98,8 +100,8 @@ def pick_condition(p, rm_only=True, fix_cond=None):
         return tz_cond
 
 
-def set_encoding_flag(t, enc_times, agent):
-    if t in enc_times:
+def set_encoding_flag(t, enc_times, cond, agent):
+    if t in enc_times and cond != 'NM':
         agent.encoding_on()
     else:
         agent.encoding_off()
@@ -111,22 +113,33 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     '''
     if t == event_bond:
         agent.retrieval_on()
-        if tz_cond == 'DM':
-            # RM: has EM, no WM
+        # flush WM unless RM
+        if tz_cond != 'RM':
             hc_t = agent.get_init_states()
-            agent.add_simple_lures(n_lures)
-        elif tz_cond == 'NM':
-            # RM: no WM, EM
-            hc_t = agent.get_init_states()
-            agent.flush_episodic_memory()
-            agent.add_simple_lures(n_lures+1)
-        elif tz_cond == 'RM':
-            # RM: has WM, EM
-            agent.add_simple_lures(n_lures)
-        else:
-            raise ValueError('unrecog tz condition')
     return hc_t
 
+
+# def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
+#     '''condition specific manipulation
+#     such as flushing, insert lure, etc.
+#     '''
+#     if t == event_bond:
+#         agent.retrieval_on()
+#         if tz_cond == 'DM':
+#             # RM: has EM, no WM
+#             hc_t = agent.get_init_states()
+#             agent.add_simple_lures(n_lures)
+#         elif tz_cond == 'NM':
+#             # RM: no WM, EM
+#             hc_t = agent.get_init_states()
+#             agent.flush_episodic_memory()
+#             agent.add_simple_lures(n_lures+1)
+#         elif tz_cond == 'RM':
+#             # RM: has WM, EM
+#             agent.add_simple_lures(n_lures)
+#         else:
+#             raise ValueError('unrecog tz condition')
+#     return hc_t
 
 # def append_prev_info(x_it_, a_prev, r_prev):
 #     a_prev = a_prev.type(torch.FloatTensor).view(1)

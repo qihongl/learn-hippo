@@ -78,28 +78,14 @@ class DND():
         assert self.kernel in ALL_KERNELS
         assert self.recall_func in ALL_POLICIES
 
-    def inject_memories(self, keys, vals):
-        """Inject pre-defined keys and values
-
-        Parameters
-        ----------
-        keys : list
-            a list of memory keys
-        vals : list
-            a list of memory content
-        """
-        assert len(keys) == len(vals)
-        for k, v in zip(keys, vals):
-            self._save_memory(k, v)
-            # remove the oldest memory, if overflow
-            if len(self.keys) > self.dict_len:
-                self.keys.pop(0)
-                self.vals.pop(0)
-
     def _save_memory(self, key, val):
         # get data is necessary for gradient reason
         self.keys.append(key.data.view(1, -1))
         self.vals.append(val.data.view(1, -1))
+        # remove the oldest memory, if overflow
+        if len(self.keys) > self.dict_len:
+            self.keys.pop(0)
+            self.vals.pop(0)
 
     def save_memory(self, key, val):
         """Save an episodic memory to the dictionary
@@ -115,10 +101,20 @@ class DND():
             return
         # add new memory to the the dictionary
         self._save_memory(key, val)
-        # remove the oldest memory, if overflow
-        if len(self.keys) > self.dict_len:
-            self.keys.pop(0)
-            self.vals.pop(0)
+
+    def inject_memories(self, keys, vals):
+        """Inject pre-defined keys and values
+
+        Parameters
+        ----------
+        keys : list
+            a list of memory keys
+        vals : list
+            a list of memory content
+        """
+        assert len(keys) == len(vals)
+        for k, v in zip(keys, vals):
+            self._save_memory(k, v)
 
     def get_memory(
             self, query_key,
