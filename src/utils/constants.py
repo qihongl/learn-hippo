@@ -1,4 +1,5 @@
 from bidict import bidict
+
 # LOG_ROOT = '../log/'
 # FIG_ROOT = '../fig/'
 ALL_SUBDIRS = ['ckpts', 'data', 'figs']
