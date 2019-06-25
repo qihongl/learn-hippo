@@ -107,7 +107,8 @@ def save_ckpt(
 
 
 def load_ckpt(
-    epoch_load, log_path, agent, optimizer,
+    epoch_load, log_path, agent,
+    optimizer=None,
     ckpt_template=CKPT_TEMPLATE
 ):
     # compute fname
@@ -117,6 +118,8 @@ def load_ckpt(
     checkpoint = torch.load(log_fpath)
     # unpack results
     agent.load_state_dict(checkpoint['network_state_dict'])
+    if optimizer is None:
+        optimizer = torch.optim.Adam(agent.parameters())
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     #
     agent.train()
