@@ -68,7 +68,10 @@ class RNR():
     def _class_config_validation(self):
         assert self.n_parts >= 3, 'n_parts >= 3'
 
-    def sample(self, n_sample=1, stack=False, to_torch=True):
+    def sample(
+            self, n_sample=1,
+            stack=False, to_torch=True, permute=False,
+    ):
         # compute batch size
         n_total = self.batch_size * n_sample
         # prealloc
@@ -78,8 +81,8 @@ class RNR():
         else:
             X = np.zeros((n_total, self.n_parts, self.T_part, self.x_dim))
             Y = np.zeros((n_total, self.n_parts, self.T_part, self.y_dim))
-        mem_id = np.zeros(n_total,)
-        cond_name = np.zeros(n_total,)
+        mem_id = np.zeros(n_total, dtype=int)
+        cond_id = np.zeros(n_total,)
         # sample data
         for i in range(n_sample):
             ii = np.arange(self.batch_size) + i * self.batch_size
@@ -89,13 +92,20 @@ class RNR():
             X[ii] = x_batch
             Y[ii] = y_batch
             mem_id[ii] = mem_id_batch
-            cond_name[ii] = cond_name
+            cond_id[ii] = cond_id_batch
+        # permute the data order
+        if permute:
+            permute_op = np.random.permutation(n_total)
+            X = X[permute_op]
+            Y = Y[permute_op]
+            mem_id = mem_id[permute_op]
+            cond_id = cond_id[permute_op]
         # to tensor
         if to_torch:
             X = to_pth(X)
             Y = to_pth(Y)
         # pack metadata
-        metadata = [mem_id, cond_name]
+        metadata = [mem_id, cond_id]
         return X, Y, metadata
 
     def _make_rnr_batch(self, stack=False):
@@ -122,18 +132,22 @@ class RNR():
 
         # 2. form a RNR trial
         x_batch, y_batch = [], []
-        rcl_mv_id_batch, cond_id_batch = [], []
+        cond_id_batch, rcl_mv_id_batch, mem_id_batch = [], [], []
         # for the same set of movies, create training data for all trial type
         for cond_id, cond_name in RNR_COND_DICT.items():
-            print(cond_id, cond_name)
+            # print(cond_id, cond_name)
             # get encoding movies
             for enc_mv_ids in combinations(range(self.n_parts), self.n_parts-1):
                 # compute the recall phase movie id depends on the condition
                 if cond_name == 'NR':
                     rcl_mv_id = list(
                         set(range(self.n_parts)).difference(enc_mv_ids))[0]
+                    # use -1 to represent no recall
+                    mem_id = -1
                 elif cond_name == 'R':
                     rcl_mv_id = np.random.choice(enc_mv_ids)
+                    # get the presentation id of that movie
+                    mem_id = enc_mv_ids.index(rcl_mv_id)
                 else:
                     raise ValueError(
                         f'Unrecognizable RNR condition: {cond_name}')
@@ -158,8 +172,9 @@ class RNR():
                 y_batch.append(y)
                 rcl_mv_id_batch.append(rcl_mv_id)
                 cond_id_batch.append(cond_id)
+                mem_id_batch.append(mem_id)
 
-        return x_batch, y_batch, rcl_mv_id_batch, cond_id_batch
+        return x_batch, y_batch, mem_id_batch, cond_id_batch
 
 
 # '''testing'''

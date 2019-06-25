@@ -26,12 +26,16 @@ task = RNR(
 # take sample
 stack = False
 n_sample = 1
-data_ = task.sample(n_sample, stack=stack, to_torch=False)
+data_ = task.sample(
+    n_sample,
+    stack=stack, to_torch=False, permute=True
+)
 [X, Y, [rcl_mv_id, cond_id]] = data_
-
+n_data = len(X)
 
 np.shape(X)
 i = 0
+# i = np.random.choice(n_data)
 x_i, y_i = X[i], Y[i]
 rcl_mv_id_i, cond_id_i = rcl_mv_id[i], cond_id[i]
 
