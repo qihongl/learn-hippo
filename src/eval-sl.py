@@ -162,7 +162,7 @@ for i in range(n_examples):
     for t in range(task.T_total):
         [vector_signal, scalar_signal, misc] = log_cache[i][t]
         [inpt[i, t], leak[i, t], comp[i, t]] = scalar_signal
-        [h_t, m_t, cm_t, des_act_t] = misc
+        [h_t, m_t, cm_t, des_act_t, V] = misc
         H[i, t, :] = to_sqnp(h_t)
         M[i, t, :] = to_sqnp(m_t)
         CM[i, t, :] = to_sqnp(cm_t)

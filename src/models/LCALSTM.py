@@ -123,7 +123,7 @@ class LCALSTM(nn.Module):
         # scache results
         scalar_signal = [inps_t, leak_t, comp_t]
         vector_signal = [f_t, i_t, o_t]
-        misc = [h_t, m_t, cm_t, decision_activity_t]
+        misc = [h_t, m_t, cm_t, decision_activity_t, self.dnd.vals]
         cache = [vector_signal, scalar_signal, misc]
         return action_dist_t, value_t, (h_t, cm_t), cache
 
