@@ -4,6 +4,7 @@ import torch.nn as nn
 
 from sklearn import metrics
 from itertools import product
+from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
 from models.DND import compute_similarities, transform_similarities
 
 
@@ -28,39 +29,90 @@ def compute_trsm(activation_tensor):
     return trsm_ / n_examples
 
 
-def _compute_evidence(
-    cell_states, memories, leak_, comp_, inpw_,
-    mrwt_func, kernel,
+def compute_cell_memory_similarity(
+        C, V, inpt, leak, comp,
+        kernel='cosine', recall_func='LCA'
 ):
-    event_len, n_hidden = cell_states.size()
-    evidence = np.zeros((event_len, len(memories)))
-    for t in range(event_len):
-        similarities_ = compute_similarities(
-            cell_states[t, :], memories, kernel
-        )
-        evidence[t, :] = transform_similarities(
-            similarities_, mrwt_func,
-            leak=leak_[t], comp=comp_[t],
-            w_input=inpw_[t],
-        ).numpy()
-    return evidence
+    n_examples, n_timepoints, n_dim = np.shape(C)
+    n_memories = len(V[0])
+    # prealloc
+    sim_raw = np.zeros((n_examples, n_timepoints, n_memories))
+    sim_lca = np.zeros((n_examples, n_timepoints, n_memories))
+    for i in range(n_examples):
+        # compute similarity
+        for t in range(n_timepoints):
+            # compute raw similarity
+            sim_raw[i, t, :] = to_np(compute_similarities(
+                to_pth(C[i, t]), V[i], kernel))
+            # compute LCA similarity
+            sim_lca[i, t, :] = transform_similarities(
+                to_pth(sim_raw[i, t, :]), recall_func,
+                leak=to_pth(leak[i, t]),
+                comp=to_pth(comp[i, t]),
+                w_input=to_pth(inpt[i, t])
+            )
+    return sim_raw, sim_lca
 
 
-def compute_evidence(
-    C_tp, K_tp, Inpw_tp, Leak_tp, Comp_tp,
-    mrwt_func, kernel
-):
-    n_mems = len(K_tp[0])
-    n_trials_ = len(C_tp)
-    event_len, n_hidden = C_tp[0].size()
-    evidences_abs = np.zeros((event_len, n_mems, n_trials_))
-    for i in range(n_trials_):
-        # calculate the kernel-based similatity for target vs. lure
-        evidences_abs[:, :, i] = _compute_evidence(
-            C_tp[i], K_tp[i], Leak_tp[i], Comp_tp[i], Inpw_tp[i],
-            mrwt_func, kernel
-        )
-    return evidences_abs
+def create_sim_dict(sim, cond_ids, n_targ=1):
+    """split data according to condition, and target vs. lures
+
+    Parameters
+    ----------
+    sim : np array
+        output of `compute_cell_memory_similarity`
+    cond_ids : dict
+        trial type info in the form of {cond_name: condition_id_array}
+    n_targ : int
+        number of target memories, assumed to "sit at the end"
+
+    Returns
+    -------
+    dict
+        similatity values
+
+    """
+    sim_dict_ = {cn: sim[cids] for cn, cids in cond_ids.items()}
+    sim_dict = {cn: {'targ': None, 'lure': None} for cn in cond_ids.keys()}
+    sim_dict['NM']['lure'] = sim_dict_['NM']
+    for cn in ['RM', 'DM']:
+        sim_dict[cn]['targ'] = np.atleast_3d(sim_dict_[cn][:, :, -n_targ:])
+        sim_dict[cn]['lure'] = np.atleast_3d(sim_dict_[cn][:, :, :-n_targ])
+    return sim_dict
+
+# def _compute_evidence(
+#     cell_states, memories, leak_, comp_, inpw_,
+#     mrwt_func, kernel,
+# ):
+#     event_len, n_hidden = cell_states.size()
+#     evidence = np.zeros((event_len, len(memories)))
+#     for t in range(event_len):
+#         similarities_ = compute_similarities(
+#             cell_states[t, :], memories, kernel
+#         )
+#         evidence[t, :] = transform_similarities(
+#             similarities_, mrwt_func,
+#             leak=leak_[t], comp=comp_[t],
+#             w_input=inpw_[t],
+#         ).numpy()
+#     return evidence
+#
+#
+# def compute_evidence(
+#     C_tp, K_tp, Inpw_tp, Leak_tp, Comp_tp,
+#     mrwt_func, kernel
+# ):
+#     n_mems = len(K_tp[0])
+#     n_trials_ = len(C_tp)
+#     event_len, n_hidden = C_tp[0].size()
+#     evidences_abs = np.zeros((event_len, n_mems, n_trials_))
+#     for i in range(n_trials_):
+#         # calculate the kernel-based similatity for target vs. lure
+#         evidences_abs[:, :, i] = _compute_evidence(
+#             C_tp[i], K_tp[i], Leak_tp[i], Comp_tp[i], Inpw_tp[i],
+#             mrwt_func, kernel
+#         )
+#     return evidences_abs
 
 
 def compute_roc(distrib_noise, distrib_signal):

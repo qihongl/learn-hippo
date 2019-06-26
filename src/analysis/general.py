@@ -42,3 +42,22 @@ def entropy(probs):
 
     """
     return - torch.stack([pi * torch.log2(pi) for pi in probs]).sum()
+
+
+def cosine_similarity(u, v):
+    """compute the cosine similarity of two vectors
+
+    Parameters
+    ----------
+    u : type
+        Description of parameter `u`.
+    v : type
+        Description of parameter `v`.
+
+    Returns
+    -------
+    scalar
+        cosine similarity
+
+    """
+    return u @ v / np.linalg.norm(u) / np.linalg.norm(v)
