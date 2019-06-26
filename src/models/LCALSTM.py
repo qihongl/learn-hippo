@@ -17,6 +17,9 @@ N_SSIG = 3
 # the ordering in the cache
 scalar_signal_names = ['input strength', 'leak', 'competition']
 vector_signal_names = ['f', 'i', 'o']
+#
+sigmoid = nn.Sigmoid()
+gain = 2
 
 
 class LCALSTM(nn.Module):
@@ -81,14 +84,14 @@ class LCALSTM(nn.Module):
             c_0_ = sample_random_vector(self.hidden_dim, scale)
         return (h_0_, c_0_)
 
-    def forward(self, x_t, hc, beta=1):
+    def forward(self, x_t, hc_prev, beta=1):
         # unpack activity
-        (h, c) = hc
-        h = h.view(h.size(1), -1)
-        c = c.view(c.size(1), -1)
+        (h_prev, c_prev) = hc_prev
+        h_prev = h_prev.view(h_prev.size(1), -1)
+        c_prev = c_prev.view(c_prev.size(1), -1)
         x_t = x_t.view(x_t.size(1), -1)
         # transform the input info
-        preact = self.i2h(x_t) + self.h2h(h)
+        preact = self.i2h(x_t) + self.h2h(h_prev)
         # get all gate values
         gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
         # split input(write) gate, forget gate, output(read) gate
@@ -96,13 +99,13 @@ class LCALSTM(nn.Module):
         o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
         i_t = gates[:, -self.hidden_dim:]
         # get kernel param
-        inps_t = preact[:, N_VSIG * self.hidden_dim+0].sigmoid()
-        leak_t = preact[:, N_VSIG * self.hidden_dim+1].sigmoid()
-        comp_t = preact[:, N_VSIG * self.hidden_dim+2].sigmoid()
+        inps_t = sigmoid(preact[:, N_VSIG * self.hidden_dim+0] * gain)
+        leak_t = sigmoid(preact[:, N_VSIG * self.hidden_dim+1] * gain)
+        comp_t = sigmoid(preact[:, N_VSIG * self.hidden_dim+2] * gain)
         # stuff to be written to cell state
         c_t_new = preact[:, N_VSIG * self.hidden_dim+N_SSIG:].tanh()
         # new cell state = gated(prev_c) + gated(new_stuff)
-        c_t = torch.mul(c, f_t) + torch.mul(i_t, c_t_new)
+        c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # recall
         m_t = self.recall(c_t, leak_t, comp_t, inps_t)
         cm_t = c_t + m_t
