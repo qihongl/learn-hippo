@@ -78,10 +78,10 @@ log_root = args.log_root
 # p_rm_ob_rcl = 2/n_param
 # n_mems = 2
 
+'''init'''
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
 
-'''init'''
 p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch,

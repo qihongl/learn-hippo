@@ -61,7 +61,6 @@ class LCALSTM(nn.Module):
         self.ssig_names = scalar_signal_names
         # init params
         initialize_weights(self, self.weight_init_scheme)
-        # self.init_weights(option=self.weight_init_scheme)
         if self.init_state_trainable:
             self.init_init_states()
 
@@ -97,13 +96,6 @@ class LCALSTM(nn.Module):
         o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
         i_t = gates[:, -self.hidden_dim:]
         # get kernel param
-        # print(preact)
-        # inps_t = torch.clamp(
-        #     preact[:, N_VSIG * self.hidden_dim+0], min=0, max=1)
-        # leak_t = torch.clamp(
-        #     preact[:, N_VSIG * self.hidden_dim+1], min=0, max=1)
-        # comp_t = torch.clamp(
-        #     preact[:, N_VSIG * self.hidden_dim+2], min=0, max=1)
         inps_t = preact[:, N_VSIG * self.hidden_dim+0].sigmoid()
         leak_t = preact[:, N_VSIG * self.hidden_dim+1].sigmoid()
         comp_t = preact[:, N_VSIG * self.hidden_dim+2].sigmoid()
@@ -167,11 +159,6 @@ class LCALSTM(nn.Module):
         if not self.dnd.encoding_off:
             self.dnd.save_memory(cm_t, cm_t)
 
-    def init_em_config(self):
-        self.flush_episodic_memory()
-        self.encoding_off()
-        self.retrieval_off()
-
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.
 
@@ -199,6 +186,11 @@ class LCALSTM(nn.Module):
             lure_i = sample_random_vector(self.hidden_dim)
             self.dnd.inject_memories([lure_i], [lure_i])
 
+    def init_em_config(self):
+        self.flush_episodic_memory()
+        self.encoding_off()
+        self.retrieval_off()
+
     def flush_episodic_memory(self):
         self.dnd.flush()
 
@@ -213,12 +205,6 @@ class LCALSTM(nn.Module):
 
     def retrieval_on(self):
         self.dnd.retrieval_off = False
-
-    def to_train_mode(self):
-        self.train()
-
-    def to_test_mode(self):
-        self.eval()
 
 
 def sample_random_vector(n_dim, scale=.1):
