@@ -2,6 +2,10 @@ log/
 figs/
 temp/
 
+*.sh
+
+*scratch*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
