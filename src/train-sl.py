@@ -37,7 +37,7 @@ parser.add_argument('--n_branch', default=3, type=int)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--lr', default=1e-3, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--n_mems', default=3, type=int)
+parser.add_argument('--n_mem', default=3, type=int)
 parser.add_argument('--sup_epoch', default=100, type=int)
 parser.add_argument('--n_epoch', default=300, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
@@ -56,7 +56,7 @@ n_branch = args.n_branch
 n_hidden = args.n_hidden
 learning_rate = args.lr
 eta = args.eta
-n_mems = args.n_mems
+n_mem = args.n_mem
 n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
@@ -76,7 +76,7 @@ log_root = args.log_root
 # eta = .1
 # p_rm_ob_enc = 2/n_param
 # p_rm_ob_rcl = 2/n_param
-# n_mems = 2
+# n_mem = 2
 
 '''init'''
 np.random.seed(subj_id)
@@ -88,21 +88,16 @@ p = P(
     penalty=penalty,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
-    n_hidden=n_hidden, lr=learning_rate, eta=eta
+    n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
-default_context_dim = n_param + n_branch
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
-    context_onehot=True,
-    append_context=True,
-    context_dim=default_context_dim,
-    n_rm_fixed=False,
-    p_rm_ob_enc=p_rm_ob_enc,
-    p_rm_ob_rcl=p_rm_ob_rcl,
+    context_onehot=True, append_context=True,
+    n_rm_fixed=False, p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=n_mems)
+agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
@@ -116,14 +111,14 @@ save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 
 # load model
-epoch_load = None
+# epoch_load = None
 # epoch_load = 300
-if epoch_load is not None:
-    agent, optimizer = load_ckpt(
-        epoch_load, log_subpath['ckpts'], agent, optimizer)
-    epoch_id = epoch_load-1
-else:
-    epoch_id = 0
+# if epoch_load is not None:
+#     agent, optimizer = load_ckpt(
+#         epoch_load, log_subpath['ckpts'], agent, optimizer)
+#     epoch_id = epoch_load-1
+# else:
+#     epoch_id = 0
 
 '''task definition'''
 log_freq = 10
@@ -138,6 +133,7 @@ Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 
 cond = None
+epoch_id = 0
 # epoch_id, i, t = 0, 0, 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()

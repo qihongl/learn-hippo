@@ -25,6 +25,7 @@ def build_log_path(
         p.env.p_rm_ob_rcl, p.env.p_rm_ob_enc)
     # net params
     enc_str = f'enc-{p.net.enc_mode}_size-{p.net.enc_size}'
+    enc_capc_str = f'nmem-{p.net.n_mem}'
     recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
     network_str = f'h-{p.net.n_hidden}'
     train_str = f'lr-{p.net.lr}-eta-{p.net.eta}'
@@ -34,12 +35,11 @@ def build_log_path(
     log_path = os.path.join(
         log_root,
         exp_str, graph_str, prob_str, obs_str, penalty_str,
-        enc_str, recall_str, network_str, train_str, curic_str,
+        enc_str, enc_capc_str, recall_str, network_str, train_str, curic_str,
         subj_str
     )
     log_subpath = {
-        subdir: os.path.join(log_path, subdir)
-        for subdir in ALL_SUBDIRS
+        subdir: os.path.join(log_path, subdir) for subdir in ALL_SUBDIRS
     }
     # add rnr subpaths
     if p.env.rnr.n_mvs is not None:
