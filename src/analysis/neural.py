@@ -162,9 +162,9 @@ def compute_auc_over_time(
 
     Parameters
     ----------
-    acts_l : 2d array, (T x ?)
+    acts_l : 2d array, (T x n_examples)
         the left distribution
-    acts_r : 2d array, (T x ?)
+    acts_r : 2d array, (T x n_examples)
         the right distribution
     n_bins : int
         histogram bin
@@ -186,6 +186,6 @@ def compute_auc_over_time(
         dist_l, _ = np.histogram(acts_l[t, :], bins=n_bins, range=histrange)
         dist_r, _ = np.histogram(acts_r[t, :], bins=n_bins, range=histrange)
         tprs[t], fprs[t] = compute_roc(dist_l, dist_r)
-    # compute area under roc cureves
+    # compute area under roc curves
     auc = [metrics.auc(fprs[t], tprs[t]) for t in range(event_len)]
     return tprs, fprs, auc
