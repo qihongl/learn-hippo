@@ -60,14 +60,13 @@ python -u train-rnr.py --exp_name testing --subj_id 0 \
 # log_root = args.log_root
 
 log_root = '../log/'
-exp_name = 'fulltz-afterrl-ohctx'
+exp_name = 'embedrnrtz'
 subj_id = 0
-penalty = 2
+penalty = 0
 supervised_epoch = 300
-epoch_load = 500
-n_epoch = 500
+epoch_load = 700
+# n_epoch = 500
 # n_examples = 256
-n_sample = 32
 n_param = 10
 n_branch = 3
 n_hidden = 128
@@ -89,8 +88,8 @@ p = P(
     n_hidden=n_hidden, lr=learning_rate, eta=eta
 )
 # init env
-# context_dim = n_param + n_branch
-context_dim = 10
+context_dim = n_param + n_branch
+# context_dim = 10
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
     context_onehot=True,
@@ -106,21 +105,22 @@ log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # load the agent back
 agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim)
 # load model
-agent, _ = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
-# reinit the agent
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
-    verbose=True
-)
+agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent, optimizer)
+# agent.eval()
+# reinit the agent
+# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+#     optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+#     verbose=True
+# )
 
 
 '''eval'''
 # training objective
-n_examples = 512
+n_examples = 256
 [results, metrics] = run_tz(
     agent, optimizer, task, p, n_examples,
-    supervised=False, learning=False
+    supervised=False, learning=True
 )
 [log_dist_a, Y, log_cache, log_cond] = results
 # [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
@@ -192,8 +192,8 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
     )
-    fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    # fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
+    # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''plot lca params'''
 # cond_name = 'RM'
@@ -223,7 +223,7 @@ f.tight_layout()
 
 '''t-RDM'''
 
-data = H
+data = C
 trsm = {}
 for cond_name in cond_ids.keys():
     if np.sum(cond_ids[cond_name]) == 0:
@@ -232,7 +232,7 @@ for cond_name in cond_ids.keys():
         data_cond_ = data[cond_ids[cond_name], :, :]
         trsm[cond_name] = compute_trsm(data_cond_)
 
-cond_name = 'RM'
+cond_name = 'DM'
 f, ax = plt.subplots(1, 1)
 sns.heatmap(
     trsm[cond_name], cmap='viridis', square=True,
