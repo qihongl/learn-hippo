@@ -98,15 +98,15 @@ class LCALSTM(nn.Module):
         i_t = gates[:, -self.hidden_dim:]
         # get kernel param
         # print(preact)
-        inps_t = torch.clamp(
-            preact[:, N_VSIG * self.hidden_dim+0], min=0, max=1)
-        leak_t = torch.clamp(
-            preact[:, N_VSIG * self.hidden_dim+1], min=0, max=1)
-        comp_t = torch.clamp(
-            preact[:, N_VSIG * self.hidden_dim+2], min=0, max=1)
-        # inps_t = preact[:, N_VSIG * self.hidden_dim+0].sigmoid()
-        # leak_t = preact[:, N_VSIG * self.hidden_dim+1].sigmoid()
-        # comp_t = preact[:, N_VSIG * self.hidden_dim+2].sigmoid()
+        # inps_t = torch.clamp(
+        #     preact[:, N_VSIG * self.hidden_dim+0], min=0, max=1)
+        # leak_t = torch.clamp(
+        #     preact[:, N_VSIG * self.hidden_dim+1], min=0, max=1)
+        # comp_t = torch.clamp(
+        #     preact[:, N_VSIG * self.hidden_dim+2], min=0, max=1)
+        inps_t = preact[:, N_VSIG * self.hidden_dim+0].sigmoid()
+        leak_t = preact[:, N_VSIG * self.hidden_dim+1].sigmoid()
+        comp_t = preact[:, N_VSIG * self.hidden_dim+2].sigmoid()
         # stuff to be written to cell state
         c_t_new = preact[:, N_VSIG * self.hidden_dim+N_SSIG:].tanh()
         # new cell state = gated(prev_c) + gated(new_stuff)
