@@ -37,6 +37,7 @@ parser.add_argument('--n_branch', default=3, type=int)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--lr', default=1e-3, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
+parser.add_argument('--n_mems', default=3, type=int)
 parser.add_argument('--sup_epoch', default=100, type=int)
 parser.add_argument('--n_epoch', default=300, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
@@ -55,14 +56,15 @@ n_branch = args.n_branch
 n_hidden = args.n_hidden
 learning_rate = args.lr
 eta = args.eta
+n_mems = args.n_mems
 n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
 # log_root = '../log/'
-# exp_name = 'rm-only'
-# subj_id = 3
+# exp_name = 'always-recall'
+# subj_id = 1
 # penalty = 2
 # supervised_epoch = 100
 # n_epoch = 300
@@ -74,7 +76,7 @@ log_root = args.log_root
 # eta = .1
 # p_rm_ob_enc = 2/n_param
 # p_rm_ob_rcl = 2/n_param
-n_mems = 2
+# n_mems = 2
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -89,12 +91,12 @@ p = P(
     n_hidden=n_hidden, lr=learning_rate, eta=eta
 )
 # init env
-context_dim = n_param + n_branch
+default_context_dim = n_param + n_branch
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
     context_onehot=True,
     append_context=True,
-    context_dim=context_dim,
+    context_dim=default_context_dim,
     n_rm_fixed=False,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
@@ -236,7 +238,7 @@ for cond_name_ in list(p.env.tz.cond_dict.values()):
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-
+# log_cache
 # f, ax = plt.subplots(1, 1, figsize=(7, 4))
 # ax.plot(to_sqnp(returns))
 # ax.plot(to_sqnp(torch.stack(values)))
