@@ -19,7 +19,7 @@ scalar_signal_names = ['input strength', 'leak', 'competition']
 vector_signal_names = ['f', 'i', 'o']
 #
 sigmoid = nn.Sigmoid()
-gain = 2
+gain = 1
 
 
 class LCALSTM(nn.Module):
@@ -31,7 +31,6 @@ class LCALSTM(nn.Module):
             weight_init_scheme='ortho',
             init_state_trainable=False,
             layernorm=False,
-            mode='train',
             a2c_linear=False,
             bias=True
     ):
