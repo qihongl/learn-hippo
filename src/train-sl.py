@@ -86,15 +86,13 @@ p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch,
     penalty=penalty,
-    p_rm_ob_enc=p_rm_ob_enc,
-    p_rm_ob_rcl=p_rm_ob_rcl,
+    p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
-    context_onehot=True, append_context=True,
-    n_rm_fixed=False, p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+    p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
 agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)

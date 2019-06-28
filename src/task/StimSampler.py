@@ -10,7 +10,8 @@ class StimSampler():
 
     def __init__(
             self,
-            n_param, n_branch,
+            n_param,
+            n_branch,
             key_rep_type='node',
             rm_kv=False,
             context_onehot=True,
@@ -241,17 +242,20 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
 # # plot
 # cmap = 'bone'
 # n_timesteps = n_param
-# width_ratios = [sampler.k_dim, sampler.v_dim]*2
+# width_ratios = [sampler.k_dim, sampler.v_dim]*2 + [sampler.c_dim]
 # f, axes = plt.subplots(
-#     n_parts, 4, figsize=(9, 4), sharey=True,
+#     n_parts, 5, figsize=(8, 5), sharey=True,
 #     gridspec_kw={'width_ratios': width_ratios}
 # )
 # for ip in range(n_parts):
 #     axes[ip, 0].imshow(o_keys_vec[ip], cmap=cmap)
 #     axes[ip, 1].imshow(o_vals_vec[ip], cmap=cmap)
-# for ip in range(n_parts):
 #     axes[ip, 2].imshow(q_keys_vec[ip], cmap=cmap)
 #     axes[ip, 3].imshow(q_vals_vec[ip], cmap=cmap)
+#
+# axes[0, 4].imshow(o_ctxs_vec, cmap=cmap)
+# axes[1, 4].imshow(q_ctxs_vec, cmap=cmap)
+#
 # # label
 # # axes[0, 0].set_title('Observation')
 # # axes[0, 2].set_title('Queries')
@@ -259,6 +263,7 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
 # axes[-1, 1].set_xlabel('Values/Action')
 # axes[-1, 2].set_xlabel('Keys/States')
 # axes[-1, 3].set_xlabel('Values/Action')
+# axes[-1, 4].set_xlabel('Context')
 # # modify y ticks/labels
 # for ip in range(n_parts):
 #     axes[ip, 0].set_yticks(range(n_timesteps))

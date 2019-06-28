@@ -44,7 +44,7 @@ def test_task_sequence_learning():
         time_ids = np.argmax(x[:T_part, :sl.k_dim], axis=1)
         sort_ids = np.argsort(time_ids)
         x_sorted = x[:T_part, :sl.k_dim][sort_ids]
-        y_sorted = x[:T_part, sl.k_dim:][sort_ids]
+        y_sorted = x[:T_part, sl.k_dim:sl.k_dim+sl.v_dim][sort_ids]
         assert np.all(x_sorted == np.eye(n_param))
         assert np.all(y_sorted == y[:T_part])
 

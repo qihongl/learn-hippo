@@ -16,6 +16,7 @@ n_rm_fixed = False
 key_rep_type = 'time'
 task = SequenceLearning(
     n_param, n_branch,
+    append_context=True,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
     n_rm_fixed=n_rm_fixed,
@@ -49,6 +50,7 @@ n_timesteps = n_param
 for ax in axes:
     ax.axhline(n_timesteps-.5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
+axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
 
 f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
           dpi=100, bbox_inches='tight')
