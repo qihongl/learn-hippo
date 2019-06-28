@@ -3,15 +3,18 @@ import torch.nn.functional as F
 from models.LCA_pytorch import LCA
 
 
-def lca_transform(similarities, leak=None, comp=None, w_input=None):
-    # these parameters ensure the LCA process is not to short
-    n_cycles = 10
-    # run LCA
+def lca_transform(
+        similarities,
+        leak=None, comp=None, w_input=None, n_cycles=10
+):
+    # construct input sequence
     stimuli = similarities.repeat(n_cycles, 1)
+    # init LCA
     lca = LCA(
         n_units=len(similarities),
         leak=leak, ltrl_inhib=comp, w_input=w_input,
     )
+    # run LCA
     lca_outputs = lca.run(stimuli)
     # take the final valuse
     lca_similarities = lca_outputs[-1, :]

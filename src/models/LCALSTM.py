@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 
 from models.EM import EM
-# from models.DND import DND
 from models.A2C import A2C
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
@@ -28,7 +27,7 @@ class LCALSTM(nn.Module):
     def __init__(
             self,
             input_dim, hidden_dim, output_dim,
-            recall_func='LCA', kernel='cosine', dict_len=100,
+            kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
             layernorm=False,
@@ -49,7 +48,6 @@ class LCALSTM(nn.Module):
         if layernorm:
             self.ln = nn.LayerNorm((1, hidden_dim))
         # memory
-        # self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
         self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
         self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
@@ -121,14 +119,14 @@ class LCALSTM(nn.Module):
         h_t = h_t.view(1, h_t.size(0), -1)
         cm_t = cm_t.view(1, cm_t.size(0), -1)
         # produce action distribution and value estimate
-        a2c_outputs_ = self.a2c.forward(h_t, beta=beta, return_h=True)
-        [action_dist_t, value_t, decision_activity_t] = a2c_outputs_
+        [pi_a_t, value_t, dec_act_t] = self.a2c.forward(
+            h_t, beta=beta, return_h=True)
         # scache results
         scalar_signal = [inps_t, leak_t, comp_t]
         vector_signal = [f_t, i_t, o_t]
-        misc = [h_t, m_t, cm_t, decision_activity_t, self.dnd.vals]
+        misc = [h_t, m_t, cm_t, dec_act_t, self.dnd.get_vals()]
         cache = [vector_signal, scalar_signal, misc]
-        return action_dist_t, value_t, (h_t, cm_t), cache
+        return pi_a_t, value_t, (h_t, cm_t), cache
 
     def recall(self, c_t, leak_t, comp_t, inps_t):
         """run the "pattern completion" procedure
@@ -183,15 +181,9 @@ class LCALSTM(nn.Module):
         log_prob_a_t = m.log_prob(a_t)
         return a_t, log_prob_a_t
 
-    def inject_memories(self, keys, vals):
-        # self.dnd.inject_memories(keys, vals)
-        self.dnd.inject_memories(vals)
-
     def add_simple_lures(self, n_lures=1):
-        for _ in range(n_lures):
-            lure_i = sample_random_vector(self.hidden_dim)
-            # self.dnd.inject_memories([lure_i], [lure_i])
-            self.dnd.inject_memories([lure_i])
+        lures = [sample_random_vector(self.hidden_dim) for _ in range(n_lures)]
+        self.dnd.inject_memories(lures)
 
     def init_em_config(self):
         self.flush_episodic_memory()

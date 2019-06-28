@@ -79,8 +79,8 @@ class DND():
 
     def _save_memory(self, key, val):
         # get data is necessary for gradient reason
-        self.keys.append(key.data.view(1, -1))
-        self.vals.append(val.data.view(1, -1))
+        self.keys.append(torch.squeeze(key.data))
+        self.vals.append(torch.squeeze(val.data))
         # remove the oldest memory, if overflow
         if len(self.keys) > self.dict_len:
             self.keys.pop(0)
@@ -165,7 +165,7 @@ class DND():
             similarities_, self.recall_func,
             leak=leak, comp=comp, w_input=w_input,
         ).view(1, -1)
-        memory_matrix = list2mat(self.vals)
+        memory_matrix = torch.stack(self.vals)
         retrieved_item = torch.mm(memory_wts, memory_matrix)
         return retrieved_item
 
@@ -219,7 +219,7 @@ def compute_similarities(
     # reshape query to 1 x key_dim
     q = query_key.data.view(1, -1)
     # reshape memory keys to #keys x key_dim
-    M = list2mat(key_list)
+    M = torch.stack(key_list)
     # compute similarities
     if metric == 'cosine':
         similarities = F.cosine_similarity(q, M)
@@ -243,20 +243,20 @@ def empty_memory(memory_dim):
     return torch.zeros(1, memory_dim).data
 
 
-def list2mat(list_of_vectors):
-    """convert a list of ROW vectors to a torch matrix
-
-    Parameters
-    ----------
-    list_of_vectors : list
-        a list of ROW vectors
-
-    Returns
-    -------
-    a torch matrix
-        Description of returned object.
-
-    """
-    n_vectors = len(list_of_vectors)
-    mat = torch.stack(list_of_vectors, dim=1).view(n_vectors, -1)
-    return mat
+# def list2mat(list_of_vectors):
+#     """convert a list of ROW vectors to a torch matrix
+#
+#     Parameters
+#     ----------
+#     list_of_vectors : list
+#         a list of ROW vectors
+#
+#     Returns
+#     -------
+#     a torch matrix
+#         Description of returned object.
+#
+#     """
+#     n_vectors = len(list_of_vectors)
+#     mat = torch.stack(list_of_vectors, dim=1).view(n_vectors, -1)
+#     return mat

@@ -5,43 +5,24 @@ notes:
 """
 import torch
 import torch.nn.functional as F
-from models.metrics import lca_transform
-
+from copy import deepcopy
+from models.LCA_pytorch import LCA
 
 # constants
 ALL_KERNELS = ['cosine', 'l1', 'l2', 'rbf']
-ALL_POLICIES = ['LCA', '1NN', 'all']
 
 
 class EM():
-    """episodic memory
+    """An episodic memory memchanism
 
     Parameters
     ----------
     size : int
-        the maximial len of the dictionary
+        the storage capacity
     dim : int
-        the dim or len of memory i, we assume memory_i is a row vector
+        the dim or len of an episodic memory i
     kernel : str
-        the metric for memory search
-    sigma : float
-        the parameter for the gaussian kernel
-
-    Attributes
-    ----------
-    encoding_off : bool
-        if True, stop forming memories
-    retrieval_off : type
-        if True, stop retrieving memories
-    reset_memory : func;
-        if called, clear the dictionary
-    _check_config : func
-        check the class config
-
-    size
-    kernel
-    dim
-    sigma
+        the metric for memory-cell_state similarity evaluation
 
     """
 
@@ -76,8 +57,8 @@ class EM():
 
         Parameters
         ----------
-        val : a row vector
-            a EM value, representing the memory content
+        val : torch.tensor
+            a memory
         """
         if self.encoding_off:
             return
@@ -89,7 +70,7 @@ class EM():
         Parameters
         ----------
         vals : list
-            a list of memory content
+            a list of memories
         """
         for v in vals:
             self._save_memory(v)
@@ -98,51 +79,55 @@ class EM():
             self, input_pattern,
             leak=None, comp=None, w_input=None
     ):
-        """Perform a 1-models search over EM
+        """given a cortical pattern, return an episodic memory
 
         Parameters
         ----------
-        input_pattern : a row vector
-            a EM key, used to for memory search
+        input_pattern : torch.tensor
+            a cortical pattern, served as a key for memory search
 
         Returns
         -------
-        a row vector
-            a EM value, representing the memory content
+        torch.tensor
+            a memory
         """
         # if no memory, return the zero vector
         if len(self.vals) == 0 or self.retrieval_off:
-            return empty_memory(self.dim)
-        return self._recall(
+            return dummy_memory(self.dim)
+        return self._get_memory(
             input_pattern, leak=leak, comp=comp, w_input=w_input
         )
 
     # @torch.no_grad()
-    def _recall(
+    def _get_memory(
             self, input_pattern,
             leak=None, comp=None, w_input=None
     ):
-        """get the episodic memory according to some policy
+        """get an episodic memory
 
         Parameters
         ----------
-        input_pattern :
+        input_pattern : torch.tensor
+            a cortical pattern, served as a key for memory search
 
         Returns
         -------
-        a row vector
-            a EM value, representing the memory content
+        torch.tensor
+            a memory
         """
         # compute similarity(query, memory_i ), for all i
-        similarities = compute_similarities(
+        w_raw = compute_similarities(
             input_pattern, self.vals, self.kernel
         )
         w = lca_transform(
-            similarities, leak=leak, comp=comp, w_input=w_input
+            w_raw, leak=leak, comp=comp, w_input=w_input
         ).view(1, -1)
         # compute the memory matrix
         M = torch.stack(self.vals)
         return w @ M
+
+    def get_vals(self):
+        return deepcopy(self.vals)
 
 
 """helpers"""
@@ -185,5 +170,23 @@ def compute_similarities(
 
 
 @torch.no_grad()
-def empty_memory(dim):
+def dummy_memory(dim):
     return torch.zeros(1, dim).data
+
+
+def lca_transform(
+        similarities,
+        leak=None, comp=None, w_input=None, n_cycles=10
+):
+    # construct input sequence
+    stimuli = similarities.repeat(n_cycles, 1)
+    # init LCA
+    lca = LCA(
+        n_units=len(similarities),
+        leak=leak, ltrl_inhib=comp, w_input=w_input,
+    )
+    # run LCA
+    lca_outputs = lca.run(stimuli)
+    # take the final valuse
+    lca_similarities = lca_outputs[-1, :]
+    return lca_similarities
