@@ -5,8 +5,7 @@ notes:
 """
 import torch
 import torch.nn.functional as F
-from models.utils import list2mat
-from models.metrics import rbf, lca_transform
+from models.metrics import lca_transform
 
 
 # constants
@@ -66,7 +65,8 @@ class EM():
         self.vals = []
 
     def _save_memory(self, val):
-        self.vals.append(val.data.view(1, -1))
+        # self.vals.append(val.data.view(1, -1))
+        self.vals.append(torch.squeeze(val.data))
         # remove the oldest memory, if overflow
         if len(self.vals) > self.size:
             self.vals.pop(0)
@@ -137,12 +137,12 @@ class EM():
         similarities = compute_similarities(
             input_pattern, self.vals, self.kernel
         )
-        memory_wts = lca_transform(
+        w = lca_transform(
             similarities, leak=leak, comp=comp, w_input=w_input
         ).view(1, -1)
-        memory_matrix = list2mat(self.vals)
-        retrieved_item = torch.mm(memory_wts, memory_matrix)
-        return retrieved_item
+        # compute the memory matrix
+        M = torch.stack(self.vals)
+        return w @ M
 
 
 """helpers"""
@@ -169,9 +169,9 @@ def compute_similarities(
         the similarity between query vs. key_i, for all i
     """
     # reshape query to 1 x key_dim
-    q = input_pattern.data.view(1, -1)
+    q = input_pattern.view(1, -1)
     # reshape memory keys to #keys x key_dim
-    M = list2mat(vals)
+    M = torch.stack(vals)
     # compute similarities
     if metric == 'cosine':
         similarities = F.cosine_similarity(q, M)

@@ -4,7 +4,6 @@ notes:
 """
 import torch
 import torch.nn.functional as F
-from models.utils import list2mat
 from models.metrics import rbf, lca_transform
 
 
@@ -242,3 +241,22 @@ def empty_memory(memory_dim):
     """Get a empty memory, assuming the memory is a row vector
     """
     return torch.zeros(1, memory_dim).data
+
+
+def list2mat(list_of_vectors):
+    """convert a list of ROW vectors to a torch matrix
+
+    Parameters
+    ----------
+    list_of_vectors : list
+        a list of ROW vectors
+
+    Returns
+    -------
+    a torch matrix
+        Description of returned object.
+
+    """
+    n_vectors = len(list_of_vectors)
+    mat = torch.stack(list_of_vectors, dim=1).view(n_vectors, -1)
+    return mat
