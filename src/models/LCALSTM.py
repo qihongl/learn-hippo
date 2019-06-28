@@ -4,7 +4,8 @@ LCA LSTM
 import torch
 import torch.nn as nn
 
-from models.DND import DND
+from models.EM import EM
+# from models.DND import DND
 from models.A2C import A2C
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
@@ -48,7 +49,8 @@ class LCALSTM(nn.Module):
         if layernorm:
             self.ln = nn.LayerNorm((1, hidden_dim))
         # memory
-        self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
+        # self.dnd = DND(dict_len, hidden_dim, kernel, recall_func)
+        self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
         self.a2c = A2C(hidden_dim, hidden_dim, output_dim)
         self.weight_init_scheme = weight_init_scheme
@@ -159,7 +161,8 @@ class LCALSTM(nn.Module):
 
     def encode(self, cm_t):
         if not self.dnd.encoding_off:
-            self.dnd.save_memory(cm_t, cm_t)
+            # self.dnd.save_memory(cm_t, cm_t)
+            self.dnd.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.
@@ -181,12 +184,14 @@ class LCALSTM(nn.Module):
         return a_t, log_prob_a_t
 
     def inject_memories(self, keys, vals):
-        self.dnd.inject_memories(keys, vals)
+        # self.dnd.inject_memories(keys, vals)
+        self.dnd.inject_memories(vals)
 
     def add_simple_lures(self, n_lures=1):
         for _ in range(n_lures):
             lure_i = sample_random_vector(self.hidden_dim)
-            self.dnd.inject_memories([lure_i], [lure_i])
+            # self.dnd.inject_memories([lure_i], [lure_i])
+            self.dnd.inject_memories([lure_i])
 
     def init_em_config(self):
         self.flush_episodic_memory()
