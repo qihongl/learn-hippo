@@ -159,7 +159,6 @@ class LCALSTM(nn.Module):
 
     def encode(self, cm_t):
         if not self.dnd.encoding_off:
-            # self.dnd.save_memory(cm_t, cm_t)
             self.dnd.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
