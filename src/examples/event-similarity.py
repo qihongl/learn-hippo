@@ -4,16 +4,13 @@ import matplotlib.pyplot as plt
 
 from task import SequenceLearning
 from analysis import compute_event_similarity_matrix
-
 from matplotlib.ticker import FormatStrFormatter
 sns.set(style='white', palette='colorblind', context='poster')
 
 '''study inter-event similarity as a function of n_branch, n_param'''
-
 n_param = 15
 n_branch = 4
-n_samples = 100
-
+n_samples = 101
 # init
 task = SequenceLearning(n_param, n_branch, n_parts=1)
 # sample
@@ -27,12 +24,17 @@ normalize = True
 similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 # plot the similarity matrix
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
-sns.heatmap(similarity_matrix, cmap='viridis', ax=ax)
+sns.heatmap(
+    similarity_matrix,
+    xticklabels=n_samples//2, yticklabels=n_samples//2,
+    cmap='viridis', ax=ax
+)
 ax.set_xlabel('event i')
 ax.set_ylabel('event j')
 ax.set_title('inter-event similarity')
 
-# analyze the lower triangular part
+
+'''plot the distribution (for the lower triangular part)'''
 similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
 bins = len(np.unique(similarity_matrix_tril))
 linewidth = 10
