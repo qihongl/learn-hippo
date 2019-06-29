@@ -60,7 +60,6 @@ class SequenceLearning():
         for i in range(n_samples):
             sample_i = self.stim_sampler.sample(
                 n_parts=self.n_parts,
-
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
