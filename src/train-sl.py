@@ -80,6 +80,7 @@ log_root = args.log_root
 # p_rm_ob_enc = 2/n_param
 # p_rm_ob_rcl = 2/n_param
 # n_mem = 2
+weight_decay = 1e-2
 
 '''init'''
 np.random.seed(subj_id)
@@ -99,7 +100,8 @@ task = SequenceLearning(
 )
 # init agent
 agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
-optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
+optimizer = torch.optim.Adam(
+    agent.parameters(), lr=p.net.lr, weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True

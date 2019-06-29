@@ -139,7 +139,12 @@ def _softmax(z, beta):
 
     """
     assert beta > 0
-    return F.softmax(torch.squeeze(z / beta), dim=0)
+    # softmax the input to a valid PMF
+    pi_a = F.softmax(torch.squeeze(z / beta), dim=0)
+    # make sure the output is valid
+    if torch.any(torch.isnan(pi_a)):
+        raise ValueError(f'Softmax produced nan: {z} -> {pi_a}')
+    return pi_a
 
 
 def _pick_action(action_distribution):
