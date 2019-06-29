@@ -1,6 +1,5 @@
 import numpy as np
 from task.Schema import Schema
-# import matplotlib.pyplot as plt
 
 
 class StimSampler():
@@ -12,7 +11,8 @@ class StimSampler():
             self,
             n_param,
             n_branch,
-            key_rep_type='node',
+            pad_len=0,
+            key_rep_type='time',
             rm_kv=False,
             context_onehot=True,
             context_dim=1,
@@ -22,6 +22,7 @@ class StimSampler():
     ):
         self.n_param = n_param
         self.n_branch = n_branch
+        self.pad_len = pad_len
         #
         self.context_onehot = context_onehot
         self.context_dim = context_dim
@@ -115,10 +116,16 @@ class StimSampler():
         # corrupt input during encoding
         o_keys_vec, o_vals_vec = self._corrupt_observations(
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
-        # pack sample
+        # context are assumed to repeat across the two phases
         o_ctxs_vec = q_ctxs_vec = ctxs_vec_
+        # pack sample
         o_sample_ = [o_keys_vec, o_vals_vec, o_ctxs_vec]
         q_sample_ = [q_keys_vec, q_vals_vec, q_ctxs_vec]
+        # padding, if there is a delay
+        if self.pad_len > 0:
+            o_sample_ = _delay_pred_demand(o_sample_, self.pad_len, side='bot')
+            q_sample_ = _delay_pred_demand(q_sample_, self.pad_len, side='top')
+        # pack sample
         sample_ = [o_sample_, q_sample_]
         return sample_
 
@@ -221,52 +228,104 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
     return matrices
 
 
-# '''test'''
-#
-# # init a graph
-# n_param, n_branch = 6, 2
-# n_parts = 2
-# p_rm_ob_enc, p_rm_ob_rcl = .25, 0
-# key_rep_type = 'time'
-# # key_rep_type = 'gaussian'
-# sampler = StimSampler(
-#     n_param, n_branch, key_rep_type=key_rep_type
-# )
-# sample_ = sampler.sample(
-#     n_parts, p_rm_ob_enc, p_rm_ob_rcl
-# )
-# observations, queries = sample_
-# [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations
-# [q_keys_vec, q_vals_vec, q_ctxs_vec] = queries
-#
-# # plot
-# cmap = 'bone'
-# n_timesteps = n_param
-# width_ratios = [sampler.k_dim, sampler.v_dim]*2 + [sampler.c_dim]
-# f, axes = plt.subplots(
-#     n_parts, 5, figsize=(8, 5), sharey=True,
-#     gridspec_kw={'width_ratios': width_ratios}
-# )
-# for ip in range(n_parts):
-#     axes[ip, 0].imshow(o_keys_vec[ip], cmap=cmap)
-#     axes[ip, 1].imshow(o_vals_vec[ip], cmap=cmap)
-#     axes[ip, 2].imshow(q_keys_vec[ip], cmap=cmap)
-#     axes[ip, 3].imshow(q_vals_vec[ip], cmap=cmap)
-#
-# axes[0, 4].imshow(o_ctxs_vec, cmap=cmap)
-# axes[1, 4].imshow(q_ctxs_vec, cmap=cmap)
-#
-# # label
-# # axes[0, 0].set_title('Observation')
-# # axes[0, 2].set_title('Queries')
-# axes[-1, 0].set_xlabel('Keys/States')
-# axes[-1, 1].set_xlabel('Values/Action')
-# axes[-1, 2].set_xlabel('Keys/States')
-# axes[-1, 3].set_xlabel('Values/Action')
-# axes[-1, 4].set_xlabel('Context')
-# # modify y ticks/labels
-# for ip in range(n_parts):
-#     axes[ip, 0].set_yticks(range(n_timesteps))
-#     axes[ip, 0].set_yticklabels(range(n_timesteps))
-#     axes[ip, 0].set_ylabel(f'Time, part {ip+1}')
-# f.tight_layout()
+def _delay_pred_demand(kvc: list, pad_len: int, side: str):
+    """delay the prediction demand by shifting the query value to later time
+    points
+
+    Parameters
+    ----------
+    kvc : list
+        Description of parameter `kvc`.
+    pad_len : int
+        Description of parameter `pad_len`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    # unpack data
+    keys_vec, vals_vec, ctxs_vec = kvc
+    n_parts, n_params, k_dim = np.shape(keys_vec)
+    _, _, v_dim = np.shape(vals_vec)
+    _, c_dim = np.shape(ctxs_vec)
+    # pad to delay prediction time
+    keys_vec = [_vpad(k_mat, pad_len, side=side) for k_mat in keys_vec]
+    vals_vec = [_vpad(v_mat, pad_len, side=side) for v_mat in vals_vec]
+    # TODO here i assumed context is always in sync with the queries
+    # but probably want to generate additional context for the padding period
+    ctxs_vec = _vpad(ctxs_vec, pad_len, side='top')
+    # pack the data
+    kvc_ = [keys_vec, vals_vec, ctxs_vec]
+    return kvc_
+
+
+def _vpad(matrix, pad_len: int, side: str):
+    '''vertically pad zeros from the top or bot'''
+    #
+    n_rows, n_cols = np.shape(matrix)
+    zero_padding = np.zeros((pad_len, n_cols))
+    if side == 'top':
+        padded_matrix = np.vstack([zero_padding, matrix])
+    elif side == 'bot':
+        padded_matrix = np.vstack([matrix, zero_padding])
+    else:
+        raise ValueError('Unrecognizable padding side')
+    return padded_matrix
+
+
+'''test'''
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    # init a graph
+    n_param, n_branch = 6, 2
+    n_parts = 2
+    pad_len = 2
+    p_rm_ob_enc, p_rm_ob_rcl = 0, 0
+    key_rep_type = 'time'
+    # key_rep_type = 'gaussian'
+    sampler = StimSampler(
+        n_param, n_branch,
+        pad_len=pad_len,
+        key_rep_type=key_rep_type
+    )
+    sample_ = sampler.sample(
+        n_parts, p_rm_ob_enc, p_rm_ob_rcl
+    )
+    observations, queries = sample_
+    [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations
+    [q_keys_vec, q_vals_vec, q_ctxs_vec] = queries
+
+    # plot
+    cmap = 'bone'
+    n_timesteps = n_param
+    width_ratios = [sampler.k_dim, sampler.v_dim]*2 + [sampler.c_dim]
+    f, axes = plt.subplots(
+        n_parts, 5, figsize=(8, 5), sharey=True,
+        gridspec_kw={'width_ratios': width_ratios}
+    )
+    for ip in range(n_parts):
+        axes[ip, 0].imshow(o_keys_vec[ip], cmap=cmap)
+        axes[ip, 1].imshow(o_vals_vec[ip], cmap=cmap)
+        axes[ip, 2].imshow(q_keys_vec[ip], cmap=cmap)
+        axes[ip, 3].imshow(q_vals_vec[ip], cmap=cmap)
+
+    axes[0, 4].imshow(o_ctxs_vec, cmap=cmap)
+    axes[1, 4].imshow(q_ctxs_vec, cmap=cmap)
+
+    # label
+    axes[0, 0].set_title('Observation')
+    axes[0, 2].set_title('Queries')
+    axes[-1, 0].set_xlabel('Keys/States')
+    axes[-1, 1].set_xlabel('Values/Action')
+    axes[-1, 2].set_xlabel('Keys/States')
+    axes[-1, 3].set_xlabel('Values/Action')
+    axes[0, 4].set_title('o, Context')
+    axes[1, 4].set_title('q, Context')
+    # modify y ticks/labels
+    for ip in range(n_parts):
+        axes[ip, 0].set_yticks(range(n_timesteps))
+        axes[ip, 0].set_yticklabels(range(n_timesteps))
+        axes[ip, 0].set_ylabel(f'Time, part {ip+1}')
+    f.tight_layout()

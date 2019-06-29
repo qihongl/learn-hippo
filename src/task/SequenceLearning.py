@@ -27,6 +27,7 @@ class SequenceLearning():
         # build a sampler
         self.stim_sampler = StimSampler(
             n_param, n_branch,
+            pad_len=pad_len,
             key_rep_type=key_rep_type,
             n_rm_fixed=n_rm_fixed,
             sampling_mode=sampling_mode,
@@ -42,7 +43,7 @@ class SequenceLearning():
         # whether to permute queries
         self.permute_queries = permute_queries
         # task duration
-        self.T_part = n_param
+        self.T_part = n_param + pad_len
         self.n_parts = n_parts
         self.T_total = self.T_part * n_parts
         # task dimension
@@ -59,6 +60,7 @@ class SequenceLearning():
         for i in range(n_samples):
             sample_i = self.stim_sampler.sample(
                 n_parts=self.n_parts,
+
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
@@ -117,27 +119,23 @@ if __name__ == "__main__":
     n_param, n_branch = 6, 2
     n_parts = 2
     n_samples = 5
+    pad_len = 3
     permute_queries = False
     task = SequenceLearning(
         n_param, n_branch,
+        pad_len=pad_len,
         permute_queries=permute_queries
     )
+
     # gen samples
     X, Y = task.sample(n_samples)
     i = 0
     x, y = X[i], Y[i]
 
-    # test
-    T_part = n_param
-    time_ids = np.argmax(x[:T_part, :task.k_dim], axis=1)
-    sort_ids = np.argsort(time_ids)
-    x_sorted = x[:T_part, :task.k_dim][sort_ids]
-    y_sorted = x[:T_part, task.k_dim:][sort_ids]
-
     # plot
     cmap = 'bone'
     f, axes = plt.subplots(
-        1, 2, figsize=(6, 4),
+        1, 2, figsize=(6, 6),
         gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
     )
     axes[0].imshow(x, cmap=cmap, vmin=0, vmax=1)
@@ -145,6 +143,6 @@ if __name__ == "__main__":
     print(x)
 
     for ax in axes:
-        ax.axhline(n_param-.5, color='red', linestyle='--')
+        ax.axhline(task.T_part-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')

@@ -29,11 +29,12 @@ python -u train-tz.py --exp_name testing --subj_id 0 \
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', default='test', type=str)
 parser.add_argument('--subj_id', default=99, type=int)
+parser.add_argument('--n_param', default=6, type=int)
+parser.add_argument('--n_branch', default=3, type=int)
+parser.add_argument('--pad_len', default=0, type=int)
 parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
-parser.add_argument('--n_param', default=6, type=int)
-parser.add_argument('--n_branch', default=3, type=int)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--lr', default=1e-3, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
@@ -48,11 +49,12 @@ print(args)
 # process args
 exp_name = args.exp_name
 subj_id = args.subj_id
+n_param = args.n_param
+n_branch = args.n_branch
+pad_len = args.pad_len
 penalty = args.penalty
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
-n_param = args.n_param
-n_branch = args.n_branch
 n_hidden = args.n_hidden
 learning_rate = args.lr
 eta = args.eta
@@ -71,6 +73,7 @@ log_root = args.log_root
 # n_examples = 256
 # n_param = 6
 # n_branch = 3
+# pad_len = 1
 # n_hidden = 64
 # learning_rate = 1e-3
 # eta = .1
@@ -84,14 +87,14 @@ torch.manual_seed(subj_id)
 
 p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
-    n_param=n_param, n_branch=n_branch,
+    n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     penalty=penalty,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
 task = SequenceLearning(
-    p.env.n_param, p.env.n_branch,
+    n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent

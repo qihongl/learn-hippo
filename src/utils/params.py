@@ -11,6 +11,7 @@ class P():
         exp_name='rnr',
         n_param=10,
         n_branch=3,
+        pad_len=0,
         def_path=None,
         def_prob=None,
         penalty=1,
@@ -46,7 +47,7 @@ class P():
         self.dk_id = self.a_dim-1
         # init param classes
         self.env = env(
-            exp_name, n_param, n_branch,
+            exp_name, n_param, n_branch, pad_len,
             def_path, def_prob, penalty,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -71,7 +72,7 @@ class env():
     def __init__(
             self,
             exp_name,
-            n_param, n_branch,
+            n_param, n_branch, pad_len,
             def_path, def_prob,
             penalty,
             rm_ob_probabilistic,
@@ -83,6 +84,7 @@ class env():
         self.exp_name = exp_name
         self.n_param = n_param
         self.n_branch = n_branch
+        self.pad_len = pad_len
         self.T_part = n_param
         self.rm_ob_probabilistic = rm_ob_probabilistic
         self.p_rm_ob_rcl = p_rm_ob_rcl

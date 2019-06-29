@@ -19,6 +19,8 @@ def build_log_path(
     # create dir names
     exp_str = f'exp-{p.env.exp_name}'
     graph_str = f'p-{p.env.n_param}_b-{p.env.n_branch}'
+    if p.env.pad_len > 0:
+        graph_str += f'_pad-{p.env.pad_len}'
     prob_str = 'tp-%.2f' % (p.env.def_prob)
     penalty_str = f'lp-{p.env.penalty}'
     obs_str = 'p_rm_ob_rcl-%.2f_enc-%.2f' % (
