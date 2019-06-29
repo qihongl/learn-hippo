@@ -27,6 +27,7 @@ def run_tz(
         hc_t = agent.get_init_states()
         # agent.flush_episodic_memory()
         agent.retrieval_off()
+        # agent.retrieval_on()
         agent.encoding_off()
 
         # pg calculation cache
@@ -42,16 +43,17 @@ def run_tz(
             a_t, p_a_t = agent.pick_action(pi_a_t)
             r_t = get_reward(a_t, Y[i][t], p.env.penalty)
             # cache the results for later RL loss computation
-            probs.append(p_a_t)
-            rewards.append(r_t)
-            values.append(v_t)
-            ents.append(entropy(pi_a_t))
+            if t >= task.pad_len:
+                probs.append(p_a_t)
+                rewards.append(r_t)
+                values.append(v_t)
+                ents.append(entropy(pi_a_t))
+                # compute supervised loss
+                yhat_t = torch.squeeze(pi_a_t)[:-1]
+                loss_sup += F.mse_loss(yhat_t, Y[i][t])
             # cache results for later analysis
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
             log_cache[i][t] = cache_t
-            # compute supervised loss
-            yhat_t = torch.squeeze(pi_a_t)[:-1]
-            loss_sup += F.mse_loss(yhat_t, Y[i][t])
             if not supervised:
                 # update WM/EM bsaed on the condition
                 hc_t = cond_manipulation(
@@ -69,6 +71,7 @@ def run_tz(
                 loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
+            # torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
             optimizer.step()
 
         # after every event sequence, log stuff
