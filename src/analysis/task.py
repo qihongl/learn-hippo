@@ -1,8 +1,45 @@
 import numpy as np
+from itertools import product
+
+
+def compute_event_similarity_matrix(Y, normalize=False):
+    """compute the inter-event similarity matrix of a batch of data
+
+    e.g.
+    task = SequenceLearning(n_param, n_branch, n_parts=1)
+    X, Y = task.sample(n_samples)
+    similarity_matrix = compute_event_similarity_matrix(Y, normalize=False)
+
+    Parameters
+    ----------
+    Y : 3d array (n_examples, _, _)
+        the target values
+    normalize : bool
+        whether to normalize by vector dim
+
+    Returns
+    -------
+    2d array (n_examples, n_examples)
+        the inter-event similarity matrix
+
+    """
+    assert len(np.shape(Y)) == 3
+    n_samples = np.shape(Y)[0]
+    similarity_matrix = np.zeros((n_samples, n_samples))
+    for i, j in product(range(n_samples), range(n_samples)):
+        event_i = np.argmax(Y[i], axis=-1)
+        event_j = np.argmax(Y[j], axis=-1)
+        similarity_matrix[i, j] = compute_event_similarity(
+            event_i, event_j, normalize=normalize)
+    return similarity_matrix
 
 
 def compute_event_similarity(event_i, event_j, normalize=True):
     """compute the #shared elements for two arrays
+    e.g.
+    event_i = np.argmax(q_vals_vec[i], axis=-1)
+    event_j = np.argmax(q_vals_vec[j], axis=-1)
+    sim_ij = compute_event_similarity(event_i, event_j, normalize=True)
 
     Parameters
     ----------
