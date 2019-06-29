@@ -13,7 +13,6 @@ def run_tz(
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
-
     # logger
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
@@ -37,13 +36,14 @@ def run_tz(
             # whether to encode
             if not supervised:
                 set_encoding_flag(t, [p.env.tz.event_ends[0]], cond_i, agent)
-            # forwardxw
+            # forward
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 X[i][t].view(1, 1, -1), hc_t)
-            a_t, p_a_t = agent.pick_action(pi_a_t)
-            r_t = get_reward(a_t, Y[i][t], p.env.penalty)
-            # cache the results for later RL loss computation
+
             if t >= task.pad_len:
+                a_t, p_a_t = agent.pick_action(pi_a_t)
+                r_t = get_reward(a_t, Y[i][t], p.env.penalty)
+                # cache the results for later RL loss computation
                 probs.append(p_a_t)
                 rewards.append(r_t)
                 values.append(v_t)
@@ -51,9 +51,11 @@ def run_tz(
                 # compute supervised loss
                 yhat_t = torch.squeeze(pi_a_t)[:-1]
                 loss_sup += F.mse_loss(yhat_t, Y[i][t])
+
             # cache results for later analysis
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
             log_cache[i][t] = cache_t
+
             if not supervised:
                 # update WM/EM bsaed on the condition
                 hc_t = cond_manipulation(
