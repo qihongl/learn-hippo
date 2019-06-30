@@ -5,9 +5,15 @@ from task import SequenceLearning
 sns.set(style='white', palette='colorblind', context='talk')
 # np.random.seed(2)
 
+task.pad_len, task.T_part
+for t in range(task.T_total):
+    print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)
+
+
 '''how to use'''
 # init
-n_param, n_branch = 3, 2
+n_param, n_branch = 5, 3
+pad_len = 3
 n_parts = 2
 n_samples = 5
 p_rm_ob_enc = 0
@@ -15,8 +21,8 @@ p_rm_ob_rcl = 0
 n_rm_fixed = False
 key_rep_type = 'time'
 task = SequenceLearning(
-    n_param, n_branch,
-    append_context=True,
+    n_param, n_branch, pad_len=pad_len,
+    # append_context=True,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
     n_rm_fixed=n_rm_fixed,

@@ -40,7 +40,8 @@ def run_tz(
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 X[i][t].view(1, 1, -1), hc_t)
 
-            if t >= task.pad_len:
+            # after delay period, compute loss
+            if np.mod(t, task.T_part) >= task.pad_len:
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 r_t = get_reward(a_t, Y[i][t], p.env.penalty)
                 # cache the results for later RL loss computation
