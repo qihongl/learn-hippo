@@ -119,8 +119,7 @@ class LCALSTM(nn.Module):
         h_t = h_t.view(1, h_t.size(0), -1)
         cm_t = cm_t.view(1, cm_t.size(0), -1)
         # produce action distribution and value estimate
-        [pi_a_t, value_t, dec_act_t] = self.a2c.forward(
-            h_t, beta=beta, return_h=True)
+        [pi_a_t, value_t, dec_act_t] = self.a2c.forward(h_t, return_h=True)
         # scache results
         scalar_signal = [inps_t, leak_t, comp_t]
         vector_signal = [f_t, i_t, o_t]
