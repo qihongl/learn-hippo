@@ -5,10 +5,6 @@ from task import SequenceLearning
 sns.set(style='white', palette='colorblind', context='talk')
 # np.random.seed(2)
 
-task.pad_len, task.T_part
-for t in range(task.T_total):
-    print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)
-
 
 '''how to use'''
 # init
@@ -52,9 +48,8 @@ axes[1].set_xlabel('val')
 
 axes[0].set_ylabel('Time')
 
-n_timesteps = n_param
 for ax in axes:
-    ax.axhline(n_timesteps-.5, color='red', linestyle='--')
+    ax.axhline(task.T_part-.5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
 
@@ -83,3 +78,8 @@ f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
 # # pick a time point
 # t = 0
 # np.array([get_know_label(t, x, y) for t in range(n_param)]).T
+
+#
+# task.pad_len, task.T_part
+# for t in range(task.T_total):
+#     print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)

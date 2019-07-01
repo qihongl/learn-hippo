@@ -5,11 +5,18 @@ from task import SequenceLearning
 sns.set(style='white', palette='colorblind', context='poster')
 
 '''study inter-event similarity as a function of n_branch, n_param'''
-n_param = 15
+n_param = 10
 n_branch = 4
 n_samples = 500
 # init
-task = SequenceLearning(n_param, n_branch, n_parts=1)
+def_path = np.ones(n_param,)
+def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
+def_prob = .5
+task = SequenceLearning(
+    n_param, n_branch, n_parts=1,
+    # def_path=def_path,
+    # def_prob=def_prob,
+)
 # sample
 X, Y = task.sample(n_samples)
 # unpack
@@ -26,13 +33,13 @@ for t in range(task.T_total):
     p_s_next[t, :] = counts / n_samples
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(5, 9))
+f, ax = plt.subplots(1, 1, figsize=(6, 10))
 sns.heatmap(
     p_s_next,
-    vmin=0, vmax=1,
+    vmin=0, vmax=1, annot=True,
     cmap='Blues', ax=ax
 )
 ax.set_title('P(s next = i)')
 ax.set_ylabel('Time')
 ax.set_xlabel('Next state')
-f.tight_layout
+# f.tight_layout

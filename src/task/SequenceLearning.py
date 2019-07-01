@@ -2,7 +2,6 @@ import numpy as np
 from utils.utils import to_pth
 from task.utils import get_event_ends
 from task.StimSampler import StimSampler
-# import matplotlib.pyplot as plt
 
 
 class SequenceLearning():
@@ -18,6 +17,8 @@ class SequenceLearning():
             n_branch,
             pad_len=0,
             n_parts=2,
+            def_path=None,
+            def_prob=None,
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             n_rm_fixed=False,
@@ -27,8 +28,11 @@ class SequenceLearning():
     ):
         # build a sampler
         self.stim_sampler = StimSampler(
-            n_param, n_branch,
+            n_param=n_param,
+            n_branch=n_branch,
             pad_len=pad_len,
+            def_path=def_path,
+            def_prob=def_prob,
             key_rep_type=key_rep_type,
             n_rm_fixed=n_rm_fixed,
             sampling_mode=sampling_mode,
