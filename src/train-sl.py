@@ -137,16 +137,15 @@ Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 
-cond = None
-epoch_id = 0
 # epoch_id, i, t = 0, 0, 0
+epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     # training objective
     supervised = epoch_id < supervised_epoch
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        cond=cond, learning=True
+        cond=None, learning=True
     )
     [log_dist_a, Y, log_cache, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],

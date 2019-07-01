@@ -24,9 +24,7 @@ def run_tz(
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=cond)
         # init model wm and em
         hc_t = agent.get_init_states()
-        # agent.flush_episodic_memory()
         agent.retrieval_off()
-        # agent.retrieval_on()
         agent.encoding_off()
 
         # pg calculation cache
