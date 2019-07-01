@@ -98,8 +98,10 @@ task = SequenceLearning(
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
+# input_dim = task.x_dim
+input_dim = task.x_dim+2
 agent = Agent(
-    task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem
+    input_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem
 )
 optimizer = torch.optim.Adam(
     agent.parameters(), lr=p.net.lr, weight_decay=0

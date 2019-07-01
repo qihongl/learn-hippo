@@ -26,7 +26,9 @@ def run_tz(
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
-
+        # init a0,r0
+        a_t = torch.tensor(p.dk_id)
+        r_t = torch.tensor(0)
         # pg calculation cache
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
@@ -35,8 +37,10 @@ def run_tz(
             if not supervised:
                 set_encoding_flag(t, [task.event_ends[0]], cond_i, agent)
             # forward
+            x_it = append_prev_info(X[i][t], a_t, r_t)
+            # x_it = X[i][t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
-                X[i][t].view(1, 1, -1), hc_t)
+                x_it.view(1, 1, -1), hc_t)
 
             # after delay period, compute loss
             if np.mod(t, task.T_part) >= task.pad_len:
@@ -50,6 +54,9 @@ def run_tz(
                 # compute supervised loss
                 yhat_t = torch.squeeze(pi_a_t)[:-1]
                 loss_sup += F.mse_loss(yhat_t, Y[i][t])
+            else:
+                a_t = torch.tensor(p.dk_id)
+                r_t = torch.tensor(0)
 
             # cache results for later analysis
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
@@ -91,16 +98,22 @@ def run_tz(
     return out
 
 
+def append_prev_info(x_it_, a_prev, r_prev):
+    a_prev = a_prev.type(torch.FloatTensor).view(1)
+    r_prev = r_prev.type(torch.FloatTensor).view(1)
+    x_it = torch.cat([x_it_, a_prev, r_prev])
+    return x_it
+
+
 def pick_condition(p, rm_only=True, fix_cond=None):
     all_tz_conditions = list(p.env.tz.cond_dict.values())
-    p_condition = p.env.tz.p_cond
     if fix_cond is not None:
         return fix_cond
     else:
         if rm_only:
             tz_cond = 'RM'
         else:
-            tz_cond = np.random.choice(all_tz_conditions, p=p_condition)
+            tz_cond = np.random.choice(all_tz_conditions, p=p.env.tz.p_cond)
         return tz_cond
 
 
@@ -144,10 +157,3 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
 #         else:
 #             raise ValueError('unrecog tz condition')
 #     return hc_t
-
-# def append_prev_info(x_it_, a_prev, r_prev):
-#     a_prev = a_prev.type(torch.FloatTensor).view(1)
-#     r_prev = r_prev.type(torch.FloatTensor).view(1)
-#     # y_prev = y_prev.type(torch.FloatTensor)
-#     x_it = torch.cat([x_it_, a_prev, r_prev])
-#     return x_it
