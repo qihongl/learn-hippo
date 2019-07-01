@@ -1,5 +1,6 @@
 import numpy as np
 from utils.utils import to_pth
+from task.utils import get_event_ends
 from task.StimSampler import StimSampler
 # import matplotlib.pyplot as plt
 
@@ -46,6 +47,9 @@ class SequenceLearning():
         self.T_part = n_param + pad_len
         self.n_parts = n_parts
         self.T_total = self.T_part * n_parts
+        # self.event_bond = np.arange(self.T_part, self.T_total, self.T_part)
+        self.event_ends = get_event_ends(self.T_part, self.n_parts)
+        self.event_bond = self.event_ends[0]+1
         # task dimension
         self.k_dim = self.stim_sampler.k_dim
         self.v_dim = self.stim_sampler.v_dim
@@ -139,9 +143,10 @@ if __name__ == "__main__":
     )
     axes[0].imshow(x, cmap=cmap, vmin=0, vmax=1)
     axes[1].imshow(y, cmap=cmap, vmin=0, vmax=1)
-    print(x)
+    # print(task.event_ends)
+    # print(task.event_bond)
 
     for ax in axes:
-        ax.axhline(task.T_part-.5, color='red', linestyle='--')
+        ax.axhline(task.event_bond-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')

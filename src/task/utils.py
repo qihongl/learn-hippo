@@ -1,6 +1,28 @@
 import numpy as np
 
 
+def get_event_ends(T_part, n_repeats):
+    """get the end points for a event sequence, with lenth T, and k repeats
+    - event ends need to be removed for prediction accuracy calculation, since
+    there is nothing to predict there
+    - event boundaries are defined by these values
+
+    Parameters
+    ----------
+    T_part : int
+        the length of an event sequence (one repeat)
+    n_repeats : int
+        number of repeats
+
+    Returns
+    -------
+    1d np.array
+        the end points of event seqs
+
+    """
+    return [T_part * (k+1)-1 for k in range(n_repeats)]
+
+
 def sample_rand_path(B, T):
     """sample a random path on the event graph
 

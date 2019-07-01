@@ -36,7 +36,7 @@ class P():
         n_example=None,
     ):
         # set encoding size to be maximal
-        T_part = n_param
+        T_part = n_param + pad_len
         if enc_size is None:
             enc_size = T_part
         if def_path is None:
@@ -85,7 +85,7 @@ class env():
         self.n_param = n_param
         self.n_branch = n_branch
         self.pad_len = pad_len
-        self.T_part = n_param
+        self.T_part = n_param + pad_len
         self.rm_ob_probabilistic = rm_ob_probabilistic
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.p_rm_ob_enc = p_rm_ob_enc
@@ -95,7 +95,6 @@ class env():
         self.def_prob = def_prob
         self.penalty = penalty
         #
-        self.T_part = n_param
         self.chance = 1 / n_branch
         #
         self.tz = tz(n_mvs_tz, self.T_part, TZ_COND_DICT, P_TZ_CONDS)

@@ -35,7 +35,7 @@ def run_tz(
         for t in range(task.T_total):
             # whether to encode
             if not supervised:
-                set_encoding_flag(t, [p.env.tz.event_ends[0]], cond_i, agent)
+                set_encoding_flag(t, [task.event_ends[0]], cond_i, agent)
             # forward
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 X[i][t].view(1, 1, -1), hc_t)
@@ -45,9 +45,9 @@ def run_tz(
                 a_t, p_a_t = agent.pick_action(pi_a_t)
                 r_t = get_reward(a_t, Y[i][t], p.env.penalty)
                 # cache the results for later RL loss computation
-                probs.append(p_a_t)
                 rewards.append(r_t)
                 values.append(v_t)
+                probs.append(p_a_t)
                 ents.append(entropy(pi_a_t))
                 # compute supervised loss
                 yhat_t = torch.squeeze(pi_a_t)[:-1]
@@ -60,7 +60,7 @@ def run_tz(
             if not supervised:
                 # update WM/EM bsaed on the condition
                 hc_t = cond_manipulation(
-                    cond_i, t, p.env.tz.event_ends[0], hc_t, agent)
+                    cond_i, t, task.event_ends[0], hc_t, agent)
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=True)
