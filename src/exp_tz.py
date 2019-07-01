@@ -13,6 +13,8 @@ def run_tz(
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
+    # misc
+    a_0, r_0 = torch.tensor(p.dk_id), torch.tensor(0)
     # logger
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
@@ -27,8 +29,7 @@ def run_tz(
         agent.retrieval_off()
         agent.encoding_off()
         # init a0,r0
-        a_t = torch.tensor(p.dk_id)
-        r_t = torch.tensor(0)
+        a_t, r_t = a_0, r_0
         # pg calculation cache
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
@@ -43,20 +44,19 @@ def run_tz(
                 x_it.view(1, 1, -1), hc_t)
 
             # after delay period, compute loss
-            if np.mod(t, task.T_part) >= task.pad_len:
-                a_t, p_a_t = agent.pick_action(pi_a_t)
-                r_t = get_reward(a_t, Y[i][t], p.env.penalty)
-                # cache the results for later RL loss computation
-                rewards.append(r_t)
-                values.append(v_t)
-                probs.append(p_a_t)
-                ents.append(entropy(pi_a_t))
-                # compute supervised loss
-                yhat_t = torch.squeeze(pi_a_t)[:-1]
-                loss_sup += F.mse_loss(yhat_t, Y[i][t])
-            else:
-                a_t = torch.tensor(p.dk_id)
-                r_t = torch.tensor(0)
+            # if np.mod(t, task.T_part) >= task.pad_len:
+            a_t, p_a_t = agent.pick_action(pi_a_t)
+            r_t = get_reward(a_t, Y[i][t], p.env.penalty)
+            # cache the results for later RL loss computation
+            rewards.append(r_t)
+            values.append(v_t)
+            probs.append(p_a_t)
+            ents.append(entropy(pi_a_t))
+            # compute supervised loss
+            yhat_t = torch.squeeze(pi_a_t)[:-1]
+            loss_sup += F.mse_loss(yhat_t, Y[i][t])
+            # else:
+            #     a_t, r_t = a_0, r_0
 
             # cache results for later analysis
             log_dist_a[i, t, :] = to_sqnp(pi_a_t)
