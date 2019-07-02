@@ -18,7 +18,7 @@ task = SequenceLearning(
     # def_prob=def_prob,
 )
 # sample
-X, Y = task.sample(n_samples)
+X, Y = task.sample(n_samples, to_torch=False)
 # unpack
 print(np.shape(X))
 print(np.shape(Y))

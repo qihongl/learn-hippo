@@ -25,11 +25,12 @@ task = SequenceLearning(
     key_rep_type=key_rep_type
 )
 # take sample
-X, Y = task.sample(n_samples)
+X, Y = task.sample(n_samples, to_torch=False)
 
 # pick a sample
 i = 0
 x, y = X[i], Y[i]
+
 
 '''visualize the sample'''
 cmap = 'bone'

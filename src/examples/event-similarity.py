@@ -14,7 +14,7 @@ n_samples = 101
 # init
 task = SequenceLearning(n_param, n_branch, n_parts=1)
 # sample
-X, Y = task.sample(n_samples)
+X, Y = task.sample(n_samples, to_torch=False)
 # unpack
 print(np.shape(X))
 print(np.shape(Y))
@@ -74,7 +74,7 @@ sim_mu = np.zeros(n,)
 sim_sd = np.zeros(n,)
 for i, n_branch in enumerate(n_branch_list):
     task = SequenceLearning(n_param, n_branch, n_parts=1)
-    X, Y = task.sample(n_samples)
+    X, Y = task.sample(n_samples, to_torch=False)
     similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
     similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
     sim_mu[i] = np.mean(similarity_matrix_tril)

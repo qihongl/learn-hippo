@@ -36,7 +36,7 @@ def test_task_sequence_learning():
     n_parts = 2
     n_samples = 3
     sl = SequenceLearning(n_param, n_branch, n_parts=n_parts)
-    X, Y = sl.sample(n_samples)
+    X, Y = sl.sample(n_samples, to_torch=False)
     for i in range(n_samples):
         x, y = X[i], Y[i]
         # test
