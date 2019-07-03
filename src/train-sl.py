@@ -13,6 +13,7 @@ from analysis import compute_behav_metrics, compute_acc, compute_dk
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 from utils.utils import to_sqnp
 from utils.params import P
+from utils.constants import TZ_COND_DICT
 from plt_helper import plot_tz_pred_acc
 # from sklearn.decomposition.pca import PCA
 plt.switch_backend('agg')
@@ -81,6 +82,7 @@ log_root = args.log_root
 # p_rm_ob_rcl = 2/n_param
 # n_mem = 2
 
+
 '''init'''
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -98,8 +100,8 @@ task = SequenceLearning(
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-# input_dim = task.x_dim
-input_dim = task.x_dim+2
+input_dim = task.x_dim
+# input_dim = task.x_dim+2
 agent = Agent(
     input_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem
 )
@@ -146,14 +148,14 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     # training objective
     supervised = epoch_id < supervised_epoch
     [results, metrics] = run_tz(
-        agent, optimizer, task, p, n_examples, supervised,
-        cond=None, learning=True
+        agent, optimizer, task, p, n_examples,
+        supervised=supervised, cond=None, learning=True
     )
-    [log_dist_a, Y, log_cache, Log_cond[epoch_id]] = results
+    [dist_a, targ_a, log_cache, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     # compute stats
-    bm_ = compute_behav_metrics(Y, log_dist_a, p)
+    bm_ = compute_behav_metrics(targ_a, dist_a, task)
     Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
     acc_mu_pts_str = " ".join('%.2f' % i for i in Log_acc[epoch_id])
     dk_mu_pts_str = " ".join('%.2f' % i for i in Log_dk[epoch_id])
@@ -174,7 +176,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
         save_ckpt(epoch_id+1, log_subpath['ckpts'], agent, optimizer)
-
 
 '''plot learning curves'''
 f, axes = plt.subplots(3, 2, figsize=(10, 9), sharex=True)
@@ -217,23 +218,25 @@ fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-
 '''plot performance'''
 cond_ids = {}
-for cond_name_ in list(p.env.tz.cond_dict.values()):
-    cond_id_ = p.env.tz.cond_dict.inverse[cond_name_]
+for cond_name_ in list(TZ_COND_DICT.values()):
+    cond_id_ = TZ_COND_DICT.inverse[cond_name_]
     cond_ids[cond_name_] = Log_cond[-1, :] == cond_id_
 
-for cond_name_ in list(p.env.tz.cond_dict.values()):
-    Y_ = to_sqnp(Y)[cond_ids[cond_name_], :]
-    log_dist_a_ = log_dist_a[cond_ids[cond_name_], :]
+# prep data
+T_total = np.shape(targ_a)[0]
+_, _, event_ends, event_bond = task.get_time_param(T_total)
+for cond_name_ in list(TZ_COND_DICT.values()):
+    targ_a_ = targ_a[cond_ids[cond_name_], :]
+    dist_a_ = dist_a[cond_ids[cond_name_], :]
     # compute performance for this condition
-    acc_mu, acc_er = compute_acc(Y_, log_dist_a_, return_er=True)
-    dk_mu = compute_dk(log_dist_a_)
+    acc_mu, acc_er = compute_acc(targ_a_, dist_a_, return_er=True)
+    dk_mu = compute_dk(dist_a_)
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_tz_pred_acc(
         acc_mu, acc_er, acc_mu+dk_mu,
-        [task.event_bond], p,
+        [event_bond], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
     )

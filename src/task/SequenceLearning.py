@@ -16,6 +16,7 @@ class SequenceLearning():
             n_param,
             n_branch,
             pad_len=0,
+            max_pad_len=None,
             n_parts=2,
             def_path=None,
             def_prob=None,
@@ -31,6 +32,7 @@ class SequenceLearning():
             n_param=n_param,
             n_branch=n_branch,
             pad_len=pad_len,
+            max_pad_len=max_pad_len,
             def_path=def_path,
             def_prob=def_prob,
             key_rep_type=key_rep_type,
@@ -40,30 +42,31 @@ class SequenceLearning():
         # graph param
         self.n_param = n_param
         self.n_branch = n_branch
+        self.n_parts = n_parts
         self.pad_len = pad_len
+        # #
+        self.max_pad_len = self.stim_sampler.max_pad_len
+        self.T_part_max = self.n_param + self.max_pad_len
+        self.T_total_max = self.T_part_max * self.n_parts
+        # #
+        # self.T_part_min = self.n_param
+        # self.T_total_min = self.T_part_min * self.n_parts
         # "noise" in the obseravtion
         self.p_rm_ob_enc = p_rm_ob_enc
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.n_rm_fixed = n_rm_fixed
         # whether to permute queries
         self.permute_queries = permute_queries
-        # task duration
-        self.T_part = n_param + pad_len
-        self.n_parts = n_parts
-        self.T_total = self.T_part * n_parts
-        # self.event_bond = np.arange(self.T_part, self.T_total, self.T_part)
-        self.event_ends = get_event_ends(self.T_part, self.n_parts)
-        self.event_bond = self.event_ends[0]+1
         # task dimension
         self.k_dim = self.stim_sampler.k_dim
         self.v_dim = self.stim_sampler.v_dim
         self.x_dim = self.k_dim * 2 + self.v_dim
         self.y_dim = self.v_dim
 
-    def sample(self, n_samples, to_torch=False):
-        # prealloc
-        X = np.zeros((n_samples, self.T_total, self.x_dim))
-        Y = np.zeros((n_samples, self.T_total, self.y_dim))
+    def sample(self, n_samples, to_torch=True):
+        # prealloc, agnostic about sequence length
+        X = [None] * n_samples
+        Y = [None] * n_samples
         # generate samples
         for i in range(n_samples):
             sample_i = self.stim_sampler.sample(
@@ -72,11 +75,35 @@ class SequenceLearning():
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
             )
+            # convert to rnn form
             X[i], Y[i] = _to_xy(sample_i)
-        # formatting
+        # type conversion
         if to_torch:
-            X, Y = to_pth(X), to_pth(Y)
+            X = [to_pth(X[i]) for i in range(n_samples)]
+            Y = [to_pth(Y[i]) for i in range(n_samples)]
         return X, Y
+
+    def get_time_param(self, T_total):
+        """compute time related parameters
+        since it might be unique for each example
+
+        Parameters
+        ----------
+        T_total : int
+            the 0-th dim of X_i or Y_i, i.e. the input sequnce length
+            T_total = (n_param + pad_len) x n_parts
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
+        T_part = T_total // self.n_parts
+        pad_len = T_part - self.n_param
+        event_ends = get_event_ends(T_part, self.n_parts)
+        event_bond = event_ends[0]+1
+        return T_part, pad_len, event_ends, event_bond
 
 
 def _to_xy(sample_):
@@ -126,18 +153,21 @@ if __name__ == "__main__":
     n_param, n_branch = 6, 2
     n_parts = 2
     n_samples = 5
-    pad_len = 3
-    permute_queries = False
+    pad_len = 'random'
     task = SequenceLearning(
-        n_param, n_branch,
-        pad_len=pad_len,
-        permute_queries=permute_queries
+        n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     )
 
     # gen samples
     X, Y = task.sample(n_samples)
+
+    # get a sample
     i = 0
-    x, y = X[i], Y[i]
+    X_i, Y_i = X[i], Y[i]
+
+    # compute time info
+    T_total = np.shape(X_i)[0]
+    T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
 
     # plot
     cmap = 'bone'
@@ -145,12 +175,12 @@ if __name__ == "__main__":
         1, 2, figsize=(6, 6),
         gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
     )
-    axes[0].imshow(x, cmap=cmap, vmin=0, vmax=1)
-    axes[1].imshow(y, cmap=cmap, vmin=0, vmax=1)
+    axes[0].imshow(X_i, cmap=cmap, vmin=0, vmax=1)
+    axes[1].imshow(Y_i, cmap=cmap, vmin=0, vmax=1)
     # print(task.event_ends)
     # print(task.event_bond)
 
     for ax in axes:
-        ax.axhline(task.event_bond-.5, color='red', linestyle='--')
+        ax.axhline(event_bond-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')

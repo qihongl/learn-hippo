@@ -3,6 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 
 from utils.utils import to_sqnp
+from utils.constants import TZ_COND_DICT, P_TZ_CONDS
 from analysis import entropy
 from models import get_reward, compute_returns, compute_a2c_loss
 
@@ -19,34 +20,44 @@ def run_tz(
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
     log_cond = np.zeros(n_examples,)
-    log_dist_a = np.zeros((n_examples, task.T_total, p.a_dim))
-    log_cache = [[None] * task.T_total for _ in range(n_examples)]
+    log_dist_a = [[] for _ in range(n_examples)]
+    log_targ_a = [[] for _ in range(n_examples)]
+    log_cache = [None] * n_examples
+
     for i in range(n_examples):
         # pick a condition
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=cond)
+        # get the example for this trial
+        X_i, Y_i = X[i], Y[i]
+        # get time info
+        T_total = np.shape(X_i)[0]
+        T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
+
+        # prealloc
+        loss_sup = 0
+        probs, rewards, values, ents = [], [], [], []
+        log_cache_i = [None] * T_total
+
         # init model wm and em
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
-        # init a0,r0
         a_t, r_t = a_0, r_0
-        # pg calculation cache
-        loss_sup = 0
-        probs, rewards, values, ents = [], [], [], []
-        for t in range(task.T_total):
+
+        for t in range(T_total):
             # whether to encode
             if not supervised:
-                set_encoding_flag(t, [task.event_ends[0]], cond_i, agent)
+                set_encoding_flag(t, [event_ends[0]], cond_i, agent)
+
             # forward
-            x_it = append_prev_info(X[i][t], a_t, r_t)
-            # x_it = X[i][t]
+            # x_it = append_prev_info(X_i[t], a_t, r_t)
+            x_it = X_i[t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
-
             # after delay period, compute loss
-            # if np.mod(t, task.T_part) >= task.pad_len:
             a_t, p_a_t = agent.pick_action(pi_a_t)
-            r_t = get_reward(a_t, Y[i][t], p.env.penalty)
+            r_t = get_reward(a_t, Y_i[t], p.env.penalty)
+
             # cache the results for later RL loss computation
             rewards.append(r_t)
             values.append(v_t)
@@ -54,18 +65,19 @@ def run_tz(
             ents.append(entropy(pi_a_t))
             # compute supervised loss
             yhat_t = torch.squeeze(pi_a_t)[:-1]
-            loss_sup += F.mse_loss(yhat_t, Y[i][t])
-            # else:
-            #     a_t, r_t = a_0, r_0
-
-            # cache results for later analysis
-            log_dist_a[i, t, :] = to_sqnp(pi_a_t)
-            log_cache[i][t] = cache_t
+            loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
             if not supervised:
                 # update WM/EM bsaed on the condition
                 hc_t = cond_manipulation(
-                    cond_i, t, task.event_ends[0], hc_t, agent)
+                    cond_i, t, event_ends[0], hc_t, agent)
+
+            # cache results for later analysis
+            log_cache_i[t] = cache_t
+            # for behavioral stuff, only record prediction time steps
+            if t % T_part >= pad_len:
+                log_dist_a[i].append(to_sqnp(pi_a_t))
+                log_targ_a[i].append(to_sqnp(Y_i[t]))
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=True)
@@ -88,10 +100,13 @@ def run_tz(
         log_return += torch.stack(rewards).sum().item()/n_examples
         log_loss_actor += loss_actor.item()/n_examples
         log_loss_critic += loss_critic.item()/n_examples
-        log_cond[i] = p.env.tz.cond_dict.inverse[cond_i]
+        log_cond[i] = TZ_COND_DICT.inverse[cond_i]
+        log_cache[i] = log_cache_i
 
     # return cache
-    results = [log_dist_a, Y, log_cache, log_cond]
+    log_dist_a = np.array(log_dist_a)
+    log_targ_a = np.array(log_targ_a)
+    results = [log_dist_a, log_targ_a, log_cache, log_cond]
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
@@ -106,14 +121,14 @@ def append_prev_info(x_it_, a_prev, r_prev):
 
 
 def pick_condition(p, rm_only=True, fix_cond=None):
-    all_tz_conditions = list(p.env.tz.cond_dict.values())
+    all_tz_conditions = list(TZ_COND_DICT.values())
     if fix_cond is not None:
         return fix_cond
     else:
         if rm_only:
             tz_cond = 'RM'
         else:
-            tz_cond = np.random.choice(all_tz_conditions, p=p.env.tz.p_cond)
+            tz_cond = np.random.choice(all_tz_conditions, p=P_TZ_CONDS)
         return tz_cond
 
 

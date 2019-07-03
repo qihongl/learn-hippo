@@ -101,14 +101,14 @@ def _compute_dk(log_dist_a):
     return dk
 
 
-def average_by_part(time_course, p):
+def average_by_part(time_course, task):
     """take average within each part of the (multi-part) sequence
 
     Parameters
     ----------
     time_course : 1d array
         a sequence of values; e.g. accuracy
-    p : the param class
+    task : the param class
         simulation parameters
 
     Returns
@@ -117,8 +117,8 @@ def average_by_part(time_course, p):
         a list of averaged values
 
     """
-    return [np.mean(time_course[get_tps_for_ith_part(ip, p.env.tz.T_part)])
-            for ip in range(p.env.tz.n_mvs)]
+    return [np.mean(time_course[get_tps_for_ith_part(ip, task.n_param)])
+            for ip in range(task.n_parts)]
 
 
 def get_tps_for_ith_part(ip, T_part):
@@ -140,16 +140,16 @@ def get_tps_for_ith_part(ip, T_part):
     return np.arange(T_part*ip, T_part*(ip+1))
 
 
-def compute_behav_metrics(Y, log_dist_a, p, average_bp=True):
+def compute_behav_metrics(Y, log_dist_a, task, average_bp=True):
     # compute performance
     acc_mu_ = compute_acc(Y, log_dist_a)
     mis_mu_ = compute_mistake(Y, log_dist_a)
     dk_mu_ = compute_dk(log_dist_a)
     if average_bp:
         # split by movie parts
-        acc_mu_parts = average_by_part(acc_mu_, p)
-        mis_mu_parts = average_by_part(mis_mu_, p)
-        dk_mu_parts = average_by_part(dk_mu_, p)
+        acc_mu_parts = average_by_part(acc_mu_, task)
+        mis_mu_parts = average_by_part(mis_mu_, task)
+        dk_mu_parts = average_by_part(dk_mu_, task)
         return acc_mu_parts, mis_mu_parts, dk_mu_parts
     return acc_mu_, mis_mu_, dk_mu_
 

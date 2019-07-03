@@ -36,9 +36,9 @@ class P():
         n_example=None,
     ):
         # set encoding size to be maximal
-        T_part = n_param + pad_len
+        # T_part = n_param + pad_len
         if enc_size is None:
-            enc_size = T_part
+            enc_size = n_param
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
         if def_prob is None:
@@ -84,8 +84,8 @@ class env():
         self.exp_name = exp_name
         self.n_param = n_param
         self.n_branch = n_branch
-        self.pad_len = pad_len
-        self.T_part = n_param + pad_len
+        self.pad_len = 'random' if pad_len == -1 else pad_len
+        # self.T_part = n_param + pad_len
         self.rm_ob_probabilistic = rm_ob_probabilistic
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.p_rm_ob_enc = p_rm_ob_enc
@@ -96,9 +96,9 @@ class env():
         self.penalty = penalty
         #
         self.chance = 1 / n_branch
-        #
-        self.tz = tz(n_mvs_tz, self.T_part, TZ_COND_DICT, P_TZ_CONDS)
-        self.rnr = rnr(n_mvs_rnr, self.T_part, RNR_COND_DICT, P_RNR_CONDS)
+
+        # self.tz = tz(n_mvs_tz, self.T_part, TZ_COND_DICT, P_TZ_CONDS)
+        # self.rnr = rnr(n_mvs_rnr, self.T_part, RNR_COND_DICT, P_RNR_CONDS)
         self.validate_args()
 
     def validate_args(self):
@@ -112,30 +112,30 @@ class env():
         def_prob = {self.def_prob}
         penalty = {self.penalty}
         def_path = {self.def_path}
-        n_movies: rnr = {self.rnr.n_mvs}
-        n_movies: tz  = {self.tz.n_mvs}
         '''
+        # n_movies: rnr = {self.rnr.n_mvs}
+        # n_movies: tz  = {self.tz.n_mvs}
         return repr_
 
 
-class tz():
-    def __init__(self, n_mvs, T_part, cond_dict, p_cond):
-        self.n_mvs = n_mvs
-        self.T_part = T_part
-        self.T_total = n_mvs * T_part
-        self.event_ends = get_event_ends(T_part, n_mvs)
-        self.cond_dict = cond_dict
-        self.p_cond = p_cond
-
-
-class rnr():
-    def __init__(self, n_mvs, T_part, cond_dict, p_cond):
-        self.n_mvs = n_mvs
-        self.T_part = T_part
-        self.T_total = n_mvs * T_part
-        self.event_ends = get_event_ends(T_part, n_mvs)
-        self.cond_dict = cond_dict
-        self.p_cond = p_cond
+# class tz():
+#     def __init__(self, n_mvs, T_part, cond_dict, p_cond):
+#         self.n_mvs = n_mvs
+#         self.T_part = T_part
+#         self.T_total = n_mvs * T_part
+#         self.event_ends = get_event_ends(T_part, n_mvs)
+#         self.cond_dict = cond_dict
+#         self.p_cond = p_cond
+#
+#
+# class rnr():
+#     def __init__(self, n_mvs, T_part, cond_dict, p_cond):
+#         self.n_mvs = n_mvs
+#         self.T_part = T_part
+#         self.T_total = n_mvs * T_part
+#         self.event_ends = get_event_ends(T_part, n_mvs)
+#         self.cond_dict = cond_dict
+#         self.p_cond = p_cond
 
 
 class net():

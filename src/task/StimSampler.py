@@ -12,6 +12,7 @@ class StimSampler():
             n_param,
             n_branch,
             pad_len=0,
+            max_pad_len=None,
             def_path=None,
             def_prob=None,
             key_rep_type='time',
@@ -25,6 +26,8 @@ class StimSampler():
         self.n_param = n_param
         self.n_branch = n_branch
         self.pad_len = pad_len
+        if max_pad_len is None:
+            self.max_pad_len = n_param//3
         #
         self.def_path = def_path
         self.def_prob = def_prob
@@ -43,12 +46,6 @@ class StimSampler():
 
     def reset_schema(self):
         """re-initialize the schema
-
-        Returns
-        -------
-        type
-            Description of returned object.
-
         """
         self.schema = Schema(
             n_param=self.n_param,
@@ -111,6 +108,7 @@ class StimSampler():
         # sample the state-param associtations
         keys_vec_, vals_vec_, ctxs_vec_ = self._sample()
         # sample for the observation phase
+        # print(keys_vec_, vals_vec_, n_parts)
         o_keys_vec, o_vals_vec = self._sample_permutations(
             keys_vec_, vals_vec_, n_parts)
         # sample for the query phase
@@ -129,9 +127,7 @@ class StimSampler():
         o_sample_ = [o_keys_vec, o_vals_vec, o_ctxs_vec]
         q_sample_ = [q_keys_vec, q_vals_vec, q_ctxs_vec]
         # padding, if there is a delay
-        if self.pad_len > 0:
-            o_sample_ = _delay_pred_demand(o_sample_, self.pad_len, side='bot')
-            q_sample_ = _delay_pred_demand(q_sample_, self.pad_len, side='top')
+        [o_sample_, q_sample_] = self._delay_pred_demand(o_sample_, q_sample_)
         # pack sample
         sample_ = [o_sample_, q_sample_]
         return sample_
@@ -202,6 +198,39 @@ class StimSampler():
                 )
         return o_keys_vec, o_vals_vec
 
+    def _delay_pred_demand(self, o_sample_, q_sample_):
+        """apply delay to the queries, and zero pad the end of observations
+
+        Parameters
+        ----------
+        o_sample_ : list
+            observations
+        q_sample_ : list
+            queries
+
+        Returns
+        -------
+        list, list
+            padded observations and queries
+
+        """
+        if self.pad_len == 0:
+            return o_sample_, q_sample_
+
+        # uniformly sample a padding length
+        if self.pad_len == 'random':
+            pad_len = np.random.randint(low=0, high=self.max_pad_len+1)
+        # fixed padding length
+        elif self.pad_len > 0:
+            pad_len = self.pad_len
+        else:
+            raise ValueError(f'Invalid delay length: {self.pad_len}')
+
+        # padd the data
+        o_sample_ = _zero_pad_kvc(o_sample_, pad_len, side='bot')
+        q_sample_ = _zero_pad_kvc(q_sample_, pad_len, side='top')
+        return o_sample_, q_sample_
+
 
 def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
     """zero out the same set of (randomly selected) rows for all input matrices
@@ -235,7 +264,7 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
     return matrices
 
 
-def _delay_pred_demand(kvc: list, pad_len: int, side: str):
+def _zero_pad_kvc(kvc: list, pad_len: int, side: str):
     """delay the prediction demand by shifting the query value to later time
     points
 
@@ -288,7 +317,8 @@ if __name__ == "__main__":
     # init a graph
     n_param, n_branch = 6, 2
     n_parts = 2
-    pad_len = 2
+    # pad_len = 2
+    pad_len = 'random'
     p_rm_ob_enc, p_rm_ob_rcl = 0, 0
     key_rep_type = 'time'
     # key_rep_type = 'gaussian'

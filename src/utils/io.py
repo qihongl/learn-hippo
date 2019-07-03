@@ -17,10 +17,10 @@ def build_log_path(
         verbose=True
 ):
     # create dir names
-    exp_str = f'exp-{p.env.exp_name}'
+    exp_str = f'{p.env.exp_name}'
     graph_str = f'p-{p.env.n_param}_b-{p.env.n_branch}'
-    if p.env.pad_len > 0:
-        graph_str += f'_pad-{p.env.pad_len}'
+    # if p.env.pad_len > 0 or p.env.pad_len == 'random':
+    graph_str += f'_pad-{p.env.pad_len}'
     prob_str = 'tp-%.2f' % (p.env.def_prob)
     penalty_str = f'lp-{p.env.penalty}'
     obs_str = 'p_rm_ob_rcl-%.2f_enc-%.2f' % (
@@ -44,8 +44,8 @@ def build_log_path(
         subdir: os.path.join(log_path, subdir) for subdir in ALL_SUBDIRS
     }
     # add rnr subpaths
-    if p.env.rnr.n_mvs is not None:
-        log_subpath = update_rnr_log_subpath(log_subpath, p.env.rnr.n_mvs)
+    # if p.env.rnr.n_mvs is not None:
+    #     log_subpath = update_rnr_log_subpath(log_subpath, p.env.rnr.n_mvs)
     # make subdirs for ckpts, activations, figures
     _make_all_dirs(log_path, log_subpath, verbose)
     return log_path, log_subpath
