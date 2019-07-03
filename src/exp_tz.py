@@ -10,7 +10,7 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        cond=None, learning=True
+        cond=None, learning=True, get_cache=True,
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -73,7 +73,8 @@ def run_tz(
                     cond_i, t, event_ends[0], hc_t, agent)
 
             # cache results for later analysis
-            log_cache_i[t] = cache_t
+            if get_cache:
+                log_cache_i[t] = cache_t
             # for behavioral stuff, only record prediction time steps
             if t % T_part >= pad_len:
                 log_dist_a[i].append(to_sqnp(pi_a_t))
@@ -101,7 +102,8 @@ def run_tz(
         log_loss_actor += loss_actor.item()/n_examples
         log_loss_critic += loss_critic.item()/n_examples
         log_cond[i] = TZ_COND_DICT.inverse[cond_i]
-        log_cache[i] = log_cache_i
+        if get_cache:
+            log_cache[i] = log_cache_i
 
     # return cache
     log_dist_a = np.array(log_dist_a)

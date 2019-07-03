@@ -149,9 +149,9 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     supervised = epoch_id < supervised_epoch
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples,
-        supervised=supervised, cond=None, learning=True
+        supervised=supervised, cond=None, learning=True, get_cache=False,
     )
-    [dist_a, targ_a, log_cache, Log_cond[epoch_id]] = results
+    [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
     # compute stats
