@@ -6,35 +6,31 @@ import seaborn as sns
 
 from models import LCALSTM as Agent
 from task import SequenceLearning
+from exp_tz import run_tz
 from utils.params import P
 from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
+from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, load_ckpt
-
-# from models.DND import compute_similarities, transform_similarities
-from exp_tz import run_tz
-from sklearn.decomposition.pca import PCA
 from analysis import compute_acc, compute_dk, compute_stats, \
     compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
     compute_auc_over_time, compute_event_similarity
 from plt_helper import plot_tz_pred_acc, get_ylim_bonds
 from matplotlib.ticker import FormatStrFormatter
+from sklearn.decomposition.pca import PCA
 # plt.switch_backend('agg')
 
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'normalize-return'
-exp_name = 'ohctx-p15'
+exp_name = 'pred-delay'
 
 subj_id = 0
 penalty = 4
 supervised_epoch = 300
-epoch_load = 500
+epoch_load = 600
 # n_epoch = 500
-# n_examples = 256
-n_param = 15
+n_param = 14
 n_branch = 4
-pad_len = 0
 n_hidden = 194
 learning_rate = 1e-3
 eta = .1
@@ -42,13 +38,16 @@ p_rm_ob_enc = .2
 p_rm_ob_rcl = .2
 n_mem = 4
 
+pad_len_load = 0
+pad_len_test = 0
+
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
 
 '''init'''
 p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
-    n_param=n_param, n_branch=n_branch, pad_len=pad_len,
+    n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
     penalty=penalty,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
@@ -57,7 +56,7 @@ p = P(
 # init env
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
-    pad_len=p.env.pad_len,
+    pad_len=pad_len_test,
     n_rm_fixed=False,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
@@ -81,40 +80,47 @@ n_examples_test = 512
     agent, optimizer, task, p, n_examples_test,
     supervised=False, learning=False
 )
-[log_dist_a_, Y_, log_cache_, log_cond_] = results
+[dist_a_, Y_, log_cache_, log_cond_] = results
 
 # skip examples untill em buffer is full
-non_nm_trials = np.where(log_cond_ != p.env.tz.cond_dict.inverse['NM'])[0]
+non_nm_trials = np.where(log_cond_ != TZ_COND_DICT.inverse['NM'])[0]
 n_examples_skip = non_nm_trials[n_mem+1]
 n_examples = n_examples_test - n_examples_skip
 # skip
-log_dist_a = log_dist_a_[n_examples_skip:]
+dist_a = dist_a_[n_examples_skip:]
 Y = Y_[n_examples_skip:]
 log_cond = log_cond_[n_examples_skip:]
 log_cache = log_cache_[n_examples_skip:]
 
 # figure out max n-time-steps across for all trials
-T_total = Y[0].size()[0]
-T_part, _, event_ends, event_bond = task.get_time_param(T_total)
+T_part = n_param + pad_len_test
+T_total = T_part * task.n_parts
 
 # %%
 '''predefine/compute some constants'''
 # precompute some constants
-n_conds = len(p.env.tz.cond_dict)
+n_conds = len(TZ_COND_DICT)
 memory_types = ['targ', 'lure']
+ts_predict = np.array([t % T_part >= pad_len_test for t in range(T_total)])
 # plot
 alpha = .5
 n_se = 3
 # colors
 gr_pal = sns.color_palette('colorblind')[2:4]
+#
+fig_dir = os.path.join(log_subpath['figs'], f'delay-{pad_len_test}')
+if not os.path.exists(fig_dir):
+    os.mkdir(fig_dir)
+
+
 # sns.palplot(gr_pal)
 
 
 '''upack results'''
 # compute trial ids
 cond_ids = {}
-for cn in list(p.env.tz.cond_dict.values()):
-    cond_id_ = p.env.tz.cond_dict.inverse[cn]
+for cn in list(TZ_COND_DICT.values()):
+    cond_id_ = TZ_COND_DICT.inverse[cn]
     cond_ids[cn] = log_cond == cond_id_
 
 # network internal reps
@@ -129,13 +135,11 @@ CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
 DA = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
 V = [None] * n_examples
 # responses
-dist_a = np.full((n_examples, T_total, p.net.a_dim), np.nan)
-Y_np = np.full((n_examples, T_total, task.y_dim), np.nan)
+# dist_a = np.full((n_examples, T_total, p.net.a_dim), np.nan)
+# Y_np = np.full((n_examples, T_total, task.y_dim), np.nan)
 
 for i in range(n_examples):
-    # the task duration for this trial
-    T_ = len(log_cache[i])
-    for t in range(T_):
+    for t in range(T_total):
         # unpack data for i,t
         [vector_signal, scalar_signal, misc] = log_cache[i][t]
         [inpt_it, leak_it, comp_it] = scalar_signal
@@ -149,16 +153,13 @@ for i in range(n_examples):
         CM[i, t, :] = to_sqnp(cm_t)
         DA[i, t, :] = to_sqnp(des_act_t)
         V[i] = V_i
-        #
-        dist_a[i, t] = log_dist_a[i][t]
-        Y_np[i, t] = Y[i][t]
 
 # compute cell state
 C = CM - M
 
 # onehot to int
 actions = np.argmax(dist_a, axis=-1)
-targets = np.argmax(Y_np, axis=-1)
+targets = np.argmax(Y, axis=-1)
 # compute performance
 dks = actions == p.dk_id
 corrects = targets == actions
@@ -166,10 +167,9 @@ mistakes = np.logical_and(targets != actions, ~dks)
 
 
 '''plot behavioral performance'''
-# np.shape(Y_)
-# np.shape(dist_a_)
-for cn in list(p.env.tz.cond_dict.values()):
-    Y_ = Y_np[cond_ids[cn], :]
+
+for cn in list(TZ_COND_DICT.values()):
+    Y_ = Y[cond_ids[cn], :]
     dist_a_ = dist_a[cond_ids[cn], :]
     # compute performance for this condition
     acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
@@ -178,11 +178,11 @@ for cn in list(p.env.tz.cond_dict.values()):
     f, ax = plt.subplots(1, 1, figsize=(8, 4))
     plot_tz_pred_acc(
         acc_mu, acc_er, acc_mu+dk_mu,
-        [event_bond], p,
+        [n_param], p,
         f, ax,
         title=f'Performance on the TZ task: {cn}',
     )
-    fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cn}.png')
+    fig_path = os.path.join(fig_dir, f'tz-acc-{cn}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''compare LCA params across conditions'''
@@ -193,7 +193,7 @@ def plot_time_course_for_all_conds(
         axis1_start=0, xlabel=None, ylabel=None, title=None,
         frameon=False, add_legend=True,
 ):
-    for i, cond_name in enumerate(p.env.tz.cond_dict.values()):
+    for i, cond_name in enumerate(TZ_COND_DICT.values()):
         submatrix_ = matrix[cond_ids[cond_name], axis1_start:]
         M_, T_ = np.shape(submatrix_)
         mu_, er_ = compute_stats(submatrix_, axis=0, n_se=n_se)
@@ -220,9 +220,12 @@ plot_time_course_for_all_conds(
 )
 axes[-1].set_xlabel('Time, recall phase')
 axes[-1].xaxis.set_major_formatter(FormatStrFormatter('%d'))
+if pad_len_test > 0:
+    for ax in axes:
+        ax.axvline(pad_len_test, color='grey', linestyle='--')
 sns.despine()
 f.tight_layout()
-fig_path = os.path.join(log_subpath['figs'], f'tz-lca-param.png')
+fig_path = os.path.join(fig_dir, f'tz-lca-param.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
@@ -276,9 +279,13 @@ ylim_l, ylim_r = get_ylim_bonds(axes)
 for i, ax in enumerate(axes):
     ax.set_ylim([ylim_l, ylim_r])
     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+
+if pad_len_test > 0:
+    for ax in axes:
+        ax.axvline(pad_len_test, color='grey', linestyle='--')
 f.tight_layout()
 sns.despine()
-fig_path = os.path.join(log_subpath['figs'], f'tz-memact-lca.png')
+fig_path = os.path.join(fig_dir, f'tz-memact-lca.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''use the amount of errors/dk in the last k time steps to predict recall'''
@@ -301,7 +308,7 @@ f.tight_layout()
 # t_recall_peak = 5
 
 #
-targets_p2 = np.argmax(Y_np[cond_ids[cond_name], T_part:], axis=2)
+targets_p2 = np.argmax(Y[cond_ids[cond_name], T_part:], axis=2)
 responses_p2 = np.argmax(dist_a[cond_ids[cond_name], T_part:], axis=2)
 dks_p2 = responses_p2 == p.dk_id
 ndks_p2_b4recall = np.sum(dks_p2[:, :t_recall_peak], axis=1)
@@ -357,7 +364,7 @@ ax.set_xlabel('Recall strength')
 ax.set_ylabel('Counts')
 ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 sns.despine()
-fig_path = os.path.join(log_subpath['figs'], f'ms-dist-t{t}.png')
+fig_path = os.path.join(fig_dir, f'ms-dist-t{t}.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
@@ -382,7 +389,7 @@ for ax in axes:
 axes[1].xaxis.set_major_formatter(FormatStrFormatter('%d'))
 f.tight_layout()
 sns.despine()
-fig_path = os.path.join(log_subpath['figs'], f'roc.png')
+fig_path = os.path.join(fig_dir, f'roc.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
@@ -493,14 +500,14 @@ for cond_name in cond_ids.keys():
         trsm[cond_name] = compute_trsm(data_cond_)
 
 f, axes = plt.subplots(3, 1, figsize=(7, 11))
-for i, cond_name in enumerate(p.env.tz.cond_dict.values()):
+for i, cond_name in enumerate(TZ_COND_DICT.values()):
     sns.heatmap(
         trsm[cond_name], cmap='viridis', square=True,
         ax=axes[i]
     )
-    axes[i].axvline(event_bond, color='red', linestyle='--')
-    axes[i].axhline(event_bond, color='red', linestyle='--')
-    axes[i].set_title(f'TR-TR similarity, {cond_name}')
+    axes[i].axvline(T_part, color='red', linestyle='--')
+    axes[i].axhline(T_part, color='red', linestyle='--')
+    axes[i].set_title(f'TR-TR correlation, {cond_name}')
 f.tight_layout()
 
 '''pca the deicison activity'''
@@ -509,56 +516,20 @@ n_pcs = 5
 data = DA
 cond_name = 'DM'
 
+
 # fit PCA
 pca = PCA(n_pcs)
+# np.shape(data)
+# np.shape(data_cond)
 data_cond = data[cond_ids[cond_name], :, :]
+data_cond = data_cond[:, ts_predict, :]
 targets_cond = targets[cond_ids[cond_name]]
 mistakes_cond = mistakes_by_cond[cond_name]
 dks_cond = dks[cond_ids[cond_name], :]
 
-data_cond_allts = np.reshape(data_cond, newshape=(-1, p.net.n_hidden))
-targets_cond_allts = np.reshape(targets_cond, newshape=(-1, ))
-mistakes_cond_allts = np.reshape(mistakes_cond, newshape=(-1, ))
-dks_cond_allts = np.reshape(dks_cond, newshape=(-1, ))
-
-# data_allts_pca = pca.fit_transform(data_cond_allts)
-#
-# f, ax = plt.subplots(1, 1, figsize=(6, 5))
-# # plot the data
-# for y_val in range(p.y_dim):
-#     y_sel_op = y_val == targets_cond_allts
-#     sel_op_ = np.logical_and(~dks_cond_allts, y_sel_op)
-#     ax.scatter(
-#         data_allts_pca[sel_op_, 0], data_allts_pca[sel_op_, 1],
-#         marker='o', alpha=alpha,
-#     )
-# ax.scatter(
-#     data_allts_pca[dks_cond_allts, 0],
-#     data_allts_pca[dks_cond_allts, 1],
-#     marker='o', color='grey', alpha=alpha,
-# )
-# ax.scatter(
-#     data_allts_pca[mistakes_cond_allts, 0], data_allts_pca[mistakes_cond_allts, 1],
-#     facecolors='none', edgecolors='red',
-# )
-# # add legend
-# box = ax.get_position()
-# ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-# ax.legend(
-#     [f'choice {k}' for k in range(task.y_dim)] + ['uncertain', 'mistake'],
-#     fancybox=True, bbox_to_anchor=(1, .5), loc='center left'
-# )
-# # mark the plot
-# ax.set_xlabel('PC 1')
-# ax.set_ylabel('PC 2')
-# ax.set_title(f'Pre-decision activity')
-# sns.despine(offset=10)
-# f.tight_layout()
-
-
 # Loop over timepoints
-pca_cum_var_exp = np.zeros((T_total, n_pcs))
-for t in range(T_total):
+pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
+for t in range(np.sum(ts_predict)):
     data_pca = pca.fit_transform(data_cond[:, t, :])
     pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
 
@@ -591,7 +562,7 @@ for t in range(T_total):
     ax.set_title(f'Pre-decision activity, time = {t}')
     sns.despine(offset=10)
     f.tight_layout()
-    # fig_path = os.path.join(log_subpath['figs'], f'pca/da-t-{t}.png')
+    # fig_path = os.path.join(fig_dir, f'pca/da-t-{t}.png')
     # f.savefig(fig_path, dpi=150, bbox_to_anchor='tight')
 
 
