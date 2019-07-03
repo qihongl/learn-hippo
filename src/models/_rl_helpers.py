@@ -65,12 +65,14 @@ def compute_returns(rewards, gamma=0, normalize=False):
         the sequence of cumulative return
 
     """
+    # compute cumulative discounted reward since t, for all t
     R = 0
     returns = []
     for r in rewards[::-1]:
         R = r + gamma * R
         returns.insert(0, R)
     returns = torch.tensor(returns)
+    # normalize w.r.t to the statistics of this trajectory
     if normalize:
         returns = (returns - returns.mean()) / (returns.std() + eps)
     return returns
