@@ -30,23 +30,16 @@ class LCALSTM(nn.Module):
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
-            layernorm=False,
             a2c_linear=False,
-            bias=True
     ):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
-        self.bias = bias
-        self.n_units_total = (N_VSIG+1) * hidden_dim + N_SSIG
+        self.n_hidden_total = (N_VSIG+1) * hidden_dim + N_SSIG
         # input-hidden weights
-        self.i2h = nn.Linear(input_dim, self.n_units_total, bias=bias)
+        self.i2h = nn.Linear(input_dim, self.n_hidden_total)
         # hidden-hidden weights
-        self.h2h = nn.Linear(hidden_dim, self.n_units_total, bias=bias)
-        # normalization
-        self.layernorm = layernorm
-        if layernorm:
-            self.ln = nn.LayerNorm((1, hidden_dim))
+        self.h2h = nn.Linear(hidden_dim, self.n_hidden_total)
         # memory
         self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
@@ -110,9 +103,6 @@ class LCALSTM(nn.Module):
         cm_t = c_t + m_t
         # encode
         self.encode(cm_t)
-        # normalize activity
-        if self.layernorm:
-            cm_t = self.ln(cm_t)
         # get gated hidden state from the cell state
         h_t = torch.mul(o_t, cm_t.tanh())
         # reshape data
