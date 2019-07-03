@@ -219,15 +219,11 @@ f.suptitle('learning curves', fontsize=15)
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''plot performance'''
+# prep data
 cond_ids = {}
 for cond_name_ in list(TZ_COND_DICT.values()):
     cond_id_ = TZ_COND_DICT.inverse[cond_name_]
     cond_ids[cond_name_] = Log_cond[-1, :] == cond_id_
-
-# prep data
-T_total = np.shape(targ_a)[0]
-_, _, event_ends, event_bond = task.get_time_param(T_total)
-for cond_name_ in list(TZ_COND_DICT.values()):
     targ_a_ = targ_a[cond_ids[cond_name_], :]
     dist_a_ = dist_a[cond_ids[cond_name_], :]
     # compute performance for this condition
@@ -236,7 +232,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_tz_pred_acc(
         acc_mu, acc_er, acc_mu+dk_mu,
-        [event_bond], p,
+        [n_param], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
     )
