@@ -1,10 +1,12 @@
+from scipy.stats import sem
 import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models import LCALSTM as Agent
+from models.LCALSTM_v2 import LCALSTM as Agent
+# from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -22,16 +24,17 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'pred-delay'
+# exp_name = 'pred-delay'
+exp_name = 'phi_dep_da_v2'
 
 subj_id = 0
 penalty = 4
 supervised_epoch = 300
 epoch_load = 600
 # n_epoch = 500
-n_param = 14
+n_param = 10
 n_branch = 4
-n_hidden = 194
+n_hidden = 128
 learning_rate = 1e-3
 eta = .1
 p_rm_ob_enc = .2
@@ -296,14 +299,18 @@ sim_lca_ms_p2 = np.max(
 t_recall_peak = np.argmax(np.mean(sim_lca_ms_p2, axis=0))
 
 f, ax = plt.subplots(1, 1, figsize=(5, 4))
-ax.axvline(t_recall_peak, linestyle='--', color='red', alpha=.5)
-ax.legend(['"recall time"'])
+# ax.axvline(t_recall_peak, linestyle='--', color='red', alpha=.5)
+# ax.legend(['"recall time"'])
 ax.plot(sim_lca_ms_p2.T, alpha=.05, color=gr_pal[0])
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Memory activation')
 ax.set_title(f'Target max score, {cond_name}')
 sns.despine()
 f.tight_layout()
+
+np.shape(sim_lca_ms_p2)
+plt.plot(sim_lca_ms_p2[:5, :].T)
+
 
 # t_recall_peak = 5
 
@@ -338,6 +345,31 @@ ax.set_ylabel('average recall peak')
 ax.set_xticks(np.arange(task.y_dim) + 1)
 sns.despine()
 f.tight_layout()
+
+# use CURRENT uncertainty to predict memory activation
+
+ma_k_mu, ma_dk_mu = np.zeros(n_param,), np.zeros(n_param,)
+ma_k_er, ma_dk_er = np.zeros(n_param,), np.zeros(n_param,)
+
+for t in range(n_param):
+    dks_p2_t = dks_p2[:, t]
+    ma_k_t = sim_lca_ms_p2[dks_p2_t, t]
+    ma_dk_t = sim_lca_ms_p2[~dks_p2_t, t]
+    # stats
+    ma_k_mu[t] = np.mean(ma_k_t)
+    ma_k_er[t] = sem(ma_k_t)
+    ma_dk_mu[t] = np.mean(ma_dk_t)
+    ma_dk_er[t] = sem(ma_dk_t)
+
+f, ax = plt.subplots(1, 1, figsize=(5, 4))
+ax.errorbar(x=range(n_param), y=ma_k_mu, yerr=ma_k_er, label='know')
+ax.errorbar(x=range(n_param), y=ma_dk_mu, yerr=ma_dk_er, label='don\'t know')
+ax.set_title('Target memory activation')
+ax.set_xlabel('Time')
+ax.set_ylabel('Activation')
+ax.legend()
+f.tight_layout()
+sns.despine()
 
 '''check the MS distribution'''
 ms_lure = np.max(sim_lca_dict['NM']['lure'], axis=-1)
