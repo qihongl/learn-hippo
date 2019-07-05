@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v2 import LCALSTM as Agent
-# from models import LCALSTM as Agent
+# from models.LCALSTM_v2 import LCALSTM as Agent
+from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -24,17 +24,17 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-# exp_name = 'pred-delay'
-exp_name = 'phi_dep_da_v2'
+exp_name = 'pred-delay'
+# exp_name = 'phi_dep_da_v2'
 
 subj_id = 0
-penalty = 4
+penalty = 1
 supervised_epoch = 300
 epoch_load = 600
 # n_epoch = 500
-n_param = 10
+n_param = 14
 n_branch = 4
-n_hidden = 128
+n_hidden = 194
 learning_rate = 1e-3
 eta = .1
 p_rm_ob_enc = .2
