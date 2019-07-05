@@ -44,13 +44,13 @@ axes[1].imshow(y, cmap=cmap)
 axes[0].set_title('x')
 axes[1].set_title('y')
 
-axes[0].set_xlabel('key/val')
-axes[1].set_xlabel('val')
+axes[0].set_xlabel('o-key/o-val/q-key')
+axes[1].set_xlabel('q-val')
 
 axes[0].set_ylabel('Time')
 
 for ax in axes:
-    ax.axhline(task.T_part-.5, color='red', linestyle='--')
+    ax.axhline(n_param + pad_len-.5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
 
