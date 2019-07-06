@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# from models.LCALSTM_v2 import LCALSTM as Agent
-from models import LCALSTM as Agent
+from models.LCALSTM_v6 import LCALSTM as Agent
+# from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -24,17 +24,17 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'pred-delay'
-# exp_name = 'phi_dep_da_v2'
+# exp_name = 'pred-delay'
+exp_name = 'phi_dep_da_v6'
 
 subj_id = 0
-penalty = 1
+penalty = 4
 supervised_epoch = 300
 epoch_load = 600
 # n_epoch = 500
-n_param = 14
+n_param = 10
 n_branch = 4
-n_hidden = 194
+n_hidden = 128
 learning_rate = 1e-3
 eta = .1
 p_rm_ob_enc = .2
@@ -304,7 +304,7 @@ f, ax = plt.subplots(1, 1, figsize=(5, 4))
 ax.plot(sim_lca_ms_p2.T, alpha=.05, color=gr_pal[0])
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Memory activation')
-ax.set_title(f'Target max score, {cond_name}')
+ax.set_title(f'Target activation, {cond_name}')
 sns.despine()
 f.tight_layout()
 
