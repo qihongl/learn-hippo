@@ -26,6 +26,8 @@ task = SequenceLearning(
 )
 # take sample
 X, Y = task.sample(n_samples, to_torch=False)
+print(f'X shape = {np.shape(X)}, n_example x time x x-dim')
+print(f'Y shape = {np.shape(Y)},  n_example x time x y-dim')
 
 # pick a sample
 i = 0
