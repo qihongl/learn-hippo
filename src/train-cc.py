@@ -37,11 +37,11 @@ task = ContextualChoice(
 )
 
 # num unique training examples in one epoch
-M = 10
-X, Y = task.sample(M)
+n_unique_example = 10
+X, Y = task.sample(n_unique_example)
 n_trials = len(X)
-print(f'X.size: {X.size()}, M x trial_length x x-dim')
-print(f'Y.size: {Y.size()}, M x trial_length x y-dim')
+print(f'X.size: {X.size()}, n_trials x trial_length x x-dim')
+print(f'Y.size: {Y.size()}, n_trials x trial_length x y-dim')
 
 # set params
 dim_hidden = 32
@@ -49,7 +49,7 @@ dim_output = 2
 dict_len = 100
 learning_rate = 1e-3
 n_epochs = 50
-eta = 0.1
+eta = 0
 
 # init model and hidden state.
 agent = Agent(task.x_dim, dim_hidden, dim_output, dict_len=dict_len)
@@ -71,14 +71,13 @@ i, m, t = 0, 0, 0
 for i in range(n_epochs):
     time_start = time.time()
     # get data for this epoch
-    X, Y = task.sample(M)
+    X, Y = task.sample(n_unique_example)
     # flush hippocampus
     agent.flush_episodic_memory()
     agent.retrieval_on()
 
     # loop over the training set
     for m in range(n_trials):
-        x_m, y_m = X[m], Y[m]
         # prealloc
         cumulative_reward = 0
         cumulative_entropy = 0
@@ -87,14 +86,14 @@ for i in range(n_epochs):
 
         # loop over time, for one training example
         for t in range(trial_length):
-            y_oh_m_t = to_pth(get_one_hot_vector(y_m[t], 2))
+            y_oh_m_t = to_pth(get_one_hot_vector(Y[m][t], 2))
             # only save memory at the last time point
             agent.encoding_off()
-            if t == trial_length-1 and m < M:
+            if t == trial_length-1 and m < n_unique_example:
                 agent.encoding_on()
             # recurrent computation at time t
             pi_a_t, value_t, (h_t, cm_t), cache = agent(
-                x_m[t].view(1, 1, -1), hc_t)
+                X[m][t].view(1, 1, -1), hc_t)
             # action selection
             a_t, prob_a_t = agent.pick_action(pi_a_t)
             # compute immediate reward
@@ -109,7 +108,7 @@ for i in range(n_epochs):
             cumulative_reward += r_t
             log_Y_hat[i, m, t] = a_t.item()
             # [f_t, i_t, o_t, r_t, m_t] = cache_t
-            log_rgate[m, t] = np.squeeze(r_t.data.numpy())
+            # log_rgate[m, t] = np.squeeze(r_t.data.numpy())
 
         returns = compute_returns(rewards)
         loss_policy, loss_value = compute_a2c_loss(probs, values, returns)
@@ -150,15 +149,16 @@ f.tight_layout()
 n_se = 2
 # compute stat
 corrects = log_Y_hat[-1] == log_Y[-1]
-mu_mem0 = np.mean(corrects[:M], axis=0)
-er_mem0 = sem(corrects[:M], axis=0) * n_se
-mu_mem1 = np.mean(corrects[M:], axis=0)
-er_mem1 = sem(corrects[M:], axis=0) * n_se
+mu_mem0 = np.mean(corrects[:n_unique_example], axis=0)
+er_mem0 = sem(corrects[:n_unique_example], axis=0) * n_se
+mu_mem1 = np.mean(corrects[n_unique_example:], axis=0)
+er_mem1 = sem(corrects[n_unique_example:], axis=0) * n_se
 
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
 ax.errorbar(range(trial_length), y=mu_mem0, yerr=er_mem0, label='w/o memory')
 ax.errorbar(range(trial_length), y=mu_mem1, yerr=er_mem1, label='w/  memory')
 ax.axvline(t_noise_off, label='turn off noise', color='grey', linestyle='--')
+# ax.axhline(1/2, color='grey', linestyle='--')
 ax.set_xlabel('Time')
 ax.set_ylabel('Correct rate')
 ax.set_title('Behavioral signature of memory based choice')
@@ -201,7 +201,7 @@ f.tight_layout()
 #     [agent.dnd.keys[i].data.numpy() for i in range(len(agent.dnd.keys))])
 # all_vals = np.vstack(
 #     [agent.dnd.vals[i].data.numpy() for i in range(len(agent.dnd.vals))])
-# Y_phase2 = np.squeeze(Y[:M, 0].numpy())
+# Y_phase2 = np.squeeze(Y[:n_unique_example, 0].numpy())
 #
 # # embed the memory to PC space
 # pca = PCA(n_components=10)
@@ -239,10 +239,10 @@ f.tight_layout()
 # # mean_rgate = np.mean(log_rgate, axis=-1)
 # #
 # # n_se = 2
-# # mu_mem0 = np.mean(mean_rgate[:M], axis=0)
-# # er_mem0 = sem(mean_rgate[:M], axis=0) * n_se
-# # mu_mem1 = np.mean(mean_rgate[M:], axis=0)
-# # er_mem1 = sem(mean_rgate[M:], axis=0) * n_se
+# # mu_mem0 = np.mean(mean_rgate[:n_unique_example], axis=0)
+# # er_mem0 = sem(mean_rgate[:n_unique_example], axis=0) * n_se
+# # mu_mem1 = np.mean(mean_rgate[n_unique_example:], axis=0)
+# # er_mem1 = sem(mean_rgate[n_unique_example:], axis=0) * n_se
 # #
 # # f, ax = plt.subplots(1, 1, figsize=(7, 4))
 # # ax.errorbar(range(trial_length), y=mu_mem0, yerr=er_mem0, label='trials w/o memory')
