@@ -59,7 +59,26 @@ def get_random_one_hot_vector(k, probs=None):
         a one-hot vector
     """
     loc_id = np.random.choice(k, p=probs)
-    return np.eye(k)[loc_id, :]
+    return get_one_hot_vector(loc_id, k)
+
+
+def get_one_hot_vector(i, k):
+    """get the i-th k-dim one hot vector
+
+    Parameters
+    ----------
+    i : type
+        Description of parameter `i`.
+    k : type
+        Description of parameter `k`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    return np.eye(k)[i, :]
 
 
 # def param_id_to_one_hot_dims(pid, n_branch):
