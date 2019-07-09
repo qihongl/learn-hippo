@@ -47,7 +47,7 @@ class LCALSTM(nn.Module):
         self.actor = nn.Linear(hidden_dim, output_dim)
         self.critic = nn.Linear(hidden_dim, 1)
         #
-        self.hpc = nn.Linear(1, 3)
+        self.hpc = nn.Linear(hidden_dim+1, 3)
         # memory
         self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
@@ -107,7 +107,8 @@ class LCALSTM(nn.Module):
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         ent_t = entropy(pi_a_t)
         # recall / encode
-        phi_t = sigmoid(self.hpc(ent_t.view(1, -1)))
+        hpc_input_t = torch.cat([dec_act_t, ent_t.view(1, -1)], dim=1)
+        phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, leak_t, comp_t] = torch.squeeze(phi_t)
         m_t = self.recall(c_t, leak_t, comp_t, inps_t)
         cm_t = c_t + m_t

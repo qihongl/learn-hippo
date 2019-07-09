@@ -47,7 +47,7 @@ class LCALSTM(nn.Module):
         self.actor = nn.Linear(hidden_dim, output_dim)
         self.critic = nn.Linear(hidden_dim, 1)
         #
-        self.hpc = nn.Linear(input_dim+hidden_dim + hidden_dim + 1, 3)
+        self.hpc = nn.Linear(input_dim+hidden_dim * 3 + 1, 3)
         # memory
         self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
@@ -110,7 +110,7 @@ class LCALSTM(nn.Module):
         # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat(
-            [x_t, h_prev, dec_act_t, ent_t.view(1, -1)], dim=1)
+            [x_t, h_prev, c_t, dec_act_t, ent_t.view(1, -1)], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, leak_t, comp_t] = torch.squeeze(phi_t)
         m_t = self.recall(c_t, leak_t, comp_t, inps_t)
