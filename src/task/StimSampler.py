@@ -1,5 +1,6 @@
 import numpy as np
 from task.Schema import Schema
+import pdb
 
 
 class StimSampler():
@@ -20,7 +21,7 @@ class StimSampler():
             context_onehot=True,
             context_dim=1,
             context_drift=False,
-            n_rm_fixed=True,
+            n_rm_fixed=False,
             sampling_mode='enumerative'
     ):
         self.n_param = n_param
@@ -248,13 +249,17 @@ def _zero_out_random_rows(matrices, p_rm, n_rm_fixed=True):
         a list of 2d arrays
     """
     assert 0 <= p_rm <= 1
-    # selection which row(s) to zero out
     n_rows, _ = np.shape(matrices[0])
+    for matrix in matrices:
+        assert np.shape(matrix)[0] == n_rows
+    # select # row(s) to zero out
     if n_rm_fixed:
         n_rows_to0 = np.ceil(p_rm * n_rows)
     else:
-        n_rows_to0 = np.round(np.random.uniform(high=p_rm) * n_rows)
-    # choose some rows to zero out
+        # in this case, p_rm == E[rows_to_remove]
+        max_rows_to_remove = p_rm * n_rows
+        n_rows_to0 = np.round(np.random.uniform(high=max_rows_to_remove))
+    # select some rows to zero out
     rows_to0 = np.random.choice(
         range(n_rows), size=int(n_rows_to0), replace=False
     )
@@ -315,11 +320,11 @@ def _vpad(matrix, pad_len: int, side: str):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # init a graph
-    n_param, n_branch = 6, 2
+    n_param, n_branch = 10, 2
     n_parts = 2
-    # pad_len = 2
-    pad_len = 'random'
-    p_rm_ob_enc, p_rm_ob_rcl = 0, 0
+    pad_len = 3
+    # pad_len = 'random'
+    p_rm_ob_enc, p_rm_ob_rcl = .5, .5
     key_rep_type = 'time'
     # key_rep_type = 'gaussian'
     sampler = StimSampler(
@@ -328,7 +333,8 @@ if __name__ == "__main__":
         key_rep_type=key_rep_type
     )
     sample_ = sampler.sample(
-        n_parts, p_rm_ob_enc, p_rm_ob_rcl
+        n_parts,
+        p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl
     )
     observations, queries = sample_
     [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations
