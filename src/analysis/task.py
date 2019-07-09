@@ -1,5 +1,123 @@
 import numpy as np
 from itertools import product
+from analysis.utils import one_hot_to_int
+
+
+def get_oq_keys(X_i, task, to_int=True):
+    """extract obs/query keys from the input matrix, for one sample
+
+    Parameters
+    ----------
+    X_i : np array
+        a sample from SequenceLearning task
+    task : object
+        the SequenceLearning task that generated X_i
+    to_int : bool
+        whether convert to integer representation
+
+    Returns
+    -------
+    np array, np array
+        observation keys, query keys
+
+    """
+    # get the observation / query keys
+    o_key = X_i[:, :task.k_dim]
+    q_key = X_i[:, -task.k_dim:]
+    # convert to integer representation
+    if to_int:
+        o_key = [one_hot_to_int(o_key[t]) for t in range(len(o_key))]
+        q_key = [one_hot_to_int(q_key[t]) for t in range(len(q_key))]
+    return o_key, q_key
+
+
+def set_nanadd(input_set, new_element):
+    """set.add a new element, don't add np.nan
+
+    Parameters
+    ----------
+    input_set : set
+        a set of int
+    new_element : int
+        a new element to be added to the set
+
+    Returns
+    -------
+    set
+        the set updated by the new element
+
+    """
+    if not np.isnan(new_element):
+        input_set.add(new_element)
+    return input_set
+
+
+def _compute_true_dk(o_key, q_key, task):
+    assert task.n_parts == 2, 'this function only works for 2-part seq'
+    assert len(o_key) == len(q_key), 'obs seq length must match query seq'
+    T_total_ = len(o_key)
+    # T_part_ = T_total_ // task.n_parts
+    # prealloc
+    o_key_up_to_t, q_key_up_to_t = set(), set()
+    dk = np.ones(T_total_, dtype=bool)
+    # compute uncertainty info over time
+    for t in range(T_total_):
+        o_key_up_to_t = set_nanadd(o_key_up_to_t, o_key[t])
+        q_key_up_to_t = set_nanadd(q_key_up_to_t, q_key[t])
+        if q_key[t] in o_key_up_to_t:
+            dk[t] = False
+        # log info
+        # t_relative = np.mod(t, T_part_)
+        # print(f'time = {t}, {t_relative} / {T_total_} |  dk = {dk[t]}')
+        # print(o_key_up_to_t)
+        # print(q_key_up_to_t)
+    return dk
+
+
+def compute_true_dk(X_i, task):
+    """compute objective uncertainty w/ or w/o EM (EM vs. WM), where ...
+    - with EM == no flusing, which applies to the RM condition
+    - WM == w/o EM == EM flushed, which applies to the NM and DM
+
+    Parameters
+    ----------
+    X_i : np array
+        a sample from SequenceLearning task
+    task : object
+        the SequenceLearning task that generated X_i
+
+    Returns
+    -------
+    dict
+        ground truth / objective uncertainty
+
+    """
+    assert task.n_parts == 2, 'this function only works for 2-part seq'
+    o_key, q_key = get_oq_keys(X_i, task, to_int=True)
+    T_total_ = len(o_key)
+    T_part_ = T_total_ // task.n_parts
+    dk = {}
+    dk['EM'] = _compute_true_dk(o_key, q_key, task)
+    dk['WM'] = _compute_true_dk(o_key[T_part_:], q_key[T_part_:], task)
+    return dk
+
+
+def batch_compute_true_dk(X, task):
+    n_samples = len(X)
+    dk_wm = np.zeros((n_samples, task.n_param))
+    dk_em = np.zeros((n_samples, task.n_param * task.n_parts))
+    # dk = [compute_true_dk(X[i], task) for i in range(n_samples)]
+    # pred_time_mask = [None] * n_samples
+    for i in range(n_samples):
+        T_total_i = np.shape(X[i])[0]
+        T_part_i, pad_len_i, _, _ = task.get_time_param(T_total_i)
+        pred_time_mask_i = task.get_pred_time_mask(
+            T_total_i, T_part_i, pad_len_i)
+        # compute objective uncertainty, w/ or w/o EM
+        dk_i = compute_true_dk(X[i], task)
+        dk_wm[i] = dk_i['WM'][pred_time_mask_i[T_part_i:]]
+        dk_em[i] = dk_i['EM'][pred_time_mask_i]
+    return dk_wm, dk_em
 
 
 def compute_event_similarity_matrix(Y, normalize=False):
@@ -60,38 +178,6 @@ def compute_event_similarity(event_i, event_j, normalize=True):
         return similarity / len(event_i)
     return similarity
 
-
-# def compute_event_similarity(Ys, tril_k=None):
-#     """compute event parameter overlap matrix - i.e. the similarity matrix
-#
-#     e.g.
-#     n_param, n_branch = 6, 3
-#     n_movies, n_parts = 100, 1
-#     def_prob = .6
-#     mg = MovieGen(n_param, n_branch, def_prob=def_prob)
-#     Xs, Ys, param_removed = mg.gen_movies(n_movies, n_parts, stack=True)
-#     S = compute_event_similarity(Ys, tril=False)
-#
-#     Parameters
-#     ----------
-#     Ys : 3d array
-#         number of examples x number of time points x feature dim
-#     tril : bool
-#         return lower triangular part only
-#
-#     Returns
-#     -------
-#     2d array
-#         inter-event similarity matrix
-#
-#     """
-#     assert len(np.shape(Ys)) == 3
-#     Y_feature_vectors = np.sum(Ys, axis=1)
-#     event_similarity_matrix = Y_feature_vectors @ Y_feature_vectors.T
-#     if tril_k is not None:
-#         event_similarity_matrix = np.tril(event_similarity_matrix, k=tril_k)
-#     return event_similarity_matrix
-#
 #
 # def remove_identical_events(Ys, n_param):
 #     """remove events that are identical

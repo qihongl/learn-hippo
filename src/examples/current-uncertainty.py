@@ -1,14 +1,75 @@
+'''study the ground truth uncertainty as a function of delay'''
+
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 from task import SequenceLearning
-from analysis import compute_stats
-from matplotlib.ticker import FormatStrFormatter
+from analysis import compute_stats, get_true_dk
+# from matplotlib.ticker import FormatStrFormatter
 sns.set(style='white', palette='colorblind', context='poster')
 
-'''study inter-event similarity as a function of n_branch, n_param'''
 
+def get_true_dk(X, task):
+    """compute ground truth uncertainty
+
+    Parameters
+    ----------
+    X_i : 3d array
+        output of task.sample()
+
+    Returns
+    -------
+    n_knows_list: list
+        # param know at time t
+    n_knows_post_delay: array
+        # param know at time t, since prediction demand onset
+    cur_knows: 2d np array
+        whether current query is in the past observation
+    pad_lens: 1d np array
+        pad length for all trials
+
+    """
+    n_samples = len(X)
+    n_knows_list = [None] * n_samples
+    n_knows_post_delay = np.zeros((n_samples, task.n_param))
+    cur_knows = np.zeros((n_samples, task.n_param))
+    pad_lens = np.zeros(n_samples, dtype=np.int)
+    for i in range(n_samples):
+        n_knows_list[i], cur_knows[i], pad_lens[i] = get_true_dk_i(X[i], task)
+        n_knows_post_delay[i, :] = n_knows_list[i][pad_lens[i]:]
+    return n_knows_list, n_knows_post_delay, cur_knows, pad_lens
+
+
+def get_true_dk_i(X_i, task):
+    # get data shape
+    T_part, x_dim = np.shape(X_i)
+    # infer pad length
+    pad_len_i = T_part - task.n_param
+    # get the observation / query keys
+    o_key = X_i[:, :task.k_dim]
+    q_key = X_i[:, -task.k_dim:]
+    # convert to integer representation
+    o_key_int = np.argmax(o_key, axis=1)
+    q_key_int = np.argmax(q_key, axis=1)
+    # prealloc
+    o_key_int_t, q_key_int_t = set(), set()
+    n_knows = np.zeros((T_part,))
+    cur_know = np.full((task.n_param,), np.nan)
+    # compute uncertainty info over time
+    for t in np.arange(1, T_part+1):
+        # don't update if pass n_params
+        if t < task.n_param+1:
+            o_key_int_t = set(o_key_int[:t])
+        # don't update before padding/delay
+        if t > pad_len_i:
+            q_key_int_t = set(q_key_int[pad_len_i:t])
+            cur_know[t-pad_len_i-1] = 1 if q_key_int[t-1] in o_key_int_t else 0
+        # compute observation-query overlap ==> "known"
+        n_knows[t-1] = len(o_key_int_t & q_key_int_t)
+    return n_knows, cur_know, pad_len_i
+
+
+# build a sampler
 n_param = 15
 n_branch = 4
 pad_len = 0
@@ -47,50 +108,10 @@ f.tight_layout()
 
 '''compute vectorized representation'''
 
-
-def compute_n_known(X_i):
-    T_part, x_dim = np.shape(X_i)
-    pad_len_i = T_part - task.n_param
-    # get the observation / query keys
-    o_key = X_i[:, :task.k_dim]
-    q_key = X_i[:, -task.k_dim:]
-    o_key_int = np.argmax(o_key, axis=1)
-    q_key_int = np.argmax(q_key, axis=1)
-    # o_key_int[-pad_len_i:] = np.nan
-    # q_key_int[:pad_len_i] = np.nan
-    # compute n_knowns
-    o_key_int_t, q_key_int_t = set(), set()
-    n_knowns = np.zeros((T_part,))
-    cur_knows = np.full((n_param,), np.nan)
-    # loop over time
-    for t in np.arange(1, T_part+1):
-        # don't update if pass n_params
-        if t < n_param+1:
-            o_key_int_t = set(o_key_int[:t])
-        # don't update before padding/delay
-        if t > pad_len_i:
-            q_key_int_t = set(q_key_int[pad_len_i:t])
-            cur_knows[t-pad_len_i-1] = 1 if q_key_int[t-1] in o_key_int_t else 0
-        # compute observation-query overlap ==> "known"
-        n_knowns[t-1] = len(o_key_int_t & q_key_int_t)
-        # print(t)
-        # print(o_key_int_t)
-        # print(q_key_int_t)
-        # print(n_knowns[t-1])
-        # print()
-    return n_knowns, cur_knows, pad_len_i
-
-
-n_knowns_list = [None] * n_samples
-n_knowns = np.zeros((n_samples, n_param))
-cur_knowns = np.zeros((n_samples, n_param))
-pad_lens = np.zeros(n_samples, dtype=np.int)
-for i in range(n_samples):
-    n_knowns_list[i], cur_knowns[i], pad_lens[i] = compute_n_known(X[i])
-    n_knowns[i, :] = n_knowns_list[i][pad_lens[i]:]
+n_knowns_list, n_knowns_post_delay, cur_knowns, pad_lens = get_true_dk(X, task)
 
 # plot # don't knows
-n_dks = (n_param-n_knowns)/n_param
+n_dks = (n_param-n_knowns_post_delay)/n_param
 n_dks_mu, n_dks_er = compute_stats(n_dks, n_se=3)
 b_pal = sns.color_palette('Blues', n_colors=5)
 f, axes = plt.subplots(2, 1, figsize=(7, 10))
@@ -125,30 +146,31 @@ n_samples = 300
 pad_len_list = [0, 2, 4, 8]
 
 f, axes = plt.subplots(2, 1, figsize=(7, 10))
+v_pal = sns.color_palette('viridis', n_colors=len(pad_len_list))
 
-for pad_len in pad_len_list:
+for i_pad_len, pad_len in enumerate(pad_len_list):
     # init
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len, n_parts=1
     )
     X, Y = task.sample(n_samples, to_torch=False)
-
     #
-    n_knowns_list = [None] * n_samples
-    n_knowns = np.zeros((n_samples, n_param))
-    cur_knowns = np.zeros((n_samples, n_param))
-    pad_lens = np.zeros(n_samples, dtype=np.int)
-    for i in range(n_samples):
-        n_knowns_list[i], cur_knowns[i], pad_lens[i] = compute_n_known(X[i])
-        n_knowns[i, :] = n_knowns_list[i][pad_lens[i]:]
-
-    n_dks = (n_param-n_knowns) / n_param
+    out_ = get_true_dk(X, task)
+    n_knowns_list, n_knowns_post_delay, cur_knowns, pad_lens = out_
+    # compute don't knows
+    n_dks = (n_param-n_knowns_post_delay) / n_param
     n_dks_mu, n_dks_er = compute_stats(n_dks, n_se=3)
-    axes[0].errorbar(x=range(n_param), y=n_dks_mu, yerr=n_dks_er)
+    axes[0].errorbar(
+        x=range(n_param), y=n_dks_mu, yerr=n_dks_er,
+        color=v_pal[i_pad_len]
+    )
 
     cur_dk = 1-cur_knowns
     p_dks_mu, p_dks_er = compute_stats(cur_dk, n_se=3)
-    axes[1].errorbar(x=range(n_param), y=p_dks_mu, yerr=p_dks_er)
+    axes[1].errorbar(
+        x=range(n_param), y=p_dks_mu, yerr=p_dks_er,
+        color=v_pal[i_pad_len]
+    )
 
 axes[1].legend(pad_len_list, title='delay', fancybox=True)
 axes[1].set_xlabel('Time, recall phase')
@@ -170,13 +192,13 @@ f.tight_layout()
 #
 #     #
 #     n_knowns_list = [None] * n_samples
-#     n_knowns = np.zeros((n_samples, n_param))
+#     n_knowns_post_delay = np.zeros((n_samples, n_param))
 #     pad_lens = np.zeros(n_samples, dtype=np.int)
 #     for i in range(n_samples):
-#         n_knowns_list[i], cur_knowns[i], pad_lens[i] = compute_n_known(X[i])
-#         n_knowns[i, :] = n_knowns_list[i][pad_lens[i]:]
+#         n_knowns_list[i], cur_knowns[i], pad_lens[i] = get_true_dk_i(X[i])
+#         n_knowns_post_delay[i, :] = n_knowns_list[i][pad_lens[i]:]
 #
-#     n_dks = (n_param-n_knowns) / n_param
+#     n_dks = (n_param-n_knowns_post_delay) / n_param
 #     n_dks_mu, n_dks_er = compute_stats(n_dks, n_se=3)
 #     ax.plot(n_dks_er)
 #

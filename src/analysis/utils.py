@@ -1,4 +1,31 @@
 import numpy as np
+
+
+def one_hot_to_int(one_hot_vector):
+    """convert a onehot vector (or zero-hot vector) to its index representation
+    if zero-hot, then return np.nan
+
+    Parameters
+    ----------
+    one_hot_vector : 1d np.array
+        an one hot vector
+
+    Returns
+    -------
+    index
+        i s.t. one_hot_vector[i] == 1
+
+    """
+    one_hot_index = np.where(one_hot_vector)[0]
+    n_ones = len(one_hot_index)
+    if n_ones == 1:
+        return int(one_hot_index)
+    elif n_ones == 0:
+        return np.nan
+    else:
+        raise ValueError(f'Invalid one-hot vector: {one_hot_vector}')
+
+
 # import pandas as pd
 # import torch.nn as nn
 
@@ -10,9 +37,6 @@ import numpy as np
 # from dep.qmvpa.signal import compute_roc
 
 # softmax = nn.Softmax()
-
-"""data org
-"""
 
 
 # def extrat_trials(data_list, trial_ids):

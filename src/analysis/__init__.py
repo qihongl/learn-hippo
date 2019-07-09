@@ -1,4 +1,5 @@
-from .task import *
 from .behav import *
-from .neural import *
 from .general import *
+from .neural import *
+from .task import *
+from .utils import *

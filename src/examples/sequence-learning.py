@@ -9,11 +9,11 @@ sns.set(style='white', palette='colorblind', context='talk')
 '''how to use'''
 # init
 n_param, n_branch = 5, 3
-pad_len = 3
+pad_len = 0
 n_parts = 2
 n_samples = 5
-p_rm_ob_enc = 0
-p_rm_ob_rcl = 0
+p_rm_ob_enc = .5
+p_rm_ob_rcl = .5
 n_rm_fixed = False
 key_rep_type = 'time'
 task = SequenceLearning(
