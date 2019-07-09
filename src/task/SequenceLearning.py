@@ -2,6 +2,8 @@ import numpy as np
 from utils.utils import to_pth
 from task.utils import get_event_ends
 from task.StimSampler import StimSampler
+# import pdb
+# pdb.set_trace()
 
 
 class SequenceLearning():
@@ -105,6 +107,30 @@ class SequenceLearning():
         event_bond = event_ends[0]+1
         return T_part, pad_len, event_ends, event_bond
 
+    def get_pred_time_mask(self, T_total, T_part, pad_len, dtype=bool):
+        """get a mask s.t.
+        mask[t] == False => during prediction delay period, no prediction demands
+        mask[t] == True  => prediction time step
+
+        Parameters
+        ----------
+        T_total : int
+            total duration of the event sequence
+        T_part : int
+            duration of one part
+        pad_len : int
+            padding length, duration of the delay
+        dtype : type
+            data type
+
+        Returns
+        -------
+        1d array
+            the mask
+
+        """
+        return np.array([t % T_part >= pad_len for t in range(T_total)], dtype=dtype)
+
 
 def _to_xy(sample_):
     # unpack data
@@ -153,9 +179,14 @@ if __name__ == "__main__":
     n_param, n_branch = 6, 2
     n_parts = 2
     n_samples = 5
-    pad_len = 'random'
+    p_rm_ob_enc = 1
+    p_rm_ob_rcl = 1
+    # pad_len = 'random'
+    pad_len = 0
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
+        p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+        n_rm_fixed=False
     )
 
     # gen samples
