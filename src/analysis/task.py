@@ -17,18 +17,20 @@ def get_oq_keys(X_i, task, to_int=True):
 
     Returns
     -------
-    np array, np array
-        observation keys, query keys
+    list, list, list
+        observation keys, query keys, observation values
 
     """
     # get the observation / query keys
     o_key = X_i[:, :task.k_dim]
     q_key = X_i[:, -task.k_dim:]
+    o_val = X_i[:, task.k_dim:task.k_dim+task.v_dim]
     # convert to integer representation
     if to_int:
         o_key = [one_hot_to_int(o_key[t]) for t in range(len(o_key))]
         q_key = [one_hot_to_int(q_key[t]) for t in range(len(q_key))]
-    return o_key, q_key
+        o_val = [one_hot_to_int(o_val[t]) for t in range(len(o_val))]
+    return o_key, q_key, o_val
 
 
 def set_nanadd(input_set, new_element):
@@ -52,7 +54,26 @@ def set_nanadd(input_set, new_element):
     return input_set
 
 
-def _compute_true_dk(o_key, q_key, task):
+def _compute_true_dk(o_key, q_key, o_val, task):
+    """compute ground truth uncertainty for a trial
+
+    Parameters
+    ----------
+    o_key : list of int
+        Description of parameter `o_key`.
+    q_key : list of int
+        Description of parameter `q_key`.
+    o_val : list of int
+        Description of parameter `o_val`.
+    task : obj
+        the SL task
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
     assert task.n_parts == 2, 'this function only works for 2-part seq'
     assert len(o_key) == len(q_key), 'obs seq length must match query seq'
     T_total_ = len(o_key)
@@ -62,9 +83,14 @@ def _compute_true_dk(o_key, q_key, task):
     dk = np.ones(T_total_, dtype=bool)
     # compute uncertainty info over time
     for t in range(T_total_):
-        o_key_up_to_t = set_nanadd(o_key_up_to_t, o_key[t])
         q_key_up_to_t = set_nanadd(q_key_up_to_t, q_key[t])
+        # if the observation is not nan (removed), consider it as an observed key
+        if not np.isnan(o_val[t]):
+            # if the key is not nan (due to delay), add it as an observed key
+            o_key_up_to_t = set_nanadd(o_key_up_to_t, o_key[t])
+        # if the query is in the observed key up to time t
         if q_key[t] in o_key_up_to_t:
+            # shouldn't say don't know
             dk[t] = False
         # log info
         # t_relative = np.mod(t, T_part_)
@@ -93,16 +119,34 @@ def compute_true_dk(X_i, task):
 
     """
     assert task.n_parts == 2, 'this function only works for 2-part seq'
-    o_key, q_key = get_oq_keys(X_i, task, to_int=True)
+    o_key, q_key, o_val = get_oq_keys(X_i, task, to_int=True)
     T_total_ = len(o_key)
     T_part_ = T_total_ // task.n_parts
     dk = {}
-    dk['EM'] = _compute_true_dk(o_key, q_key, task)
-    dk['WM'] = _compute_true_dk(o_key[T_part_:], q_key[T_part_:], task)
+    dk['EM'] = _compute_true_dk(o_key, q_key, o_val, task)
+    dk['WM'] = _compute_true_dk(
+        o_key[T_part_:], q_key[T_part_:], o_val[T_part_:], task
+    )
     return dk
 
 
 def batch_compute_true_dk(X, task):
+    """compute the uncertainty ground truth for a sample/batch of data
+    - a wrapper for `compute_true_dk()`
+
+    Parameters
+    ----------
+    X : 3d array
+        a sample from the SL task
+    task : obj
+        the SL task
+
+    Returns
+    -------
+    2d array, 2d array
+        uncertainty w/ w/o episodic flush
+
+    """
     n_samples = len(X)
     dk_wm = np.zeros((n_samples, task.n_param))
     dk_em = np.zeros((n_samples, task.n_param * task.n_parts))
