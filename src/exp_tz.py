@@ -10,7 +10,7 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        cond=None, learning=True, get_cache=True,
+        cond=None, learning=True, get_cache=True, get_data=False,
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -112,6 +112,11 @@ def run_tz(
     metrics = [log_loss_sup, log_loss_actor, log_loss_critic,
                log_return, log_pi_ent]
     out = [results, metrics]
+    if get_data:
+        X_array_list = [to_sqnp(X[i]) for i in range(n_examples)]
+        Y_array_list = [to_sqnp(Y[i]) for i in range(n_examples)]
+        training_data = [X_array_list, Y_array_list]
+        out.append(training_data)
     return out
 
 

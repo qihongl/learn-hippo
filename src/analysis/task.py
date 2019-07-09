@@ -130,7 +130,7 @@ def compute_true_dk(X_i, task):
     return dk
 
 
-def batch_compute_true_dk(X, task):
+def batch_compute_true_dk(X, task, dtype=bool):
     """compute the uncertainty ground truth for a sample/batch of data
     - a wrapper for `compute_true_dk()`
 
@@ -148,8 +148,8 @@ def batch_compute_true_dk(X, task):
 
     """
     n_samples = len(X)
-    dk_wm = np.zeros((n_samples, task.n_param))
-    dk_em = np.zeros((n_samples, task.n_param * task.n_parts))
+    dk_wm = np.zeros((n_samples, task.n_param), dtype=dtype)
+    dk_em = np.zeros((n_samples, task.n_param * task.n_parts), dtype=dtype)
     # dk = [compute_true_dk(X[i], task) for i in range(n_samples)]
     # pred_time_mask = [None] * n_samples
     for i in range(n_samples):

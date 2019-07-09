@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v6 import LCALSTM as Agent
+from models.LCALSTM_v2 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
@@ -15,7 +15,7 @@ from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, load_ckpt
 from analysis import compute_acc, compute_dk, compute_stats, \
     compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
-    compute_auc_over_time, compute_event_similarity
+    compute_auc_over_time, compute_event_similarity, batch_compute_true_dk
 from plt_helper import plot_tz_pred_acc, get_ylim_bonds
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
@@ -25,23 +25,26 @@ sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
 # exp_name = 'pred-delay'
-exp_name = 'phi_dep_da_v6'
+exp_name = 'phi_dep_da_v2'
 
 subj_id = 0
 penalty = 4
 supervised_epoch = 300
 epoch_load = 600
 # n_epoch = 500
-n_param = 10
+n_param = 14
 n_branch = 4
-n_hidden = 128
+n_hidden = 194
 learning_rate = 1e-3
 eta = .1
-p_rm_ob_enc = .2
-p_rm_ob_rcl = .2
 n_mem = 4
 
+p_rm_ob_enc_load = .2
+p_rm_ob_rcl_load = .2
 pad_len_load = 0
+
+p_rm_ob_enc_test = .2
+p_rm_ob_rcl_test = .2
 pad_len_test = 0
 
 np.random.seed(subj_id)
@@ -52,26 +55,22 @@ p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
     penalty=penalty,
-    p_rm_ob_enc=p_rm_ob_enc,
-    p_rm_ob_rcl=p_rm_ob_rcl,
+    p_rm_ob_enc=p_rm_ob_enc_load,
+    p_rm_ob_rcl=p_rm_ob_rcl_load,
     n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
 task = SequenceLearning(
     p.env.n_param, p.env.n_branch,
     pad_len=pad_len_test,
-    n_rm_fixed=False,
-    p_rm_ob_enc=p_rm_ob_enc,
-    p_rm_ob_rcl=p_rm_ob_rcl,
+    p_rm_ob_enc=p_rm_ob_enc_test,
+    p_rm_ob_rcl=p_rm_ob_rcl_test,
 )
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
 # load the agent back
-input_dim = task.x_dim
-# input_dim = task.x_dim+2
-agent = Agent(input_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
-# load model
+agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
 agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 
 
@@ -79,11 +78,16 @@ agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 '''eval'''
 # training objective
 n_examples_test = 512
-[results, metrics] = run_tz(
+[results, metrics, XY] = run_tz(
     agent, optimizer, task, p, n_examples_test,
-    supervised=False, learning=False
+    supervised=False, learning=False, get_data=True,
 )
 [dist_a_, Y_, log_cache_, log_cond_] = results
+[X_raw, Y_raw] = XY
+
+
+# compute ground truth / objective uncertainty (delay phase removed)
+true_dk_wm_, true_dk_em_ = batch_compute_true_dk(X_raw, task)
 
 # skip examples untill em buffer is full
 non_nm_trials = np.where(log_cond_ != TZ_COND_DICT.inverse['NM'])[0]
@@ -94,6 +98,8 @@ dist_a = dist_a_[n_examples_skip:]
 Y = Y_[n_examples_skip:]
 log_cond = log_cond_[n_examples_skip:]
 log_cache = log_cache_[n_examples_skip:]
+true_dk_wm = true_dk_wm_[n_examples_skip:]
+true_dk_em = true_dk_em_[n_examples_skip:]
 
 # figure out max n-time-steps across for all trials
 T_part = n_param + pad_len_test
@@ -137,9 +143,6 @@ M = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
 CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
 DA = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
 V = [None] * n_examples
-# responses
-# dist_a = np.full((n_examples, T_total, p.net.a_dim), np.nan)
-# Y_np = np.full((n_examples, T_total, task.y_dim), np.nan)
 
 for i in range(n_examples):
     for t in range(T_total):
@@ -232,7 +235,7 @@ fig_path = os.path.join(fig_dir, f'tz-lca-param.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
-'''compute cell memory similarity evidence '''
+'''compute cell-memory similarity / memory activation '''
 # compute similarity between cell state vs. memories
 sim_cos, sim_lca = compute_cell_memory_similarity(C, V, inpt, leak, comp)
 sim_cos_dict = create_sim_dict(sim_cos, cond_ids, n_targ=1)
@@ -258,7 +261,7 @@ sim_lca_stats['NM']['lure']['mu'], \
     sim_lca_stats['NM']['lure']['er'] = compute_stats(
     np.mean(sim_lca_dict['NM']['lure'], axis=-1))
 
-# plot
+# plot target/lure activation for all conditions
 # sim_plt_ = sim_cos_stats
 sim_plt_ = sim_lca_stats
 f, axes = plt.subplots(3, 1, figsize=(5, 8))
@@ -292,86 +295,109 @@ fig_path = os.path.join(fig_dir, f'tz-memact-lca.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''use the amount of errors/dk in the last k time steps to predict recall'''
+# pick a condition
 cond_name = 'DM'
-sim_lca_ms_p2 = np.max(
-    sim_lca_dict[cond_name]['targ'][:, T_part:], axis=-1)
+targ_act_cond_p2 = np.max(sim_lca_dict[cond_name]['targ'][:, T_part:], axis=-1)
+dk_cond_p2 = dks[cond_ids[cond_name], n_param:]
+true_dk_em_cond_p2 = true_dk_em[cond_ids[cond_name], n_param:]
+true_dk_wm_cond_p2 = true_dk_wm[cond_ids[cond_name], :]
 
-t_recall_peak = np.argmax(np.mean(sim_lca_ms_p2, axis=0))
+# t s.t. maximal recall peak
+t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
 
+
+# plot
+# plot target memory activation profile, for all trials
 f, ax = plt.subplots(1, 1, figsize=(5, 4))
-# ax.axvline(t_recall_peak, linestyle='--', color='red', alpha=.5)
-# ax.legend(['"recall time"'])
-ax.plot(sim_lca_ms_p2.T, alpha=.05, color=gr_pal[0])
+ax.plot(targ_act_cond_p2.T, alpha=.05, color=gr_pal[0])
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Memory activation')
 ax.set_title(f'Target activation, {cond_name}')
 sns.despine()
 f.tight_layout()
+fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-lca.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-np.shape(sim_lca_ms_p2)
-plt.plot(sim_lca_ms_p2[:5, :].T)
-
-
-# t_recall_peak = 5
-
-#
-targets_p2 = np.argmax(Y[cond_ids[cond_name], T_part:], axis=2)
-responses_p2 = np.argmax(dist_a[cond_ids[cond_name], T_part:], axis=2)
-dks_p2 = responses_p2 == p.dk_id
-ndks_p2_b4recall = np.sum(dks_p2[:, :t_recall_peak], axis=1)
-
-f, ax = plt.subplots(1, 1, figsize=(4, 3))
-ax.hist(ndks_p2_b4recall)
-ax.set_xlabel('# don\'t knows')
-ax.set_ylabel('# trials')
-ax.set_xticks(np.arange(task.y_dim)+1)
-sns.despine()
-f.tight_layout()
-
-
-nvs = np.unique(ndks_p2_b4recall)
-ma_mu = np.zeros(len(nvs),)
-ma_er = np.zeros(len(nvs),)
-for i, val in enumerate(np.unique(ndks_p2_b4recall)):
-    mem_act_recall_ndk = sim_lca_ms_p2[ndks_p2_b4recall == val, t_recall_peak]
-    ma_mu[i] = np.mean(mem_act_recall_ndk)
-    ma_er[i] = np.std(mem_act_recall_ndk)
-
-f, ax = plt.subplots(1, 1, figsize=(5, 4))
-ax.errorbar(x=nvs, y=ma_mu, yerr=ma_er)
+# use previous uncertainty to predict memory activation
+t_pick_max = 7
+v_pal = sns.color_palette('viridis', n_colors=t_pick_max)
+f, ax = plt.subplots(1, 1, figsize=(8, 4))
+for t_pick_ in range(t_pick_max):
+    ndks_p2_b4recall = np.sum(dk_cond_p2[:, :t_pick_], axis=1)
+    nvs = np.unique(ndks_p2_b4recall)
+    ma_mu = np.zeros(len(nvs),)
+    ma_er = np.zeros(len(nvs),)
+    for i, val in enumerate(np.unique(ndks_p2_b4recall)):
+        mem_act_recall_ndk = targ_act_cond_p2[ndks_p2_b4recall == val, t_pick_]
+        ma_mu[i] = np.mean(mem_act_recall_ndk)
+        ma_er[i] = np.std(mem_act_recall_ndk) / 10
+    ax.errorbar(x=nvs, y=ma_mu, yerr=ma_er, color=v_pal[t_pick_])
+ax.legend(range(t_pick_max), bbox_to_anchor=(1.3, 1))
 ax.set_title('Recall ~ uncertainty')
 ax.set_xlabel('# don\'t knows')
 ax.set_ylabel('average recall peak')
-ax.set_xticks(np.arange(task.y_dim) + 1)
 sns.despine()
 f.tight_layout()
+fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-by-ndk.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+
+f, ax = plt.subplots(1, 1, figsize=(10, 4))
+t = 0
+true_dk_em_cond_p2_t = true_dk_em_cond_p2[:, t]
+true_dk_wm_cond_p2_t = true_dk_wm_cond_p2[:, t]
+ax.plot(1-true_dk_em_cond_p2_t, alpha=.5)
+ax.plot(2-true_dk_wm_cond_p2_t, alpha=.5)
+
 
 # use CURRENT uncertainty to predict memory activation
+em_only_cond_p2 = np.logical_and(true_dk_wm_cond_p2, ~ true_dk_em_cond_p2)
+wm_only_cond_p2 = np.logical_and(~true_dk_wm_cond_p2, true_dk_em_cond_p2)
+both_cond_p2 = np.logical_and(~true_dk_wm_cond_p2, ~true_dk_em_cond_p2)
+neither_cond_p2 = np.logical_and(true_dk_wm_cond_p2, true_dk_em_cond_p2)
 
-ma_k_mu, ma_dk_mu = np.zeros(n_param,), np.zeros(n_param,)
-ma_k_er, ma_dk_er = np.zeros(n_param,), np.zeros(n_param,)
+ma_em_mu, ma_em_er = np.zeros(n_param,), np.zeros(n_param,)
+ma_wm_mu, ma_wm_er = np.zeros(n_param,), np.zeros(n_param,)
+ma_bo_mu, ma_bo_er = np.zeros(n_param,), np.zeros(n_param,)
+ma_nt_mu, ma_nt_er = np.zeros(n_param,), np.zeros(n_param,)
+
+t = 0
 
 for t in range(n_param):
-    dks_p2_t = dks_p2[:, t]
-    ma_k_t = sim_lca_ms_p2[dks_p2_t, t]
-    ma_dk_t = sim_lca_ms_p2[~dks_p2_t, t]
-    # stats
-    ma_k_mu[t] = np.mean(ma_k_t)
-    ma_k_er[t] = sem(ma_k_t)
-    ma_dk_mu[t] = np.mean(ma_dk_t)
-    ma_dk_er[t] = sem(ma_dk_t)
+    # compute stats
+    ma_em_mu[t], ma_em_er[t] = compute_stats(
+        targ_act_cond_p2[em_only_cond_p2[:, t], t], n_se=3
+    )
+    ma_wm_mu[t], ma_wm_er[t] = compute_stats(
+        targ_act_cond_p2[wm_only_cond_p2[:, t], t], n_se=3
+    )
+    ma_bo_mu[t], ma_bo_er[t] = compute_stats(
+        targ_act_cond_p2[both_cond_p2[:, t], t], n_se=3
+    )
+    ma_nt_mu[t], ma_nt_er[t] = compute_stats(
+        targ_act_cond_p2[neither_cond_p2[:, t], t], n_se=3
+    )
 
-f, ax = plt.subplots(1, 1, figsize=(5, 4))
-ax.errorbar(x=range(n_param), y=ma_k_mu, yerr=ma_k_er, label='know')
-ax.errorbar(x=range(n_param), y=ma_dk_mu, yerr=ma_dk_er, label='don\'t know')
+
+f, ax = plt.subplots(1, 1, figsize=(8, 5))
+ax.errorbar(x=range(n_param), y=ma_nt_mu, yerr=ma_nt_mu / 10, label='neither')
+ax.errorbar(x=range(n_param), y=ma_bo_mu, yerr=ma_bo_er, label='EM and WM')
+ax.errorbar(x=range(n_param), y=ma_em_mu, yerr=ma_em_er, label='EM only')
+if np.sum(wm_only_cond_p2) != 0:
+    ax.errorbar(x=range(n_param), y=ma_wm_mu, yerr=ma_wm_er, label=r'WM only')
+
 ax.set_title('Target memory activation')
-ax.set_xlabel('Time')
+ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Activation')
-ax.legend()
+ax.legend(fancybox=True)
 f.tight_layout()
 sns.despine()
+fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-by-dk.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-'''check the MS distribution'''
+'''signal detection analysis'''
+
+# plot the max-score distribution for one time step
 ms_lure = np.max(sim_lca_dict['NM']['lure'], axis=-1)
 ms_targ = np.max(sim_lca_dict['DM']['targ'], axis=-1)
 leg_ = ['NM', 'DM']
@@ -386,7 +412,7 @@ for j, m_type in enumerate(memory_types):
         dt_[j],
         # hist=False,
         bins=bins,
-        kde=False,
+        # kde=False,
         # kde_kws={"shade": True},
         ax=ax, color=gr_pal[::-1][j]
     )
@@ -401,7 +427,8 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
 '''signal detection, max score'''
-ms_targ = ms_targ[:np.shape(ms_lure)[0], :]
+# roc analysis
+ms_lure = ms_lure[:np.shape(ms_targ)[0], :]
 tprs, fprs, auc = compute_auc_over_time(ms_lure.T, ms_targ.T)
 
 b_pal = sns.color_palette('Blues', n_colors=T_part)
@@ -467,24 +494,24 @@ for cond_name, cond_ids_ in cond_ids.items():
 # show regression model
 # predictor: inter-event similarity
 ind_var = confusion_by_cond_mu
-# set dependent var
-dep_var = corrects_by_cond_mu
-dep_var = mistakes_by_cond_mu
-dep_var = dks_by_cond_mu
-f, axes = plt.subplots(3, 1, figsize=(5, 11), sharex=True)
-for i, cond_name in enumerate(cond_ids.keys()):
-    print(i, cond_name)
-    sns.regplot(
-        ind_var[cond_name], dep_var[cond_name],
-        ax=axes[i]
-    )
-    axes[i].set_title(cond_name)
-ylims_ = get_ylim_bonds(axes)
-for ax in axes:
-    ax.set_ylim(ylims_)
-    ax.set_xlabel('Similarity')
-sns.despine()
-f.tight_layout()
+# # set dependent var
+# dep_var = corrects_by_cond_mu
+# dep_var = mistakes_by_cond_mu
+# dep_var = dks_by_cond_mu
+# f, axes = plt.subplots(3, 1, figsize=(5, 11), sharex=True)
+# for i, cond_name in enumerate(cond_ids.keys()):
+#     print(i, cond_name)
+#     sns.regplot(
+#         ind_var[cond_name], dep_var[cond_name],
+#         ax=axes[i]
+#     )
+#     axes[i].set_title(cond_name)
+# ylims_ = get_ylim_bonds(axes)
+# for ax in axes:
+#     ax.set_ylim(ylims_)
+#     ax.set_xlabel('Similarity')
+# sns.despine()
+# f.tight_layout()
 
 ''''''
 dep_vars = {
