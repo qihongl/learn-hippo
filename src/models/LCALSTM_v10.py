@@ -119,7 +119,7 @@ class LCALSTM(nn.Module):
         #
         f_t = gates[:, :self.hidden_dim]
         o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
-        o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
+        i_t = gates[:, -self.hidden_dim:]
         #
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # readout from cm_t
