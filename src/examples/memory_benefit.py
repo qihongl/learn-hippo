@@ -96,9 +96,9 @@ axes[1].text(text_x, text_y, 'B',
              fontsize=28, fontweight='bold')
 f.tight_layout()
 sns.despine()
-f.savefig('temp/demo_mb.png', bbox_inches='tight', dpi=100)
-#
-#
+f.savefig('examples/figs/demo_mb.png', bbox_inches='tight', dpi=100)
+
+
 # f, ax = plt.subplots(1, 1, figsize=(6, 4))
 # plt.plot(memory_benefit)
 # plt.plot(cum_memory_benefit)
