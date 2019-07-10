@@ -113,9 +113,9 @@ class LCALSTM(nn.Module):
         self.encode(cm_t)
         '''final decision attempt'''
         # TODO optional recompute output gate
-        # preact = self.i2h(x_t) + self.h2h(h_t)
-        # gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
-        # o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
+        preact = self.i2h(x_t) + self.h2h(h_t)
+        gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
+        o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
         # readout from cm_t
         h_t = torch.mul(o_t, cm_t.tanh())
         # make final dec
