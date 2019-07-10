@@ -15,7 +15,7 @@ from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 from utils.utils import to_sqnp
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from plt_helper import plot_tz_pred_acc
+from plt_helper import plot_pred_acc_full
 # from sklearn.decomposition.pca import PCA
 plt.switch_backend('agg')
 
@@ -231,7 +231,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     acc_mu, acc_er = compute_acc(targ_a_, dist_a_, return_er=True)
     dk_mu = compute_dk(dist_a_)
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
-    plot_tz_pred_acc(
+    plot_pred_acc_full(
         acc_mu, acc_er, acc_mu+dk_mu,
         [n_param], p,
         f, ax,

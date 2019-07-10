@@ -42,7 +42,7 @@ def get_bw_pal(contrast=100):
     return bw_pal
 
 
-def plot_tz_pred_acc(
+def plot_pred_acc_full(
     pa_mu, pa_er, pa_or_dk_mu, event_bounds, p,
     f, ax,
     alpha=.3,
@@ -106,20 +106,24 @@ def plot_tz_pred_acc(
 
 
 # precompute some stuff
-def plot_rnr_pred_acc(
+def plot_pred_acc_rcl(
     pa_mu, pa_er, pa_or_dk_mu, p,
     f, ax,
     alpha=.3,
     title='Performance on the RNR task',
+    baseline_on=True,
     legend_on=False,
-
 ):
+    if baseline_on:
+        legend_lab = ['baseline', 'don\'t know',
+                      'mistakes', 'correct prediction']
+        baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
+    else:
+        legend_lab = ['don\'t know', 'mistakes', 'correct prediction']
     c_pal = sns.color_palette('colorblind', n_colors=4)
-    legend_lab = ['baseline', 'don\'t know', 'mistakes', 'correct prediction']
     total_event_len = np.shape(pa_mu)[0]
     x_ = range(total_event_len)
     ones = np.ones_like(x_)
-    baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
 
     alpha = .3
     # plot the performance
@@ -130,7 +134,8 @@ def plot_rnr_pred_acc(
     ax.fill_between(x_, pa_or_dk_mu, ones, alpha=alpha, color=c_pal[3])
 
     # plot observation baseline
-    ax.plot(baseline, color='grey', ls='--')
+    if baseline_on:
+        ax.plot(baseline, color='grey', ls='--')
     # add labels
     ax.set_xlabel('Time')
     ax.set_ylabel('Probability')
@@ -140,6 +145,6 @@ def plot_rnr_pred_acc(
     ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
     # add legend
     if legend_on:
-        f.legend(legend_lab, frameon=False, bbox_to_anchor=(.98, .78))
+        f.legend(legend_lab, frameon=False, bbox_to_anchor=(.98, .6))
     sns.despine()
     f.tight_layout()
