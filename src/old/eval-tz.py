@@ -15,7 +15,7 @@ from utils.utils import to_np
 from utils.params import P
 from utils.io import build_log_path, load_ckpt
 from scipy.stats import sem
-from plt_helper import plot_tz_pred_acc
+from plt_helper import plot_pred_acc_full
 
 sns.set(style='white', context='talk', palette='colorblind')
 alpha = .3
@@ -111,7 +111,7 @@ pa_or_dk_mu = pa_mu + dk_probs_mu
 
 # # plot individual results
 # f, ax = plt.subplots(1, 1, figsize=(8, 4), sharex=True)
-# plot_tz_pred_acc(
+# plot_pred_acc_full(
 #     pa_mu, pa_er, pa_or_dk_mu, event_bounds, p,
 #     f, ax
 # )
@@ -129,7 +129,7 @@ log_pa_or_dk_mu = np.mean(log_pa_or_dk, axis=0)
 
 # plot the group results
 f, ax = plt.subplots(1, 1, figsize=(8, 4), sharex=True)
-plot_tz_pred_acc(
+plot_pred_acc_full(
     log_pa_mu, log_pa_se, log_pa_or_dk_mu, event_bounds, p,
     f, ax
 )

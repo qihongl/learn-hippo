@@ -14,7 +14,7 @@ from analysis import compute_behav_metrics, compute_acc, compute_dk, entropy
 from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
-from plt_helper import plot_tz_pred_acc
+from plt_helper import plot_pred_acc_full
 from utils.constants import rnr_log_fnames, RNR_COND_DICT
 # from sklearn.decomposition.pca import PCA
 # plt.switch_backend('agg')

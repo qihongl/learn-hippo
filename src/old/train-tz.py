@@ -14,7 +14,7 @@ from analysis import compute_behav_metrics, compute_acc, compute_dk, entropy
 from utils.params import P
 from utils.utils import to_sqnp
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
-from plt_helper import plot_tz_pred_acc
+from plt_helper import plot_pred_acc_full
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
@@ -314,7 +314,7 @@ for cond_ in list(p.env.tz.cond_dict.values()):
     acc_mu, acc_er = compute_acc(Y_, log_dist_a_, return_er=True)
     dk_mu = compute_dk(log_dist_a_)
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
-    plot_tz_pred_acc(
+    plot_pred_acc_full(
         acc_mu, acc_er, acc_mu+dk_mu,
         [p.env.tz.event_ends[0]], p,
         f, ax,
