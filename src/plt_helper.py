@@ -3,6 +3,7 @@ import seaborn as sns
 
 # from scipy.stats import sem
 from analysis import get_baseline, compute_stats
+from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT
 from matplotlib.ticker import FormatStrFormatter
 
@@ -160,3 +161,14 @@ def plot_time_course_for_all_conds(
     ax.set_title(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
+
+
+def show_weight_stats(agent):
+    for name, wts in agent.named_parameters():
+        wts_np = to_sqnp(wts)
+        wts_norm = np.linalg.norm(wts_np)
+        wts_mean = np.mean(wts_np)
+        wts_min, wts_max = np.min(wts_np), np.max(wts_np)
+        print(name, np.shape(wts_np))
+        print('\tNorm: %6.2f, Mean: %6.2f, Min %6.2f, Max: %6.2f' %
+              (wts_norm, wts_mean, wts_min, wts_max))

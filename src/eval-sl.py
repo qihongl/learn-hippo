@@ -1,4 +1,3 @@
-from scipy.stats import sem
 import os
 import torch
 import numpy as np
@@ -7,6 +6,7 @@ import seaborn as sns
 
 from models.LCALSTM_v9 import LCALSTM as Agent
 # from models import LCALSTM as Agent
+from scipy.stats import sem, pearsonr
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -20,7 +20,7 @@ from analysis import compute_acc, compute_dk, compute_stats, \
     compute_cell_memory_similarity_stats, sep_by_obj_uncertainty
 
 from plt_helper import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
-    plot_time_course_for_all_conds
+    plot_time_course_for_all_conds, show_weight_stats
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
 # plt.switch_backend('agg')
@@ -77,7 +77,7 @@ log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # load the agent back
 agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
 agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
-
+show_weight_stats(agent)
 
 # %%
 '''eval'''
@@ -584,62 +584,52 @@ for cond_name, cond_ids_ in cond_ids.items():
 # show regression model
 # predictor: inter-event similarity
 ind_var = confusion_by_cond_mu
-# # set dependent var
-# dep_var = corrects_by_cond_mu
-# dep_var = mistakes_by_cond_mu
-# dep_var = dks_by_cond_mu
-# f, axes = plt.subplots(3, 1, figsize=(5, 11), sharex=True)
-# for i, cond_name in enumerate(cond_ids.keys()):
-#     print(i, cond_name)
-#     sns.regplot(
-#         ind_var[cond_name], dep_var[cond_name],
-#         ax=axes[i]
-#     )
-#     axes[i].set_title(cond_name)
-# ylims_ = get_ylim_bonds(axes)
-# for ax in axes:
-#     ax.set_ylim(ylims_)
-#     ax.set_xlabel('Similarity')
-# sns.despine()
-# f.tight_layout()
-
-''''''
 dep_vars = {
     'Corrects': corrects_by_cond_mu, 'Errors': mistakes_by_cond_mu,
     'Uncertain': dks_by_cond_mu
 }
-cond_name = 'DM'
+c_pal = sns.color_palette(n_colors=3)
+f, axes = plt.subplots(3, 3, figsize=(9, 8), sharex=True, sharey=True)
+for col_id, cond_name in enumerate(cond_ids.keys()):
+    for row_id, info_name in enumerate(dep_vars.keys()):
+        sns.regplot(
+            ind_var[cond_name], dep_vars[info_name][cond_name],
+            scatter_kws={'alpha': .5, 'marker': '.', 's': 15},
+            x_jitter=.025, y_jitter=.05,
+            color=c_pal[col_id],
+            ax=axes[row_id, col_id]
+        )
+        corr, pval = pearsonr(
+            ind_var[cond_name], dep_vars[info_name][cond_name]
+        )
+        str_ = 'r = %.2f, p = %.2f' % (corr, pval)
+        str_ = str_+'*' if pval < .05 else str_
+        str_ = cond_name + '\n' + str_ if row_id == 0 else str_
+        axes[row_id, col_id].set_title(str_)
+        axes[row_id, 0].set_ylabel(info_name)
+        axes[row_id, col_id].set_ylim([-.05, 1.05])
 
-
-f, axes = plt.subplots(3, 1, figsize=(5, 10), sharex=True)
-for i, info in enumerate(dep_vars.keys()):
-    sns.regplot(
-        ind_var[cond_name], dep_vars[info][cond_name],
-        scatter_kws={'alpha': .5, 'marker': '.', 's': 50},
-        # x_jitter=.05, y_jitter=.1,
-        ax=axes[i]
-    )
-    axes[i].set_ylabel(info)
-axes[0].set_title(cond_name)
-
-ylims_ = get_ylim_bonds(axes)
-for ax in axes:
-    ax.set_ylim(ylims_)
-    ax.set_xlabel('Similarity')
+    axes[-1, col_id].set_xlabel('Similarity')
 sns.despine()
 f.tight_layout()
-fig_path = os.path.join(fig_dir, f'ambiguity-{cond_name}.png')
+fig_path = os.path.join(fig_dir, f'ambiguity-by-cond.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
-'''weights'''
-for name, wts in agent.named_parameters():
-    wts_np = to_sqnp(wts)
-    wts_norm = np.linalg.norm(wts_np)
-    wts_mean = np.mean(wts_np)
-    wts_min, wts_max = np.min(wts_np), np.max(wts_np)
-    print(name, np.shape(wts_np))
-    print(wts_norm, wts_mean, wts_min, wts_max)
+# '''ambiguity regression, sep by objective uncertainty'''
+# cond_name = 'DM'
+# confusion_cond = confusion_by_cond_mu[cond_name]
+# confusion_cond_ext = np.tile(confusion_cond, (15, 1)).T
+# f, ax = plt.subplots(1, 1, figsize=(5, 4))
+# sns.regplot(
+#     dk_cond_p2[em_only_cond_p2], confusion_cond_ext[em_only_cond_p2],
+#     scatter_kws={'alpha': .5, 'marker': '.', 's': 15},
+#     x_jitter=.025, y_jitter=.05,
+#     # color=c_pal[col_id],
+#     ax=ax
+# )
+# np.mean(dk_cond_p2, axis=1)
+# np.shape(mistakes_cond_p2)
 
 
 '''t-RDM: raw similarity'''
@@ -652,15 +642,18 @@ for cond_name in cond_ids.keys():
         data_cond_ = data[cond_ids[cond_name], :, :]
         trsm[cond_name] = compute_trsm(data_cond_)
 
-f, axes = plt.subplots(3, 1, figsize=(7, 11))
+f, axes = plt.subplots(3, 1, figsize=(7, 11), sharex=True)
 for i, cond_name in enumerate(TZ_COND_DICT.values()):
     sns.heatmap(
         trsm[cond_name], cmap='viridis', square=True,
+        xticklabels=5, yticklabels=5,
         ax=axes[i]
     )
     axes[i].axvline(T_part, color='red', linestyle='--')
     axes[i].axhline(T_part, color='red', linestyle='--')
     axes[i].set_title(f'TR-TR correlation, {cond_name}')
+    axes[i].set_ylabel('Time')
+axes[-1].set_xlabel('Time')
 f.tight_layout()
 
 '''pca the deicison activity'''
