@@ -6,13 +6,14 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from models.LCALSTM_v9 import LCALSTM as Agent
+# from models import LCALSTM as Agent
 from task import ContextualChoice
-from models import LCALSTM as Agent
-from analysis import entropy
+from analysis import entropy, compute_stats
 # from models.DND import compute_similarities
 from models import get_reward, compute_returns, compute_a2c_loss
 from task.utils import get_one_hot_vector
-from utils.utils import to_pth
+from utils.utils import to_pth, to_sqnp
 from sklearn.decomposition import PCA
 from scipy.stats import sem
 
@@ -32,8 +33,7 @@ t_noise_off = 5
 # input/output/hidden/memory dim
 obs_dim = 32
 task = ContextualChoice(
-    obs_dim=obs_dim, trial_length=trial_length,
-    t_noise_off=t_noise_off
+    obs_dim=obs_dim, trial_length=trial_length, t_noise_off=t_noise_off
 )
 
 # num unique training examples in one epoch
@@ -48,7 +48,7 @@ dim_hidden = 32
 dim_output = 2
 dict_len = 100
 learning_rate = 1e-3
-n_epochs = 50
+n_epochs = 300
 eta = 0
 
 # init model and hidden state.
@@ -64,7 +64,8 @@ log_loss_policy = np.zeros(n_epochs,)
 
 log_Y = np.zeros((n_epochs, n_trials, trial_length))
 log_Y_hat = np.zeros((n_epochs, n_trials, trial_length))
-log_rgate = np.zeros((n_trials, trial_length, dim_hidden))
+
+log_cache = [[[None] for _ in range(trial_length)] for _ in range(n_trials)]
 
 # loop over epoch
 i, m, t = 0, 0, 0
@@ -107,8 +108,7 @@ for i in range(n_epochs):
             # log
             cumulative_reward += r_t
             log_Y_hat[i, m, t] = a_t.item()
-            # [f_t, i_t, o_t, r_t, m_t] = cache_t
-            # log_rgate[m, t] = np.squeeze(r_t.data.numpy())
+            log_cache[m][t] = cache
 
         returns = compute_returns(rewards)
         loss_policy, loss_value = compute_a2c_loss(probs, values, returns)
@@ -134,18 +134,58 @@ for i in range(n_epochs):
     )
 
 
+'''org data'''
+# network internal reps
+inpt = np.full((n_trials, trial_length), np.nan)
+leak = np.full((n_trials, trial_length), np.nan)
+comp = np.full((n_trials, trial_length), np.nan)
+C = np.full((n_trials, trial_length, dim_hidden), np.nan)
+H = np.full((n_trials, trial_length, dim_hidden), np.nan)
+M = np.full((n_trials, trial_length, dim_hidden), np.nan)
+CM = np.full((n_trials, trial_length, dim_hidden), np.nan)
+DA = np.full((n_trials, trial_length, dim_hidden), np.nan)
+V = [None] * n_trials
+
+for i in range(n_trials):
+    for t in range(trial_length):
+        # unpack data for i,t
+        [vector_signal, scalar_signal, misc] = log_cache[i][t]
+        [inpt_it, leak_it, comp_it] = scalar_signal
+        [h_t, m_t, cm_t, des_act_t, V_i] = misc
+        # cache data to np array
+        inpt[i, t] = to_sqnp(inpt_it)
+        leak[i, t] = to_sqnp(leak_it)
+        comp[i, t] = to_sqnp(comp_it)
+        H[i, t, :] = to_sqnp(h_t)
+        M[i, t, :] = to_sqnp(m_t)
+        CM[i, t, :] = to_sqnp(cm_t)
+        DA[i, t, :] = to_sqnp(des_act_t)
+        V[i] = V_i
+
+# compute cell state
+C = CM - M
+
 '''analysis'''
-f, axes = plt.subplots(1, 2, figsize=(8, 3))
-axes[0].plot(log_return)
-axes[0].set_ylabel('Return')
-axes[0].set_xlabel('Epoch')
-axes[1].plot(log_loss_value)
-axes[1].set_ylabel('Value loss')
-axes[1].set_xlabel('Epoch')
+f, axes = plt.subplots(2, 2, figsize=(8, 6), sharex=True)
+axes[0, 0].plot(log_return)
+axes[0, 0].set_ylabel('Return')
+
+axes[0, 1].plot(log_ent)
+axes[0, 1].set_ylabel('Ent')
+
+axes[1, 0].plot(log_loss_value)
+axes[1, 0].set_ylabel('Value loss')
+
+axes[1, 1].plot(log_loss_policy)
+axes[1, 1].set_ylabel('Policy loss')
+
+axes[1, 1].set_xlabel('Epoch')
+axes[1, 0].set_xlabel('Epoch')
+
 sns.despine()
 f.tight_layout()
 
-
+'''prediction accuracy'''
 n_se = 2
 # compute stat
 corrects = log_Y_hat[-1] == log_Y[-1]
@@ -166,6 +206,25 @@ f.legend(frameon=False, bbox_to_anchor=(1, .6))
 sns.despine()
 f.tight_layout()
 # f.savefig('../figs/correct-rate.png', dpi=100, bbox_inches='tight')
+#
+# '''lca params'''
+# inpt_nr_mu, inpt_nr_er = compute_stats(inpt[:n_unique_example])
+# inpt_r_mu, inpt_r_er = compute_stats(inpt[n_unique_example:])
+# leak_nr_mu, leak_nr_er = compute_stats(leak[:n_unique_example])
+# leak_r_mu, leak_r_er = compute_stats(leak[n_unique_example:])
+# comp_nr_mu, comp_nr_er = compute_stats(comp[:n_unique_example])
+# comp_r_mu, comp_r_er = compute_stats(comp[n_unique_example:])
+#
+# f, axes = plt.subplots(3, 1, figsize=(7, 8))
+# axes[0].errorbar(x=range(trial_length), y=inpt_r_mu, yerr=inpt_r_er)
+# axes[0].errorbar(x=range(trial_length), y=inpt_nr_mu, yerr=inpt_nr_er)
+# axes[1].errorbar(x=range(trial_length), y=leak_r_mu, yerr=leak_r_er)
+# axes[1].errorbar(x=range(trial_length), y=leak_nr_mu, yerr=leak_nr_er)
+# axes[2].errorbar(x=range(trial_length), y=comp_r_mu, yerr=comp_r_er)
+# axes[2].errorbar(x=range(trial_length), y=comp_nr_mu, yerr=comp_nr_er)
+# sns.despine()
+# f.tight_layout()
+
 
 # '''visualize keys and values'''
 # dmat_mm = np.zeros((len(agent.dnd.keys), len(agent.dnd.keys)))

@@ -179,19 +179,18 @@ if __name__ == "__main__":
     n_param, n_branch = 6, 2
     n_parts = 2
     n_samples = 5
-    p_rm_ob_enc = 1
-    p_rm_ob_rcl = 1
+    p_rm_ob_enc = 0.1
+    p_rm_ob_rcl = 0.1
     # pad_len = 'random'
     pad_len = 0
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
         p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
-        n_rm_fixed=False
+        # n_rm_fixed=False
     )
 
     # gen samples
-    X, Y = task.sample(n_samples)
-
+    X, Y = task.sample(n_samples, to_torch=True)
     # get a sample
     i = 0
     X_i, Y_i = X[i], Y[i]
