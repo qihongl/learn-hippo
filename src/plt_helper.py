@@ -1,16 +1,10 @@
 import numpy as np
 import seaborn as sns
 
-from scipy.stats import sem
-from analysis import get_baseline
+# from scipy.stats import sem
+from analysis import get_baseline, compute_stats
+from utils.constants import TZ_COND_DICT
 from matplotlib.ticker import FormatStrFormatter
-
-
-# def compute_summary_stats(X, axis=0, n_se=2):
-#     """require X to be 2d"""
-#     mu = np.mean(X, axis=axis)
-#     er = sem(X, axis=axis)*n_se
-#     return mu, er
 
 
 def get_ylim_bonds(axes):
@@ -148,3 +142,21 @@ def plot_pred_acc_rcl(
         f.legend(legend_lab, frameon=False, bbox_to_anchor=(.98, .6))
     sns.despine()
     f.tight_layout()
+
+
+def plot_time_course_for_all_conds(
+        matrix, cond_ids, ax,
+        n_se=2,
+        axis1_start=0, xlabel=None, ylabel=None, title=None,
+        frameon=False, add_legend=True,
+):
+    for i, cond_name in enumerate(TZ_COND_DICT.values()):
+        submatrix_ = matrix[cond_ids[cond_name], axis1_start:]
+        M_, T_ = np.shape(submatrix_)
+        mu_, er_ = compute_stats(submatrix_, axis=0, n_se=n_se)
+        ax.errorbar(x=range(T_), y=mu_, yerr=er_, label=cond_name)
+    if add_legend:
+        ax.legend(frameon=frameon)
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)

@@ -5,6 +5,7 @@ import torch.nn as nn
 from sklearn import metrics
 from itertools import product
 from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
+from analysis import compute_stats
 from models.DND import compute_similarities, transform_similarities
 
 
@@ -80,39 +81,20 @@ def create_sim_dict(sim, cond_ids, n_targ=1):
         sim_dict[cn]['lure'] = np.atleast_3d(sim_dict_[cn][:, :, :-n_targ])
     return sim_dict
 
-# def _compute_evidence(
-#     cell_states, memories, leak_, comp_, inpw_,
-#     mrwt_func, kernel,
-# ):
-#     event_len, n_hidden = cell_states.size()
-#     evidence = np.zeros((event_len, len(memories)))
-#     for t in range(event_len):
-#         similarities_ = compute_similarities(
-#             cell_states[t, :], memories, kernel
-#         )
-#         evidence[t, :] = transform_similarities(
-#             similarities_, mrwt_func,
-#             leak=leak_[t], comp=comp_[t],
-#             w_input=inpw_[t],
-#         ).numpy()
-#     return evidence
-#
-#
-# def compute_evidence(
-#     C_tp, K_tp, Inpw_tp, Leak_tp, Comp_tp,
-#     mrwt_func, kernel
-# ):
-#     n_mems = len(K_tp[0])
-#     n_trials_ = len(C_tp)
-#     event_len, n_hidden = C_tp[0].size()
-#     evidences_abs = np.zeros((event_len, n_mems, n_trials_))
-#     for i in range(n_trials_):
-#         # calculate the kernel-based similatity for target vs. lure
-#         evidences_abs[:, :, i] = _compute_evidence(
-#             C_tp[i], K_tp[i], Leak_tp[i], Comp_tp[i], Inpw_tp[i],
-#             mrwt_func, kernel
-#         )
-#     return evidences_abs
+
+def compute_cell_memory_similarity_stats(sim_dict, cond_ids):
+    # re-organize as hierachical dict
+    sim_stats = {cn: {'targ': {}, 'lure': {}} for cn in cond_ids.keys()}
+    # for DM, RM conditions...
+    for cond in ['DM', 'RM']:
+        # compute stats for target & lure activation
+        for m_type in sim_stats[cond].keys():
+            s_ = compute_stats(np.mean(sim_dict[cond][m_type], axis=-1))
+            sim_stats[cond][m_type]['mu'], sim_stats[cond][m_type]['er'] = s_
+    # for NM trials, only compute lure activations, since there is no target
+    s_ = compute_stats(np.mean(sim_dict['NM']['lure'], axis=-1))
+    sim_stats['NM']['lure']['mu'], sim_stats['NM']['lure']['er'] = s_
+    return sim_stats
 
 
 def compute_roc(distrib_noise, distrib_signal):

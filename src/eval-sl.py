@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v2_1 import LCALSTM as Agent
+from models.LCALSTM_v9 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
@@ -15,8 +15,12 @@ from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, load_ckpt
 from analysis import compute_acc, compute_dk, compute_stats, \
     compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
-    compute_auc_over_time, compute_event_similarity, batch_compute_true_dk
-from plt_helper import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds
+    compute_auc_over_time, compute_event_similarity, batch_compute_true_dk, \
+    process_cache, get_trial_cond_ids, compute_n_trials_to_skip,\
+    compute_cell_memory_similarity_stats, sep_by_obj_uncertainty
+
+from plt_helper import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
+    plot_time_course_for_all_conds
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
 # plt.switch_backend('agg')
@@ -25,9 +29,9 @@ sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
 # exp_name = 'pred-delay'
-exp_name = 'july11_v2_1'
+exp_name = 'july9_v9'
 
-subj_id = 1
+subj_id = 0
 penalty = 4
 supervised_epoch = 300
 epoch_load = 600
@@ -38,11 +42,11 @@ n_hidden = 194
 learning_rate = 1e-3
 eta = .1
 n_mem = 4
-
+# loading params
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = .3
 pad_len_load = -1
-
+# testing params
 p_test = .3
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
@@ -85,14 +89,20 @@ n_examples_test = 666
 )
 [dist_a_, Y_, log_cache_, log_cond_] = results
 [X_raw, Y_raw] = XY
-
-
 # compute ground truth / objective uncertainty (delay phase removed)
 true_dk_wm_, true_dk_em_ = batch_compute_true_dk(X_raw, task)
 
-# skip examples untill em buffer is full
-non_nm_trials = np.where(log_cond_ != TZ_COND_DICT.inverse['NM'])[0]
-n_examples_skip = non_nm_trials[n_mem+1]
+'''precompute some constants'''
+# figure out max n-time-steps across for all trials
+T_part = n_param + pad_len_test
+T_total = T_part * task.n_parts
+#
+n_conds = len(TZ_COND_DICT)
+memory_types = ['targ', 'lure']
+ts_predict = np.array([t % T_part >= pad_len_test for t in range(T_total)])
+
+'''skip examples untill EM is full'''
+n_examples_skip = compute_n_trials_to_skip(log_cond_, p)
 n_examples = n_examples_test - n_examples_skip
 # skip
 dist_a = dist_a_[n_examples_skip:]
@@ -102,67 +112,11 @@ log_cache = log_cache_[n_examples_skip:]
 true_dk_wm = true_dk_wm_[n_examples_skip:]
 true_dk_em = true_dk_em_[n_examples_skip:]
 
-# figure out max n-time-steps across for all trials
-T_part = n_param + pad_len_test
-T_total = T_part * task.n_parts
-
-# %%
-'''predefine/compute some constants'''
-# precompute some constants
-n_conds = len(TZ_COND_DICT)
-memory_types = ['targ', 'lure']
-ts_predict = np.array([t % T_part >= pad_len_test for t in range(T_total)])
-# plot
-alpha = .5
-n_se = 3
-# colors
-gr_pal = sns.color_palette('colorblind')[2:4]
-#
-fig_dir = os.path.join(log_subpath['figs'], f'delay-{pad_len_test}')
-if not os.path.exists(fig_dir):
-    os.mkdir(fig_dir)
-
-
-# sns.palplot(gr_pal)
-
-
-'''upack results'''
-# compute trial ids
-cond_ids = {}
-for cn in list(TZ_COND_DICT.values()):
-    cond_id_ = TZ_COND_DICT.inverse[cn]
-    cond_ids[cn] = log_cond == cond_id_
-
-# network internal reps
-inpt = np.full((n_examples, T_total), np.nan)
-inpt = np.full((n_examples, T_total), np.nan)
-leak = np.full((n_examples, T_total), np.nan)
-comp = np.full((n_examples, T_total), np.nan)
-C = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-H = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-M = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-DA = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-V = [None] * n_examples
-
-for i in range(n_examples):
-    for t in range(T_total):
-        # unpack data for i,t
-        [vector_signal, scalar_signal, misc] = log_cache[i][t]
-        [inpt_it, leak_it, comp_it] = scalar_signal
-        [h_t, m_t, cm_t, des_act_t, V_i] = misc
-        # cache data to np array
-        inpt[i, t] = to_sqnp(inpt_it)
-        leak[i, t] = to_sqnp(leak_it)
-        comp[i, t] = to_sqnp(comp_it)
-        H[i, t, :] = to_sqnp(h_t)
-        M[i, t, :] = to_sqnp(m_t)
-        CM[i, t, :] = to_sqnp(cm_t)
-        DA[i, t, :] = to_sqnp(des_act_t)
-        V[i] = V_i
-
-# compute cell state
-C = CM - M
+'''organize results to analyzable form'''
+cond_ids = get_trial_cond_ids(log_cond)
+activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
+[C, H, M, CM, DA, V] = activity_
+[inpt, leak, comp] = ctrl_param_
 
 # onehot to int
 actions = np.argmax(dist_a, axis=-1)
@@ -171,6 +125,18 @@ targets = np.argmax(Y, axis=-1)
 dks = actions == p.dk_id
 corrects = targets == actions
 mistakes = np.logical_and(targets != actions, ~dks)
+
+
+# %%
+'''plotting params'''
+alpha = .5
+n_se = 3
+# colors
+gr_pal = sns.color_palette('colorblind')[2:4]
+# make dir to save figs
+fig_dir = os.path.join(log_subpath['figs'], f'delay-{pad_len_test}')
+if not os.path.exists(fig_dir):
+    os.mkdir(fig_dir)
 
 
 '''plot behavioral performance'''
@@ -195,34 +161,17 @@ for cn in list(TZ_COND_DICT.values()):
 '''compare LCA params across conditions'''
 
 
-def plot_time_course_for_all_conds(
-        matrix, ax,
-        axis1_start=0, xlabel=None, ylabel=None, title=None,
-        frameon=False, add_legend=True,
-):
-    for i, cond_name in enumerate(TZ_COND_DICT.values()):
-        submatrix_ = matrix[cond_ids[cond_name], axis1_start:]
-        M_, T_ = np.shape(submatrix_)
-        mu_, er_ = compute_stats(submatrix_, axis=0, n_se=n_se)
-        ax.errorbar(x=range(T_), y=mu_, yerr=er_, label=cond_name)
-    if add_legend:
-        ax.legend(frameon=frameon)
-    ax.set_title(title)
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel(xlabel)
-
-
 f, axes = plt.subplots(3, 1, figsize=(7, 9), sharex=True)
 plot_time_course_for_all_conds(
-    inpt, axes[0], axis1_start=T_part,
+    inpt, cond_ids, axes[0], axis1_start=T_part,
     title='"need" for episodic memories', ylabel='input strength'
 )
 plot_time_course_for_all_conds(
-    leak, axes[1], axis1_start=T_part,
+    leak, cond_ids, axes[1], axis1_start=T_part,
     title='leakiness of the memories', ylabel='leak'
 )
 plot_time_course_for_all_conds(
-    comp, axes[2], axis1_start=T_part,
+    comp, cond_ids, axes[2], axis1_start=T_part,
     title='competition across memories', ylabel='competition'
 )
 axes[-1].set_xlabel('Time, recall phase')
@@ -241,59 +190,43 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 sim_cos, sim_lca = compute_cell_memory_similarity(C, V, inpt, leak, comp)
 sim_cos_dict = create_sim_dict(sim_cos, cond_ids, n_targ=1)
 sim_lca_dict = create_sim_dict(sim_lca, cond_ids, n_targ=1)
-# compute stats
-sim_cos_stats = {cn: {'targ': {}, 'lure': {}} for cn in cond_ids.keys()}
-sim_lca_stats = {cn: {'targ': {}, 'lure': {}} for cn in cond_ids.keys()}
+sim_cos_stats = compute_cell_memory_similarity_stats(sim_cos_dict, cond_ids)
+sim_lca_stats = compute_cell_memory_similarity_stats(sim_lca_dict, cond_ids)
 
-# split by conditions x target/lure
-for cond_name in ['DM', 'RM']:
-    for memory_type in sim_cos_stats[cond_name].keys():
-        sim_cos_stats[cond_name][memory_type]['mu'], \
-            sim_cos_stats[cond_name][memory_type]['er'] = compute_stats(
-            np.mean(sim_cos_dict[cond_name][memory_type], axis=-1))
-        sim_lca_stats[cond_name][memory_type]['mu'], \
-            sim_lca_stats[cond_name][memory_type]['er'] = compute_stats(
-            np.mean(sim_lca_dict[cond_name][memory_type], axis=-1))
-
-sim_cos_stats['NM']['lure']['mu'], \
-    sim_cos_stats['NM']['lure']['er'] = compute_stats(
-    np.mean(sim_cos_dict['NM']['lure'], axis=-1))
-sim_lca_stats['NM']['lure']['mu'], \
-    sim_lca_stats['NM']['lure']['er'] = compute_stats(
-    np.mean(sim_lca_dict['NM']['lure'], axis=-1))
 
 # plot target/lure activation for all conditions
-# sim_plt_ = sim_cos_stats
-sim_plt_ = sim_lca_stats
-f, axes = plt.subplots(3, 1, figsize=(5, 8))
-for i, c_name in enumerate(cond_ids.keys()):
-    for m_type in memory_types:
-        if m_type == 'targ' and c_name == 'NM':
-            continue
-        color_ = gr_pal[0] if m_type == 'targ' else gr_pal[1]
-        axes[i].errorbar(
-            x=range(T_part),
-            y=sim_plt_[c_name][m_type]['mu'][T_part:],
-            yerr=sim_plt_[c_name][m_type]['er'][T_part:],
-            label=f'{m_type}', color=color_
-        )
-        axes[i].set_title(c_name)
-        axes[i].set_ylabel('Memory activation')
-axes[0].legend()
-axes[-1].set_xlabel('Time, recall phase')
-# make all ylims the same
-ylim_l, ylim_r = get_ylim_bonds(axes)
-for i, ax in enumerate(axes):
-    ax.set_ylim([ylim_l, ylim_r])
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
+for ker_name, sim_stats_plt_ in sim_stats_plt.items():
+    # print(ker_name, sim_stats_plt_)
+    f, axes = plt.subplots(3, 1, figsize=(5, 8))
+    for i, c_name in enumerate(cond_ids.keys()):
+        for m_type in memory_types:
+            if m_type == 'targ' and c_name == 'NM':
+                continue
+            color_ = gr_pal[0] if m_type == 'targ' else gr_pal[1]
+            axes[i].errorbar(
+                x=range(T_part),
+                y=sim_stats_plt_[c_name][m_type]['mu'][T_part:],
+                yerr=sim_stats_plt_[c_name][m_type]['er'][T_part:],
+                label=f'{m_type}', color=color_
+            )
+            axes[i].set_title(c_name)
+            axes[i].set_ylabel('Memory activation')
+    axes[0].legend()
+    axes[-1].set_xlabel('Time, recall phase')
+    # make all ylims the same
+    ylim_l, ylim_r = get_ylim_bonds(axes)
+    for i, ax in enumerate(axes):
+        ax.set_ylim([ylim_l, ylim_r])
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 
-if pad_len_test > 0:
-    for ax in axes:
-        ax.axvline(pad_len_test, color='grey', linestyle='--')
-f.tight_layout()
-sns.despine()
-fig_path = os.path.join(fig_dir, f'tz-memact-lca.png')
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    if pad_len_test > 0:
+        for ax in axes:
+            ax.axvline(pad_len_test, color='grey', linestyle='--')
+    f.tight_layout()
+    sns.despine()
+    fig_path = os.path.join(fig_dir, f'tz-memact-{ker_name}.png')
+    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''use the amount of errors/dk in the last k time steps to predict recall'''
 # pick a condition
@@ -304,10 +237,8 @@ dk_cond_p2 = dks[cond_ids[cond_name], n_param:]
 mistakes_cond_p2 = mistakes[cond_ids[cond_name], n_param:]
 true_dk_em_cond_p2 = true_dk_em[cond_ids[cond_name], n_param:]
 true_dk_wm_cond_p2 = true_dk_wm[cond_ids[cond_name], :]
-
 # t s.t. maximal recall peak
 t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
-
 
 # plot
 # plot target memory activation profile, for all trials
@@ -322,6 +253,7 @@ fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-lca.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 # use previous uncertainty to predict memory activation
+
 t_pick_max = 5
 v_pal = sns.color_palette('viridis', n_colors=t_pick_max)
 f, ax = plt.subplots(1, 1, figsize=(8, 4))
@@ -350,6 +282,8 @@ em_only_cond_p2 = np.logical_and(true_dk_wm_cond_p2, ~ true_dk_em_cond_p2)
 wm_only_cond_p2 = np.logical_and(~true_dk_wm_cond_p2, true_dk_em_cond_p2)
 neither_cond_p2 = np.logical_and(true_dk_wm_cond_p2, true_dk_em_cond_p2)
 both_cond_p2 = np.logical_and(~true_dk_wm_cond_p2, ~true_dk_em_cond_p2)
+obj_uncertainty_info = [em_only_cond_p2, wm_only_cond_p2, neither_cond_p2,
+                        both_cond_p2]
 
 n_ = np.shape(both_cond_p2)[0]
 
@@ -376,33 +310,43 @@ fig_path = os.path.join(fig_dir, f'tz-{cond_name}-q-source.png')
 f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
-# use CURRENT uncertainty to predict memory activation
-ma_em_mu, ma_em_er = np.zeros(n_param,), np.zeros(n_param,)
-ma_wm_mu, ma_wm_er = np.zeros(n_param,), np.zeros(n_param,)
-ma_bo_mu, ma_bo_er = np.zeros(n_param,), np.zeros(n_param,)
-ma_nt_mu, ma_nt_er = np.zeros(n_param,), np.zeros(n_param,)
+# use objective uncertainty metric to decompose LCA params in the EM condition
+inpt_cond_p2 = inpt[cond_ids[cond_name], T_part:]
+leak_cond_p2 = leak[cond_ids[cond_name], T_part:]
+comp_cond_p2 = comp[cond_ids[cond_name], T_part:]
+all_lca_param_cond_p2 = {
+    'input strength': inpt_cond_p2,
+    'leak': leak_cond_p2, 'competition': comp_cond_p2
+}
 
-# compute stats
-# t = 0
-np.shape(targ_act_cond_p2)
-T_part
-for t in range(n_param):
-    ma_em_mu[t], ma_em_er[t] = compute_stats(
-        targ_act_cond_p2[em_only_cond_p2[:, t], t+pad_len_test], n_se=n_se)
-    ma_wm_mu[t], ma_wm_er[t] = compute_stats(
-        targ_act_cond_p2[wm_only_cond_p2[:, t], t+pad_len_test], n_se=n_se)
-    ma_bo_mu[t], ma_bo_er[t] = compute_stats(
-        targ_act_cond_p2[both_cond_p2[:, t], t+pad_len_test], n_se=n_se)
-    ma_nt_mu[t], ma_nt_er[t] = compute_stats(
-        targ_act_cond_p2[neither_cond_p2[:, t], t+pad_len_test], n_se=n_se)
+f, axes = plt.subplots(3, 1, figsize=(7, 10), sharex=True)
+for i, (param_name, param_cond_p2) in enumerate(all_lca_param_cond_p2.items()):
+    print(i, param_name, param_cond_p2)
+    param_cond_p2_stats = sep_by_obj_uncertainty(
+        param_cond_p2[pad_len_test:], obj_uncertainty_info, n_se=n_se)
+    for key, [mu_, er_] in param_cond_p2_stats.items():
+        if not np.all(np.isnan(mu_)):
+            axes[i].errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
+    axes[i].set_ylabel(f'{param_name}')
+    axes[i].legend(fancybox=True)
+
+axes[-1].set_xlabel('Time, recall phase')
+axes[0].set_title(f'LCA params, {cond_name}')
+f.tight_layout()
+sns.despine()
+
+
+# use CURRENT uncertainty to predict memory activation
+
+targ_act_cond_p2_stats = sep_by_obj_uncertainty(
+    targ_act_cond_p2[pad_len_test:], obj_uncertainty_info, n_se=n_se)
 
 f, ax = plt.subplots(1, 1, figsize=(8, 5))
-ax.errorbar(x=range(n_param), y=ma_em_mu, yerr=ma_em_er, label='EM only')
-ax.errorbar(x=range(n_param), y=ma_nt_mu, yerr=ma_nt_er, label='neither')
-ax.errorbar(x=range(n_param), y=ma_bo_mu, yerr=ma_bo_er, label='both')
-if np.sum(wm_only_cond_p2) > 0:
-    ax.errorbar(x=range(n_param), y=ma_wm_mu, yerr=ma_wm_er, label='WM only')
-
+for key, [mu_, er_] in targ_act_cond_p2_stats.items():
+    if not np.all(np.isnan(mu_)):
+        ax.errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
+ax.set_ylabel(f'{param_name}')
+ax.legend(fancybox=True)
 ax.set_title(f'Target memory activation, {cond_name}')
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Activation')
@@ -416,28 +360,13 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 '''predictions performance w.r.t prediction source (EM, WM)'''
 
 corrects_cond_p2 = corrects[cond_ids[cond_name], n_param:]
-
-# prealloc
-pa_em_mu, pa_em_er = np.zeros(n_param,), np.zeros(n_param,)
-pa_wm_mu, pa_wm_er = np.zeros(n_param,), np.zeros(n_param,)
-pa_bo_mu, pa_bo_er = np.zeros(n_param,), np.zeros(n_param,)
-pa_nt_mu, pa_nt_er = np.zeros(n_param,), np.zeros(n_param,)
-for t in range(n_param):
-    pa_em_mu[t], pa_em_er[t] = compute_stats(
-        corrects_cond_p2[em_only_cond_p2[:, t], t], n_se=n_se)
-    pa_wm_mu[t], pa_wm_er[t] = compute_stats(
-        corrects_cond_p2[wm_only_cond_p2[:, t], t], n_se=n_se)
-    pa_bo_mu[t], pa_bo_er[t] = compute_stats(
-        corrects_cond_p2[both_cond_p2[:, t], t], n_se=n_se)
-    pa_nt_mu[t], pa_nt_er[t] = compute_stats(
-        corrects_cond_p2[neither_cond_p2[:, t], t], n_se=n_se)
+acc_cond_p2_stats = sep_by_obj_uncertainty(
+    corrects_cond_p2, obj_uncertainty_info, n_se=n_se)
 
 f, ax = plt.subplots(1, 1, figsize=(6, 4))
-ax.errorbar(x=range(n_param), y=pa_em_mu, yerr=pa_em_er, label='EM only')
-ax.errorbar(x=range(n_param), y=pa_nt_mu, yerr=pa_nt_er, label='neither')
-ax.errorbar(x=range(n_param), y=pa_bo_mu, yerr=pa_bo_er, label='both')
-if np.sum(wm_only_cond_p2) > 0:
-    ax.errorbar(x=range(n_param), y=pa_wm_mu, yerr=pa_wm_er, label='WM only')
+for key, [mu_, er_] in acc_cond_p2_stats.items():
+    if not np.all(np.isnan(mu_)):
+        ax.errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
 ax.set_title(f'Performance, {cond_name}')
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Accuracy')
@@ -450,27 +379,13 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''dk w.r.t prediction source (EM, WM)'''
 
-# prealloc
-dk_em_mu, dk_em_er = np.zeros(n_param,), np.zeros(n_param,)
-dk_wm_mu, dk_wm_er = np.zeros(n_param,), np.zeros(n_param,)
-dk_bo_mu, dk_bo_er = np.zeros(n_param,), np.zeros(n_param,)
-dk_nt_mu, dk_nt_er = np.zeros(n_param,), np.zeros(n_param,)
-for t in range(n_param):
-    dk_em_mu[t], dk_em_er[t] = compute_stats(
-        dk_cond_p2[em_only_cond_p2[:, t], t], n_se=n_se)
-    dk_wm_mu[t], dk_wm_er[t] = compute_stats(
-        dk_cond_p2[wm_only_cond_p2[:, t], t], n_se=n_se)
-    dk_bo_mu[t], dk_bo_er[t] = compute_stats(
-        dk_cond_p2[both_cond_p2[:, t], t], n_se=n_se)
-    dk_nt_mu[t], dk_nt_er[t] = compute_stats(
-        dk_cond_p2[neither_cond_p2[:, t], t], n_se=n_se)
+dk_cond_p2_stats = sep_by_obj_uncertainty(
+    dk_cond_p2, obj_uncertainty_info, n_se=n_se)
 
 f, ax = plt.subplots(1, 1, figsize=(6, 4))
-ax.errorbar(x=range(n_param), y=dk_em_mu, yerr=dk_em_er, label='EM only')
-ax.errorbar(x=range(n_param), y=dk_nt_mu, yerr=dk_nt_er, label='neither')
-ax.errorbar(x=range(n_param), y=dk_bo_mu, yerr=dk_bo_er, label='both')
-if np.sum(wm_only_cond_p2) > 0:
-    ax.errorbar(x=range(n_param), y=dk_wm_mu, yerr=dk_wm_er, label='WM only')
+for key, [mu_, er_] in dk_cond_p2_stats.items():
+    if not np.all(np.isnan(mu_)):
+        ax.errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
 ax.set_title(f'Uncertainty, {cond_name}')
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('P(DK)')
@@ -539,8 +454,9 @@ f.tight_layout()
 
 f, ax = plt.subplots(1, 1, figsize=(6, 3.5))
 plot_pred_acc_rcl(
-    pa_em_mu, pa_em_er, pa_em_mu+dk_em_mu, p,
-    f, ax,
+    acc_cond_p2_stats['EM only'][0], acc_cond_p2_stats['EM only'][1],
+    acc_cond_p2_stats['EM only'][0]+dk_cond_p2_stats['EM only'][0],
+    p, f, ax,
     title=f'EM-based prediction performance, {cond_name}',
     baseline_on=False, legend_on=True,
 )
@@ -554,8 +470,9 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 f, ax = plt.subplots(1, 1, figsize=(6, 3.5))
 plot_pred_acc_rcl(
-    pa_bo_mu, pa_bo_er, pa_bo_mu+dk_bo_mu, p,
-    f, ax,
+    acc_cond_p2_stats['both'][0], acc_cond_p2_stats['both'][1],
+    acc_cond_p2_stats['both'][0]+dk_cond_p2_stats['both'][0],
+    p, f, ax,
     title=f'WM+EM based prediction performance, {cond_name}',
     baseline_on=False, legend_on=True,
 )
@@ -575,8 +492,8 @@ ms_lure = np.max(sim_lca_dict['NM']['lure'], axis=-1)
 ms_targ = np.max(sim_lca_dict['DM']['targ'], axis=-1)
 leg_ = ['NM', 'DM']
 
-t = 2
-bins = 50
+t = t_recall_peak
+bins = 30
 dt_ = [ms_lure[:, T_part+t], ms_targ[:, T_part+t]]
 
 f, ax = plt.subplots(1, 1, figsize=(6, 3))
@@ -693,11 +610,13 @@ dep_vars = {
 }
 cond_name = 'DM'
 
+
 f, axes = plt.subplots(3, 1, figsize=(5, 10), sharex=True)
 for i, info in enumerate(dep_vars.keys()):
-    print(i, cond_name)
     sns.regplot(
         ind_var[cond_name], dep_vars[info][cond_name],
+        scatter_kws={'alpha': .5, 'marker': '.', 's': 50},
+        # x_jitter=.05, y_jitter=.1,
         ax=axes[i]
     )
     axes[i].set_ylabel(info)
