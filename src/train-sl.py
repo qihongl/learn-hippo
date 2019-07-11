@@ -131,7 +131,7 @@ save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
 #     epoch_id = 0
 
 '''task definition'''
-log_freq = 10
+log_freq = 20
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_sup = np.zeros(n_epoch,)
