@@ -242,15 +242,48 @@ t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
 
 # plot
 # plot target memory activation profile, for all trials
+
+f, axes = plt.subplots(2, 1, figsize=(6, 7))
+
+mu_, er_ = compute_stats(targ_act_cond_p2, n_se=3)
+axes[0].plot(targ_act_cond_p2.T, alpha=.1, color=gr_pal[0])
+axes[0].errorbar(x=range(n_param), y=mu_, yerr=er_, color='black')
+axes[0].set_xlabel('Time, recall phase')
+axes[0].set_ylabel('Memory activation')
+axes[0].set_title(f'Target activation, {cond_name}')
+
+sorted_targ_act_cond_p2 = np.sort(targ_act_cond_p2, axis=1)[:, ::-1]
+mu_, er_ = compute_stats(sorted_targ_act_cond_p2, n_se=3)
+axes[1].plot(sorted_targ_act_cond_p2.T, alpha=.1, color=gr_pal[0])
+axes[1].errorbar(x=range(n_param), y=mu_, yerr=er_, color='black')
+axes[1].set_ylabel('Memory activation')
+axes[1].set_title(f'Sorted')
+
+sns.despine()
+f.tight_layout()
+fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-lca.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
 f, ax = plt.subplots(1, 1, figsize=(5, 4))
-ax.plot(targ_act_cond_p2.T, alpha=.05, color=gr_pal[0])
+ax.plot(targ_act_cond_p2[:5, :].T)
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Memory activation')
 ax.set_title(f'Target activation, {cond_name}')
 sns.despine()
 f.tight_layout()
-fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-lca.png')
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+# recall peak distribution
+recall_peak_times = np.argmax(targ_act_cond_p2, axis=1)
+f, ax = plt.subplots(1, 1, figsize=(5, 4))
+ax.set_title(f'Target activation peak time, {cond_name}')
+sns.violinplot(
+    recall_peak_times,
+    color=gr_pal[0], ax=ax)
+ax.set_xlabel('Time')
+ax.set_ylabel('Freq')
+sns.despine()
+f.tight_layout()
+
 
 # use previous uncertainty to predict memory activation
 
