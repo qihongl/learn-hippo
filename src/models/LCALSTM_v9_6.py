@@ -38,16 +38,17 @@ class LCALSTM(nn.Module):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
+        self.dec_hidden_dim = hidden_dim // 2
         self.n_hidden_total = (N_VSIG+1) * hidden_dim + N_SSIG
         # rnn module
         self.i2h = nn.Linear(input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(hidden_dim, self.n_hidden_total)
         # deicion module
-        self.ih = nn.Linear(hidden_dim, hidden_dim)
-        self.actor = nn.Linear(hidden_dim, output_dim)
-        self.critic = nn.Linear(hidden_dim, 1)
+        self.ih = nn.Linear(hidden_dim, self.dec_hidden_dim)
+        self.actor = nn.Linear(self.dec_hidden_dim, output_dim)
+        self.critic = nn.Linear(self.dec_hidden_dim, 1)
         #
-        self.hpc = nn.Linear(hidden_dim*2, 3)
+        self.hpc = nn.Linear(self.dec_hidden_dim + hidden_dim, 3)
         # memory
         self.dnd = EM(dict_len, hidden_dim, kernel)
         # the RL mechanism
@@ -102,7 +103,7 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        dec_act_t = sigmoid(self.ih(h_t))
+        dec_act_t = F.relu(self.ih(h_t))
         # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
@@ -112,9 +113,14 @@ class LCALSTM(nn.Module):
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
-        # make final dec
+        # TODO optional recompute output gate
+        # preact = self.i2h(x_t) + self.h2h(h_t)
+        # gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
+        # o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
+        # readout from cm_t
         h_t = torch.mul(o_t, cm_t.tanh())
-        dec_act_t = sigmoid(self.ih(h_t))
+        # make final dec
+        dec_act_t = F.relu(self.ih(h_t))
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
         # reshape data

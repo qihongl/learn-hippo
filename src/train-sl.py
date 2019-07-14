@@ -6,16 +6,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v9_2 import LCALSTM as Agent
+from models.LCALSTM_v9_6 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
 from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
-from utils.utils import to_sqnp
 from utils.params import P
 from utils.constants import TZ_COND_DICT
 from plt_helper import plot_pred_acc_full
+# from utils.utils import to_sqnp
 # from sklearn.decomposition.pca import PCA
 plt.switch_backend('agg')
 
@@ -101,10 +101,9 @@ task = SequenceLearning(
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
 )
 # init agent
-input_dim = task.x_dim
-# input_dim = task.x_dim+2
 agent = Agent(
-    input_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem
+    input_dim=task.x_dim, hidden_dim=p.net.n_hidden, output_dim=p.a_dim,
+    dict_len=p.net.n_mem
 )
 optimizer = torch.optim.Adam(
     agent.parameters(), lr=p.net.lr, weight_decay=0
