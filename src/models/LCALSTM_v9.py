@@ -8,7 +8,6 @@ import torch.nn.functional as F
 import pdb
 
 from models.EM import EM
-from analysis.general import entropy
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
 
@@ -29,7 +28,8 @@ class LCALSTM(nn.Module):
 
     def __init__(
             self,
-            input_dim, hidden_dim, output_dim,
+            input_dim, output_dim,
+            rnn_hidden_dim, dec_hidden_dim,
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
@@ -37,19 +37,19 @@ class LCALSTM(nn.Module):
     ):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
-        self.n_hidden_total = (N_VSIG+1) * hidden_dim + N_SSIG
+        self.rnn_hidden_dim = rnn_hidden_dim
+        self.n_hidden_total = (N_VSIG+1) * rnn_hidden_dim + N_SSIG
         # rnn module
         self.i2h = nn.Linear(input_dim, self.n_hidden_total)
-        self.h2h = nn.Linear(hidden_dim, self.n_hidden_total)
+        self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
         # deicion module
-        self.ih = nn.Linear(hidden_dim, hidden_dim)
-        self.actor = nn.Linear(hidden_dim, output_dim)
-        self.critic = nn.Linear(hidden_dim, 1)
+        self.ih = nn.Linear(rnn_hidden_dim, dec_hidden_dim)
+        self.actor = nn.Linear(dec_hidden_dim, output_dim)
+        self.critic = nn.Linear(dec_hidden_dim, 1)
         #
-        self.hpc = nn.Linear(hidden_dim*2, 3)
+        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, 3)
         # memory
-        self.dnd = EM(dict_len, hidden_dim, kernel)
+        self.dnd = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
@@ -67,20 +67,20 @@ class LCALSTM(nn.Module):
             self.init_init_states()
 
     def init_init_states(self):
-        scale = 1 / self.hidden_dim
+        scale = 1 / self.rnn_hidden_dim
         self.h_0 = torch.nn.Parameter(
-            sample_random_vector(self.hidden_dim, scale), requires_grad=True
+            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
         )
         self.c_0 = torch.nn.Parameter(
-            sample_random_vector(self.hidden_dim, scale), requires_grad=True
+            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
         )
 
     def get_init_states(self, scale=.1, device='cpu'):
         if self.init_state_trainable:
             h_0_, c_0_ = self.h_0, self.c_0
         else:
-            h_0_ = sample_random_vector(self.hidden_dim, scale)
-            c_0_ = sample_random_vector(self.hidden_dim, scale)
+            h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+            c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
         return (h_0_, c_0_)
 
     def forward(self, x_t, hc_prev, beta=1):
@@ -92,12 +92,12 @@ class LCALSTM(nn.Module):
         # transform the input info
         preact = self.i2h(x_t) + self.h2h(h_prev)
         # get all gate values
-        gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
-        c_t_new = preact[:, N_VSIG * self.hidden_dim+N_SSIG:].tanh()
+        gates = preact[:, : N_VSIG * self.rnn_hidden_dim].sigmoid()
+        c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim+N_SSIG:].tanh()
         # split input(write) gate, forget gate, output(read) gate
-        f_t = gates[:, :self.hidden_dim]
-        o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
-        i_t = gates[:, -self.hidden_dim:]
+        f_t = gates[:, :self.rnn_hidden_dim]
+        o_t = gates[:, self.rnn_hidden_dim:2 * self.rnn_hidden_dim]
+        i_t = gates[:, -self.rnn_hidden_dim:]
         # new cell state = gated(prev_c) + gated(new_stuff)
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
@@ -112,13 +112,8 @@ class LCALSTM(nn.Module):
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
-        # TODO optional recompute output gate
-        # preact = self.i2h(x_t) + self.h2h(h_t)
-        # gates = preact[:, : N_VSIG * self.hidden_dim].sigmoid()
-        # o_t = gates[:, self.hidden_dim:2 * self.hidden_dim]
-        # readout from cm_t
-        h_t = torch.mul(o_t, cm_t.tanh())
         # make final dec
+        h_t = torch.mul(o_t, cm_t.tanh())
         dec_act_t = F.relu(self.ih(h_t))
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
@@ -185,7 +180,8 @@ class LCALSTM(nn.Module):
         return a_t, log_prob_a_t
 
     def add_simple_lures(self, n_lures=1):
-        lures = [sample_random_vector(self.hidden_dim) for _ in range(n_lures)]
+        lures = [sample_random_vector(self.rnn_hidden_dim)
+                 for _ in range(n_lures)]
         self.dnd.inject_memories(lures)
 
     def init_em_config(self):

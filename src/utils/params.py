@@ -28,6 +28,7 @@ class P():
         recall_func='LCA',
         kernel='cosine',
         n_hidden=128,
+        n_hidden_dec=64,
         lr=1e-3,
         gamma=0,
         eta=.1,
@@ -57,7 +58,7 @@ class P():
         )
         self.net = net(
             recall_func, kernel, enc_mode, enc_size, n_mem,
-            n_hidden, lr, gamma, eta,
+            n_hidden, n_hidden_dec, lr, gamma, eta,
             n_param, n_branch
         )
         self.misc = misc(sup_epoch, n_epoch, n_example)
@@ -143,7 +144,7 @@ class net():
         self,
         recall_func, kernel,
         enc_mode, enc_size, n_mem,
-        n_hidden, lr, gamma, eta,
+        n_hidden, n_hidden_dec, lr, gamma, eta,
         n_param, n_branch
     ):
         self.recall_func = recall_func
@@ -151,6 +152,7 @@ class net():
         self.enc_mode = enc_mode
         self.enc_size = enc_size
         self.n_hidden = n_hidden
+        self.n_hidden_dec = n_hidden_dec
         self.lr = lr
         self.gamma = gamma
         self.eta = eta

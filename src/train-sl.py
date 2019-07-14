@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v9_6 import LCALSTM as Agent
+from models.LCALSTM_v9 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
@@ -38,6 +38,7 @@ parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--n_hidden', default=64, type=int)
+parser.add_argument('--n_hidden_dec', default=32, type=int)
 parser.add_argument('--lr', default=1e-3, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--n_mem', default=3, type=int)
@@ -58,6 +59,7 @@ penalty = args.penalty
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
 n_hidden = args.n_hidden
+n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
 eta = args.eta
 n_mem = args.n_mem
@@ -93,7 +95,8 @@ p = P(
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     penalty=penalty,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
-    n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
+    n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
+    lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
 task = SequenceLearning(
@@ -102,7 +105,8 @@ task = SequenceLearning(
 )
 # init agent
 agent = Agent(
-    input_dim=task.x_dim, hidden_dim=p.net.n_hidden, output_dim=p.a_dim,
+    input_dim=task.x_dim, output_dim=p.a_dim,
+    rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.n_mem
 )
 optimizer = torch.optim.Adam(

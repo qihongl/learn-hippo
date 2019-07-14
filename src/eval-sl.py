@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v9 import LCALSTM as Agent
+# from models.LCALSTM_v9 import LCALSTM as Agent
+from models.LCALSTM_v9_6 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from scipy.stats import sem, pearsonr
 from task import SequenceLearning
@@ -28,10 +29,10 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-# exp_name = 'pred-delay'
-exp_name = 'july9_v9'
+exp_name = 'declayer_size_v9_6'
+# exp_name = 'july9_v9'
 
-subj_id = 0
+subj_id = 1
 penalty = 4
 supervised_epoch = 300
 epoch_load = 600
@@ -39,6 +40,7 @@ epoch_load = 600
 n_param = 15
 n_branch = 4
 n_hidden = 194
+n_hidden_dec = 194//2
 learning_rate = 1e-3
 eta = .1
 n_mem = 4
@@ -60,9 +62,9 @@ p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
     penalty=penalty,
-    p_rm_ob_enc=p_rm_ob_enc_load,
-    p_rm_ob_rcl=p_rm_ob_rcl_load,
-    n_hidden=n_hidden, lr=learning_rate, eta=eta, n_mem=n_mem
+    p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
+    n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
+    lr=learning_rate, eta=eta, n_mem=n_mem
 )
 # init env
 task = SequenceLearning(
@@ -75,14 +77,18 @@ task = SequenceLearning(
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 
 # load the agent back
-agent = Agent(task.x_dim, p.net.n_hidden, p.a_dim, dict_len=p.net.n_mem)
+agent = Agent(
+    input_dim=task.x_dim, output_dim=p.a_dim,
+    rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
+    dict_len=p.net.n_mem
+)
 agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 show_weight_stats(agent)
 
 # %%
 '''eval'''
 # training objective
-n_examples_test = 666
+n_examples_test = 512
 [results, metrics, XY] = run_tz(
     agent, optimizer, task, p, n_examples_test,
     supervised=False, learning=False, get_data=True,
@@ -117,6 +123,7 @@ cond_ids = get_trial_cond_ids(log_cond)
 activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
 [C, H, M, CM, DA, V] = activity_
 [inpt, leak, comp] = ctrl_param_
+
 
 # onehot to int
 actions = np.argmax(dist_a, axis=-1)
@@ -244,10 +251,12 @@ t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
 # plot target memory activation profile, for all trials
 
 f, axes = plt.subplots(2, 1, figsize=(6, 7))
-
+# np.shape(targ_act_cond_p2)
 mu_, er_ = compute_stats(targ_act_cond_p2, n_se=3)
 axes[0].plot(targ_act_cond_p2.T, alpha=.1, color=gr_pal[0])
-axes[0].errorbar(x=range(n_param), y=mu_, yerr=er_, color='black')
+axes[0].errorbar(x=range(T_part), y=mu_, yerr=er_, color='black')
+if pad_len_test > 0:
+    axes[0].axvline(pad_len_test, color='grey', linestyle='--')
 axes[0].set_xlabel('Time, recall phase')
 axes[0].set_ylabel('Memory activation')
 axes[0].set_title(f'Target activation, {cond_name}')
@@ -255,7 +264,7 @@ axes[0].set_title(f'Target activation, {cond_name}')
 sorted_targ_act_cond_p2 = np.sort(targ_act_cond_p2, axis=1)[:, ::-1]
 mu_, er_ = compute_stats(sorted_targ_act_cond_p2, n_se=3)
 axes[1].plot(sorted_targ_act_cond_p2.T, alpha=.1, color=gr_pal[0])
-axes[1].errorbar(x=range(n_param), y=mu_, yerr=er_, color='black')
+axes[1].errorbar(x=range(T_part), y=mu_, yerr=er_, color='black')
 axes[1].set_ylabel('Memory activation')
 axes[1].set_title(f'Sorted')
 
@@ -283,7 +292,8 @@ ax.set_xlabel('Time')
 ax.set_ylabel('Freq')
 sns.despine()
 f.tight_layout()
-
+fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targ-peak-dist.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 # use previous uncertainty to predict memory activation
 
@@ -344,6 +354,7 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
 # use objective uncertainty metric to decompose LCA params in the EM condition
+cond_name = 'DM'
 inpt_cond_p2 = inpt[cond_ids[cond_name], T_part:]
 leak_cond_p2 = leak[cond_ids[cond_name], T_part:]
 comp_cond_p2 = comp[cond_ids[cond_name], T_part:]
@@ -354,9 +365,9 @@ all_lca_param_cond_p2 = {
 
 f, axes = plt.subplots(3, 1, figsize=(7, 10), sharex=True)
 for i, (param_name, param_cond_p2) in enumerate(all_lca_param_cond_p2.items()):
-    print(i, param_name, param_cond_p2)
+    # print(i, param_name, param_cond_p2)
     param_cond_p2_stats = sep_by_obj_uncertainty(
-        param_cond_p2[pad_len_test:], obj_uncertainty_info, n_se=n_se)
+        param_cond_p2[:, pad_len_test:], obj_uncertainty_info, n_se=n_se)
     for key, [mu_, er_] in param_cond_p2_stats.items():
         if not np.all(np.isnan(mu_)):
             axes[i].errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
@@ -367,12 +378,14 @@ axes[-1].set_xlabel('Time, recall phase')
 axes[0].set_title(f'LCA params, {cond_name}')
 f.tight_layout()
 sns.despine()
+fig_path = os.path.join(fig_dir, f'tz-lca-param-{cond_name}.png')
+f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
 # use CURRENT uncertainty to predict memory activation
 
 targ_act_cond_p2_stats = sep_by_obj_uncertainty(
-    targ_act_cond_p2[pad_len_test:], obj_uncertainty_info, n_se=n_se)
+    targ_act_cond_p2[:, pad_len_test:], obj_uncertainty_info, n_se=n_se)
 
 f, ax = plt.subplots(1, 1, figsize=(8, 5))
 for key, [mu_, er_] in targ_act_cond_p2_stats.items():
@@ -690,78 +703,76 @@ axes[-1].set_xlabel('Time')
 f.tight_layout()
 
 '''pca the deicison activity'''
-
-n_pcs = 5
-data = DA
-cond_name = 'DM'
-
-
-# fit PCA
-pca = PCA(n_pcs)
-# np.shape(data)
-# np.shape(data_cond)
-data_cond = data[cond_ids[cond_name], :, :]
-data_cond = data_cond[:, ts_predict, :]
-targets_cond = targets[cond_ids[cond_name]]
-mistakes_cond = mistakes_by_cond[cond_name]
-dks_cond = dks[cond_ids[cond_name], :]
-
-# Loop over timepoints
-pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
-for t in range(np.sum(ts_predict)):
-    data_pca = pca.fit_transform(data_cond[:, t, :])
-    pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
-
-    f, ax = plt.subplots(1, 1, figsize=(7, 5))
-    # plot the data
-    for y_val in range(p.y_dim):
-        y_sel_op = y_val == targets_cond
-        sel_op_ = np.logical_and(~dks[cond_ids[cond_name], t], y_sel_op[:, t])
-        ax.scatter(
-            data_pca[sel_op_, 0], data_pca[sel_op_, 1],
-            marker='o', alpha=alpha,
-        )
-    ax.scatter(
-        data_pca[dks[cond_ids[cond_name], t], 0],
-        data_pca[dks[cond_ids[cond_name], t], 1],
-        marker='o', color='grey', alpha=alpha,
-    )
-    ax.scatter(
-        data_pca[mistakes_cond[:, t], 0], data_pca[mistakes_cond[:, t], 1],
-        facecolors='none', edgecolors='red',
-    )
-    # add legend
-    ax.legend(
-        [f'choice {k}' for k in range(task.y_dim)] + ['uncertain', 'error'],
-        fancybox=True, bbox_to_anchor=(1, .5), loc='center left'
-    )
-    # mark the plot
-    ax.set_xlabel('PC 1')
-    ax.set_ylabel('PC 2')
-    ax.set_title(f'Pre-decision activity, time = {t}')
-    sns.despine(offset=10)
-    f.tight_layout()
-    # fig_path = os.path.join(fig_dir, f'pca/da-t-{t}.png')
-    # f.savefig(fig_path, dpi=150, bbox_to_anchor='tight')
-
-
-# plot cumulative variance explained curve
-t = -1
-pc_id = 1
-f, ax = plt.subplots(1, 1, figsize=(5, 3))
-ax.plot(pca_cum_var_exp[t])
-ax.set_title('First %d PCs capture %d%% of variance' %
-             (pc_id+1, pca_cum_var_exp[t, pc_id]*100))
-ax.axvline(pc_id, color='grey', linestyle='--')
-ax.axhline(pca_cum_var_exp[t, pc_id], color='grey', linestyle='--')
-ax.set_ylim([None, 1.05])
-ytickval_ = ax.get_yticks()
-ax.set_yticklabels(['{:,.0%}'.format(x) for x in ytickval_])
-ax.set_xticks(np.arange(n_pcs))
-ax.set_xticklabels(np.arange(n_pcs)+1)
-ax.set_ylabel('cum. var. exp.')
-ax.set_xlabel('Number of components')
-sns.despine(offset=5)
-f.tight_layout()
-
-# sns.heatmap(pca_cum_var_exp, cmap='viridis')
+#
+# n_pcs = 5
+# data = DA
+# cond_name = 'DM'
+#
+#
+# # fit PCA
+# pca = PCA(n_pcs)
+# # np.shape(data)
+# # np.shape(data_cond)
+# data_cond = data[cond_ids[cond_name], :, :]
+# data_cond = data_cond[:, ts_predict, :]
+# targets_cond = targets[cond_ids[cond_name]]
+# mistakes_cond = mistakes_by_cond[cond_name]
+# dks_cond = dks[cond_ids[cond_name], :]
+#
+# # Loop over timepoints
+# pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
+# for t in range(np.sum(ts_predict)):
+#     data_pca = pca.fit_transform(data_cond[:, t, :])
+#     pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
+#
+#     f, ax = plt.subplots(1, 1, figsize=(7, 5))
+#     # plot the data
+#     for y_val in range(p.y_dim):
+#         y_sel_op = y_val == targets_cond
+#         sel_op_ = np.logical_and(~dks[cond_ids[cond_name], t], y_sel_op[:, t])
+#         ax.scatter(
+#             data_pca[sel_op_, 0], data_pca[sel_op_, 1],
+#             marker='o', alpha=alpha,
+#         )
+#     ax.scatter(
+#         data_pca[dks[cond_ids[cond_name], t], 0],
+#         data_pca[dks[cond_ids[cond_name], t], 1],
+#         marker='o', color='grey', alpha=alpha,
+#     )
+#     ax.scatter(
+#         data_pca[mistakes_cond[:, t], 0], data_pca[mistakes_cond[:, t], 1],
+#         facecolors='none', edgecolors='red',
+#     )
+#     # add legend
+#     ax.legend(
+#         [f'choice {k}' for k in range(task.y_dim)] + ['uncertain', 'error'],
+#         fancybox=True, bbox_to_anchor=(1, .5), loc='center left'
+#     )
+#     # mark the plot
+#     ax.set_xlabel('PC 1')
+#     ax.set_ylabel('PC 2')
+#     ax.set_title(f'Pre-decision activity, time = {t}')
+#     sns.despine(offset=10)
+#     f.tight_layout()
+#
+#
+# # plot cumulative variance explained curve
+# t = -1
+# pc_id = 1
+# f, ax = plt.subplots(1, 1, figsize=(5, 3))
+# ax.plot(pca_cum_var_exp[t])
+# ax.set_title('First %d PCs capture %d%% of variance' %
+#              (pc_id+1, pca_cum_var_exp[t, pc_id]*100))
+# ax.axvline(pc_id, color='grey', linestyle='--')
+# ax.axhline(pca_cum_var_exp[t, pc_id], color='grey', linestyle='--')
+# ax.set_ylim([None, 1.05])
+# ytickval_ = ax.get_yticks()
+# ax.set_yticklabels(['{:,.0%}'.format(x) for x in ytickval_])
+# ax.set_xticks(np.arange(n_pcs))
+# ax.set_xticklabels(np.arange(n_pcs)+1)
+# ax.set_ylabel('cum. var. exp.')
+# ax.set_xlabel('Number of components')
+# sns.despine(offset=5)
+# f.tight_layout()
+#
+# # sns.heatmap(pca_cum_var_exp, cmap='viridis')

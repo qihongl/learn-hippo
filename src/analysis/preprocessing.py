@@ -21,8 +21,8 @@ def get_trial_cond_ids(log_cond):
 
 
 def process_cache(log_cache, T_total, p):
+    # prealloc
     n_examples = len(log_cache)
-    # network internal reps
     inpt = np.full((n_examples, T_total), np.nan)
     leak = np.full((n_examples, T_total), np.nan)
     comp = np.full((n_examples, T_total), np.nan)
@@ -30,7 +30,7 @@ def process_cache(log_cache, T_total, p):
     H = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     M = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-    DA = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
+    DA = np.full((n_examples, T_total, p.net.n_hidden_dec), np.nan)
     V = [None] * n_examples
 
     for i in range(n_examples):
