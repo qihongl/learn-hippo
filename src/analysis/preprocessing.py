@@ -61,7 +61,7 @@ def process_cache(log_cache, T_total, p):
 '''data separator'''
 
 
-def sep_by_obj_uncertainty(matrix_p2, obj_uncertainty_info, n_se=3):
+def sep_by_qsource(matrix_p2, obj_uncertainty_info, n_se=3):
     [em_only_cond_p2, wm_only_cond_p2, neither_cond_p2,
      both_cond_p2] = obj_uncertainty_info
     n_param = np.shape(obj_uncertainty_info[0])[1]

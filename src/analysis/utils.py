@@ -26,6 +26,25 @@ def one_hot_to_int(one_hot_vector):
         raise ValueError(f'Invalid one-hot vector: {one_hot_vector}')
 
 
+def prop_true(bool_array, axis=0):
+    """compute the proportion of truth values along a axis
+
+    Parameters
+    ----------
+    bool_array : nd array
+        boolean array
+    axis : int
+        array axis to sum over
+
+    Returns
+    -------
+    (n-1)d array
+        % true along input axis
+
+    """
+    n = np.shape(bool_array)[axis]
+    return np.sum(bool_array, axis=axis)/n
+
 # import pandas as pd
 # import torch.nn as nn
 
