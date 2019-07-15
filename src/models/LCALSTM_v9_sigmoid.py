@@ -100,7 +100,7 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        dec_act_t = F.relu(self.ih(h_t))
+        dec_act_t = sigmoid(self.ih(h_t))
         # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
@@ -112,7 +112,7 @@ class LCALSTM(nn.Module):
         '''final decision attempt'''
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
-        dec_act_t = F.relu(self.ih(h_t))
+        dec_act_t = sigmoid(self.ih(h_t))
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
         # reshape data
