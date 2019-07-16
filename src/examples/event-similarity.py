@@ -11,6 +11,9 @@ sns.set(style='white', palette='colorblind', context='poster')
 n_param = 15
 n_branch = 4
 n_samples = 101
+expected_similarity = 1 / n_branch
+# similarity_cap = expected_similarity * 2
+
 # init
 task = SequenceLearning(n_param, n_branch, n_parts=1)
 # sample
@@ -21,6 +24,11 @@ print(np.shape(Y))
 
 # compute similarity
 normalize = True
+if not normalize:
+    similarity_cap = task.similarity_cap * n_param
+else:
+    similarity_cap = task.similarity_cap
+
 similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 # plot the similarity matrix
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
@@ -50,6 +58,8 @@ sns.distplot(
     ax=ax
 )
 ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
+ax.axvline(similarity_cap, linestyle='--',
+           color='grey', alpha=.5, linewidth=linewidth//2)
 ax.set_xlabel(xlabel)
 ax.set_ylabel('Freq.')
 ax.set_title(title)
@@ -104,7 +114,7 @@ sim_mu = np.zeros(n,)
 sim_sd = np.zeros(n,)
 for i, n_param in enumerate(n_param_list):
     task = SequenceLearning(n_param, n_branch, n_parts=1)
-    X, Y = task.sample(n_samples)
+    X, Y = task.sample(n_samples, to_torch=False)
     similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
     similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
     sim_mu[i] = np.mean(similarity_matrix_tril)

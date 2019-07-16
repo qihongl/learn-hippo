@@ -7,18 +7,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from models.LCALSTM_v9 import LCALSTM as Agent
-# from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
-from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
+from utils.io import build_log_path, save_ckpt, save_all_params
 from utils.params import P
 from utils.constants import TZ_COND_DICT
 from plt_helper import plot_pred_acc_full
+# from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 # from utils.utils import to_sqnp
 # from sklearn.decomposition.pca import PCA
 plt.switch_backend('agg')
-
 sns.set(style='white', palette='colorblind', context='talk')
 
 '''learning to tz with a2c. e.g. cmd:
@@ -68,6 +67,7 @@ n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
+
 # log_root = '../log/'
 # exp_name = 'always-recall'
 # subj_id = 1
@@ -102,6 +102,7 @@ p = P(
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+    similarity_cap_lag=p.net.n_mem,
 )
 # init agent
 agent = Agent(

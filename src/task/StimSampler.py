@@ -1,6 +1,6 @@
 import numpy as np
 from task.Schema import Schema
-import pdb
+# import pdb
 
 
 class StimSampler():
@@ -79,7 +79,8 @@ class StimSampler():
         vals_vec = np.vstack([self.schema.val_rep[v_t, :] for v_t in vals])
         # ctxs_vec = np.vstack([self.schema.ctx_rep[v_t, :] for v_t in vals])
         ctxs_vec = np.vstack([self.schema.ctx_rep])
-        return keys_vec, vals_vec, ctxs_vec
+        misc = [keys, vals]
+        return keys_vec, vals_vec, ctxs_vec, misc
 
     def sample(
             self,
@@ -107,7 +108,7 @@ class StimSampler():
 
         """
         # sample the state-param associtations
-        keys_vec_, vals_vec_, ctxs_vec_ = self._sample()
+        keys_vec_, vals_vec_, ctxs_vec_, misc = self._sample()
         # sample for the observation phase
         # print(keys_vec_, vals_vec_, n_parts)
         o_keys_vec, o_vals_vec = self._sample_permutations(
@@ -131,7 +132,7 @@ class StimSampler():
         [o_sample_, q_sample_] = self._delay_pred_demand(o_sample_, q_sample_)
         # pack sample
         sample_ = [o_sample_, q_sample_]
-        return sample_
+        return sample_, misc
 
     def _sample_permutations(
             self, keys_vec_raw, vals_vec_raw, n_perms
@@ -322,7 +323,7 @@ if __name__ == "__main__":
     # init a graph
     n_param, n_branch = 10, 2
     n_parts = 2
-    pad_len = 3
+    pad_len = 0
     # pad_len = 'random'
     p_rm_ob_enc, p_rm_ob_rcl = .5, .5
     key_rep_type = 'time'
@@ -332,7 +333,7 @@ if __name__ == "__main__":
         pad_len=pad_len,
         key_rep_type=key_rep_type
     )
-    sample_ = sampler.sample(
+    sample_, misc = sampler.sample(
         n_parts,
         p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl
     )

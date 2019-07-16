@@ -1,7 +1,10 @@
 import numpy as np
+from collections import deque
 from utils.utils import to_pth
 from task.utils import get_event_ends
+from analysis.task import compute_event_similarity
 from task.StimSampler import StimSampler
+
 # import pdb
 # pdb.set_trace()
 
@@ -25,6 +28,8 @@ class SequenceLearning():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             n_rm_fixed=False,
+            similarity_cap=None,
+            similarity_cap_lag=4,
             permute_queries=False,
             key_rep_type='time',
             sampling_mode='enumerative'
@@ -50,9 +55,6 @@ class SequenceLearning():
         self.max_pad_len = self.stim_sampler.max_pad_len
         self.T_part_max = self.n_param + self.max_pad_len
         self.T_total_max = self.T_part_max * self.n_parts
-        # #
-        # self.T_part_min = self.n_param
-        # self.T_total_min = self.T_part_min * self.n_parts
         # "noise" in the obseravtion
         self.p_rm_ob_enc = p_rm_ob_enc
         self.p_rm_ob_rcl = p_rm_ob_rcl
@@ -64,25 +66,50 @@ class SequenceLearning():
         self.v_dim = self.stim_sampler.v_dim
         self.x_dim = self.k_dim * 2 + self.v_dim
         self.y_dim = self.v_dim
+        # stats
+        # expected inter event similarity under uniform assumption
+        self.similarity_cap_lag = similarity_cap_lag
+        self.expected_similarity = 1 / n_branch
+        if similarity_cap is None:
+            self.similarity_cap = np.min([self.expected_similarity * 2, .99])
+        else:
+            self.similarity_cap = similarity_cap
 
-    def sample(self, n_samples, to_torch=True):
+    def sample(self, n_samples, to_torch=True, return_misc=False):
         # prealloc, agnostic about sequence length
         X = [None] * n_samples
         Y = [None] * n_samples
+        misc = [None] * n_samples
+        prev_events = deque(maxlen=self.similarity_cap_lag)
+
         # generate samples
-        for i in range(n_samples):
-            sample_i = self.stim_sampler.sample(
+        i = 0
+        while i < n_samples:
+            sample_i, misc_i = self.stim_sampler.sample(
                 n_parts=self.n_parts,
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
             )
-            # convert to rnn form
-            X[i], Y[i] = _to_xy(sample_i)
+
+            # compute similarity(event_i vs. event_j) for j in prev-k-events
+            _, Y_i_int = misc_i
+            prev_sims = np.array([compute_event_similarity(Y_j_int, Y_i_int)
+                                  for Y_j_int in prev_events])
+            if np.any(prev_sims > self.similarity_cap):
+                continue
+            else:
+                # collect data
+                prev_events.append(Y_i_int)
+                misc[i] = misc_i
+                X[i], Y[i] = _to_xy(sample_i)
+                i += 1
         # type conversion
         if to_torch:
             X = [to_pth(X[i]) for i in range(n_samples)]
             Y = [to_pth(Y[i]) for i in range(n_samples)]
+        if return_misc:
+            return X, Y, misc
         return X, Y
 
     def get_time_param(self, T_total):
@@ -175,10 +202,10 @@ def _to_xy(sample_):
 '''how to use'''
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    # from analysis import compute_event_similarity_matrix
 
-    n_param, n_branch = 6, 2
+    n_param, n_branch = 6, 3
     n_parts = 2
-    n_samples = 5
     p_rm_ob_enc = 0.1
     p_rm_ob_rcl = 0.1
     # pad_len = 'random'
@@ -186,11 +213,21 @@ if __name__ == "__main__":
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
         p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
-        # n_rm_fixed=False
     )
 
     # gen samples
-    X, Y = task.sample(n_samples, to_torch=True)
+    n_samples = 10
+    X, Y, misc = task.sample(n_samples, to_torch=False, return_misc=True)
+
+    # Y_int = np.array([misc[i][1] for i in range(n_samples)])
+
+    # np.shape(Y)
+    # _, T_total, _ = np.shape(Y)
+    # esm = compute_event_similarity_matrix(Y_int, normalize=True)
+    # sim_cap_mask = esm >= task.similarity_cap
+    # plt.imshow(esm)
+    # plt.imshow(sim_cap_mask)
+
     # get a sample
     i = 0
     X_i, Y_i = X[i], Y[i]

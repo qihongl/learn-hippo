@@ -4,9 +4,10 @@ from task.SequenceLearning import SequenceLearning
 
 
 def test_task_stim_sampler():
-    n_param, n_branch = 7, 3
+    n_param = np.random.randint(low=2, high=15)
+    n_branch = np.random.randint(low=2, high=5)
     stim_sampler = StimSampler(n_param, n_branch)
-    states_vec, param_vals_vec, ctx = stim_sampler._sample()
+    states_vec, param_vals_vec, ctx, misc = stim_sampler._sample()
     # tests
     assert np.all(np.sum(states_vec, axis=1) == 1), \
         'check no empty state for all t'
@@ -15,24 +16,38 @@ def test_task_stim_sampler():
 
 
 def test_task_stim_sampler_inter_part_consistency():
-    n_param, n_branch = 7, 3
+    n_param = np.random.randint(low=2, high=15)
+    n_branch = np.random.randint(low=2, high=5)
     n_parts = 2
-    es = StimSampler(n_param, n_branch)
-    [states_vec, param_vals_vec, _], _ = es.sample(n_parts)
-    s_feature_vec = np.sum(states_vec[0], axis=0)
-    p_counts_vec = np.sum(param_vals_vec[0], axis=0)
-    for ip in np.arange(1, n_parts):
-        assert np.all(
-            np.sum(states_vec[ip], axis=0) == s_feature_vec
-        ), 'different event parts should have the same set of states'
-        assert np.all(
-            np.sum(param_vals_vec[ip], axis=0) == p_counts_vec
-        ), 'different event parts should have the same set of parameter values'
+    ss = StimSampler(n_param, n_branch)
+    [states_vec, param_vals_vec], _ = ss.sample(n_parts)
+
+    [o_sample_, q_sample_], [x_int, y_int] = ss.sample(n_parts)
+    [o_keys_vec, o_vals_vec, o_ctxs_vec] = o_sample_
+    [q_keys_vec, q_vals_vec, q_ctxs_vec] = q_sample_
+
+    o_k_int = np.argmax(o_keys_vec, axis=-1)
+    q_k_int = np.argmax(q_keys_vec, axis=-1)
+    o_y_int = np.argmax(o_vals_vec, axis=-1)
+    q_y_int = np.argmax(q_vals_vec, axis=-1)
+
+    for ip in range(n_parts):
+        assert np.all(q_k_int[ip] == x_int),\
+            'different event parts should have the same SEQ of query keys'
+        assert set(o_k_int[ip]) == set(x_int),\
+            'different event parts should have the same SET of query keys'
+
+        assert np.all(q_y_int[ip] == y_int),\
+            'different event parts should have the same SEQ of query vals'
+        for v in range(n_branch):
+            assert np.sum(o_y_int[ip] == v) == np.sum(y_int == v),\
+                'different event parts should have the same SET of observed vals'
 
 
 def test_task_sequence_learning():
     '''test ordering k,v in x by time re-product y'''
-    n_param, n_branch = 6, 5
+    n_param = np.random.randint(low=2, high=15)
+    n_branch = np.random.randint(low=2, high=5)
     n_parts = 2
     n_samples = 3
     sl = SequenceLearning(n_param, n_branch, n_parts=n_parts)
@@ -50,7 +65,9 @@ def test_task_sequence_learning():
 
 
 if __name__ == "__main__":
-    test_task_stim_sampler()
-    test_task_stim_sampler_inter_part_consistency()
-    test_task_sequence_learning()
+    n_iters = 3
+    for _ in range(n_iters):
+        test_task_stim_sampler()
+        test_task_stim_sampler_inter_part_consistency()
+        test_task_sequence_learning()
     print("Everything passed")

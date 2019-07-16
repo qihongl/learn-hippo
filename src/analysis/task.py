@@ -208,7 +208,7 @@ def compute_event_similarity_matrix(Y, normalize=False):
 
     Parameters
     ----------
-    Y : 3d array (n_examples, _, _)
+    Y : 3d array (n_examples, _, _) or 2d array (n_examples, _)
         the target values
     normalize : bool
         whether to normalize by vector dim
@@ -219,14 +219,18 @@ def compute_event_similarity_matrix(Y, normalize=False):
         the inter-event similarity matrix
 
     """
-    assert len(np.shape(Y)) == 3
+    if len(np.shape(Y)) == 3:
+        Y_int = np.argmax(Y, axis=-1)
+    elif len(np.shape(Y)) == 2:
+        Y_int = Y
+    else:
+        raise ValueError('Invalid Y shape')
+    # prealloc
     n_samples = np.shape(Y)[0]
     similarity_matrix = np.zeros((n_samples, n_samples))
     for i, j in product(range(n_samples), range(n_samples)):
-        event_i = np.argmax(Y[i], axis=-1)
-        event_j = np.argmax(Y[j], axis=-1)
         similarity_matrix[i, j] = compute_event_similarity(
-            event_i, event_j, normalize=normalize)
+            Y_int[i], Y_int[j], normalize=normalize)
     return similarity_matrix
 
 
