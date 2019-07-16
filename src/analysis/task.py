@@ -164,6 +164,40 @@ def batch_compute_true_dk(X, task, dtype=bool):
     return dk_wm, dk_em
 
 
+def get_qsource(true_dk_em, true_dk_wm, cond_ids, p):
+    # DM
+    # can recall from EM
+    true_dk_em_dm_p2 = true_dk_em[cond_ids['DM'], p.env.n_param:]
+    true_dk_wm_dm_p2 = true_dk_wm[cond_ids['DM'], :]
+    eo_dm_p2 = np.logical_and(true_dk_wm_dm_p2, ~true_dk_em_dm_p2)
+    wo_dm_p2 = np.logical_and(~true_dk_wm_dm_p2, true_dk_em_dm_p2)
+    nt_dm_p2 = np.logical_and(true_dk_wm_dm_p2, true_dk_em_dm_p2)
+    bt_dm_p2 = np.logical_and(~true_dk_wm_dm_p2, ~true_dk_em_dm_p2)
+    # NM
+    # no episodic memory => "EM only", "both" are impossble
+    # true_dk_em_nm_p2 = true_dk_em[cond_ids['NM'], n_param:]
+    true_dk_wm_nm_p2 = true_dk_wm[cond_ids['NM'], :]
+    n_trials_, n_time_steps_ = np.shape(true_dk_wm_nm_p2)
+    eo_nm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    wo_nm_p2 = ~true_dk_wm_nm_p2
+    nt_nm_p2 = true_dk_wm_nm_p2
+    bt_nm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    # RM
+    # has episodic memory
+    true_dk_rm_nm_p2 = true_dk_em[cond_ids['RM'], p.env.n_param:]
+    n_trials_, n_time_steps_ = np.shape(true_dk_wm_nm_p2)
+    eo_rm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    wo_rm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    nt_rm_p2 = true_dk_rm_nm_p2
+    bt_rm_p2 = ~true_dk_rm_nm_p2
+    # gather data
+    qsource_rm = [eo_rm_p2, wo_rm_p2, nt_rm_p2, bt_rm_p2]
+    qsource_dm = [eo_dm_p2, wo_dm_p2, nt_dm_p2, bt_dm_p2]
+    qsource_nm = [eo_nm_p2, wo_nm_p2, nt_nm_p2, bt_nm_p2]
+    qsource_all_conds = {'RM': qsource_rm, 'DM': qsource_dm, 'NM': qsource_nm}
+    return qsource_all_conds
+
+
 def compute_event_similarity_matrix(Y, normalize=False):
     """compute the inter-event similarity matrix of a batch of data
 
