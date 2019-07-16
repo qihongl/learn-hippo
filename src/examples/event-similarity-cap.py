@@ -127,13 +127,14 @@ for i, similarity_cap in enumerate(similarity_caps):
 
 
 mu_t, er_t = compute_stats(times.T)
-f, ax = plt.subplots(1, 1, figsize=(10, 5))
 xticks = range(len(similarity_caps))
 xlabs = ['%.2f' % s for s in similarity_caps]
 
+f, ax = plt.subplots(1, 1, figsize=(7, 5))
 ax.errorbar(x=xticks, y=mu_t, yerr=er_t)
-ax.set_title('Run time, sampling w/ different similarity cap')
+ax.set_title('Run time for sampling')
 ax.set_ylabel('Run time (sec)')
+ax.set_xlabel('Similarity cap')
 ax.set_xticks(xticks)
 ax.set_xticklabels(xlabs)
 sns.despine()
