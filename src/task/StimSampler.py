@@ -28,7 +28,7 @@ class StimSampler():
         self.n_branch = n_branch
         self.pad_len = pad_len
         if max_pad_len is None:
-            self.max_pad_len = n_param//3
+            self.max_pad_len = np.max([n_param//3 - 1, 0])
         #
         self.def_path = def_path
         self.def_prob = def_prob
@@ -216,11 +216,12 @@ class StimSampler():
             padded observations and queries
 
         """
-        if self.pad_len == 0:
+        if self.pad_len == 0 or self.max_pad_len == 0:
             return o_sample_, q_sample_
 
         # uniformly sample a padding length
         if self.pad_len == 'random':
+            # high is exclusive so need to add 1
             pad_len = np.random.randint(low=0, high=self.max_pad_len+1)
         # fixed padding length
         elif self.pad_len > 0:
