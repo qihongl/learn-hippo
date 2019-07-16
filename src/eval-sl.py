@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # from models.LCALSTM_v9 import LCALSTM as Agent
-from models.LCALSTM_v9_sigmoid import LCALSTM as Agent
 # from models.LCALSTM_v9 import LCALSTM as Agent
+from models.LCALSTM_v9 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from scipy.stats import sem, pearsonr
 from task import SequenceLearning
@@ -30,7 +30,7 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'declayer_size_sigmoid'
+exp_name = 'declayer_size'
 # exp_name = 'july9_v9'
 
 subj_id = 0
@@ -40,8 +40,8 @@ epoch_load = 600
 # n_epoch = 500
 n_param = 15
 n_branch = 4
-n_hidden = 128
-n_hidden_dec = 32
+n_hidden = 194
+n_hidden_dec = 128
 learning_rate = 1e-3
 eta = .1
 n_mem = 4
@@ -50,10 +50,14 @@ p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = .3
 pad_len_load = -1
 # testing params
-p_test = .3
+p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 pad_len_test = 0
+
+similarity_cap = .5
+slience_recall_time = None
+# slience_recall_time = 2
 
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -73,6 +77,7 @@ task = SequenceLearning(
     pad_len=pad_len_test,
     p_rm_ob_enc=p_rm_ob_enc_test,
     p_rm_ob_rcl=p_rm_ob_rcl_test,
+    similarity_cap=similarity_cap
 )
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
@@ -81,20 +86,23 @@ log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 agent = Agent(
     input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-    dict_len=p.net.n_mem
+    dict_len=p.net.dict_len
 )
 agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 show_weight_stats(agent)
 
 # %%
 '''eval'''
+seed = 0
+np.random.seed(seed)
+torch.manual_seed(seed)
 # training objective
 n_examples_test = 512
 [results, metrics, XY] = run_tz(
     agent, optimizer, task, p, n_examples_test,
     supervised=False, learning=False, get_data=True,
+    slience_recall_time=slience_recall_time
 )
-
 
 [dist_a_, Y_, log_cache_, log_cond_] = results
 [X_raw, Y_raw] = XY
@@ -503,6 +511,8 @@ plot_pred_acc_rcl(
     title=f'EM-based prediction performance, {cond_name}',
     baseline_on=False, legend_on=True,
 )
+if slience_recall_time is not None:
+    ax.axvline(slience_recall_time, color='red', linestyle='--', alpha=alpha)
 ax.set_xlabel('Time, recall phase')
 ax.set_ylabel('Accuracy')
 f.tight_layout()
@@ -535,11 +545,14 @@ ms_lure = np.max(sim_lca_dict['NM']['lure'], axis=-1)
 ms_targ = np.max(sim_lca_dict['DM']['targ'], axis=-1)
 leg_ = ['NM', 'DM']
 
+bins = 30
+
+sns.distplot(ms_lure[:, T_part+t])
+sns.distplot(ms_targ[:, T_part+t])
 
 # t s.t. maximal recall peak
 t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
 t = t_recall_peak
-bins = 50
 dt_ = [ms_lure[:, T_part+t], ms_targ[:, T_part+t]]
 
 f, ax = plt.subplots(1, 1, figsize=(6, 3))
@@ -548,8 +561,8 @@ for j, m_type in enumerate(memory_types):
         dt_[j],
         # hist=False,
         bins=bins,
-        # kde=False,
-        # kde_kws={"shade": True},
+        kde=False,
+        kde_kws={"shade": True},
         ax=ax, color=gr_pal[::-1][j]
     )
 ax.legend(leg_, frameon=False,)
@@ -589,20 +602,27 @@ f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 
 '''compute inter-event similarity'''
+targ_raw = np.argmax(Y_raw, axis=-1)
 ambiguity = np.zeros((n_examples, n_mem-1))
-for i in np.arange(n_mem-1, n_examples):
+for i in range(n_examples):
     cur_mem_ids = np.arange(i-n_mem+1, i)
-    prev_events = [targets[j] for j in cur_mem_ids]
-    cur_event = targets[i]
-    for j in range(n_mem-1):
-        ambiguity[i, j] = compute_event_similarity(cur_event, prev_events[j])
+    for j, j_raw in enumerate(cur_mem_ids):
+        ambiguity[i, j] = compute_event_similarity(targ_raw[i], targ_raw[j])
+
 
 # plot event similarity distribution
 confusion_mu = np.mean(ambiguity, axis=1)
-f, ax = plt.subplots(1, 1, figsize=(5, 3))
-sns.distplot(confusion_mu, kde=False, ax=ax)
-ax.set_xlabel('Similarity')
-ax.set_ylabel('P')
+
+f, axes = plt.subplots(2, 1, figsize=(5, 6))
+sns.distplot(confusion_mu, kde=False, ax=axes[0])
+axes[0].set_ylabel('P')
+axes[0].set_xlim([0, 1])
+
+sns.distplot(np.ravel(ambiguity), kde=False, ax=axes[1])
+axes[1].set_xlabel('Parameter overlap')
+axes[1].set_ylabel('P')
+axes[1].set_xlim([0, 1])
+
 sns.despine()
 f.tight_layout()
 
