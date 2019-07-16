@@ -7,7 +7,7 @@ from analysis import compute_stats
 def compute_n_trials_to_skip(log_cond, p):
     # skip examples untill em buffer is full
     non_nm_trials = np.where(log_cond != TZ_COND_DICT.inverse['NM'])[0]
-    n_examples_skip = non_nm_trials[p.net.n_mem+1]
+    n_examples_skip = non_nm_trials[p.n_event_remember+1]
     return n_examples_skip
 
 

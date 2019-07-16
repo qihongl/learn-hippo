@@ -11,6 +11,7 @@ from models import get_reward, compute_returns, compute_a2c_loss
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
         cond=None, learning=True, get_cache=True, get_data=False,
+        slience_recall_time=None,
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -32,6 +33,7 @@ def run_tz(
         # get time info
         T_total = np.shape(X_i)[0]
         T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
+        enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
         # prealloc
         loss_sup = 0
@@ -45,9 +47,15 @@ def run_tz(
         a_t, r_t = a_0, r_0
 
         for t in range(T_total):
+            t_relative = t % T_part
+            in_2nd_part = t >= T_part
+            # testing condition
+            if slience_recall_time is not None:
+                slience_recall(t_relative, in_2nd_part,
+                               slience_recall_time, agent)
             # whether to encode
             if not supervised:
-                set_encoding_flag(t, [event_ends[0]], cond_i, agent)
+                set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
             # x_it = append_prev_info(X_i[t], a_t, r_t)
@@ -127,6 +135,13 @@ def append_prev_info(x_it_, a_prev, r_prev):
     return x_it
 
 
+def get_enc_times(enc_size, n_param, pad_len):
+    n_segments = n_param // enc_size
+    enc_times_ = [enc_size * (k+1) for k in range(n_segments)]
+    enc_times = [pad_len + et - 1 for et in enc_times_]
+    return enc_times
+
+
 def pick_condition(p, rm_only=True, fix_cond=None):
     all_tz_conditions = list(TZ_COND_DICT.values())
     if fix_cond is not None:
@@ -144,6 +159,14 @@ def set_encoding_flag(t, enc_times, cond, agent):
         agent.encoding_on()
     else:
         agent.encoding_off()
+
+
+def slience_recall(t_relative, in_2nd_part, slience_recall_time, agent):
+    if in_2nd_part:
+        if t_relative == slience_recall_time:
+            agent.retrieval_off()
+        else:
+            agent.retrieval_on()
 
 
 def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):

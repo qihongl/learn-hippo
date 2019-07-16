@@ -27,7 +27,7 @@ def build_log_path(
         p.env.p_rm_ob_rcl, p.env.p_rm_ob_enc)
     # net params
     enc_str = f'enc-{p.net.enc_mode}_size-{p.net.enc_size}'
-    enc_capc_str = f'nmem-{p.net.n_mem}'
+    enc_capc_str = f'nmem-{p.n_event_remember}'
     recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
     network_str = f'h-{p.net.n_hidden}_hdec-{p.net.n_hidden_dec}'
     train_str = f'lr-{p.net.lr}-eta-{p.net.eta}'

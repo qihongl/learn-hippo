@@ -80,6 +80,7 @@ class SequenceLearning():
         X = [None] * n_samples
         Y = [None] * n_samples
         misc = [None] * n_samples
+        # track the last k events
         prev_events = deque(maxlen=self.similarity_cap_lag)
 
         # generate samples

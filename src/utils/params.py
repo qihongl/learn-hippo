@@ -24,7 +24,7 @@ class P():
         n_mvs_rnr=3,
         enc_size=None,
         enc_mode='cum',
-        n_mem=2,
+        n_event_remember=4,
         recall_func='LCA',
         kernel='cosine',
         n_hidden=128,
@@ -40,12 +40,20 @@ class P():
         # T_part = n_param + pad_len
         if enc_size is None:
             enc_size = n_param
+        assert 0 < enc_size <= n_param
+        assert n_param % enc_size == 0
+        self.n_event_remember = n_event_remember
+        self.n_segments = n_param // enc_size
+        dict_len = self.n_event_remember * self.n_segments
+        print(dict_len)
+
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
         if def_prob is None:
             def_prob = 1/n_branch
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.dk_id = self.a_dim-1
+
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
@@ -57,7 +65,7 @@ class P():
             n_mvs_rnr
         )
         self.net = net(
-            recall_func, kernel, enc_mode, enc_size, n_mem,
+            recall_func, kernel, enc_mode, enc_size, n_event_remember,
             n_hidden, n_hidden_dec, lr, gamma, eta,
             n_param, n_branch
         )
@@ -98,8 +106,6 @@ class env():
         #
         self.chance = 1 / n_branch
 
-        # self.tz = tz(n_mvs_tz, self.T_part, TZ_COND_DICT, P_TZ_CONDS)
-        # self.rnr = rnr(n_mvs_rnr, self.T_part, RNR_COND_DICT, P_RNR_CONDS)
         self.validate_args()
 
     def validate_args(self):
@@ -114,36 +120,14 @@ class env():
         penalty = {self.penalty}
         def_path = {self.def_path}
         '''
-        # n_movies: rnr = {self.rnr.n_mvs}
-        # n_movies: tz  = {self.tz.n_mvs}
         return repr_
-
-
-# class tz():
-#     def __init__(self, n_mvs, T_part, cond_dict, p_cond):
-#         self.n_mvs = n_mvs
-#         self.T_part = T_part
-#         self.T_total = n_mvs * T_part
-#         self.event_ends = get_event_ends(T_part, n_mvs)
-#         self.cond_dict = cond_dict
-#         self.p_cond = p_cond
-#
-#
-# class rnr():
-#     def __init__(self, n_mvs, T_part, cond_dict, p_cond):
-#         self.n_mvs = n_mvs
-#         self.T_part = T_part
-#         self.T_total = n_mvs * T_part
-#         self.event_ends = get_event_ends(T_part, n_mvs)
-#         self.cond_dict = cond_dict
-#         self.p_cond = p_cond
 
 
 class net():
     def __init__(
         self,
         recall_func, kernel,
-        enc_mode, enc_size, n_mem,
+        enc_mode, enc_size, dict_len,
         n_hidden, n_hidden_dec, lr, gamma, eta,
         n_param, n_branch
     ):
@@ -156,7 +140,7 @@ class net():
         self.lr = lr
         self.gamma = gamma
         self.eta = eta
-        self.n_mem = n_mem
+        self.dict_len = dict_len
         # inferred params
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.dk_id = self.a_dim-1
