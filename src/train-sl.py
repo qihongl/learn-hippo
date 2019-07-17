@@ -37,6 +37,7 @@ parser.add_argument('--enc_size', default=None, type=int)
 parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
+parser.add_argument('--similarity_cap', default=None, type=float)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--n_hidden_dec', default=32, type=int)
 parser.add_argument('--lr', default=1e-3, type=float)
@@ -59,6 +60,7 @@ enc_size = args.enc_size
 penalty = args.penalty
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
+similarity_cap = args.similarity_cap
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -106,7 +108,7 @@ p = P(
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
     p_rm_ob_enc=p.env.p_rm_ob_enc, p_rm_ob_rcl=p.env.p_rm_ob_rcl,
-    similarity_cap_lag=p.n_event_remember,
+    similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap,
 )
 # init agent
 agent = Agent(
