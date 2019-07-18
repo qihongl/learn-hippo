@@ -45,7 +45,6 @@ class P():
         self.n_event_remember = n_event_remember
         self.n_segments = n_param // enc_size
         dict_len = self.n_event_remember * self.n_segments
-        print(dict_len)
 
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
@@ -65,7 +64,7 @@ class P():
             n_mvs_rnr
         )
         self.net = net(
-            recall_func, kernel, enc_mode, enc_size, n_event_remember,
+            recall_func, kernel, enc_mode, enc_size, dict_len,
             n_hidden, n_hidden_dec, lr, gamma, eta,
             n_param, n_branch
         )

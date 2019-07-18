@@ -155,6 +155,20 @@ def save_all_params(datapath, params, args=None):
         json.dump(params.net.__dict__, f, indent=2)
 
 
+def get_test_data_dir(
+        log_subpath,
+        epoch_load, pad_len_test, slience_recall_time,
+        n_examples_test
+):
+    test_data_dir_ = f'epoch-{epoch_load}/delay-{pad_len_test}'
+    test_data_dir = os.path.join(log_subpath['data'], test_data_dir_)
+    test_data_fname_ = f'st-{slience_recall_time}-n{n_examples_test}.pkl'
+    test_data_fname = os.path.join(test_data_dir, test_data_fname_)
+    if not os.path.exists(test_data_dir):
+        os.makedirs(test_data_dir)
+    return test_data_fname
+
+
 def pickle_save_dict(input_dict, save_path):
     """Save the dictionary
 

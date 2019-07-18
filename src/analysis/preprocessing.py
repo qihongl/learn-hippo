@@ -4,6 +4,10 @@ from utils.constants import TZ_COND_DICT
 from analysis import compute_stats
 
 
+def trim_data(n_examples_skip, data_list):
+    return [data[n_examples_skip:] for data in data_list]
+
+
 def compute_n_trials_to_skip(log_cond, p):
     # skip examples untill em buffer is full
     non_nm_trials = np.where(log_cond != TZ_COND_DICT.inverse['NM'])[0]

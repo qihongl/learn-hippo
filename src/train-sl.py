@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+import pickle
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,10 +11,10 @@ from models.LCALSTM_v9 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
-from utils.io import build_log_path, save_ckpt, save_all_params
+from utils.io import build_log_path, save_ckpt, save_all_params, get_test_data_dir
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from plt_helper import plot_pred_acc_full
+from vis import plot_pred_acc_full
 # from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
 # from utils.utils import to_sqnp
 
@@ -188,6 +189,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     if np.mod(epoch_id+1, log_freq) == 0:
         save_ckpt(epoch_id+1, log_subpath['ckpts'], agent, optimizer)
 
+
 '''plot learning curves'''
 f, axes = plt.subplots(3, 2, figsize=(10, 9), sharex=True)
 axes[0, 0].plot(Log_return)
@@ -249,3 +251,17 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+# '''test the model'''
+# n_examples_test = 512
+# [results, metrics, XY] = run_tz(
+#     agent, optimizer, task, p, n_examples_test,
+#     supervised=False, learning=False, get_data=True,
+#     slience_recall_time=None
+# )
+# # save the data
+# test_data_fname = get_test_data_dir(
+#     log_subpath, n_epoch, 0, None, n_examples_test)
+# test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
+# with open(test_data_fname, 'wb') as handle:
+#     pickle.dump(test_data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
