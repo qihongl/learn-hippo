@@ -260,8 +260,8 @@ for cond_name_ in list(TZ_COND_DICT.values()):
 #     slience_recall_time=None
 # )
 # # save the data
-# test_data_fname = get_test_data_dir(
+# test_data_dir, test_data_fname = get_test_data_dir(
 #     log_subpath, n_epoch, 0, None, n_examples_test)
 # test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
-# with open(test_data_fname, 'wb') as handle:
+# with open(os.path.join(test_data_dir, test_data_fname), 'wb') as handle:
 #     pickle.dump(test_data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
