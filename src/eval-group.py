@@ -49,7 +49,7 @@ slience_recall_times = range(n_param)
 
 # subj_id = 0
 # subj_ids = np.arange(7)
-subj_ids = [0]
+subj_ids = np.arange(1, 7)
 penaltys = [4]
 # penalty = 4
 # fix_cond = None
@@ -58,8 +58,8 @@ penaltys = [4]
 all_conds = [None]
 for slience_recall_time in slience_recall_times:
     for subj_id, penalty, fix_cond in product(subj_ids, penaltys, all_conds):
-
-        print(f'subj_id : {subj_id}, penalty : {penalty}, cond : {fix_cond}')
+        print(f'\nsubj_id : {subj_id}, penalty : {penalty}, cond : {fix_cond}')
+        print(f'slience_recall_time : {slience_recall_time}')
 
         p = P(
             exp_name=exp_name, sup_epoch=supervised_epoch,
