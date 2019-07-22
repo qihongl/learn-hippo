@@ -264,8 +264,8 @@ f.tight_layout()
 sns.despine()
 
 f.savefig('../figs/em-pa.png', dpi=150)
-#
-#
+
+
 # '''the % of contribution of immediate recall'''
 #
 # sli_ = np.array([[emb_acc_mu[subj_id, t][t] for t in range(n_param)]

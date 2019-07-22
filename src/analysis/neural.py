@@ -119,8 +119,8 @@ def compute_roc(distrib_noise, distrib_signal):
         the roc curve: true positive rate, and false positive rate
 
     """
-    assert len(distrib_noise) == len(distrib_signal)
-    assert np.sum(distrib_noise) == np.sum(distrib_signal)
+    # assert len(distrib_noise) == len(distrib_signal)
+    # assert np.sum(distrib_noise) == np.sum(distrib_signal)
     n_pts = len(distrib_noise)
     tpr, fpr = np.zeros(n_pts), np.zeros(n_pts)
     # slide the decision boundary from left to right

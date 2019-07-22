@@ -36,14 +36,14 @@ log_root = '../log/'
 exp_name = 'encsize_fixed'
 # exp_name = 'july9_v9'
 
-subj_ids = np.arange(7)
+subj_ids = np.arange(2)
 n_subjs = len(subj_ids)
 all_conds = ['RM', 'DM', 'NM']
 
 CMs_dlist, DAs_dlist = {k: [] for k in all_conds}, {k: [] for k in all_conds}
 
 for subj_id, fix_cond in product(subj_ids, all_conds):
-    print(subj_id, fix_cond)
+    print(f'subj_id = {subj_id}, cond = {fix_cond}')
 
     # subj_id = 0
     penalty = 4
@@ -94,7 +94,9 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
         p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
     )
     # create logging dirs
-    log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
+    log_path, log_subpath = build_log_path(
+        subj_id, p, log_root=log_root, verbose=False
+    )
 
     test_data_dir, test_data_fname = get_test_data_dir(
         log_subpath, epoch_load, pad_len_test,
@@ -128,8 +130,9 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
     # skip examples untill EM is full
     n_examples_skip = n_event_remember
     n_examples = n_examples_test - n_examples_skip
-    data_to_trim = [dist_a_, Y_, log_cond_,
-                    log_cache_, true_dk_wm_, true_dk_em_]
+    data_to_trim = [
+        dist_a_, Y_, log_cond_, log_cache_, true_dk_wm_, true_dk_em_
+    ]
     [dist_a, Y, log_cond, log_cache, true_dk_wm, true_dk_em] = trim_data(
         n_examples_skip, data_to_trim)
     # process the data
@@ -138,6 +141,7 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
     [C, H, M, CM, DA, V] = activity_
     [inpt, leak, comp] = ctrl_param_
 
+    # collect data
     CMs_dlist[fix_cond].append(CM)
     DAs_dlist[fix_cond].append(DA)
 
@@ -162,7 +166,7 @@ n_examples_tr = int(n_examples * (1-test_prop))
 n_examples_te = int(n_examples * test_prop)
 
 data = CMs_darray
-# data = DAs_darray
+data = DAs_darray
 
 _, nH, _, _ = np.shape(data[cond])
 
@@ -186,63 +190,6 @@ for cond in all_conds:
         srm.transform(data_te[cond][:, :, :, i])
         for i in range(n_examples_te)
     ]
-
-
-# compute the inter-subject t-RSM for the i-th trial
-
-
-def compute_bs_pattern_corr(data_te_i_srm):
-    T_ = np.shape(data_te_i_srm)[-1]
-    bs_trsa_i = []
-    for i_s in range(n_subjs):
-        for j_s in np.arange(i_s+1, n_subjs):
-            # print(i_s, j_s)
-            bs_trsa_i.append(
-                np.corrcoef(
-                    data_te_i_srm[i_s].T, data_te_i_srm[j_s].T)[T_:, :T_]
-            )
-    bs_trsa_i = np.array(bs_trsa_i)
-    # extract diag: corr(t,t)
-    bs_trsa_diag = np.array([np.diag(bs_trsa_i) for bs_trsa_i in bs_trsa_i])
-    # average over subj i - subj j pairs
-    bs_trsa_diag_mu = np.mean(bs_trsa_diag, axis=0)
-    return bs_trsa_diag_mu
-
-
-'''start plotting'''
-n_se = 3
-
-
-# '''Inter-subject pattern correlation, within each condition'''
-# bs_trsa_diag_mu = {}
-# for cond in all_conds:
-#     # compute the t-t mean s
-#     bs_trsa_diag_mu[cond] = np.array([
-#         compute_bs_pattern_corr(data_te_i_srm)
-#         for data_te_i_srm in data_te_srm[cond]
-#     ])
-#
-# # compute stats
-# itrsm_mu, itrsm_sd = {}, {}
-# for cond in cond_ids.keys():
-#     itrsm_mu[cond], itrsm_sd[cond] = compute_stats(
-#         bs_trsa_diag_mu[cond], n_se=n_se)
-# # plot
-# f, ax = plt.subplots(1, 1, figsize=(8, 4))
-# for i_c, cond in enumerate(cond_ids.keys()):
-#     print(i_c, cond)
-#     ax.errorbar(
-#         x=range(T_total), y=itrsm_mu[cond], yerr=itrsm_sd[cond],
-#         label=cond
-#     )
-# ax.axvline(T_part, color='red', linestyle='--', alpha=.5)
-# ax.legend()
-#
-# ax.set_xlabel('Time')
-# ax.set_ylabel('Linear Correlation')
-# ax.set_title('Inter-subject pattern correlation')
-# sns.despine()
-# f.tight_layout()
 
 
 '''Inter-subject pattern correlation, RM vs. cond'''
@@ -282,41 +229,64 @@ def compute_bs_bc_isc(data_te_srm_rm_i, data_te_srm_xm_i, win_size=5):
     return np.mean(isc_mu, axis=0)
 
 
+# ref_cond = 'NM'
 win_size = 4
-bs_bc_trsm_diag = {k: [] for k in all_conds}
-bs_bc_isc = {k: [] for k in all_conds}
-for cond in all_conds:
-    # pick a trial
-    for i in range(n_examples_te):
-        data_te_srm_rm_i = data_te_srm['RM'][i]
-        data_te_srm_xm_i = data_te_srm[cond][i]
-        # for this trial, compute inter-subject inter-condition pattern corr
-        bs_bc_trsm_c_i = compute_bs_bc_trsm(data_te_srm_rm_i, data_te_srm_xm_i)
-        # only extract the diag entries (t to t)
-        bs_bc_trsm_diag[cond].append(np.diag(bs_bc_trsm_c_i))
-        # isc
-        bs_bc_isc[cond].append(
-            compute_bs_bc_isc(data_te_srm_rm_i, data_te_srm_xm_i, win_size)
-        )
+
+bs_bc_trsm_diag = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+bs_bc_isc = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+
+for i_rc, ref_cond in enumerate(all_conds):
+    for i_c, cond in enumerate(all_conds):
+        # pick a trial
+        if i_c >= i_rc:
+            for i in range(n_examples_te):
+                # for this trial ...
+                data_te_srm_rm_i = data_te_srm[ref_cond][i]
+                data_te_srm_xm_i = data_te_srm[cond][i]
+                # compute inter-subject inter-condition pattern corr
+                bs_bc_trsm_c_i = compute_bs_bc_trsm(
+                    data_te_srm_rm_i, data_te_srm_xm_i
+                )
+                # only extract the diag entries (t to t)
+                bs_bc_trsm_diag[ref_cond][cond].append(np.diag(bs_bc_trsm_c_i))
+                # isc
+                bs_bc_isc[ref_cond][cond].append(
+                    compute_bs_bc_isc(
+                        data_te_srm_rm_i, data_te_srm_xm_i, win_size
+                    )
+                )
 
 
 '''plot pattern corr '''
+sns.palplot(sns.color_palette(n_colors=8))
+c_pal = sns.color_palette(n_colors=8)
+color_id_pick = [0, 1, 2, 3, 4, 7]
+c_pal = [c_pal[color_id] for color_id in color_id_pick]
+
 # compute stats
-mu_, er_ = {}, {}
-for cond in cond_ids.keys():
-    mu_[cond], er_[cond] = compute_stats(bs_bc_trsm_diag[cond], n_se=n_se)
+n_se = 3
+mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+for ref_cond in cond_ids.keys():
+    for cond in cond_ids.keys():
+        mu_[ref_cond][cond], er_[ref_cond][cond] = compute_stats(
+            bs_bc_trsm_diag[ref_cond][cond], n_se=n_se)
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(7, 4))
-for i_c, cond in enumerate(cond_ids.keys()):
-    print(i_c, cond)
-    ax.errorbar(
-        x=range(T_part), y=mu_[cond][T_part:], yerr=er_[cond][T_part:],
-        label=cond
-    )
-ax.legend([f'RM-{cond}' for cond in all_conds])
-# ax.axvline(T_part, color='red', linestyle='--', alpha=.5)
-
+f, ax = plt.subplots(1, 1, figsize=(9, 5))
+color_id = 0
+for i_rc, ref_cond in enumerate(cond_ids.keys()):
+    for i_c, cond in enumerate(cond_ids.keys()):
+        if i_c >= i_rc:
+            ax.errorbar(
+                x=range(T_part),
+                y=mu_[ref_cond][cond][T_part:],
+                yerr=er_[ref_cond][cond][T_part:],
+                label=f'{ref_cond}-{cond}', color=c_pal[color_id]
+            )
+            color_id += 1
+ax.legend(bbox_to_anchor=(1, 1))
+ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel('Time')
 ax.set_ylabel('Linear Correlation')
 ax.set_title('Spatial inter-subject correlation')
@@ -325,29 +295,33 @@ f.tight_layout()
 
 
 '''plot pattern isc'''
+n_se = 1
 # compute stats
-mu_, er_ = {}, {}
-for cond in cond_ids.keys():
-    mu_[cond], er_[cond] = compute_stats(bs_bc_isc[cond], n_se=n_se)
+mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
+for ref_cond in cond_ids.keys():
+    for cond in cond_ids.keys():
+        mu_[ref_cond][cond], er_[ref_cond][cond] = compute_stats(
+            bs_bc_isc[ref_cond][cond], n_se=n_se)
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(6, 4))
-for i_c, cond in enumerate(cond_ids.keys()):
-    print(i_c, cond)
-    ax.errorbar(
-        x=range(len(mu_[cond])), y=mu_[cond], yerr=er_[cond],
-        label=cond
-    )
-ax.legend([f'RM-{cond}' for cond in all_conds])
+f, ax = plt.subplots(1, 1, figsize=(8, 5))
+color_id = 0
+for i_rc, ref_cond in enumerate(cond_ids.keys()):
+    for i_c, cond in enumerate(cond_ids.keys()):
+        print(i_c, cond)
+        if i_c >= i_rc:
+            ax.errorbar(
+                x=range(len(mu_[ref_cond][cond])),
+                y=mu_[ref_cond][cond], yerr=er_[ref_cond][cond],
+                label=f'{ref_cond}-{cond}', color=c_pal[color_id]
+            )
+            color_id += 1
+ax.legend(bbox_to_anchor=(1, 1))
 # ax.axvline(T_part, color='red', linestyle='--', alpha=.5)
-
+ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel(f'Time (sliding window size = {win_size})')
 ax.set_ylabel('Linear Correlation')
 ax.set_title('Inter-subject correlation')
 sns.despine()
 f.tight_layout()
-
-
-# f, axes = plt.subplots(3, 1, figsize=(8, 10))
-# for i_c, cond in enumerate(cond_ids.keys()):
-#     axes[i_c].plot(np.array(bs_bc_isc[cond]).T)

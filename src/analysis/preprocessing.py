@@ -65,27 +65,65 @@ def process_cache(log_cache, T_total, p):
 '''data separator'''
 
 
-def sep_by_qsource(matrix_p2, obj_uncertainty_info, n_se=3):
-    [em_only_cond_p2, wm_only_cond_p2, neither_cond_p2,
-     both_cond_p2] = obj_uncertainty_info
-    n_param = np.shape(obj_uncertainty_info[0])[1]
-    m_em_mu, m_em_er = np.zeros(n_param,), np.zeros(n_param,)
-    m_wm_mu, m_wm_er = np.zeros(n_param,), np.zeros(n_param,)
-    m_bo_mu, m_bo_er = np.zeros(n_param,), np.zeros(n_param,)
-    m_nt_mu, m_nt_er = np.zeros(n_param,), np.zeros(n_param,)
-    for t in range(n_param):
-        m_em_mu[t], m_em_er[t] = compute_stats(
-            matrix_p2[em_only_cond_p2[:, t], t], n_se=n_se)
-        m_wm_mu[t], m_wm_er[t] = compute_stats(
-            matrix_p2[wm_only_cond_p2[:, t], t], n_se=n_se)
-        m_bo_mu[t], m_bo_er[t] = compute_stats(
-            matrix_p2[both_cond_p2[:, t], t], n_se=n_se)
-        m_nt_mu[t], m_nt_er[t] = compute_stats(
-            matrix_p2[neither_cond_p2[:, t], t], n_se=n_se)
-    stats = {
-        'EM only': [m_em_mu, m_em_er],
-        'neither': [m_nt_mu, m_nt_er],
-        'both': [m_bo_mu, m_bo_er],
-        'WM only': [m_wm_mu, m_wm_er],
+def get_qsource(true_dk_em, true_dk_wm, cond_ids, p):
+    # DM
+    # can recall from EM
+    true_dk_em_dm_p2 = true_dk_em[cond_ids['DM'], p.env.n_param:]
+    true_dk_wm_dm_p2 = true_dk_wm[cond_ids['DM'], :]
+    eo_dm_p2 = np.logical_and(true_dk_wm_dm_p2, ~true_dk_em_dm_p2)
+    wo_dm_p2 = np.logical_and(~true_dk_wm_dm_p2, true_dk_em_dm_p2)
+    nt_dm_p2 = np.logical_and(true_dk_wm_dm_p2, true_dk_em_dm_p2)
+    bt_dm_p2 = np.logical_and(~true_dk_wm_dm_p2, ~true_dk_em_dm_p2)
+    # NM
+    # no episodic memory => "EM only", "both" are impossble
+    # true_dk_em_nm_p2 = true_dk_em[cond_ids['NM'], n_param:]
+    true_dk_wm_nm_p2 = true_dk_wm[cond_ids['NM'], :]
+    n_trials_, n_time_steps_ = np.shape(true_dk_wm_nm_p2)
+    eo_nm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    wo_nm_p2 = ~true_dk_wm_nm_p2
+    nt_nm_p2 = true_dk_wm_nm_p2
+    bt_nm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    # RM
+    # has episodic memory
+    true_dk_rm_nm_p2 = true_dk_em[cond_ids['RM'], p.env.n_param:]
+    n_trials_, n_time_steps_ = np.shape(true_dk_wm_nm_p2)
+    eo_rm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    wo_rm_p2 = np.zeros(shape=(n_trials_, n_time_steps_), dtype=bool)
+    nt_rm_p2 = true_dk_rm_nm_p2
+    bt_rm_p2 = ~true_dk_rm_nm_p2
+    # gather data
+    q_source_rm = {
+        'EM only': eo_rm_p2, 'WM only': wo_rm_p2,
+        'neither': nt_rm_p2, 'both': bt_rm_p2
     }
+    q_source_dm = {
+        'EM only': eo_dm_p2, 'WM only': wo_dm_p2,
+        'neither': nt_dm_p2, 'both': bt_dm_p2
+    }
+    q_source_nm = {
+        'EM only': eo_nm_p2, 'WM only': wo_nm_p2,
+        'neither': nt_nm_p2, 'both': bt_nm_p2
+    }
+    #
+    q_source_all_conds = {
+        'RM': q_source_rm,
+        'DM': q_source_dm,
+        'NM': q_source_nm
+    }
+    return q_source_all_conds
+
+
+def sep_by_qsource(matrix_p2, q_source_info, n_se=3):
+    stats = {}
+    # loop over sources
+    for q_source_name, q_source_id in q_source_info.items():
+        T_ = np.shape(q_source_id)[1]
+        mu_, er_ = np.zeros(T_,), np.zeros(T_,)
+        # loop over time
+        for t in range(T_):
+            # compute stats
+            mu_[t], er_[t] = compute_stats(
+                matrix_p2[q_source_id[:, t], t], n_se=n_se)
+        # collect stats for this source
+        stats[q_source_name] = [mu_, er_]
     return stats

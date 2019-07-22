@@ -10,7 +10,8 @@ import seaborn as sns
 # from models.LCALSTM_v9 import LCALSTM as Agent
 # from models import LCALSTM as Agent
 from itertools import product
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, probplot
+from sklearn import metrics
 from task import SequenceLearning
 # from exp_tz import run_tz
 from utils.params import P
@@ -22,7 +23,7 @@ from analysis import compute_acc, compute_dk, compute_stats, \
     compute_auc_over_time, compute_event_similarity, batch_compute_true_dk, \
     process_cache, get_trial_cond_ids, compute_n_trials_to_skip,\
     compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
-    get_qsource, trim_data
+    get_qsource, trim_data, compute_roc
 
 from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
     plot_time_course_for_all_conds
@@ -36,20 +37,20 @@ log_root = '../log/'
 exp_name = 'encsize_fixed'
 # exp_name = 'july9_v9'
 
-# subj_ids = np.arange(7)
-subj_ids = [0, 1]
-penaltys = [1]
+subj_ids = np.arange(7)
+penaltys = [0, 1, 4, 8]
+# subj_ids = [0]
 
 for subj_id, penalty in product(subj_ids, penaltys):
 
     # subj_id = 0
-    # penalty = 4
+    # penalty = 8
     supervised_epoch = 300
     epoch_load = 600
     # n_epoch = 500
     n_param = 16
     n_branch = 4
-    enc_size = 8
+    enc_size = 16
     n_event_remember = 4
 
     n_hidden = 194
@@ -257,17 +258,14 @@ for subj_id, penalty in product(subj_ids, penaltys):
     '''compute q source, and check q source % for all conditions'''
 
     # pick a condition
-    q_source_all_conds = get_qsource(true_dk_em, true_dk_wm, cond_ids, p)
-    [q_source_rm_p2, q_source_dm_p2, q_source_nm_p2] = q_source_all_conds.values()
-    [eo_rm_p2, wo_rm_p2, nt_rm_p2, bt_rm_p2] = q_source_rm_p2
-    [eo_dm_p2, wo_dm_p2, nt_dm_p2, bt_dm_p2] = q_source_dm_p2
-    [eo_nm_p2, wo_nm_p2, nt_nm_p2, bt_nm_p2] = q_source_nm_p2
+    q_source = get_qsource(true_dk_em, true_dk_wm, cond_ids, p)
+    all_q_source = list(q_source['DM'].keys())
 
     width = .85
     f, axes = plt.subplots(3, 1, figsize=(7, 10))
-    for i, (cd_name, q_source_cd_p2) in enumerate(q_source_all_conds.items()):
+    for i, (cd_name, q_source_cd_p2) in enumerate(q_source.items()):
         # unpack data
-        eo_cd_p2, wo_cd_p2, nt_cd_p2, bt_cd_p2 = q_source_cd_p2
+        eo_cd_p2, wo_cd_p2, nt_cd_p2, bt_cd_p2 = q_source_cd_p2.values()
         axes[i].bar(range(n_param), prop_true(
             eo_cd_p2), label='EM', width=width)
         axes[i].bar(range(n_param), prop_true(wo_cd_p2), label='WM', width=width,
@@ -288,9 +286,10 @@ for subj_id, penalty in product(subj_ids, penaltys):
 
     '''plot target memory activation profile, for all trials'''
     cond_name = 'DM'
+    m_type = 'targ'
     # get target memory activation
     targ_act_cond_p2 = np.mean(
-        sim_lca_dict[cond_name]['targ'][:, T_part:], axis=-1)
+        sim_lca_dict[cond_name][m_type][:, T_part:], axis=-1)
     ylab = 'Activation'
 
     f, axes = plt.subplots(2, 2, figsize=(9, 7))
@@ -311,7 +310,7 @@ for subj_id, penalty in product(subj_ids, penaltys):
     axes[0, 1].set_title(f'{n_trials_} example trials')
     axes[0, 1].set_ylim(axes[0, 0].get_ylim())
 
-    sorted_targ_act_cond_p2 = np.sort(targ_act_cond_p2, axis=1)[:, ::-1]
+    sorted_targ_act_cond_p2 = np.sort(targ_act_cond_p2, axis=1)[:, :: -1]
     mu_, er_ = compute_stats(sorted_targ_act_cond_p2, n_se=3)
     axes[1, 0].plot(sorted_targ_act_cond_p2.T, alpha=.1, color=gr_pal[0])
     axes[1, 0].errorbar(x=range(T_part), y=mu_, yerr=er_, color='black')
@@ -330,14 +329,15 @@ for subj_id, penalty in product(subj_ids, penaltys):
         axes[0, 0].axvline(pad_len_test, color='grey', linestyle='--')
         axes[0, 1].axvline(pad_len_test, color='grey', linestyle='--')
         axes[1, 1].axvline(pad_len_test, color='grey', linestyle='--')
-
-    f.suptitle('Activation profile of the target memory, DM',
+    m_type_txt = 'target' if m_type == 'targ' else m_type
+    f.suptitle(f'Memory activation profile, {m_type_txt}, {cond_name}',
                y=.95, fontsize=18)
 
     sns.despine()
     f.tight_layout(rect=[0, 0, 1, 0.9])
     # f.subplots_adjust(top=0.9)
-    fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-lca.png')
+    fig_path = os.path.join(
+        fig_dir, f'mem-act-profile-{cond_name}-{m_type}-lca.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     # nthres = 50
@@ -355,21 +355,23 @@ for subj_id, penalty in product(subj_ids, penaltys):
     #
     # f, ax = plt.subplots(1, 1, figsize=(5, 4))
     # for t in range(T_part):
-    #     ax.plot(thres, prob[t, :], color=v_pal[t])
+    #     ax.plot(np.log(thres), prob[t, :], color=v_pal[t])
     # ax.set_ylabel('P(activation > v | t)')
-    # ax.set_xlabel('v')
+    # ax.set_xlabel('log(v)')
     # f.tight_layout()
     # sns.despine()
 
     # use previous uncertainty to predict memory activation
     cond_name = 'DM'
     dk_cond_p2 = dks[cond_ids[cond_name], n_param:]
-    t_pick_max = 7
+    t_pick_max = 9
+    t_picks = np.arange(2, t_pick_max)
     v_pal = sns.color_palette('viridis', n_colors=t_pick_max)
     f, ax = plt.subplots(1, 1, figsize=(8, 4))
-    for t_pick_ in range(t_pick_max):
+    for t_pick_ in t_picks:
         # compute number of don't knows produced so far
         ndks_p2_b4recall = np.sum(dk_cond_p2[:, :t_pick_], axis=1)
+        ndks_p2_b4recall = ndks_p2_b4recall / t_pick_
         nvs = np.unique(ndks_p2_b4recall)
         ma_mu = np.zeros(len(nvs),)
         ma_er = np.zeros(len(nvs),)
@@ -378,13 +380,16 @@ for subj_id, penalty in product(subj_ids, penaltys):
             ma_mu[i], ma_er[i] = compute_stats(mem_act_recall_ndk, n_se=1)
         ax.errorbar(x=nvs, y=ma_mu, yerr=ma_er, color=v_pal[t_pick_])
 
-    ax.legend(range(t_pick_max), bbox_to_anchor=(1.3, 1))
-    ax.set_title('Recall ~ subjective uncertainty')
-    ax.set_xlabel('# don\'t knows')
+    ax.legend(t_picks, title='time', bbox_to_anchor=(1.3, 1.1))
+    ax.set_title(f'Target activation, {cond_name}')
+    # ax.set_xlabel('# don\'t knows')
+    ax.set_xlabel('percent don\'t knows')
+    ax.set_xlim([0, 1.05])
     ax.set_ylabel('average recall peak')
     sns.despine()
     f.tight_layout()
-    fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-by-ndk.png')
+    fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-by-propdk.png')
+    # fig_path = os.path.join(fig_dir, f'tz-{cond_name}-targact-by-ndk.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     # use objective uncertainty metric to decompose LCA params in the EM condition
@@ -392,7 +397,7 @@ for subj_id, penalty in product(subj_ids, penaltys):
     inpt_cond_p2 = inpt[cond_ids[cond_name], T_part:]
     leak_cond_p2 = leak[cond_ids[cond_name], T_part:]
     comp_cond_p2 = comp[cond_ids[cond_name], T_part:]
-    q_source_cond_p2 = q_source_all_conds[cond_name]
+    q_source_cond_p2 = q_source[cond_name]
     all_lca_param_cond_p2 = {
         'input strength': inpt_cond_p2,
         'leak': leak_cond_p2, 'competition': comp_cond_p2
@@ -417,8 +422,9 @@ for subj_id, penalty in product(subj_ids, penaltys):
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     # use CURRENT uncertainty to predict memory activation
+    cond_name = 'DM'
     targ_act_cond_p2_stats = sep_by_qsource(
-        targ_act_cond_p2[:, pad_len_test:], q_source_dm_p2, n_se=n_se)
+        targ_act_cond_p2[:, pad_len_test:], q_source[cond_name], n_se=n_se)
 
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     for key, [mu_, er_] in targ_act_cond_p2_stats.items():
@@ -444,11 +450,11 @@ for subj_id, penalty in product(subj_ids, penaltys):
     corrects_cond_p2 = corrects[cond_ids[cond_name], n_param:]
     mistakes_cond_p2 = mistakes[cond_ids[cond_name], n_param:]
     acc_cond_p2_stats = sep_by_qsource(
-        corrects_cond_p2, q_source_dm_p2, n_se=n_se)
+        corrects_cond_p2, q_source[cond_name], n_se=n_se)
     dk_cond_p2_stats = sep_by_qsource(
-        dk_cond_p2, q_source_dm_p2, n_se=n_se)
+        dk_cond_p2, q_source[cond_name], n_se=n_se)
     mistakes_cond_p2_stats = sep_by_qsource(
-        mistakes_cond_p2, q_source_dm_p2, n_se=n_se)
+        mistakes_cond_p2, q_source[cond_name], n_se=n_se)
 
     stats_to_plot = {
         'correct': acc_cond_p2_stats, 'uncertain': dk_cond_p2_stats,
@@ -477,12 +483,14 @@ for subj_id, penalty in product(subj_ids, penaltys):
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     '''ma ~ correct in the EM only case'''
+    cond_name = 'DM'
 
     tma_crt_mu, tma_crt_er = np.zeros(n_param,), np.zeros(n_param,)
     tma_incrt_mu, tma_incrt_er = np.zeros(n_param,), np.zeros(n_param,)
     for t in range(n_param):
-        tma_ = targ_act_cond_p2[eo_dm_p2[:, t], t+pad_len_test]
-        crt_ = corrects_cond_p2[eo_dm_p2[:, t], t]
+        tma_ = targ_act_cond_p2[
+            q_source[cond_name]['EM only'][:, t], t+pad_len_test]
+        crt_ = corrects_cond_p2[q_source[cond_name]['EM only'][:, t], t]
         tma_crt_mu[t], tma_crt_er[t] = compute_stats(tma_[crt_])
         tma_incrt_mu[t], tma_incrt_er[t] = compute_stats(tma_[~crt_])
 
@@ -507,8 +515,9 @@ for subj_id, penalty in product(subj_ids, penaltys):
     tma_k_mu, tma_k_er = np.zeros(n_param,), np.zeros(n_param,)
     tma_dk_mu, tma_dk_er = np.zeros(n_param,), np.zeros(n_param,)
     for t in range(n_param):
-        tma_ = targ_act_cond_p2[eo_dm_p2[:, t], t+pad_len_test]
-        dk_ = dk_cond_p2[eo_dm_p2[:, t], t]
+        tma_ = targ_act_cond_p2[
+            q_source[cond_name]['EM only'][:, t], t+pad_len_test]
+        dk_ = dk_cond_p2[q_source[cond_name]['EM only'][:, t], t]
         tma_k_mu[t], tma_k_er[t] = compute_stats(tma_[~dk_])
         tma_dk_mu[t], tma_dk_er[t] = compute_stats(tma_[dk_])
 
@@ -539,100 +548,77 @@ for subj_id, penalty in product(subj_ids, penaltys):
 
     '''analyze the EM-only condition'''
 
-    f, ax = plt.subplots(1, 1, figsize=(6, 3.5))
-    plot_pred_acc_rcl(
-        acc_cond_p2_stats['EM only'][0], acc_cond_p2_stats['EM only'][1],
-        acc_cond_p2_stats['EM only'][0]+dk_cond_p2_stats['EM only'][0],
-        p, f, ax,
-        title=f'EM-based prediction performance, {cond_name}',
-        baseline_on=False, legend_on=True,
-    )
-    if slience_recall_time is not None:
-        ax.axvline(slience_recall_time, color='red',
-                   linestyle='--', alpha=alpha)
-    ax.set_xlabel('Time, recall phase')
-    ax.set_ylabel('Accuracy')
-    f.tight_layout()
-    sns.despine()
-    fig_path = os.path.join(fig_dir, f'tz-{cond_name}-pa-em-only.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    for source_ in all_q_source:
+        if np.all(np.isnan(acc_cond_p2_stats[source_][0])):
+            continue
+        f, ax = plt.subplots(1, 1, figsize=(6, 3.5))
+        plot_pred_acc_rcl(
+            acc_cond_p2_stats[source_][0], acc_cond_p2_stats[source_][1],
+            acc_cond_p2_stats[source_][0] + dk_cond_p2_stats[source_][0],
+            p, f, ax,
+            title=f'Prediction performance, {source_}, {cond_name}',
+            baseline_on=False, legend_on=True,
+        )
+        if slience_recall_time is not None:
+            ax.axvline(slience_recall_time, color='red',
+                       linestyle='--', alpha=alpha)
+        ax.set_xlabel('Time, recall phase')
+        ax.set_ylabel('Accuracy')
+        f.tight_layout()
+        sns.despine()
+        fig_path = os.path.join(fig_dir, f'tz-pa-{cond_name}-{source_}.png')
+        f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-    f, ax = plt.subplots(1, 1, figsize=(6, 3.5))
-    plot_pred_acc_rcl(
-        acc_cond_p2_stats['both'][0], acc_cond_p2_stats['both'][1],
-        acc_cond_p2_stats['both'][0]+dk_cond_p2_stats['both'][0],
-        p, f, ax,
-        title=f'WM+EM based prediction performance, {cond_name}',
-        baseline_on=False, legend_on=True,
-    )
-    ax.set_xlabel('Time, recall phase')
-    ax.set_ylabel('Accuracy')
-    ax.set_ylim([-0.05, 1.05])
-    f.tight_layout()
-    sns.despine()
-    fig_path = os.path.join(fig_dir, f'tz-{cond_name}-pa-both.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    '''compare the over time'''
 
-    '''signal detection analysis'''
+    def get_max_score(mem_act_cond):
+        n_trials_ = np.shape(mem_act_cond)[0]
+        rt_ = np.argmax(
+            np.max(mem_act_cond[:, T_part:], axis=-1),
+            axis=-1
+        ) + T_part
+        ms_targ = np.array(
+            [np.max(mem_act_cond[i, rt_[i], :]) for i in range(n_trials_)]
+        )
+        return ms_targ
 
-    # plot the max-score distribution for one time step
-    ms_lure = np.max(sim_lca_dict['NM']['lure'], axis=-1)
-    ms_targ = np.max(sim_lca_dict['DM']['targ'], axis=-1)
+    ms_targ = get_max_score(sim_lca_dict['DM']['targ'])
+    ms_lure = get_max_score(sim_lca_dict['NM']['lure'])
 
+    tpr, fpr = compute_roc(ms_lure, ms_targ)
+    auc = metrics.auc(tpr, fpr)
+
+    distribution_ms = [ms_lure, ms_targ]
+    bins = 40
     leg_ = ['NM', 'DM']
-
-    bins = 30
-
-    sns.distplot(ms_lure[:, T_part+t])
-    sns.distplot(ms_targ[:, T_part+t])
-
-    # t s.t. maximal recall peak
-    t_recall_peak = np.argmax(np.mean(targ_act_cond_p2, axis=0))
-    t = t_recall_peak
-    dt_ = [ms_lure[:, T_part+t], ms_targ[:, T_part+t]]
-
-    f, ax = plt.subplots(1, 1, figsize=(6, 3))
+    f, axes = plt.subplots(
+        1, 2, figsize=(9, 3), gridspec_kw={'width_ratios': [2, 1]}
+    )
     for j, m_type in enumerate(memory_types):
         sns.distplot(
-            dt_[j],
+            distribution_ms[j],
             # hist=False,
             bins=bins,
             kde=False,
-            kde_kws={"shade": True},
-            ax=ax, color=gr_pal[::-1][j]
+            # kde_kws={"shade": True, 'kernel': 'gau'},
+            color=gr_pal[::-1][j],
+            ax=axes[0],
         )
-    ax.legend(leg_, frameon=False,)
-    ax.set_title('Max score distribution')
-    ax.set_xlabel('Recall strength')
-    ax.set_ylabel('Counts')
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    sns.despine()
-    fig_path = os.path.join(fig_dir, f'ms-dist-t{t}.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    # ax.set_ylim([-50, None])
+    axes[0].legend(leg_, frameon=False,)
+    axes[0].set_title('Max score distribution at peak time')
+    axes[0].set_xlabel('Recall strength')
+    axes[0].set_ylabel('Counts')
+    axes[0].xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
-    '''signal detection, max score'''
-    # roc analysis
-    ms_lure = ms_lure[:np.shape(ms_targ)[0], :]
-    tprs, fprs, auc = compute_auc_over_time(ms_lure.T, ms_targ.T)
-
-    b_pal = sns.color_palette('Blues', n_colors=T_part)
-    f, axes = plt.subplots(2, 1, figsize=(5, 7))
-    for t in np.arange(T_part, T_total):
-        axes[0].plot(fprs[t], tprs[t], color=b_pal[t-T_part])
-    axes[0].set_xlabel('FPR')
-    axes[0].set_ylabel('TPR')
-    axes[0].set_title('ROC curves over time')
-    axes[0].plot([0, 1], [0, 1], linestyle='--', color='grey')
-    axes[1].plot(auc[T_part:], color='black')
-    axes[1].set_xlabel('Time')
-    axes[1].set_ylabel('AUC')
-    axes[1].set_title('AUC over time')
-    for ax in axes:
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    axes[1].xaxis.set_major_formatter(FormatStrFormatter('%d'))
+    axes[1].plot(tpr, fpr)
+    axes[1].plot([0, 1], [0, 1], linestyle='--', color='grey')
+    axes[1].set_title('ROC, AUC = %.2f' % (auc))
+    axes[1].set_xlabel('TRP')
+    axes[1].set_ylabel('FRP')
     f.tight_layout()
     sns.despine()
-    fig_path = os.path.join(fig_dir, f'roc.png')
+    fig_path = os.path.join(fig_dir, f'ms-dist-t-peak.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     '''compute inter-event similarity'''
@@ -716,57 +702,31 @@ for subj_id, penalty in product(subj_ids, penaltys):
     fig_path = os.path.join(fig_dir, f'ambiguity-by-cond.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-    '''show regression model w/ ambiguity as the predictor, for DM
-    treat time point is indep obs (wrong), and split the data w.r.t q source
-    '''
-    # cond_name = 'DM'
-    # confusion_cond = confusion_by_cond_mu[cond_name]
-    # confusion_cond_ext = np.tile(confusion_cond, (15, 1)).T
+    # '''t-RDM: raw similarity'''
+    # data = C
+    # trsm = {}
+    # for cond_name in cond_ids.keys():
+    #     if np.sum(cond_ids[cond_name]) == 0:
+    #         continue
+    #     else:
+    #         data_cond_ = data[cond_ids[cond_name], :, :]
+    #         trsm[cond_name] = compute_trsm(data_cond_)
     #
-    # t = 5
-    #
-    # f, ax = plt.subplots(1, 1, figsize=(5, 4))
-    # sns.regplot(
-    #     confusion_cond_ext[eo_dm_p2[:, t], t], dk_cond_p2[eo_dm_p2[:, t], t],
-    #     logistic=True,
-    #     scatter_kws={'alpha': .5, 'marker': '.', 's': 15},
-    #     x_jitter=.025, y_jitter=.05,
-    #     ax=ax
-    # )
-    # ax.set_xlabel('Ambiguity')
-    # ax.set_ylabel('[action]')
-    # sns.despine()
+    # f, axes = plt.subplots(3, 1, figsize=(7, 11), sharex=True)
+    # for i, cond_name in enumerate(TZ_COND_DICT.values()):
+    #     sns.heatmap(
+    #         trsm[cond_name], cmap='viridis', square=True,
+    #         xticklabels=5, yticklabels=5,
+    #         ax=axes[i]
+    #     )
+    #     axes[i].axvline(T_part, color='red', linestyle='--')
+    #     axes[i].axhline(T_part, color='red', linestyle='--')
+    #     axes[i].set_title(f'TR-TR correlation, {cond_name}')
+    #     axes[i].set_ylabel('Time')
+    # axes[-1].set_xlabel('Time')
     # f.tight_layout()
-    # # np.mean(dk_cond_p2, axis=1)
-    # # np.shape(mistakes_cond_p2)
-    # np.sum(dk_cond_p2[eo_dm_p2])
-    # np.sum(dk_cond_p2[~eo_dm_p2])
-
-    '''t-RDM: raw similarity'''
-    data = C
-    trsm = {}
-    for cond_name in cond_ids.keys():
-        if np.sum(cond_ids[cond_name]) == 0:
-            continue
-        else:
-            data_cond_ = data[cond_ids[cond_name], :, :]
-            trsm[cond_name] = compute_trsm(data_cond_)
-
-    f, axes = plt.subplots(3, 1, figsize=(7, 11), sharex=True)
-    for i, cond_name in enumerate(TZ_COND_DICT.values()):
-        sns.heatmap(
-            trsm[cond_name], cmap='viridis', square=True,
-            xticklabels=5, yticklabels=5,
-            ax=axes[i]
-        )
-        axes[i].axvline(T_part, color='red', linestyle='--')
-        axes[i].axhline(T_part, color='red', linestyle='--')
-        axes[i].set_title(f'TR-TR correlation, {cond_name}')
-        axes[i].set_ylabel('Time')
-    axes[-1].set_xlabel('Time')
-    f.tight_layout()
-    fig_path = os.path.join(fig_dir, f'trdm-by-cond.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    # fig_path = os.path.join(fig_dir, f'trdm-by-cond.png')
+    # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     # '''pca the deicison activity'''
     #
