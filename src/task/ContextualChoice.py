@@ -123,7 +123,7 @@ if __name__ == "__main__":
         t_noise_off=t_noise_off
     )
     # sample
-    n_examples = 5
+    n_examples = 10
     X, Y = task.sample(n_examples, to_torch=False)
     print(f'X shape = {np.shape(X)}, n_example x time x x-dim')
     print(f'Y shape = {np.shape(Y)},  n_example x time x y-dim')
@@ -132,8 +132,8 @@ if __name__ == "__main__":
     i = 0
     input = X[i]
     target = int(Y[i][0])
-    vmin = np.min(X[i])
-    vmax = np.max(X[i])
+    vmin = np.min(X)
+    vmax = np.max(X)
 
     f, ax = plt.subplots(1, 1, figsize=(3, 5))
     sns.heatmap(
