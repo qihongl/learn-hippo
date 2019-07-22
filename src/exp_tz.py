@@ -58,8 +58,8 @@ def run_tz(
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            # x_it = append_prev_info(X_i[t], a_t, r_t)
-            x_it = X_i[t]
+            x_it = append_prev_info(X_i[t], a_t, r_t)
+            # x_it = X_i[t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
