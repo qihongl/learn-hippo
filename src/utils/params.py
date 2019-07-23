@@ -15,6 +15,7 @@ class P():
         def_path=None,
         def_prob=None,
         penalty=1,
+        penalty_random=0,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -56,7 +57,7 @@ class P():
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
-            def_path, def_prob, penalty,
+            def_path, def_prob, penalty, penalty_random,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -82,7 +83,7 @@ class env():
             exp_name,
             n_param, n_branch, pad_len,
             def_path, def_prob,
-            penalty,
+            penalty, penalty_random,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -102,6 +103,12 @@ class env():
         self.def_path = def_path
         self.def_prob = def_prob
         self.penalty = penalty
+        if penalty_random == 0:
+            self.penalty_random = False
+        elif penalty_random == 1:
+            self.penalty_random = True
+        else:
+            raise ValueError('Invalid penalty_random = {penalty_random}')
         #
         self.chance = 1 / n_branch
 

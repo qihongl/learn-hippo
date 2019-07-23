@@ -64,7 +64,9 @@ def run_tz(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
             a_t, p_a_t = agent.pick_action(pi_a_t)
-            r_t = get_reward(a_t, Y_i[t], p.env.penalty)
+            # get reward
+            penalty = sample_penalty(p)
+            r_t = get_reward(a_t, Y_i[t], penalty)
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
@@ -179,6 +181,12 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
         if tz_cond != 'RM':
             hc_t = agent.get_init_states()
     return hc_t
+
+
+def sample_penalty(p):
+    if p.env.penalty_random:
+        return np.random.uniform(0, p.env.penalty)
+    return p.env.penalty
 
 
 # def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
