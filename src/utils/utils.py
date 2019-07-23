@@ -18,6 +18,10 @@ def to_sqnp(torch_tensor):
     return np.squeeze(to_np(torch_tensor))
 
 
+def get_th_data(tensor_list):
+    return [th_tensor.data for th_tensor in tensor_list]
+
+
 def vprint(verbose, msg):
     if verbose:
         print(msg)

@@ -9,7 +9,7 @@ import seaborn as sns
 
 from models.LCALSTM_v9 import LCALSTM as Agent
 from task import SequenceLearning
-from exp_tz import run_tz
+from exp_tz_stateful import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
 from utils.io import build_log_path, save_ckpt, save_all_params, get_test_data_dir
 from utils.params import P
