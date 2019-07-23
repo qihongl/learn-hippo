@@ -2,9 +2,9 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 
+from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
-from analysis import entropy
 from models import get_reward, compute_returns, compute_a2c_loss
 
 
@@ -41,6 +41,7 @@ def run_tz(
         log_cache_i = [None] * T_total
 
         # init model wm and em
+        penalty = sample_penalty(p)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
@@ -58,14 +59,13 @@ def run_tz(
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            x_it = append_prev_info(X_i[t], a_t, r_t)
+            x_it = append_prev_info(X_i[t], [a_t, r_t, penalty])
             # x_it = X_i[t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
-            penalty = sample_penalty(p)
             r_t = get_reward(a_t, Y_i[t], penalty)
 
             # cache the results for later RL loss computation
@@ -130,11 +130,13 @@ def run_tz(
     return out
 
 
-def append_prev_info(x_it_, a_prev, r_prev):
-    a_prev = a_prev.type(torch.FloatTensor).view(1)
-    r_prev = r_prev.type(torch.FloatTensor).view(1)
-    x_it = torch.cat([x_it_, a_prev, r_prev])
-    return x_it
+def append_prev_info(x_it_, scalar_list):
+    for s in scalar_list:
+        x_it_ = torch.cat([x_it_, s.type(torch.FloatTensor).view(1)])
+    # a_prev = a_prev.type(torch.FloatTensor).view(1)
+    # r_prev = r_prev.type(torch.FloatTensor).view(1)
+    # x_it = torch.cat([x_it_, a_prev, r_prev])
+    return x_it_
 
 
 def get_enc_times(enc_size, n_param, pad_len):
@@ -184,9 +186,10 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
 
 
 def sample_penalty(p):
+    penalty = p.env.penalty
     if p.env.penalty_random:
-        return np.random.uniform(0, p.env.penalty)
-    return p.env.penalty
+        penalty = np.random.uniform(0, p.env.penalty)
+    return torch.tensor(penalty)
 
 
 # def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
