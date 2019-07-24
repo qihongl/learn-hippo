@@ -1,7 +1,6 @@
 import os
 import time
 import torch
-import pickle
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,12 +10,10 @@ from models.LCALSTM_v9 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
-from utils.io import build_log_path, save_ckpt, save_all_params, get_test_data_dir
+from utils.io import build_log_path, save_ckpt, save_all_params
 from utils.params import P
 from utils.constants import TZ_COND_DICT
 from vis import plot_pred_acc_full
-# from utils.io import build_log_path, save_ckpt, save_all_params, load_ckpt
-# from utils.utils import to_sqnp
 
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
@@ -75,24 +72,6 @@ supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
 
-# log_root = '../log/'
-# exp_name = 'always-recall'
-# subj_id = 1
-# penalty = 2
-# supervised_epoch = 100
-# n_epoch = 300
-# n_examples = 256
-# n_param = 6
-# n_branch = 3
-# pad_len = 3
-# n_hidden = 64
-# learning_rate = 1e-3
-# eta = .1
-# p_rm_ob_enc = 2/n_param
-# p_rm_ob_rcl = 2/n_param
-# n_mem = 2
-
-
 '''init'''
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
@@ -119,29 +98,21 @@ agent = Agent(
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len
 )
-optimizer = torch.optim.Adam(
-    agent.parameters(), lr=p.net.lr, weight_decay=0
-)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
-    verbose=True
-)
+optimizer_rl = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
+optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
+scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer_rl, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    verbose=True)
+scheduler_sup = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer_sup, factor=1/2, patience=50, threshold=1e-3, min_lr=1e-8,
+    verbose=True)
 
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # save experiment params initial weights
 save_all_params(log_subpath['data'], p)
-save_ckpt(0, log_subpath['ckpts'], agent, optimizer)
+save_ckpt(0, log_subpath['ckpts'], agent, optimizer_sup)
 
-# load model
-# epoch_load = None
-# epoch_load = 300
-# if epoch_load is not None:
-#     agent, optimizer = load_ckpt(
-#         epoch_load, log_subpath['ckpts'], agent, optimizer)
-#     epoch_id = epoch_load-1
-# else:
-#     epoch_id = 0
 
 '''task definition'''
 log_freq = 20
@@ -161,10 +132,16 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     # training objective
     supervised = epoch_id < supervised_epoch
+    if supervised:
+        optimizer = optimizer_sup
+    else:
+        optimizer = optimizer_rl
+
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples,
-        supervised=supervised, cond=None, learning=True, get_cache=False,
+        supervised=supervised, fix_cond=None, learning=True, get_cache=False,
     )
+
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
@@ -183,10 +160,14 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
         Log_loss_sup[epoch_id], runtime)
     print(msg)
+
     # update lr scheduler
-    if not supervised:
+    if supervised:
+        scheduler_sup.step(Log_loss_sup[epoch_id])
+    else:
         neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
-        scheduler.step(neg_pol_score)
+        scheduler_rl.step(neg_pol_score)
+
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
         save_ckpt(epoch_id+1, log_subpath['ckpts'], agent, optimizer)
@@ -253,17 +234,3 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-# '''test the model'''
-# n_examples_test = 512
-# [results, metrics, XY] = run_tz(
-#     agent, optimizer, task, p, n_examples_test,
-#     supervised=False, learning=False, get_data=True,
-#     slience_recall_time=None
-# )
-# # save the data
-# test_data_dir, test_data_fname = get_test_data_dir(
-#     log_subpath, n_epoch, 0, None, n_examples_test)
-# test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
-# with open(os.path.join(test_data_dir, test_data_fname), 'wb') as handle:
-#     pickle.dump(test_data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)

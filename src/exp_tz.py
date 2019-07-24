@@ -10,8 +10,10 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        cond=None, learning=True, get_cache=True, get_data=False,
+        fix_cond=None, fix_penalty=None,
         slience_recall_time=None,
+        learning=True, get_cache=True, get_data=False,
+
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -27,7 +29,7 @@ def run_tz(
 
     for i in range(n_examples):
         # pick a condition
-        cond_i = pick_condition(p, rm_only=supervised, fix_cond=cond)
+        cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
         # get time info
@@ -41,7 +43,7 @@ def run_tz(
         log_cache_i = [None] * T_total
 
         # init model wm and em
-        penalty = sample_penalty(p)
+        penalty = sample_penalty(p, fix_penalty)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
@@ -186,10 +188,17 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
-def sample_penalty(p):
-    penalty = p.env.penalty
-    if p.env.penalty_random:
-        penalty = np.random.uniform(0, p.env.penalty)
+def sample_penalty(p, fix_penalty):
+    # if penalty level is fixed, usually used during test
+    if fix_penalty is not None:
+        penalty = fix_penalty
+    else:
+        # otherwise sample a penalty level
+        if p.env.penalty_random:
+            penalty = np.random.uniform(0, p.env.penalty)
+        else:
+            # or train with a fixed penalty level
+            penalty = p.env.penalty
     return torch.tensor(penalty)
 
 

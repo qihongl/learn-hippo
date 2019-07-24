@@ -43,10 +43,6 @@ def build_log_path(
     log_subpath = {
         subdir: os.path.join(log_path, subdir) for subdir in ALL_SUBDIRS
     }
-    # add rnr subpaths
-    # if p.env.rnr.n_mvs is not None:
-    #     log_subpath = update_rnr_log_subpath(log_subpath, p.env.rnr.n_mvs)
-    # make subdirs for ckpts, activations, figures
     _make_all_dirs(log_path, log_subpath, verbose)
     return log_path, log_subpath
 
@@ -155,18 +151,20 @@ def save_all_params(datapath, params, args=None):
         json.dump(params.net.__dict__, f, indent=2)
 
 
-def get_test_data_dir(
-        log_subpath,
-        epoch_load, pad_len_test, slience_recall_time,
-        n_examples_test
-):
-    test_data_dir_ = f'epoch-{epoch_load}/delay-{pad_len_test}'
-    test_data_dir = os.path.join(log_subpath['data'], test_data_dir_)
-    test_data_fname = f'st-{slience_recall_time}-n{n_examples_test}.pkl'
-    # test_data_fname = os.path.join(test_data_dir, test_data_fname_)
+def get_test_data_dir(log_subpath, epoch_load, test_params):
+    [fix_penalty, pad_len_test, slience_recall_time] = test_params
+    test_data_subdir = f'epoch-{epoch_load}/penalty-{fix_penalty}/delay-{pad_len_test}/srt-{slience_recall_time}'
+    test_data_dir = os.path.join(log_subpath['data'], test_data_subdir)
     if not os.path.exists(test_data_dir):
         os.makedirs(test_data_dir)
-    return test_data_dir, test_data_fname
+    return test_data_dir, test_data_subdir
+
+
+def get_test_data_fname(n_examples_test, fix_cond=None):
+    test_data_fname = f'n{n_examples_test}.pkl'
+    if fix_cond is not None:
+        test_data_fname = fix_cond + '-' + test_data_fname
+    return test_data_fname
 
 
 def pickle_save_dict(input_dict, save_path):
@@ -180,7 +178,8 @@ def pickle_save_dict(input_dict, save_path):
         Description of parameter `save_path`.
 
     """
-    pickle.dump(input_dict, open(save_path, "wb"))
+    with open(save_path, 'wb') as handle:
+        pickle.dump(input_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def pickle_load_dict(fpath):

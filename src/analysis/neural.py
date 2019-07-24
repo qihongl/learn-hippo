@@ -133,6 +133,28 @@ def compute_roc(distrib_noise, distrib_signal):
     return tpr, fpr
 
 
+def to_histogram(
+    array_1d,
+    n_bins=100, histrange=(0, 1)
+):
+    dist, _ = np.histogram(array_1d, bins=n_bins, range=histrange)
+    return dist
+
+
+def get_hist_info(array_l, array_r, bins=50, hist_range=(0, 1)):
+    dist_l, hist_info_l = get_hist_info_(array_l)
+    dist_r, hist_info_r = get_hist_info_(array_r)
+    return [dist_l, dist_r], [hist_info_l, hist_info_r]
+
+
+def get_hist_info_(array_1d, bins=50, hist_range=(0, 1)):
+    dist_, dist_edges = np.histogram(array_1d, bins=bins, range=hist_range)
+    dist_normed = dist_ / np.sum(dist_)
+    dist_edges_mids = (dist_edges[1:]+dist_edges[:-1])/2.
+    bin_width = dist_edges[1]-dist_edges[0]
+    return dist_, [dist_edges, dist_normed, dist_edges_mids, bin_width]
+
+
 def compute_auc_over_time(
         acts_l, acts_r,
         n_bins=100, histrange=(0, 1)
@@ -165,8 +187,8 @@ def compute_auc_over_time(
     fprs = np.zeros((event_len, n_bins))
     for t in range(event_len):
         # compute the bin counts for each condition
-        dist_l, _ = np.histogram(acts_l[t, :], bins=n_bins, range=histrange)
-        dist_r, _ = np.histogram(acts_r[t, :], bins=n_bins, range=histrange)
+        dist_l = to_histogram(acts_l[t, :])
+        dist_r = to_histogram(acts_r[t, :])
         tprs[t], fprs[t] = compute_roc(dist_l, dist_r)
     # compute area under roc curves
     auc = [metrics.auc(fprs[t], tprs[t]) for t in range(event_len)]
