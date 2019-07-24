@@ -175,31 +175,6 @@ def _to_xy(sample_):
     return x, y
 
 
-# '''scratch'''
-# # init a graph
-# n_param, n_branch = 6, 2
-# n_parts = 2
-# n_samples = 5
-# append_context = True
-# task = SequenceLearning(
-#     n_param, n_branch,
-#     # context_onehot=True,
-#     # context_drift=True,
-#     # append_context=append_context,
-# )
-# sample = task.stim_sampler.sample(n_parts)
-# # unpack data
-# observations, queries = sample
-# [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations
-# [q_keys_vec, q_vals_vec, q_ctxs_vec] = queries
-# # to RNN form
-# x = np.hstack([
-#     np.vstack([k for k in o_keys_vec]),
-#     np.vstack([v for v in o_vals_vec])
-# ])
-# y = np.vstack(q_vals_vec)
-
-
 '''how to use'''
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -219,15 +194,6 @@ if __name__ == "__main__":
     # gen samples
     n_samples = 10
     X, Y, misc = task.sample(n_samples, to_torch=False, return_misc=True)
-
-    # Y_int = np.array([misc[i][1] for i in range(n_samples)])
-
-    # np.shape(Y)
-    # _, T_total, _ = np.shape(Y)
-    # esm = compute_event_similarity_matrix(Y_int, normalize=True)
-    # sim_cap_mask = esm >= task.similarity_cap
-    # plt.imshow(esm)
-    # plt.imshow(sim_cap_mask)
 
     # get a sample
     i = 0
