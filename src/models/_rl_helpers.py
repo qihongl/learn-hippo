@@ -43,7 +43,8 @@ def get_reward(a_t, y_t, penalty, allow_dk=True):
         r_t = 1
     else:
         r_t = - penalty
-    return torch.tensor(r_t).type(torch.FloatTensor).data
+    return torch.from_numpy(np.array(r_t)).type(torch.FloatTensor).data
+    # return torch.tensor(r_t).type(torch.FloatTensor).clone().detach()
 
 
 def compute_returns(rewards, gamma=0, normalize=False):

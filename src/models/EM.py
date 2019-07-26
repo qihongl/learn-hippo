@@ -179,7 +179,7 @@ def lca_transform(
         leak=None, comp=None, w_input=None, n_cycles=10
 ):
     # construct input sequence
-    similarities[similarities <= 0] = 0
+    similarities[similarities < 0] = 0
     stimuli = similarities.repeat(n_cycles, 1)
     # init LCA
     lca = LCA(
