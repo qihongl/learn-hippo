@@ -17,8 +17,6 @@ def run_tz(
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
-    # misc
-    a_0, r_0 = torch.tensor(p.dk_id), torch.tensor(0)
     # logger
     log_return, log_pi_ent = 0, 0
     log_loss_sup, log_loss_actor, log_loss_critic = 0, 0, 0
@@ -44,10 +42,10 @@ def run_tz(
 
         # init model wm and em
         penalty = sample_penalty(p, fix_penalty)
+        # a_t, r_t = get_a0_r0(p)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
-        a_t, r_t = a_0, r_0
 
         for t in range(T_total):
             t_relative = t % T_part
@@ -201,6 +199,11 @@ def sample_penalty(p, fix_penalty):
             penalty = p.env.penalty
     return torch.tensor(penalty)
 
+
+def get_a0_r0(p):
+    a_0 = torch.tensor(p.dk_id)
+    r_0 = torch.tensor(0)
+    return a_0, r_0
 
 # def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
 #     '''condition specific manipulation

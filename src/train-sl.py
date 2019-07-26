@@ -98,14 +98,17 @@ agent = Agent(
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len
 )
+
+optimizer_sup = torch.optim.Adam(agent.parameters(), lr=1e-3)
+scheduler_sup = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer_sup, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    verbose=True)
+
 optimizer_rl = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
-optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer_rl, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
-scheduler_sup = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_sup, factor=1/2, patience=50, threshold=1e-3, min_lr=1e-8,
-    verbose=True)
+
 
 # create logging dirs
 log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
