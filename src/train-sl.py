@@ -99,7 +99,7 @@ agent = Agent(
     dict_len=p.net.dict_len
 )
 
-optimizer_sup = torch.optim.Adam(agent.parameters(), lr=1e-3)
+optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler_sup = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer_sup, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
