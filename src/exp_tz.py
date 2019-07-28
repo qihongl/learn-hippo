@@ -10,10 +10,8 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        fix_cond=None, fix_penalty=None,
-        slience_recall_time=None,
+        fix_cond=None, fix_penalty=None, slience_recall_time=None,
         learning=True, get_cache=True, get_data=False,
-
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -134,9 +132,6 @@ def run_tz(
 def append_prev_info(x_it_, scalar_list):
     for s in scalar_list:
         x_it_ = torch.cat([x_it_, s.type(torch.FloatTensor).view(1)])
-    # a_prev = a_prev.type(torch.FloatTensor).view(1)
-    # r_prev = r_prev.type(torch.FloatTensor).view(1)
-    # x_it = torch.cat([x_it_, a_prev, r_prev])
     return x_it_
 
 
@@ -204,25 +199,3 @@ def get_a0_r0(p):
     a_0 = torch.tensor(p.dk_id)
     r_0 = torch.tensor(0)
     return a_0, r_0
-
-# def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
-#     '''condition specific manipulation
-#     such as flushing, insert lure, etc.
-#     '''
-#     if t == event_bond:
-#         agent.retrieval_on()
-#         if tz_cond == 'DM':
-#             # RM: has EM, no WM
-#             hc_t = agent.get_init_states()
-#             agent.add_simple_lures(n_lures)
-#         elif tz_cond == 'NM':
-#             # RM: no WM, EM
-#             hc_t = agent.get_init_states()
-#             agent.flush_episodic_memory()
-#             agent.add_simple_lures(n_lures+1)
-#         elif tz_cond == 'RM':
-#             # RM: has WM, EM
-#             agent.add_simple_lures(n_lures)
-#         else:
-#             raise ValueError('unrecog tz condition')
-#     return hc_t
