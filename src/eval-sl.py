@@ -31,31 +31,32 @@ from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
 # plt.switch_backend('agg')
-
+plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
 exp_name = 'metalearn-penalty'
 # exp_name = 'july9_v9'
 
-subj_ids = np.arange(2)
-penaltys = [1, 2, 4, 8]
+subj_ids = [0, 1]
+penaltys = [2, 4]
+fix_penaltyes = [0, .5, 1, 2, 4]
 # subj_ids = [0]
 
 for subj_id, penalty in product(subj_ids, penaltys):
 
     # subj_id = 1
-    supervised_epoch = 300
-    epoch_load = 600
+    supervised_epoch = 600
+    epoch_load = 900
     # n_epoch = 500
     n_param = 16
     n_branch = 4
     enc_size = 16
     n_event_remember = 4
 
-    n_hidden = 194
+    n_hidden = 128
     n_hidden_dec = 128
-    learning_rate = 1e-3
+    learning_rate = 5e-4
     eta = .1
 
     # loading params
@@ -71,7 +72,7 @@ for subj_id, penalty in product(subj_ids, penaltys):
     slience_recall_time = None
     pad_len_test = 0
     # penalty_test = 2
-    for penalty_test in [0, 1, 2, 4]:
+    for penalty_test in fix_penaltyes:
 
         # slience_recall_time = 2
 
@@ -159,21 +160,27 @@ for subj_id, penalty in product(subj_ids, penaltys):
 
         '''plot behavioral performance'''
 
-        for cn in list(TZ_COND_DICT.values()):
+        f, axes = plt.subplots(3, 1, figsize=(8, 10))
+        for i, cn in enumerate(list(TZ_COND_DICT.values())):
             Y_ = Y[cond_ids[cn], :]
             dist_a_ = dist_a[cond_ids[cn], :]
             # compute performance for this condition
             acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
             dk_mu = compute_dk(dist_a_)
+            if i == 0:
+                add_legend = True
+                legend_loc = (.98, .94)
+            else:
+                add_legend = False
             # plot
-            f, ax = plt.subplots(1, 1, figsize=(8, 4))
             plot_pred_acc_full(
                 acc_mu, acc_er, acc_mu+dk_mu,
-                [n_param], p, f, ax,
+                [n_param], p, f, axes[i],
                 title=f'Performance on the TZ task: {cn}',
+                add_legend=add_legend, legend_loc=legend_loc,
             )
-            fig_path = os.path.join(fig_dir, f'tz-acc-{cn}.png')
-            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+        fig_path = os.path.join(fig_dir, f'tz-acc.png')
+        f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
         '''compare LCA params across conditions'''
 

@@ -1,22 +1,15 @@
 import os
-# import torch
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models import LCALSTM as Agent
 from itertools import product
 from scipy.stats import pearsonr
 from task import SequenceLearning
-# from exp_tz import run_tz
 from utils.params import P
-# from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
 from utils.constants import TZ_COND_DICT
-from utils.io import build_log_path, load_ckpt, get_test_data_dir, pickle_load_dict
+from utils.io import build_log_path, load_ckpt, pickle_load_dict, \
+    get_test_data_dir, get_test_data_fname
 from analysis import compute_acc, compute_dk, compute_stats, \
     compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
     compute_auc_over_time, compute_event_similarity, batch_compute_true_dk, \
@@ -33,10 +26,9 @@ from sklearn.decomposition.pca import PCA
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'encsize_fixed'
-# exp_name = 'july9_v9'
+exp_name = 'metalearn-penalty'
 
-subj_ids = np.arange(2)
+subj_ids = np.arange(6)
 n_subjs = len(subj_ids)
 all_conds = ['RM', 'DM', 'NM']
 
@@ -45,11 +37,9 @@ CMs_dlist, DAs_dlist = {k: [] for k in all_conds}, {k: [] for k in all_conds}
 for subj_id, fix_cond in product(subj_ids, all_conds):
     print(f'subj_id = {subj_id}, cond = {fix_cond}')
 
-    # subj_id = 0
-    penalty = 4
-    supervised_epoch = 300
-    epoch_load = 600
-    # n_epoch = 500
+    supervised_epoch = 600
+    epoch_load = 900
+
     n_param = 16
     n_branch = 4
     enc_size = 16
@@ -57,18 +47,20 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
 
     n_hidden = 194
     n_hidden_dec = 128
-    learning_rate = 1e-3
+    learning_rate = 5e-4
     eta = .1
 
     # loading params
     p_rm_ob_enc_load = .3
     p_rm_ob_rcl_load = .3
     pad_len_load = -1
+    penalty_train = 4
     # testing params
     p_test = 0
     p_rm_ob_enc_test = p_test
     p_rm_ob_rcl_test = p_test
     pad_len_test = 0
+    penalty_test = 2
 
     slience_recall_time = None
     # slience_recall_time = 2
@@ -83,7 +75,7 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
         exp_name=exp_name, sup_epoch=supervised_epoch,
         n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
         enc_size=enc_size, n_event_remember=n_event_remember,
-        penalty=penalty,
+        penalty=penalty_train,
         p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
         n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
         lr=learning_rate, eta=eta,
@@ -98,16 +90,13 @@ for subj_id, fix_cond in product(subj_ids, all_conds):
         subj_id, p, log_root=log_root, verbose=False
     )
 
-    test_data_dir, test_data_fname = get_test_data_dir(
-        log_subpath, epoch_load, pad_len_test,
-        slience_recall_time, n_examples_test)
-
-    if fix_cond is not None:
-        test_data_fname = fix_cond + test_data_fname
-
+    test_params = [penalty_test, pad_len_test, slience_recall_time]
+    test_data_dir, test_data_subdir = get_test_data_dir(
+        log_subpath, epoch_load, test_params)
+    test_data_fname = get_test_data_fname(n_examples_test, fix_cond)
     fpath = os.path.join(test_data_dir, test_data_fname)
-    test_data_dict = pickle_load_dict(fpath)
 
+    test_data_dict = pickle_load_dict(fpath)
     results = test_data_dict['results']
     XY = test_data_dict['XY']
 
@@ -158,7 +147,8 @@ for cond in all_conds:
 
 
 from brainiak.funcalign.srm import SRM
-dim_srm = 64
+# from sklearn.preprocessing import StandardScaler
+dim_srm = 32
 srm = SRM(features=dim_srm)
 
 test_prop = .5
@@ -176,21 +166,46 @@ for cond in all_conds:
     data_tr[cond] = data[cond][:, :, :, :n_examples_tr]
     data_te[cond] = data[cond][:, :, :, n_examples_tr:]
 
+
 # fit training set
 data_tr_unroll = np.concatenate(
     [data_tr[cond].reshape(n_subjs, nH, -1) for cond in all_conds],
     axis=2
 )
+# mean centering
+for i_s in range(n_subjs):
+    mu_ = np.mean(data_tr_unroll[i_s], axis=1, keepdims=True)
+    data_tr_unroll[i_s] = data_tr_unroll[i_s] - mu_
 srm.fit(data_tr_unroll)
+
+np.shape(data_tr_unroll[0])
+np.mean(data_tr_unroll[0], axis=1)
+np.mean(data_tr_unroll[0], axis=0)
+
+
+data_te_unroll = np.concatenate(
+    [data_te[cond].reshape(n_subjs, nH, -1) for cond in all_conds],
+    axis=2
+)
+
+# compute subject specific intercept
+intercepts = [
+    np.mean(data_te_unroll[i_s], axis=1, keepdims=True)
+    for i_s in range(n_subjs)
+]
 
 # transform to the shared space
 data_te_srm = {}
 for cond in all_conds:
+    d_ = [data_te[cond][:, :, :, i] for i in range(n_examples_te)]
+    d_centered = [d_[i] - intercepts for i in range(n_examples_te)]
     data_te_srm[cond] = [
-        srm.transform(data_te[cond][:, :, :, i])
+        srm.transform(d_centered[i])
         for i in range(n_examples_te)
     ]
 
+
+# np.shape(data_te[cond][:, :, :, i])
 
 '''Inter-subject pattern correlation, RM vs. cond'''
 
@@ -230,7 +245,7 @@ def compute_bs_bc_isc(data_te_srm_rm_i, data_te_srm_xm_i, win_size=5):
 
 
 # ref_cond = 'NM'
-win_size = 4
+win_size = 5
 
 bs_bc_trsm_diag = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 bs_bc_isc = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
@@ -275,6 +290,7 @@ for ref_cond in cond_ids.keys():
 # plot
 f, ax = plt.subplots(1, 1, figsize=(9, 5))
 color_id = 0
+i_rc, ref_cond = 0, 'RM'
 for i_rc, ref_cond in enumerate(cond_ids.keys()):
     for i_c, cond in enumerate(cond_ids.keys()):
         if i_c >= i_rc:
@@ -307,6 +323,7 @@ for ref_cond in cond_ids.keys():
 # plot
 f, ax = plt.subplots(1, 1, figsize=(8, 5))
 color_id = 0
+i_rc, ref_cond = 0, 'RM'
 for i_rc, ref_cond in enumerate(cond_ids.keys()):
     for i_c, cond in enumerate(cond_ids.keys()):
         print(i_c, cond)
@@ -325,3 +342,7 @@ ax.set_ylabel('Linear Correlation')
 ax.set_title('Inter-subject correlation')
 sns.despine()
 f.tight_layout()
+
+
+'''prediction isc change'''
+np.shape(bs_bc_isc['RM']['DM'])

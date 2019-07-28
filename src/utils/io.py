@@ -112,18 +112,19 @@ def load_ckpt(
     # compute fname
     ckpt_fname = ckpt_template % epoch_load
     log_fpath = os.path.join(log_path, ckpt_fname)
-    # load the ckpt back
-    checkpoint = torch.load(log_fpath)
-    # unpack results
-    agent.load_state_dict(checkpoint['network_state_dict'])
-    if optimizer is None:
-        optimizer = torch.optim.Adam(agent.parameters())
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #
-    agent.train()
-    # msg
-    print(f'epoch {epoch_load} loaded')
-    return agent, optimizer
+    if os.path.exists(log_fpath):
+        # load the ckpt back
+        checkpoint = torch.load(log_fpath)
+        # unpack results
+        agent.load_state_dict(checkpoint['network_state_dict'])
+        if optimizer is None:
+            optimizer = torch.optim.Adam(agent.parameters())
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        agent.train()
+        # msg
+        print(f'epoch {epoch_load} loaded')
+        return agent, optimizer
+    return None, None
 
 
 def save_all_params(datapath, params, args=None):

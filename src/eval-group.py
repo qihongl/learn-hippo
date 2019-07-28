@@ -19,8 +19,8 @@ n_examples_test = 512
 
 # subj_id = 0
 # penalty = 1
-supervised_epoch = 300
-epoch_load = 600
+supervised_epoch = 600
+epoch_load = 900
 n_param = 16
 n_branch = 4
 n_event_remember = 4
@@ -28,7 +28,7 @@ enc_size = 16
 
 n_hidden = 194
 n_hidden_dec = 128
-learning_rate = 1e-3
+learning_rate = 5e-4
 eta = .1
 
 # loading params
@@ -50,14 +50,15 @@ slience_recall_time = None
 
 # subj_id = 0
 # subj_ids = np.arange(7)
-subj_ids = np.arange(2)
-penaltys = [1, 2, 4, 8]
-fix_penaltyes = [0, 1, 2, 4]
+subj_ids = np.arange(6)
+penaltys = [4]
+# fix_penaltyes = [0, .5, 1, 2, 4]
+fix_penaltyes = [2]
 # penalty_train = 2
 # fix_cond = None
 # fix_cond = 'RM'
-# all_conds = ['RM', 'DM', 'NM']
-all_conds = [None]
+all_conds = ['RM', 'DM', 'NM']
+# all_conds = [None]
 # for slience_recall_time in slience_recall_times:
 for subj_id, penalty_train, fix_cond in product(subj_ids, penaltys, all_conds):
     print(f'\nsubj : {subj_id}, penalty : {penalty_train}, cond : {fix_cond}')
@@ -96,6 +97,10 @@ for subj_id, penalty_train, fix_cond in product(subj_ids, penaltys, all_conds):
         )
 
         agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
+        # if data dir does not exsits ... skip
+        if agent is None:
+            print('DNE')
+            continue
 
         # training objective
         np.random.seed(seed)

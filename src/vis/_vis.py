@@ -13,6 +13,7 @@ def plot_pred_acc_full(
     f, ax,
     alpha=.3,
     title='Performance on the TZ task',
+    add_legend=True, legend_loc=(.98, .7),
 
 ):
     """plot the preformance on the tz task
@@ -66,7 +67,8 @@ def plot_pred_acc_full(
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
     # add legend
-    f.legend(legend_lab, frameon=False, bbox_to_anchor=(.98, .7))
+    if add_legend:
+        f.legend(legend_lab, frameon=False, bbox_to_anchor=legend_loc)
     sns.despine()
     f.tight_layout()
 
