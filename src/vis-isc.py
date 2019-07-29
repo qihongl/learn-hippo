@@ -32,109 +32,154 @@ subj_ids = np.arange(6)
 n_subjs = len(subj_ids)
 all_conds = ['RM', 'DM', 'NM']
 
-CMs_dlist, DAs_dlist = {k: [] for k in all_conds}, {k: [] for k in all_conds}
+supervised_epoch = 600
+epoch_load = 900
 
-for subj_id, fix_cond in product(subj_ids, all_conds):
-    print(f'subj_id = {subj_id}, cond = {fix_cond}')
+n_param = 16
+n_branch = 4
+enc_size = 16
+n_event_remember = 4
 
-    supervised_epoch = 600
-    epoch_load = 900
+n_hidden = 194
+n_hidden_dec = 128
+learning_rate = 5e-4
+eta = .1
 
-    n_param = 16
-    n_branch = 4
-    enc_size = 16
-    n_event_remember = 4
+# loading params
+p_rm_ob_enc_load = .3
+p_rm_ob_rcl_load = .3
+pad_len_load = -1
+penalty_train = 4
+# testing params
+p_test = 0
+p_rm_ob_enc_test = p_test
+p_rm_ob_rcl_test = p_test
+pad_len_test = 0
+penalty_test = 2
 
-    n_hidden = 194
-    n_hidden_dec = 128
-    learning_rate = 5e-4
-    eta = .1
+slience_recall_time = None
+# slience_recall_time = 2
 
-    # loading params
-    p_rm_ob_enc_load = .3
-    p_rm_ob_rcl_load = .3
-    pad_len_load = -1
-    penalty_train = 4
-    # testing params
-    p_test = 0
-    p_rm_ob_enc_test = p_test
-    p_rm_ob_rcl_test = p_test
-    pad_len_test = 0
-    penalty_test = 2
+n_examples_test = 512
 
-    slience_recall_time = None
-    # slience_recall_time = 2
 
-    n_examples_test = 512
+def prealloc():
+    return {cond: [] for cond in all_conds}
 
-    np.random.seed(subj_id)
-    # torch.manual_seed(subj_id)
 
-    '''init'''
-    p = P(
-        exp_name=exp_name, sup_epoch=supervised_epoch,
-        n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-        enc_size=enc_size, n_event_remember=n_event_remember,
-        penalty=penalty_train,
-        p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
-        n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-        lr=learning_rate, eta=eta,
-    )
-    # init env
-    task = SequenceLearning(
-        n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
-        p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
-    )
-    # create logging dirs
-    log_path, log_subpath = build_log_path(
-        subj_id, p, log_root=log_root, verbose=False
-    )
+CMs_dlist = {cond: [] for cond in all_conds}
+DAs_dlist = {cond: [] for cond in all_conds}
 
-    test_params = [penalty_test, pad_len_test, slience_recall_time]
-    test_data_dir, test_data_subdir = get_test_data_dir(
-        log_subpath, epoch_load, test_params)
-    test_data_fname = get_test_data_fname(n_examples_test, fix_cond)
-    fpath = os.path.join(test_data_dir, test_data_fname)
+# C_dlist = {cond: None for cond in all_conds}
+# V_dlist = {cond: None for cond in all_conds}
+# inpt_dlist = {cond: None for cond in all_conds}
+# leak_dlist = {cond: None for cond in all_conds}
+# comp_dlist = {cond: None for cond in all_conds}
 
-    test_data_dict = pickle_load_dict(fpath)
-    results = test_data_dict['results']
-    XY = test_data_dict['XY']
+# cond_ids_dlist = {cond: None for cond in all_conds}
+# cond_ids_combined = {cond: [] for cond in all_conds}
 
-    [dist_a_, Y_, log_cache_, log_cond_] = results
-    [X_raw, Y_raw] = XY
+has_memory_conds = ['RM', 'DM']
+ma_dlist = {cond: [] for cond in has_memory_conds}
 
-    # compute ground truth / objective uncertainty (delay phase removed)
-    true_dk_wm_, true_dk_em_ = batch_compute_true_dk(X_raw, task)
+# fix_cond = 'RM'
 
-    '''precompute some constants'''
-    # figure out max n-time-steps across for all trials
-    T_part = n_param + pad_len_test
-    T_total = T_part * task.n_parts
-    #
-    n_conds = len(TZ_COND_DICT)
-    memory_types = ['targ', 'lure']
-    ts_predict = np.array([t % T_part >= pad_len_test for t in range(T_total)])
+for subj_id in subj_ids:
+    print(f'\nsubj_id = {subj_id}: ', end='')
+    for fix_cond in all_conds:
+        print(f'{fix_cond} ', end='')
 
-    '''organize results to analyzable form'''
-    # skip examples untill EM is full
-    n_examples_skip = n_event_remember
-    n_examples = n_examples_test - n_examples_skip
-    data_to_trim = [
-        dist_a_, Y_, log_cond_, log_cache_, true_dk_wm_, true_dk_em_
-    ]
-    [dist_a, Y, log_cond, log_cache, true_dk_wm, true_dk_em] = trim_data(
-        n_examples_skip, data_to_trim)
-    # process the data
-    cond_ids = get_trial_cond_ids(log_cond)
-    activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
-    [C, H, M, CM, DA, V] = activity_
-    [inpt, leak, comp] = ctrl_param_
+        np.random.seed(subj_id)
+        p = P(
+            exp_name=exp_name, sup_epoch=supervised_epoch,
+            n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
+            enc_size=enc_size, n_event_remember=n_event_remember,
+            penalty=penalty_train,
+            p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
+            n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
+            lr=learning_rate, eta=eta,
+        )
+        # init env
+        task = SequenceLearning(
+            n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
+            p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
+        )
+        # create logging dirs
+        log_path, log_subpath = build_log_path(
+            subj_id, p, log_root=log_root, verbose=False
+        )
 
-    # collect data
-    CMs_dlist[fix_cond].append(CM)
-    DAs_dlist[fix_cond].append(DA)
+        test_params = [penalty_test, pad_len_test, slience_recall_time]
+        test_data_dir, test_data_subdir = get_test_data_dir(
+            log_subpath, epoch_load, test_params)
+        test_data_fname = get_test_data_fname(n_examples_test, fix_cond)
+        fpath = os.path.join(test_data_dir, test_data_fname)
 
-# type formatting
+        test_data_dict = pickle_load_dict(fpath)
+        results = test_data_dict['results']
+        XY = test_data_dict['XY']
+
+        [dist_a_, Y_, log_cache_, log_cond_] = results
+        [X_raw, Y_raw] = XY
+
+        # compute ground truth / objective uncertainty (delay phase removed)
+        true_dk_wm_, true_dk_em_ = batch_compute_true_dk(X_raw, task)
+
+        '''precompute some constants'''
+        # figure out max n-time-steps across for all trials
+        T_part = n_param + pad_len_test
+        T_total = T_part * task.n_parts
+        #
+        n_conds = len(TZ_COND_DICT)
+        memory_types = ['targ', 'lure']
+        ts_predict = np.array(
+            [t % T_part >= pad_len_test for t in range(T_total)])
+
+        '''organize results to analyzable form'''
+        # skip examples untill EM is full
+        n_examples_skip = n_event_remember
+        n_examples = n_examples_test - n_examples_skip
+        data_to_trim = [
+            dist_a_, Y_, log_cond_, log_cache_, true_dk_wm_, true_dk_em_
+        ]
+        [dist_a, Y, log_cond, log_cache, true_dk_wm, true_dk_em] = trim_data(
+            n_examples_skip, data_to_trim)
+        # process the data
+        cond_ids = get_trial_cond_ids(log_cond)
+        activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
+        [C, H, M, CM, DA, V] = activity_
+        [inpt, leak, comp] = ctrl_param_
+
+        # collect data
+        CMs_dlist[fix_cond].append(CM)
+        DAs_dlist[fix_cond].append(DA)
+
+        # # get data for
+        # C_dlist[fix_cond] = C
+        # V_dlist[fix_cond] = V
+        # inpt_dlist[fix_cond] = inpt
+        # leak_dlist[fix_cond] = leak
+        # comp_dlist[fix_cond] = comp
+        # cond_ids_dlist[fix_cond] = cond_ids
+
+        if fix_cond in has_memory_conds:
+            # collect memory activation for RM and DM sessions
+            _, sim_lca = compute_cell_memory_similarity(
+                C, V, inpt, leak, comp)
+            sim_lca_dict = create_sim_dict(
+                sim_lca, cond_ids, n_targ=p.n_segments)
+            ma_dlist[fix_cond].append(sim_lca_dict[fix_cond])
+
+# organize target memory activation
+tma = {cond: [] for cond in has_memory_conds}
+for cond in has_memory_conds:
+    tma[cond] = np.array([
+        np.max(ma_dlist[cond][i_s]['targ'], axis=-1)
+        for i_s in range(n_subjs)
+    ]).transpose((0, 2, 1))
+    print(f'np.shape(tma[{cond}]) = {np.shape(tma[cond])}')
+
+# organize brain activity
 CMs_darray, DAs_darray = {}, {}
 for cond in all_conds:
     CMs_darray[cond] = np.array(CMs_dlist[cond]).transpose((0, 3, 2, 1))
@@ -144,7 +189,6 @@ for cond in all_conds:
 
 
 '''isc'''
-
 
 from brainiak.funcalign.srm import SRM
 # from sklearn.preprocessing import StandardScaler
@@ -178,10 +222,9 @@ for i_s in range(n_subjs):
     data_tr_unroll[i_s] = data_tr_unroll[i_s] - mu_
 srm.fit(data_tr_unroll)
 
-np.shape(data_tr_unroll[0])
-np.mean(data_tr_unroll[0], axis=1)
-np.mean(data_tr_unroll[0], axis=0)
-
+# np.shape(data_tr_unroll[0])
+# np.mean(data_tr_unroll[0], axis=1)
+# np.mean(data_tr_unroll[0], axis=0)
 
 data_te_unroll = np.concatenate(
     [data_te[cond].reshape(n_subjs, nH, -1) for cond in all_conds],
@@ -205,8 +248,6 @@ for cond in all_conds:
     ]
 
 
-# np.shape(data_te[cond][:, :, :, i])
-
 '''Inter-subject pattern correlation, RM vs. cond'''
 
 
@@ -217,8 +258,10 @@ def compute_bs_bc_trsm(data_te_srm_rm_i, data_te_srm_xm_i):
         j_s_list = set(range(n_subjs)).difference([i_s])
         for j_s in j_s_list:
             bs_bc_trsm.append(
-                np.corrcoef(data_te_srm_rm_i[i_s].T,
-                            data_te_srm_xm_i[j_s].T)[:T_, T_:]
+                np.corrcoef(
+                    data_te_srm_rm_i[i_s].T,
+                    data_te_srm_xm_i[j_s].T
+                )[:T_, T_:]
             )
     return np.mean(bs_bc_trsm, axis=0)
 
@@ -234,11 +277,14 @@ def compute_bs_bc_isc(data_te_srm_rm_i, data_te_srm_xm_i, win_size=5):
         for j_s in j_s_list:
             # for subj i vs. subj j, compute isc over time
             isc_mu_ij = []
+            # compute sliding window averages
             for t in np.arange(T_part, T_total-win_size):
-                isc_mu_ij.append(np.mean(np.corrcoef(
-                    data_te_srm_rm_i[i_s][:, t: t+win_size],
-                    data_te_srm_xm_i[j_s][:, t: t+win_size]
-                )[dim_srm:, :dim_srm]))
+                isc_mu_ij.append(
+                    np.mean(np.corrcoef(
+                        data_te_srm_rm_i[i_s][:, t: t+win_size],
+                        data_te_srm_xm_i[j_s][:, t: t+win_size]
+                    )[dim_srm:, :dim_srm])
+                )
             isc_mu_ij = np.array(isc_mu_ij)
             isc_mu.append(isc_mu_ij)
     return np.mean(isc_mu, axis=0)
