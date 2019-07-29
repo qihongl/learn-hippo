@@ -1,8 +1,7 @@
 '''parameter config class'''
 
 from task.utils import sample_rand_path
-from utils.constants import ALL_ENC_MODE, TZ_COND_DICT, RNR_COND_DICT, \
-    P_TZ_CONDS, P_RNR_CONDS
+from utils.constants import ALL_ENC_MODE
 
 
 class P():
@@ -17,6 +16,7 @@ class P():
         penalty=1,
         penalty_random=0,
         penalty_onehot=0,
+        normalize_return=1,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -59,6 +59,7 @@ class P():
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
             def_path, def_prob, penalty, penalty_random, penalty_onehot,
+            normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -85,6 +86,7 @@ class env():
             n_param, n_branch, pad_len,
             def_path, def_prob,
             penalty, penalty_random, penalty_onehot,
+            normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -105,6 +107,7 @@ class env():
         self.penalty = penalty
         self.penalty_random = _zero_one_to_true_false(penalty_random)
         self.penalty_onehot = _zero_one_to_true_false(penalty_onehot)
+        self.normalize_return = _zero_one_to_true_false(penalty_onehot)
         #
         self.chance = 1 / n_branch
 
