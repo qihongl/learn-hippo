@@ -188,7 +188,8 @@ def sample_penalty(p, fix_penalty):
     else:
         # otherwise sample a penalty level
         if p.env.penalty_random:
-            penalty = np.random.uniform(0, p.env.penalty)
+            penalty = np.random.randint(0, p.env.penalty+1)
+            # penalty = np.random.uniform(0, p.env.penalty)
         else:
             # or train with a fixed penalty level
             penalty = p.env.penalty
