@@ -114,7 +114,7 @@ if __name__ == "__main__":
     sns.set(style='white', context='talk')
 
     # build a sampler
-    obs_dim = 20
+    obs_dim = 32
     trial_length = 10
     t_noise_off = 5
     task = ContextualChoice(
@@ -123,12 +123,12 @@ if __name__ == "__main__":
         t_noise_off=t_noise_off
     )
     # sample
-    n_examples = 10
+    n_examples = 30
     X, Y = task.sample(n_examples, to_torch=False)
     print(f'X shape = {np.shape(X)}, n_example x time x x-dim')
     print(f'Y shape = {np.shape(Y)},  n_example x time x y-dim')
 
-    # show one trial
+    '''show one trial'''
     i = 0
     input = X[i]
     target = int(Y[i][0])
@@ -148,3 +148,19 @@ if __name__ == "__main__":
     ax.set_xlabel('Time')
     ax.set_ylabel('x-dim: context | input')
     f.savefig(f'examples/figs/eg-{target}.png', dpi=100, bbox_inches='tight')
+
+    '''inter-context similarity'''
+    from sklearn.metrics.pairwise import cosine_similarity
+    all_contexts = np.array(
+        [X[i][0, obs_dim:] for i in range(n_examples)]
+    )
+    # context_similarity = np.corrcoef(all_contexts)
+    context_similarity = cosine_similarity(all_contexts, all_contexts)
+
+    f, ax = plt.subplots(1, 1, figsize=(6, 5))
+    sns.heatmap(context_similarity, cmap='viridis', square=True)
+    ax.set_title(f'context-context similarity')
+    ax.set_xlabel('context i')
+    ax.set_ylabel('context j')
+    f.tight_layout()
+    f.savefig(f'examples/figs/cc-context-sim.png', dpi=100, bbox_inches='tight')

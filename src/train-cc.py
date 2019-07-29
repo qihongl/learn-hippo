@@ -13,7 +13,7 @@ from analysis import entropy, compute_stats
 # from models.DND import compute_similarities
 from models import get_reward, compute_returns, compute_a2c_loss
 from task.utils import get_one_hot_vector
-from utils.utils import to_pth, to_sqnp
+from utils.utils import to_pth, to_sqnp, to_np
 from sklearn.decomposition import PCA
 from scipy.stats import sem
 
@@ -23,13 +23,13 @@ torch.manual_seed(seed_val)
 np.random.seed(seed_val)
 
 # env param
-penalty = 0
+penalty = 1
 
 # gen training set
 # n time steps of a trial
 trial_length = 10
 # after `tp_corrupt`, turn off the noise
-t_noise_off = 5
+t_noise_off = trial_length // 2
 # input/output/hidden/memory dim
 obs_dim = 32
 task = ContextualChoice(
@@ -37,24 +37,35 @@ task = ContextualChoice(
 )
 
 # num unique training examples in one epoch
-n_unique_example = 10
+n_unique_example = 5
 X, Y = task.sample(n_unique_example)
 n_trials = len(X)
 print(f'X.size: {X.size()}, n_trials x trial_length x x-dim')
 print(f'Y.size: {Y.size()}, n_trials x trial_length x y-dim')
 
+
 # set params
-dim_hidden = 32
+dim_hidden = 64
+dim_hidden_dec = 32
 dim_output = 2
+
 dict_len = 100
 learning_rate = 1e-3
 n_epochs = 300
 eta = 0
 
 # init model and hidden state.
-agent = Agent(task.x_dim, dim_hidden, dim_output, dict_len=dict_len)
+agent = Agent(
+    input_dim=task.x_dim, output_dim=dim_output,
+    rnn_hidden_dim=dim_hidden, dec_hidden_dim=dim_hidden_dec,
+    dict_len=dict_len, kernel='cosine',
+)
+# agent = Agent(task.x_dim, dim_hidden, dim_output, dict_len=dict_len)
 optimizer = torch.optim.Adam(agent.parameters(), lr=learning_rate)
-
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, factor=1/2, patience=50, threshold=1e-3, min_lr=1e-8,
+    verbose=True
+)
 
 '''train'''
 log_return = np.zeros(n_epochs,)
@@ -75,7 +86,6 @@ for i in range(n_epochs):
     X, Y = task.sample(n_unique_example)
     # flush hippocampus
     agent.flush_episodic_memory()
-    agent.retrieval_on()
 
     # loop over the training set
     for m in range(n_trials):
@@ -84,6 +94,11 @@ for i in range(n_epochs):
         cumulative_entropy = 0
         probs, rewards, values = [], [], []
         hc_t = agent.get_init_states()
+
+        if m > n_unique_example:
+            agent.retrieval_on()
+        else:
+            agent.retrieval_off()
 
         # loop over time, for one training example
         for t in range(trial_length):
@@ -110,7 +125,7 @@ for i in range(n_epochs):
             log_Y_hat[i, m, t] = a_t.item()
             log_cache[m][t] = cache
 
-        returns = compute_returns(rewards)
+        returns = compute_returns(rewards, normalize=True)
         loss_policy, loss_value = compute_a2c_loss(probs, values, returns)
         loss = loss_policy + loss_value - eta * cumulative_entropy
         optimizer.zero_grad()
@@ -124,6 +139,7 @@ for i in range(n_epochs):
         log_loss_value[i] += loss_value.item() / n_trials
         log_loss_policy[i] += loss_policy.item() / n_trials
 
+    scheduler.step(log_return[i])
     # print out some stuff
     time_end = time.time()
     run_time = time_end - time_start
@@ -143,7 +159,7 @@ C = np.full((n_trials, trial_length, dim_hidden), np.nan)
 H = np.full((n_trials, trial_length, dim_hidden), np.nan)
 M = np.full((n_trials, trial_length, dim_hidden), np.nan)
 CM = np.full((n_trials, trial_length, dim_hidden), np.nan)
-DA = np.full((n_trials, trial_length, dim_hidden), np.nan)
+DA = np.full((n_trials, trial_length, dim_hidden_dec), np.nan)
 V = [None] * n_trials
 
 for i in range(n_trials):
@@ -194,7 +210,7 @@ er_mem0 = sem(corrects[:n_unique_example], axis=0) * n_se
 mu_mem1 = np.mean(corrects[n_unique_example:], axis=0)
 er_mem1 = sem(corrects[n_unique_example:], axis=0) * n_se
 
-f, ax = plt.subplots(1, 1, figsize=(7, 4))
+f, ax = plt.subplots(1, 1, figsize=(8, 4))
 ax.errorbar(range(trial_length), y=mu_mem0, yerr=er_mem0, label='w/o memory')
 ax.errorbar(range(trial_length), y=mu_mem1, yerr=er_mem1, label='w/  memory')
 ax.axvline(t_noise_off, label='turn off noise', color='grey', linestyle='--')
@@ -202,114 +218,26 @@ ax.axvline(t_noise_off, label='turn off noise', color='grey', linestyle='--')
 ax.set_xlabel('Time')
 ax.set_ylabel('Correct rate')
 ax.set_title('Behavioral signature of memory based choice')
-f.legend(frameon=False, bbox_to_anchor=(1, .6))
+f.legend(frameon=False, bbox_to_anchor=(.9, .6))
+f.tight_layout()
+sns.despine()
+
+# f.savefig('../figs/correct-rate.png', dpi=100, bbox_inches='tight')
+
+'''lca params'''
+inpt_nr_mu, inpt_nr_er = compute_stats(inpt[:n_unique_example])
+inpt_r_mu, inpt_r_er = compute_stats(inpt[n_unique_example:])
+leak_nr_mu, leak_nr_er = compute_stats(leak[:n_unique_example])
+leak_r_mu, leak_r_er = compute_stats(leak[n_unique_example:])
+comp_nr_mu, comp_nr_er = compute_stats(comp[:n_unique_example])
+comp_r_mu, comp_r_er = compute_stats(comp[n_unique_example:])
+
+f, axes = plt.subplots(3, 1, figsize=(7, 8))
+axes[0].errorbar(x=range(trial_length), y=inpt_r_mu, yerr=inpt_r_er)
+axes[0].errorbar(x=range(trial_length), y=inpt_nr_mu, yerr=inpt_nr_er)
+axes[1].errorbar(x=range(trial_length), y=leak_r_mu, yerr=leak_r_er)
+axes[1].errorbar(x=range(trial_length), y=leak_nr_mu, yerr=leak_nr_er)
+axes[2].errorbar(x=range(trial_length), y=comp_r_mu, yerr=comp_r_er)
+axes[2].errorbar(x=range(trial_length), y=comp_nr_mu, yerr=comp_nr_er)
 sns.despine()
 f.tight_layout()
-# f.savefig('../figs/correct-rate.png', dpi=100, bbox_inches='tight')
-#
-# '''lca params'''
-# inpt_nr_mu, inpt_nr_er = compute_stats(inpt[:n_unique_example])
-# inpt_r_mu, inpt_r_er = compute_stats(inpt[n_unique_example:])
-# leak_nr_mu, leak_nr_er = compute_stats(leak[:n_unique_example])
-# leak_r_mu, leak_r_er = compute_stats(leak[n_unique_example:])
-# comp_nr_mu, comp_nr_er = compute_stats(comp[:n_unique_example])
-# comp_r_mu, comp_r_er = compute_stats(comp[n_unique_example:])
-#
-# f, axes = plt.subplots(3, 1, figsize=(7, 8))
-# axes[0].errorbar(x=range(trial_length), y=inpt_r_mu, yerr=inpt_r_er)
-# axes[0].errorbar(x=range(trial_length), y=inpt_nr_mu, yerr=inpt_nr_er)
-# axes[1].errorbar(x=range(trial_length), y=leak_r_mu, yerr=leak_r_er)
-# axes[1].errorbar(x=range(trial_length), y=leak_nr_mu, yerr=leak_nr_er)
-# axes[2].errorbar(x=range(trial_length), y=comp_r_mu, yerr=comp_r_er)
-# axes[2].errorbar(x=range(trial_length), y=comp_nr_mu, yerr=comp_nr_er)
-# sns.despine()
-# f.tight_layout()
-
-
-# '''visualize keys and values'''
-# dmat_mm = np.zeros((len(agent.dnd.keys), len(agent.dnd.keys)))
-# dmat_kk = np.zeros((len(agent.dnd.keys), len(agent.dnd.keys)))
-#
-# for i in range(len(agent.dnd.keys)):
-#     for j in range(len(agent.dnd.keys)):
-#         dmat_mm[i, j] = compute_similarities(
-#             agent.dnd.vals[i], [agent.dnd.vals[j]], agent.dnd.kernel
-#         ).item()
-#         dmat_kk[i, j] = compute_similarities(
-#             agent.dnd.keys[i], [agent.dnd.keys[j]], agent.dnd.kernel
-#         ).item()
-#
-# # plot
-# dmats = [dmat_kk, dmat_mm]
-# labels = ['key', 'memory']
-#
-# f, axes = plt.subplots(1, 2, figsize=(12, 5))
-# for i, ax in enumerate(axes):
-#     im = ax.imshow(dmats[i], cmap='viridis')
-#     f.colorbar(im, ax=ax)
-#     ax.set_xlabel(f'id, {labels[i]} i')
-#     ax.set_ylabel(f'id, {labels[i]} j')
-#     ax.set_title(
-#         f'{labels[i]}-{labels[i]} similarity, metric = {agent.dnd.kernel}')
-# f.tight_layout()
-#
-# '''project memory content to low dim space'''
-#
-# # organize the values to a numpy array, #memories x mem_dim
-# all_keys = np.vstack(
-#     [agent.dnd.keys[i].data.numpy() for i in range(len(agent.dnd.keys))])
-# all_vals = np.vstack(
-#     [agent.dnd.vals[i].data.numpy() for i in range(len(agent.dnd.vals))])
-# Y_phase2 = np.squeeze(Y[:n_unique_example, 0].numpy())
-#
-# # embed the memory to PC space
-# pca = PCA(n_components=10)
-# all_vals_pca = pca.fit_transform(all_vals)
-# # pick pcs
-# pc_x = 0
-# pc_y = 1
-#
-# # plot
-# f, ax = plt.subplots(1, 1, figsize=(7, 5))
-# for y_val in np.unique(Y_phase2):
-#     y_mask = Y_phase2 == y_val
-#     ax.scatter(
-#         all_vals_pca[y_mask, pc_x],
-#         all_vals_pca[y_mask, pc_y],
-#         marker='o', alpha=.5,
-#     )
-# ax.set_title(f'Each point is a memory')
-# ax.set_xlabel(f'PC {pc_x}')
-# ax.set_ylabel(f'PC {pc_y}')
-# ax.legend(['left trial', 'right trial'], bbox_to_anchor=(.65, .4))
-# sns.despine(offset=20)
-# f.tight_layout()
-# # f.savefig('../figs/pc-v.png', dpi=100, bbox_inches='tight')
-#
-# # f, ax = plt.subplots(1, 1, figsize=(6, 4))
-# # ax.plot(np.cumsum(pca.explained_variance_ratio_))
-# # ax.set_title('cumulative variance explained')
-# # ax.set_xlabel('#PCs')
-# # ax.set_ylabel('% var explained')
-# # sns.despine()
-# # f.tight_layout()
-#
-#
-# # mean_rgate = np.mean(log_rgate, axis=-1)
-# #
-# # n_se = 2
-# # mu_mem0 = np.mean(mean_rgate[:n_unique_example], axis=0)
-# # er_mem0 = sem(mean_rgate[:n_unique_example], axis=0) * n_se
-# # mu_mem1 = np.mean(mean_rgate[n_unique_example:], axis=0)
-# # er_mem1 = sem(mean_rgate[n_unique_example:], axis=0) * n_se
-# #
-# # f, ax = plt.subplots(1, 1, figsize=(7, 4))
-# # ax.errorbar(range(trial_length), y=mu_mem0, yerr=er_mem0, label='trials w/o memory')
-# # ax.errorbar(range(trial_length), y=mu_mem1, yerr=er_mem1, label='trials w/  memory')
-# # ax.axvline(t_noise_off, label='turn off noise', color='grey', linestyle='--')
-# # ax.set_xlabel('Time')
-# # ax.set_ylabel(r'$r_t$    ', rotation=0)
-# # ax.set_title('Average r gate value')
-# # f.legend(frameon=False, bbox_to_anchor=(1, .8))
-# # sns.despine()
-# # f.tight_layout()
