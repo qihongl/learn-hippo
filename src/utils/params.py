@@ -16,6 +16,7 @@ class P():
         def_prob=None,
         penalty=1,
         penalty_random=0,
+        penalty_onehot=0,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -57,7 +58,7 @@ class P():
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
-            def_path, def_prob, penalty, penalty_random,
+            def_path, def_prob, penalty, penalty_random, penalty_onehot,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -83,7 +84,7 @@ class env():
             exp_name,
             n_param, n_branch, pad_len,
             def_path, def_prob,
-            penalty, penalty_random,
+            penalty, penalty_random, penalty_onehot,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -94,7 +95,6 @@ class env():
         self.n_param = n_param
         self.n_branch = n_branch
         self.pad_len = 'random' if pad_len == -1 else pad_len
-        # self.T_part = n_param + pad_len
         self.rm_ob_probabilistic = rm_ob_probabilistic
         self.p_rm_ob_rcl = p_rm_ob_rcl
         self.p_rm_ob_enc = p_rm_ob_enc
@@ -103,12 +103,8 @@ class env():
         self.def_path = def_path
         self.def_prob = def_prob
         self.penalty = penalty
-        if penalty_random == 0:
-            self.penalty_random = False
-        elif penalty_random == 1:
-            self.penalty_random = True
-        else:
-            raise ValueError('Invalid penalty_random = {penalty_random}')
+        self.penalty_random = _zero_one_to_true_false(penalty_random)
+        self.penalty_onehot = _zero_one_to_true_false(penalty_onehot)
         #
         self.chance = 1 / n_branch
 
@@ -206,3 +202,13 @@ def _infer_data_dims(n_param, n_branch):
     y_dim = n_branch
     a_dim = n_branch+1
     return x_dim, y_dim, a_dim
+
+
+def _zero_one_to_true_false(int_val):
+    if int_val == 0:
+        bool_val = False
+    elif int_val == 1:
+        bool_val = True
+    else:
+        raise ValueError('Invalid input = {penalty_random}')
+    return bool_val

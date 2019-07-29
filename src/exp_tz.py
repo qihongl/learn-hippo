@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
-
+import pdb
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
@@ -39,7 +39,7 @@ def run_tz(
         log_cache_i = [None] * T_total
 
         # init model wm and em
-        penalty = sample_penalty(p, fix_penalty)
+        penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
         # a_t, r_t = get_a0_r0(p)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
@@ -58,14 +58,14 @@ def run_tz(
 
             # forward
             # x_it = append_prev_info(X_i[t], [a_t, r_t, penalty])
-            x_it = append_prev_info(X_i[t], [penalty])
+            x_it = append_prev_info(X_i[t], [penalty_rep])
             # x_it = X_i[t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
             a_t, p_a_t = agent.pick_action(pi_a_t)
             # get reward
-            r_t = get_reward(a_t, Y_i[t], penalty)
+            r_t = get_reward(a_t, Y_i[t], penalty_val)
 
             # cache the results for later RL loss computation
             rewards.append(r_t)
@@ -131,8 +131,20 @@ def run_tz(
 
 def append_prev_info(x_it_, scalar_list):
     for s in scalar_list:
-        x_it_ = torch.cat([x_it_, s.type(torch.FloatTensor).view(1)])
+        x_it_ = torch.cat(
+            [x_it_, s.type(torch.FloatTensor).view(tensor_length(s))]
+        )
     return x_it_
+
+
+def tensor_length(tensor):
+    if tensor.dim() == 0:
+        length = 1
+    elif tensor.dim() > 1:
+        raise ValueError('length for high dim tensor is undefined')
+    else:
+        length = len(tensor)
+    return length
 
 
 def get_enc_times(enc_size, n_param, pad_len):
@@ -181,19 +193,34 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
-def sample_penalty(p, fix_penalty):
+def sample_penalty(p, fix_penalty, feasible_range=[0, 2, 4]):
     # if penalty level is fixed, usually used during test
     if fix_penalty is not None:
-        penalty = fix_penalty
+        penalty_val = fix_penalty
     else:
         # otherwise sample a penalty level
         if p.env.penalty_random:
-            penalty = np.random.randint(0, p.env.penalty+1)
+            penalty_val = np.random.choice(feasible_range)
+            # penalty_val = np.random.randint(0, p.env.penalty+1)
             # penalty = np.random.uniform(0, p.env.penalty)
+            # print(penalty)
         else:
             # or train with a fixed penalty level
-            penalty = p.env.penalty
-    return torch.tensor(penalty)
+            penalty_val = p.env.penalty
+    # form the input representation of the current penalty signal
+    if p.env.penalty_onehot:
+        penalty_rep = one_hot_penalty(penalty_val)
+    else:
+        penalty_rep = penalty_val
+    return torch.tensor(penalty_val), torch.tensor(penalty_rep)
+
+
+def one_hot_penalty(penalty_int, feasible_range=[0, 2, 4]):
+    assert penalty_int in feasible_range, \
+        print(f'invalid penalty_int = {penalty_int}')
+    if penalty_int > 0:
+        penalty_int /= 2
+    return np.eye(len(feasible_range))[int(penalty_int), :]
 
 
 def get_a0_r0(p):
