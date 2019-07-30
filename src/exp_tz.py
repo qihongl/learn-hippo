@@ -40,7 +40,7 @@ def run_tz(
 
         # init model wm and em
         penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
-        print(penalty_val, penalty_rep)
+        # print(penalty_val, penalty_rep)
         # a_t, r_t = get_a0_r0(p)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
