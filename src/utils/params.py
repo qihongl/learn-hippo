@@ -79,6 +79,9 @@ class P():
         # TODO temp solution
         if penalty_onehot == 1:
             assert penalty_discrete == 1
+        if penalty_discrete == 0:
+            assert penalty_random == 1
+
         if self.env.penalty_onehot:
             self.extra_x_dim = len(penalty_range)
         else:
