@@ -15,7 +15,9 @@ class P():
         def_prob=None,
         penalty=1,
         penalty_random=0,
+        penalty_discrete=1,
         penalty_onehot=0,
+        penalty_range=[0, 2, 4],
         normalize_return=1,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
@@ -58,7 +60,8 @@ class P():
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
-            def_path, def_prob, penalty, penalty_random, penalty_onehot,
+            def_path, def_prob,
+            penalty, penalty_random, penalty_discrete, penalty_onehot, penalty_range,
             normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -73,6 +76,14 @@ class P():
         )
         self.misc = misc(sup_epoch, n_epoch, n_example)
 
+        # TODO temp solution
+        if penalty_onehot == 1:
+            assert penalty_discrete == 1
+        if self.env.penalty_onehot:
+            self.extra_x_dim = len(penalty_range)
+        else:
+            self.extra_x_dim = 1
+
     def __repr__(self):
         repr_ = str(self.env.__repr__) + '\n' + str(self.net.__repr__)
         return repr_
@@ -85,7 +96,8 @@ class env():
             exp_name,
             n_param, n_branch, pad_len,
             def_path, def_prob,
-            penalty, penalty_random, penalty_onehot,
+            penalty, penalty_random, penalty_discrete,
+            penalty_onehot, penalty_range,
             normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -106,7 +118,9 @@ class env():
         self.def_prob = def_prob
         self.penalty = penalty
         self.penalty_random = _zero_one_to_true_false(penalty_random)
+        self.penalty_discrete = _zero_one_to_true_false(penalty_discrete)
         self.penalty_onehot = _zero_one_to_true_false(penalty_onehot)
+        self.penalty_range = penalty_range
         self.normalize_return = _zero_one_to_true_false(penalty_onehot)
         #
         self.chance = 1 / n_branch

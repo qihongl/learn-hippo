@@ -40,6 +40,7 @@ def run_tz(
 
         # init model wm and em
         penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
+        print(penalty_val, penalty_rep)
         # a_t, r_t = get_a0_r0(p)
         hc_t = agent.get_init_states()
         agent.retrieval_off()
@@ -193,34 +194,34 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
-def sample_penalty(p, fix_penalty, feasible_range=[0, 2, 4]):
+def sample_penalty(p, fix_penalty):
     # if penalty level is fixed, usually used during test
     if fix_penalty is not None:
         penalty_val = fix_penalty
     else:
         # otherwise sample a penalty level
         if p.env.penalty_random:
-            penalty_val = np.random.choice(feasible_range)
-            # penalty_val = np.random.randint(0, p.env.penalty+1)
-            # penalty = np.random.uniform(0, p.env.penalty)
-            # print(penalty)
+            if p.env.penalty_discrete:
+                penalty_val = np.random.choice(p.env.penalty_range)
+            else:
+                penalty_val = np.random.uniform(0, p.env.penalty)
         else:
             # or train with a fixed penalty level
             penalty_val = p.env.penalty
     # form the input representation of the current penalty signal
     if p.env.penalty_onehot:
-        penalty_rep = one_hot_penalty(penalty_val)
+        penalty_rep = one_hot_penalty(penalty_val, p)
     else:
         penalty_rep = penalty_val
     return torch.tensor(penalty_val), torch.tensor(penalty_rep)
 
 
-def one_hot_penalty(penalty_int, feasible_range=[0, 2, 4]):
-    assert penalty_int in feasible_range, \
+def one_hot_penalty(penalty_int, p):
+    assert penalty_int in p.env.penalty_range, \
         print(f'invalid penalty_int = {penalty_int}')
-    if penalty_int > 0:
-        penalty_int /= 2
-    return np.eye(len(feasible_range))[int(penalty_int), :]
+    one_hot_dim = len(p.env.penalty_range)
+    penalty_id = p.env.penalty_range.index(penalty_int)
+    return np.eye(one_hot_dim)[penalty_id, :]
 
 
 def get_a0_r0(p):
