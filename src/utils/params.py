@@ -17,7 +17,6 @@ class P():
         penalty_random=0,
         penalty_discrete=1,
         penalty_onehot=0,
-        penalty_range=[0, 2, 4],
         normalize_return=1,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
@@ -61,7 +60,7 @@ class P():
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
             def_path, def_prob,
-            penalty, penalty_random, penalty_discrete, penalty_onehot, penalty_range,
+            penalty, penalty_random, penalty_discrete, penalty_onehot,
             normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -83,7 +82,7 @@ class P():
             assert penalty_random == 1
 
         if self.env.penalty_onehot:
-            self.extra_x_dim = len(penalty_range)
+            self.extra_x_dim = len(self.env.penalty_range)
         else:
             self.extra_x_dim = 1
 
@@ -99,8 +98,7 @@ class env():
             exp_name,
             n_param, n_branch, pad_len,
             def_path, def_prob,
-            penalty, penalty_random, penalty_discrete,
-            penalty_onehot, penalty_range,
+            penalty, penalty_random, penalty_discrete, penalty_onehot,
             normalize_return,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
@@ -123,8 +121,9 @@ class env():
         self.penalty_random = _zero_one_to_true_false(penalty_random)
         self.penalty_discrete = _zero_one_to_true_false(penalty_discrete)
         self.penalty_onehot = _zero_one_to_true_false(penalty_onehot)
-        self.penalty_range = penalty_range
-        self.normalize_return = _zero_one_to_true_false(penalty_onehot)
+        # self.penalty_range = [i for i in range(penalty+1) if i % 2 == 0]
+        self.penalty_range = [i for i in range(penalty+1)]
+        self.normalize_return = _zero_one_to_true_false(normalize_return)
         #
         self.chance = 1 / n_branch
 
