@@ -7,7 +7,7 @@ def to_pth(np_array, pth_dtype=torch.FloatTensor):
 
 
 def to_sqpth(np_array, pth_dtype=torch.FloatTensor):
-    return torch.squeeze(to_pth(np_array))
+    return torch.squeeze(to_pth(np_array, pth_dtype=pth_dtype))
 
 
 def to_np(torch_tensor):
