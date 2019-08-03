@@ -4,23 +4,20 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import warnings
 
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models.LCALSTM_v9 import LCALSTM as Agent
-# from models import LCALSTM as Agent
 from itertools import product
-from scipy.stats import pearsonr, probplot
+from scipy.stats import pearsonr
 from sklearn import metrics
 from task import SequenceLearning
 # from exp_tz import run_tz
 from utils.params import P
-from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
+# from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
 from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, get_test_data_dir, \
     pickle_load_dict, get_test_data_fname
 from analysis import compute_acc, compute_dk, compute_stats, \
-    compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
+    compute_cell_memory_similarity, create_sim_dict, \
     compute_event_similarity, batch_compute_true_dk, \
     process_cache, get_trial_cond_ids, compute_n_trials_to_skip,\
     compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
@@ -30,53 +27,63 @@ from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
     plot_time_course_for_all_conds
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
-# plt.switch_backend('agg')
+
+warnings.filterwarnings("ignore")
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-exp_name = 'metalearn-penalty'
-# exp_name = 'july9_v9'
+# exp_name = 'penalty-fixed-discrete-moresuptrain'
+exp_name = 'penalty-fixed-discrete-simple'
+exp_name = 'penalty-fixed-discrete-lessevent'
+
+supervised_epoch = 700
+epoch_load = 1000
+learning_rate = 5e-4
+# supervised_epoch = 400
+# epoch_load = 700
+# supervised_epoch = 300
+# epoch_load = 600
+# learning_rate = 1e-3
+
+n_branch = 4
+n_param = 16
+enc_size = 16
+n_event_remember = 2
+
+n_hidden = 194
+n_hidden_dec = 128
+eta = .1
+
+penalty_random = 0
+# testing param, ortho to the training directory
+penalty_discrete = 1
+penalty_onehot = 0
+normalize_return = 1
+
+# loading params
+p_rm_ob_enc_load = .3
+p_rm_ob_rcl_load = .3
+pad_len_load = -1
+
+# testing params
+p_test = 0
+p_rm_ob_enc_test = p_test
+p_rm_ob_rcl_test = p_test
+slience_recall_time = None
+pad_len_test = 0
+n_examples_test = 256
 
 subj_ids = [0, 1]
-penaltys = [2, 4]
-fix_penaltyes = [0, .5, 1, 2, 4]
-# subj_ids = [0]
+penaltys_train = [0, 2, 4, 8]
+penaltys_test = [0, 2, 4, 8]
 
-for subj_id, penalty in product(subj_ids, penaltys):
+for subj_id, penalty_train in product(subj_ids, penaltys_train):
 
-    # subj_id = 1
-    supervised_epoch = 600
-    epoch_load = 900
-    # n_epoch = 500
-    n_param = 16
-    n_branch = 4
-    enc_size = 16
-    n_event_remember = 4
-
-    n_hidden = 128
-    n_hidden_dec = 128
-    learning_rate = 5e-4
-    eta = .1
-
-    # loading params
-    p_rm_ob_enc_load = .3
-    p_rm_ob_rcl_load = .3
-    pad_len_load = -1
-    # penalty = 4
-
-    # testing params
-    p_test = 0
-    p_rm_ob_enc_test = p_test
-    p_rm_ob_rcl_test = p_test
-    slience_recall_time = None
-    pad_len_test = 0
-    # penalty_test = 2
-    for penalty_test in fix_penaltyes:
-
-        # slience_recall_time = 2
-
-        n_examples_test = 512
+    # penaltys_test_ = [fp for fp in penaltys_test if fp <= penalty_train]
+    penaltys_test_ = [penalty_train]
+    for penalty_test in penaltys_test_:
+        print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
 
         np.random.seed(subj_id)
         torch.manual_seed(subj_id)
@@ -86,7 +93,9 @@ for subj_id, penalty in product(subj_ids, penaltys):
             exp_name=exp_name, sup_epoch=supervised_epoch,
             n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
             enc_size=enc_size, n_event_remember=n_event_remember,
-            penalty=penalty,
+            penalty=penalty_train, penalty_random=penalty_random,
+            penalty_onehot=penalty_onehot, penalty_discrete=penalty_discrete,
+            normalize_return=normalize_return,
             p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
             n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
             lr=learning_rate, eta=eta,
@@ -98,11 +107,15 @@ for subj_id, penalty in product(subj_ids, penaltys):
         )
         # create logging dirs
         test_params = [penalty_test, pad_len_test, slience_recall_time]
-        log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
+        log_path, log_subpath = build_log_path(
+            subj_id, p, log_root=log_root, mkdir=False)
         test_data_dir, test_data_subdir = get_test_data_dir(
             log_subpath, epoch_load, test_params)
         test_data_fname = get_test_data_fname(n_examples_test)
         fpath = os.path.join(test_data_dir, test_data_fname)
+        if not os.path.exists(fpath):
+            print('DNE')
+            continue
 
         test_data_dict = pickle_load_dict(fpath)
         results = test_data_dict['results']
