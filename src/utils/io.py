@@ -14,6 +14,7 @@ from utils.constants import CKPT_TEMPLATE, ALL_SUBDIRS, NET_JSON_FNAME
 def build_log_path(
         subj_id, p,
         log_root=None,
+        mkdir=True,
         verbose=True
 ):
     # create dir names
@@ -43,7 +44,7 @@ def build_log_path(
     log_subpath = {
         subdir: os.path.join(log_path, subdir) for subdir in ALL_SUBDIRS
     }
-    _make_all_dirs(log_path, log_subpath, verbose)
+    _make_all_dirs(log_path, log_subpath, mkdir=mkdir, verbose=verbose)
     return log_path, log_subpath
 
 
@@ -75,16 +76,16 @@ def update_rnr_log_subpath(log_subpath, n_mvs_rnr):
     return log_subpath
 
 
-def _make_all_dirs(log_path, log_subpath, verbose):
+def _make_all_dirs(log_path, log_subpath, mkdir=True, verbose=False):
     # create output dir
-    if not os.path.exists(log_path):
+    if not os.path.exists(log_path) and mkdir:
         os.makedirs(log_path, exist_ok=True)
         vprint(verbose, f'Dir created: \n{log_path}')
     else:
         vprint(verbose, f'Use exisiting dir: \n{log_path}')
 
     for k, log_subpath_ in log_subpath.items():
-        if not os.path.exists(log_subpath_):
+        if not os.path.exists(log_subpath_) and mkdir:
             os.makedirs(log_subpath_, exist_ok=True)
             vprint(verbose, f'- sub dir: {k}')
         else:
