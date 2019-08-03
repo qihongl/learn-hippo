@@ -79,8 +79,9 @@ log_root = args.log_root
 
 
 '''init'''
-np.random.seed(subj_id)
-torch.manual_seed(subj_id)
+seed_val = subj_id + 777
+np.random.seed(seed_val)
+torch.manual_seed(seed_val)
 
 p = P(
     exp_name=exp_name,
