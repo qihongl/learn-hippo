@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def one_hot_to_int(one_hot_vector):
@@ -45,7 +46,38 @@ def prop_true(bool_array, axis=0):
     n = np.shape(bool_array)[axis]
     return np.sum(bool_array, axis=axis)/n
 
-# import pandas as pd
+
+def make_df(data_dict):
+    """
+    convert a data dictionary to a dataframe
+    the data dict must be in the form of {'condition_name': 1-d data array}
+
+    Parameters
+    ----------
+    data_dict : dict
+        a data dictionary
+
+    Returns
+    -------
+    pd.DataFrame
+        a data frame: col1 = value; col2 = condition labels
+
+    """
+    # get sample size
+    n_data = dict(zip(
+        data_dict.keys(), [len(data) for data in data_dict.values()]
+    ))
+    # get condition vector
+    cond = np.concatenate(
+        [[cond_name] * n_data[cond_name] for cond_name in data_dict.keys()]
+    )
+    # get data value vector
+    data = np.concatenate([cond_data for cond_data in data_dict.values()])
+    # combine to form a df
+    df = pd.DataFrame({'Value': data, 'Condition': cond})
+    return df
+
+
 # import torch.nn as nn
 
 # from sklearn import metrics
