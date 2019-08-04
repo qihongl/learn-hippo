@@ -42,12 +42,12 @@ def plot_pred_acc_full(
     """
     # precompute some stuff
     c_pal = sns.color_palette('colorblind', n_colors=4)
-    legend_lab = ['event boundary', 'baseline', 'don\'t know',
-                  'mistakes', 'correct prediction']
+    legend_lab = ['event boundary', 'uncertain',
+                  'error', 'correct']
     total_event_len = np.shape(pa_mu)[0]
     x_ = range(total_event_len)
     ones = np.ones_like(x_)
-    baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
+    # baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
     # plot the performance
     ax.errorbar(x=x_, y=pa_mu, yerr=pa_er, color=c_pal[0])
     # plot dk region
@@ -58,7 +58,7 @@ def plot_pred_acc_full(
     for eb in event_bounds:
         ax.axvline(eb-1, ls='--', color=c_pal[3], alpha=1)
     # plot observation baseline
-    ax.plot(baseline, color='grey', ls='--')
+    # ax.plot(baseline, color='grey', ls='--')
     # add labels
     ax.set_xlabel('Time')
     ax.set_ylabel('Probability')
@@ -83,11 +83,10 @@ def plot_pred_acc_rcl(
     legend_on=False,
 ):
     if baseline_on:
-        legend_lab = ['baseline', 'don\'t know',
-                      'mistakes', 'correct prediction']
+        legend_lab = ['baseline', 'uncertain', 'error', 'correct']
         baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
     else:
-        legend_lab = ['don\'t know', 'mistakes', 'correct prediction']
+        legend_lab = ['uncertain', 'error', 'correct']
     c_pal = sns.color_palette('colorblind', n_colors=4)
     total_event_len = np.shape(pa_mu)[0]
     x_ = range(total_event_len)
