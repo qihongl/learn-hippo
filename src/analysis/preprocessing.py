@@ -66,6 +66,25 @@ def process_cache(log_cache, T_total, p):
 
 
 def get_qsource(true_dk_em, true_dk_wm, cond_ids, p):
+    """compute query source
+
+    Parameters
+    ----------
+    true_dk_em : type
+        Description of parameter `true_dk_em`.
+    true_dk_wm : type
+        Description of parameter `true_dk_wm`.
+    cond_ids : type
+        Description of parameter `cond_ids`.
+    p : type
+        Description of parameter `p`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
     # DM
     # can recall from EM
     true_dk_em_dm_p2 = true_dk_em[cond_ids['DM'], p.env.n_param:]
@@ -114,6 +133,23 @@ def get_qsource(true_dk_em, true_dk_wm, cond_ids, p):
 
 
 def sep_by_qsource(matrix_p2, q_source_info, n_se=3):
+    """separate values by query source and then compute statistics
+
+    Parameters
+    ----------
+    matrix_p2 : type
+        Description of parameter `matrix_p2`.
+    q_source_info : type
+        Description of parameter `q_source_info`.
+    n_se : type
+        Description of parameter `n_se`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
     stats = {}
     # loop over sources
     for q_source_name, q_source_id in q_source_info.items():
