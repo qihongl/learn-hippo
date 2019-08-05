@@ -11,24 +11,25 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname
 
 log_root = '../log/'
-exp_name = 'penalty-fixed-discrete-simple'
-exp_name = 'penalty-fixed-discrete-lessevent'
+# exp_name = 'penalty-fixed-discrete-simple-smalllr'
+exp_name = 'penalty-fixed-discrete-simple_'
+# exp_name = 'penalty-fixed-discrete-lessevent'
 
 seed = 0
 
-supervised_epoch = 700
-epoch_load = 1000
-learning_rate = 5e-4
+# supervised_epoch = 700
+# epoch_load = 1000
+# learning_rate = 6e-4
 # supervised_epoch = 400
 # epoch_load = 700
-# supervised_epoch = 300
-# epoch_load = 600
-# learning_rate = 1e-3
+supervised_epoch = 300
+epoch_load = 600
+learning_rate = 1e-3
 
-n_branch = 4
+n_branch = 3
 n_param = 16
 enc_size = 16
-n_event_remember = 2
+n_event_remember = 4
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -52,17 +53,17 @@ p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 n_examples_test = 256
 
-similarity_cap_test = .5
+similarity_cap_test = .6
 
 '''loop over conditions for testing'''
 # slience_recall_times = range(n_param)
 slience_recall_time = None
 
 # subj_id = 0
-# subj_ids = np.arange(7)
-subj_ids = [0, 1]
-penaltys_train = [0, 2, 4, 8]
-penaltys_test = [0, 2, 4, 8]
+subj_ids = np.arange(6)
+# subj_ids = [0, 1]
+penaltys_train = [0, 2, 4]
+penaltys_test = [0, 2, 4]
 
 
 # all_conds = ['RM', 'DM', 'NM']
