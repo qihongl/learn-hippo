@@ -10,7 +10,8 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        fix_cond=None, fix_penalty=None, slience_recall_time=None,
+        fix_cond=None, fix_penalty=None,
+        slience_recall_time=None,
         learning=True, get_cache=True, get_data=False,
 ):
     # sample data
@@ -60,7 +61,6 @@ def run_tz(
             # forward
             # x_it = append_prev_info(X_i[t], [a_t, r_t, penalty])
             x_it = append_prev_info(X_i[t], [penalty_rep])
-            # x_it = X_i[t]
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
@@ -174,9 +174,12 @@ def set_encoding_flag(t, enc_times, cond, agent):
         agent.encoding_off()
 
 
-def slience_recall(t_relative, in_2nd_part, slience_recall_time, agent):
+def slience_recall(
+        t_relative, in_2nd_part, slience_recall_time,
+        agent
+):
     if in_2nd_part:
-        if t_relative == slience_recall_time:
+        if t_relative in slience_recall_time:
             agent.retrieval_off()
         else:
             agent.retrieval_on()

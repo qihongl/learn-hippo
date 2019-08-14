@@ -155,7 +155,18 @@ def save_all_params(datapath, params, args=None):
 
 def get_test_data_dir(log_subpath, epoch_load, test_params):
     [fix_penalty, pad_len_test, slience_recall_time] = test_params
-    test_data_subdir = f'epoch-{epoch_load}/penalty-{fix_penalty}/delay-{pad_len_test}/srt-{slience_recall_time}'
+
+    if slience_recall_time is None:
+        str_info = 'srt-None'
+    else:
+        str_info = f'srt-{slience_recall_time[0]}-{slience_recall_time[-1]}'
+
+    test_data_subdir = os.path.join(
+        f'epoch-{epoch_load}',
+        f'penalty-{fix_penalty}',
+        f'delay-{pad_len_test}',
+        str_info
+    )
     test_data_dir = os.path.join(log_subpath['data'], test_data_subdir)
     if not os.path.exists(test_data_dir):
         os.makedirs(test_data_dir)
