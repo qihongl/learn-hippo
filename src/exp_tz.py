@@ -2,16 +2,18 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 import pdb
+
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
+from task.utils import scramble_array, scramble_array_list
 from models import get_reward, compute_returns, compute_a2c_loss
 
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
         fix_cond=None, fix_penalty=None,
-        slience_recall_time=None,
+        slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
     # sample data
@@ -29,6 +31,9 @@ def run_tz(
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
+        if scramble:
+            X_i, Y_i = time_scramble(X_i, Y_i, task, scramble_obs_only=False)
+
         # get time info
         T_total = np.shape(X_i)[0]
         T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
@@ -231,3 +236,14 @@ def get_a0_r0(p):
     a_0 = torch.tensor(p.dk_id)
     r_0 = torch.tensor(0)
     return a_0, r_0
+
+
+def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
+    if scramble_obs_only:
+        # option 1: scramble observations
+        X_i[:, :task.k_dim + task.v_dim] = scramble_array(
+            X_i[:, :task.k_dim+task.v_dim])
+    else:
+        # option 2: scramble observations + queries
+        [X_i, Y_i] = scramble_array_list([X_i, Y_i])
+    return X_i, Y_i

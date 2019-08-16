@@ -81,42 +81,41 @@ def get_one_hot_vector(i, k):
     return np.eye(k)[i, :]
 
 
-# def param_id_to_one_hot_dims(pid, n_branch):
-#     """map parameter id to the relevant dimension over one hot rep
-#
-#     Parameters
-#     ----------
-#     pid : int
-#         parameter id
-#     n_branch : int
-#         branching factor of the graph
-#
-#     Returns
-#     -------
-#     list
-#         the relevant dimensions in the one-hot representation
-#
-#     """
-#     return np.arange(n_branch) + pid * n_branch
-#
-#
-# def permute_rows(matrix):
-#     """temporally permute the order of events
-#
-#     Parameters
-#     ----------
-#     matrix : 2d array
-#         typically the input observation matrix
-#
-#     Returns
-#     -------
-#     2d array
-#         the row-permuted matix
-#
-#     """
-#     n_rows, _ = np.shape(matrix)
-#     perm_op = np.random.permutation(range(n_rows))
-#     return matrix[perm_op, :]
+def chunks(lst, chunk_size):
+    '''
+    Adapted from:
+    https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
+    '''
+    assert chunk_size >= 1
+    return [lst[i:i+chunk_size] for i in np.arange(0, len(lst), chunk_size)]
+
+
+def get_scrambled_ids(n_time_points, nchunks):
+    assert n_time_points % nchunks == 0
+    chunk_size = n_time_points // nchunks
+    tp_chunks = chunks(np.arange(n_time_points), chunk_size)
+    tp_chunks_scrambled = tp_chunks[::-1]
+    tp_scrambled = np.concatenate(tp_chunks_scrambled)
+    return tp_scrambled
+
+
+def scramble_array(nparray, nchunks=4):
+    '''scramble the input array along the 0-th axis
+
+    e.g.
+    X = np.random.normal(size=(T, V))
+    X_scrb = scramble_array(X, nchunks=4)
+    '''
+    n_tps = np.shape(nparray)[0]
+    tp_scrambled = get_scrambled_ids(n_tps, nchunks)
+    return nparray[tp_scrambled, :]
+
+
+def scramble_array_list(array_list, nchunks=4):
+    '''scramble a list of input arrays along the 0-th axis
+    '''
+    return [scramble_array(array) for array in array_list]
+
 
 # def get_ith_nCk(index, n, k):
 #     """get the i-th return from the set of n-choose-k

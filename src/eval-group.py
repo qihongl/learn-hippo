@@ -12,14 +12,16 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
 
 log_root = '../log/'
 # exp_name = 'penalty-fixed-discrete-simple-smalllr'
+# exp_name = 'penalty-random-continuous'
 exp_name = 'penalty-random-continuous'
-# exp_name = 'penalty-fixed-discrete-lessevent'
 
 seed = 0
-
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
+# supervised_epoch = 600
+# epoch_load = 900
+# learning_rate = 5e-4
 
 n_branch = 3
 n_param = 16
@@ -32,7 +34,7 @@ eta = .1
 
 penalty_random = 1
 # testing param, ortho to the training directory
-penalty_discrete = 0
+penalty_discrete = 1
 penalty_onehot = 0
 normalize_return = 1
 
@@ -43,7 +45,7 @@ p_rm_ob_rcl_load = .3
 
 # testing params
 pad_len_test = 0
-p_test = .3
+p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 n_examples_test = 256
@@ -51,18 +53,23 @@ n_examples_test = 256
 similarity_cap_test = .75
 
 '''loop over conditions for testing'''
-slience_recall_times = [range(n_param), None]
+# slience_recall_times = [range(n_param), None]
+slience_recall_times = [range(n_param)]
+# slience_recall_times = [None]
 
 # subj_id = 0
 subj_ids = np.arange(6)
 # subj_ids = [0, 1]
 penaltys_train = [4]
+# penaltys_test = [2]
+# penaltys_train = [0, 2, 4]
 penaltys_test = [0, 2, 4]
 
-
-# all_conds = ['RM', 'DM', 'NM']
-all_conds = ['RM']
+all_conds = ['RM', 'DM']
+# all_conds = ['DM']
 # all_conds = [None]
+
+scramble = False
 
 for slience_recall_time in slience_recall_times:
     for subj_id, penalty_train, fix_cond in product(subj_ids, penaltys_train, all_conds):
@@ -119,14 +126,15 @@ for slience_recall_time in slience_recall_times:
                 agent, optimizer, task, p, n_examples_test,
                 supervised=False, learning=False, get_data=True,
                 fix_cond=fix_cond, fix_penalty=fix_penalty,
-                slience_recall_time=slience_recall_time
+                slience_recall_time=slience_recall_time, scramble=scramble
             )
 
             # save the data
             test_params = [fix_penalty, pad_len_test, slience_recall_time]
             test_data_dir, _ = get_test_data_dir(
                 log_subpath, epoch_load, test_params)
-            test_data_fname = get_test_data_fname(n_examples_test, fix_cond)
+            test_data_fname = get_test_data_fname(
+                n_examples_test, fix_cond, scramble)
             test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
             fpath = os.path.join(test_data_dir, test_data_fname)
             pickle_save_dict(test_data_dict, fpath)

@@ -167,16 +167,19 @@ def get_test_data_dir(log_subpath, epoch_load, test_params):
         f'delay-{pad_len_test}',
         str_info
     )
+
     test_data_dir = os.path.join(log_subpath['data'], test_data_subdir)
     if not os.path.exists(test_data_dir):
         os.makedirs(test_data_dir)
     return test_data_dir, test_data_subdir
 
 
-def get_test_data_fname(n_examples_test, fix_cond=None):
+def get_test_data_fname(n_examples_test, fix_cond=None, scramble=False):
     test_data_fname = f'n{n_examples_test}.pkl'
     if fix_cond is not None:
         test_data_fname = fix_cond + '-' + test_data_fname
+    if scramble:
+        test_data_fname = 'scramble' + '-' + test_data_fname
     return test_data_fname
 
 
