@@ -142,10 +142,10 @@ def save_all_params(datapath, params, args=None):
         with open(os.path.join(datapath, 'args.json'), 'w') as f:
             json.dump(args.__dict__, f, indent=2)
     # save env params
-    # env_outpath = os.path.join(datapath, ENV_JSON_FNAME)
-    # assert os.path.exists(os.path.dirname(env_outpath))
-    # with open(env_outpath, 'w') as f:
-    #     json.dump(env.__dict__, f, indent=2)
+    env_outpath = os.path.join(datapath, 'env.json')
+    assert os.path.exists(os.path.dirname(env_outpath))
+    with open(env_outpath, 'w') as f:
+        json.dump(env.__dict__, f, indent=2)
     # save model params
     mod_outpath = os.path.join(datapath, NET_JSON_FNAME)
     assert os.path.exists(os.path.dirname(mod_outpath))
