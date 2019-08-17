@@ -10,26 +10,26 @@ n_branch = 4
 n_samples = 500
 # init
 def_path = np.ones(n_param,)
-def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
+# def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
+
 def_prob = .5
 task = SequenceLearning(
     n_param, n_branch, n_parts=1,
-    # def_path=def_path,
-    # def_prob=def_prob,
+    def_path=def_path,
+    def_prob=def_prob,
 )
 # sample
-X, Y = task.sample(n_samples, to_torch=False)
-# unpack
-print(np.shape(X))
-print(np.shape(Y))
+X, Y, misc = task.sample(n_samples, to_torch=False, return_misc=True)
+Y_int = np.stack([misc[i][1] for i in range(n_samples)])
+_, T_total = np.shape(Y_int)
+
 
 '''plot next state distribution over time'''
 
 # compute
-p_s_next = np.zeros((task.T_total, n_branch))
-for t in range(task.T_total):
-    Y_feature_vector = np.argmax(Y, axis=2)
-    unique, counts = np.unique(Y_feature_vector[:, t], return_counts=True)
+p_s_next = np.zeros((T_total, n_branch))
+for t in range(T_total):
+    unique, counts = np.unique(Y_int[:, t], return_counts=True)
     p_s_next[t, :] = counts / n_samples
 
 # plot
