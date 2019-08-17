@@ -31,6 +31,7 @@ parser.add_argument('--subj_id', default=99, type=int)
 parser.add_argument('--n_param', default=6, type=int)
 parser.add_argument('--n_branch', default=3, type=int)
 parser.add_argument('--pad_len', default=0, type=int)
+parser.add_argument('--def_prob', default=None, type=int)
 parser.add_argument('--enc_size', default=None, type=int)
 parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--penalty_random', default=0, type=int)
@@ -58,6 +59,7 @@ subj_id = args.subj_id
 n_param = args.n_param
 n_branch = args.n_branch
 pad_len = args.pad_len
+def_prob = args.def_prob
 enc_size = args.enc_size
 penalty = args.penalty
 penalty_random = args.penalty_random
@@ -87,6 +89,7 @@ p = P(
     exp_name=exp_name,
     sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
+    def_prob=def_prob,
     enc_size=enc_size, n_event_remember=n_event_remember,
     penalty=penalty, penalty_random=penalty_random,
     penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
