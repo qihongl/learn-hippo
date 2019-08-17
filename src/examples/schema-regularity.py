@@ -9,13 +9,13 @@ n_param = 10
 n_branch = 4
 n_samples = 500
 # init
-def_path = np.ones(n_param,)
 # def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
-
+# def_path = np.ones(n_param,)
 def_prob = .5
+def_prob = None
 task = SequenceLearning(
     n_param, n_branch, n_parts=1,
-    def_path=def_path,
+    # def_path=def_path,
     def_prob=def_prob,
 )
 # sample
