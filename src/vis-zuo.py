@@ -32,8 +32,10 @@ from brainiak.funcalign.srm import SRM
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
+# exp_name = 'penalty-fixed-discrete-simple_'
 exp_name = 'penalty-random-continuous'
-
+# exp_name = 'penalty-fixed-discrete-simple_'
+# subj_ids = np.arange(10)
 subj_ids = np.arange(6)
 n_subjs = len(subj_ids)
 
@@ -72,7 +74,7 @@ pad_len_test = 0
 penalty_test = 2
 
 n_examples_test = 256
-fix_cond = 'DM'
+fix_cond = 'RM'
 scramble = False
 
 srt_dict = {'control': None, 'patient': np.arange(n_param)}
@@ -158,8 +160,8 @@ test_prop = .5
 n_examples_tr = int(n_examples * (1-test_prop))
 n_examples_te = n_examples-n_examples_tr
 
-data = CM
-# data = DA
+# data = CM
+data = DA
 
 for g_name in group_names:
     print(f'\n{g_name}: {np.shape(data[g_name])}', end='')
@@ -177,7 +179,7 @@ for g_name in group_names:
         X_train.append(d_tr_ - np.mean(X_intercepts[-1]))
         X_test.append(d_te_ - np.mean(X_intercepts[-1]))
 
-
+# np.shape(d_tr_)
 # np.shape(X_train)
 # np.shape(data['control'][i_s][n_examples_tr:, :, :])
 
@@ -293,22 +295,25 @@ def compute_isc_stats(iscs):
     for j, g_name_j in enumerate(group_names):
         if i <= j:
             isc_ = np.mean(iscs[g_name_i][g_name_j], axis=1)
+            # isc_ = iscs[g_name_i][g_name_j]
             mu_, se_ = compute_stats(isc_)
             mu[f'{g_name_i}-{g_name_j}'] = mu_
             se[f'{g_name_i}-{g_name_j}'] = se_
     return mu, se
 
 
+np.shape(sisc[g_name_i][g_name_j])
+
 '''Temporal ISC'''
 n_se = 1
 
 mu, se = compute_isc_stats(sisc)
+
 sort_ids = np.argsort(mu['control-control'])[::-1]
 
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
 for i, key in enumerate(mu.keys()):
-    print(key)
-    ax.errorbar(x=range(len(mu[key])), y=mu[key][sort_ids],
+    ax.errorbar(x=range(len()), y=mu[key][sort_ids],
                 yerr=se[key][sort_ids]*n_se, label=f'{key}')
 ax.legend()
 ax.set_xlabel('Components (ordered by ISC value)')
@@ -322,7 +327,10 @@ dabest_data = dabest.load(
     data=df, idx=list(mu.keys()),
     # paired=True, id_col='ids',
 )
-dabest_data.mean_diff.plot(swarm_label='Temporal ISC', fig_size=(7, 4))
+dabest_data.mean_diff.plot(
+    swarm_label='Temporal ISC', fig_size=(7, 4),
+    # swarm_ylim=[.55, 1], contrast_ylim=[-.2, .2]
+)
 # dabest_data.mean_diff.statistical_tests
 
 
@@ -344,5 +352,8 @@ dabest_data = dabest.load(
     data=df, idx=list(mu.keys()),
     # paired=True, id_col='ids',
 )
-dabest_data.mean_diff.plot(swarm_label='Spatial ISC', fig_size=(7, 4))
+dabest_data.mean_diff.plot(
+    swarm_label='Spatial ISC', fig_size=(7, 4),
+    # swarm_ylim=[.3, 1], contrast_ylim=[-.25, .25]
+)
 # dabest_data.mean_diff.statistical_tests
