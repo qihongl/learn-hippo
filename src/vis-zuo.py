@@ -32,30 +32,27 @@ from brainiak.funcalign.srm import SRM
 sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-# exp_name = 'penalty-fixed-discrete-simple_'
-exp_name = 'penalty-random-continuous'
-# exp_name = 'penalty-fixed-discrete-simple_'
-# subj_ids = np.arange(10)
-subj_ids = np.arange(6)
+# exp_name = 'penalty-random-continuous'
+# subj_ids = np.arange(6)
+exp_name = 'penalty-fixed-discrete-simple_'
+subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
 
-# supervised_epoch = 600
-# epoch_load = 900
-# learning_rate = 5e-4
-supervised_epoch = 600
-epoch_load = 1000
-learning_rate = 7e-4
+supervised_epoch = 300
+epoch_load = 600
+learning_rate = 1e-3
 
-n_param = 16
 n_branch = 3
+n_param = 16
 enc_size = 16
-n_event_remember = 3
+n_event_remember = 2
+def_prob = None
 
 n_hidden = 194
 n_hidden_dec = 128
 eta = .1
 
-penalty_random = 1
+penalty_random = 0
 # testing param, ortho to the training directory
 penalty_discrete = 1
 penalty_onehot = 0
@@ -71,7 +68,7 @@ p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 pad_len_test = 0
-penalty_test = 2
+penalty_test = 4
 
 n_examples_test = 256
 fix_cond = 'RM'
@@ -288,43 +285,52 @@ for i, g_name_i in enumerate(group_names):
                 tisc[g_name_i][g_name_j])
 
 
-def compute_isc_stats(iscs):
+def compute_isc_stats(iscs, average_over_subjs=False):
     mu, se = {}, {}
     # for i, g_name_i in enumerate(group_names):
     i, g_name_i = 0, 'control'
     for j, g_name_j in enumerate(group_names):
         if i <= j:
-            isc_ = np.mean(iscs[g_name_i][g_name_j], axis=1)
-            # isc_ = iscs[g_name_i][g_name_j]
+            if average_over_subjs:
+                isc_ = np.mean(iscs[g_name_i][g_name_j], axis=1)
+            else:
+                # isc_ = np.mean(iscs[g_name_i][g_name_j], axis=2)
+                isc_ = iscs[g_name_i][g_name_j]
             mu_, se_ = compute_stats(isc_)
             mu[f'{g_name_i}-{g_name_j}'] = mu_
             se[f'{g_name_i}-{g_name_j}'] = se_
     return mu, se
 
 
-np.shape(sisc[g_name_i][g_name_j])
-
 '''Temporal ISC'''
 n_se = 1
 
-mu, se = compute_isc_stats(sisc)
+mu_tisc, se_tisc = compute_isc_stats(sisc)
+np.shape(mu_tisc)
 
-sort_ids = np.argsort(mu['control-control'])[::-1]
+# np.shape(sisc[g_name_i][g_name_j])
+# np.shape(sisc[f'{g_name_i}'][f'{g_name_j}'])
+# np.shape()
+# np.shape(mu_tisc['control-control'])
+# sort_ids = np.argsort(mu_tisc['control-control'])[::-1]
+sort_ids = np.argsort(np.mean(mu_tisc['control-control'], axis=0))[::-1]
 
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
-for i, key in enumerate(mu.keys()):
-    ax.errorbar(x=range(len()), y=mu[key][sort_ids],
-                yerr=se[key][sort_ids]*n_se, label=f'{key}')
+for i, key in enumerate(mu_tisc.keys()):
+    mu_, se_ = compute_stats(mu_tisc[key])
+    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids]*n_se,
+                label=f'{key}')
 ax.legend()
 ax.set_xlabel('Components (ordered by ISC value)')
 ax.set_ylabel('Temporal ISC')
 sns.despine()
 
 
-df = pd.DataFrame(mu)
-df['ids'] = np.arange(dim_srm)
+mu_sub_ij_tisc = {k: np.mean(mu_tisc[k], axis=1) for k in mu_tisc.keys()}
+df = pd.DataFrame(mu_sub_ij_tisc)
+# df['ids'] = np.arange(dim_srm)
 dabest_data = dabest.load(
-    data=df, idx=list(mu.keys()),
+    data=df, idx=list(mu_sub_ij_tisc.keys()),
     # paired=True, id_col='ids',
 )
 dabest_data.mean_diff.plot(
@@ -335,21 +341,27 @@ dabest_data.mean_diff.plot(
 
 
 '''Spatial ISC'''
-mu, se = compute_isc_stats(tisc)
+mu_sisc, se_sisc = compute_isc_stats(tisc)
+
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
-for i, key in enumerate(mu.keys()):
+for i, key in enumerate(mu_sisc.keys()):
     print(key)
-    ax.errorbar(x=range(len(mu[key])), y=mu[key],
-                yerr=se[key]*n_se, label=f'{key}')
+    np.shape(mu_sisc[key])
+    mu_, se_ = compute_stats(mu_sisc[key])
+    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_*n_se, label=f'{key}')
+    # ax.errorbar(x=range(len(mu_sisc[key])), y=mu_sisc[key],
+    #             yerr=se_sisc[key]*n_se, label=f'{key}')
 ax.legend()
 ax.set_xlabel('Time')
 ax.set_ylabel('Spatial ISC')
 sns.despine()
 
-df = pd.DataFrame(mu)
-df['ids'] = np.arange(n_param)
+mu_sub_ij_sisc = {k: np.mean(mu_sisc[k], axis=1) for k in mu_sisc.keys()}
+
+df = pd.DataFrame(mu_sub_ij_sisc)
+# df['ids'] = np.arange(n_param)
 dabest_data = dabest.load(
-    data=df, idx=list(mu.keys()),
+    data=df, idx=list(mu_sub_ij_sisc.keys()),
     # paired=True, id_col='ids',
 )
 dabest_data.mean_diff.plot(
