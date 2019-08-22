@@ -6,8 +6,8 @@ import pandas as pd
 import dabest
 
 from collections import defaultdict
-from itertools import product
-from scipy.stats import pearsonr
+# from itertools import product
+# from scipy.stats import pearsonr
 from task import SequenceLearning
 from utils.params import P
 from utils.constants import TZ_COND_DICT
@@ -23,7 +23,7 @@ from analysis import compute_acc, compute_dk, compute_stats, \
 # from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
 #     plot_time_course_for_all_conds
 from matplotlib.ticker import FormatStrFormatter
-from sklearn.decomposition.pca import PCA
+# from sklearn.decomposition.pca import PCA
 from itertools import combinations
 from scipy.special import comb
 from brainiak.funcalign.srm import SRM
@@ -76,8 +76,10 @@ scramble = False
 
 srt_dict = {'control': None, 'patient': np.arange(n_param)}
 group_names = list(srt_dict.keys())
-CM = {gn: [None] * n_subjs for gn in group_names}
-DA = {gn: [None] * n_subjs for gn in group_names}
+# CM = {gn: [None] * n_subjs for gn in group_names}
+# DA = {gn: [None] * n_subjs for gn in group_names}
+CM = defaultdict(list)
+DA = defaultdict(list)
 
 for g_name, srt in srt_dict.items():
     print(f'\ngroup_name: {g_name}')
@@ -146,8 +148,8 @@ for g_name, srt in srt_dict.items():
         cond_ids = get_trial_cond_ids(log_cond)
         activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
         [C_, H_, M_, CM_, DA_, V_] = activity_
-        CM[g_name][subj_id] = CM_
-        DA[g_name][subj_id] = DA_
+        CM[g_name].append(CM_)
+        DA[g_name].append(DA_)
         # [inpt, leak, comp] = ctrl_param_
 
 '''analysis'''
@@ -160,25 +162,19 @@ n_examples_te = n_examples-n_examples_tr
 # data = CM
 data = DA
 
-for g_name in group_names:
-    print(f'\n{g_name}: {np.shape(data[g_name])}', end='')
-
 # reshape data to fit SRM
 _, _, nTR, nH = np.shape(data[g_name])
 X_train = []
 X_test = []
 X_intercepts = []
 for g_name in group_names:
+    print(f'\n{g_name}: {np.shape(data[g_name])}', end='')
     for subj_id in subj_ids:
         d_tr_ = data[g_name][subj_id][:n_examples_tr, :, :].reshape((-1, nH)).T
         d_te_ = data[g_name][subj_id][n_examples_tr:, :, :].reshape((-1, nH)).T
         X_intercepts.append(np.mean(d_tr_, axis=1))
         X_train.append(d_tr_ - np.mean(X_intercepts[-1]))
         X_test.append(d_te_ - np.mean(X_intercepts[-1]))
-
-# np.shape(d_tr_)
-# np.shape(X_train)
-# np.shape(data['control'][i_s][n_examples_tr:, :, :])
 
 srm = SRM(features=dim_srm)
 srm.fit(X_train)
@@ -191,29 +187,11 @@ X_test_srm = {gn: None for gn in group_names}
 X_test_srm['control'] = X_test_srm_[:n_subjs]
 X_test_srm['patient'] = X_test_srm_[n_subjs:]
 
-np.shape(X_test_srm_)
-np.shape(X_test_srm['patient'])
-np.shape(X_test_srm['control'])
-# k = 0
-# np.shape(X_test_srm['patient'][:, :, k, :])
 
-
-def prealloc_dict():
-    dict_ = defaultdict(dict)
-    for i, g_name_i in enumerate(group_names):
-        for j, g_name_j in enumerate(group_names):
-            if i <= j:
-                dict_[g_name_i][g_name_j] = [None] * n_examples_te
-    return dict_
-
-
+# compute t/s ISC
 n_subj_pairs = int(comb(n_subjs, 2))
-sisc = prealloc_dict()
-tisc = prealloc_dict()
-
-# print(sisc.keys())
-# print(sisc['control'].keys())
-# print(sisc['patient'].keys())
+sisc = defaultdict(list)
+tisc = defaultdict(list)
 
 # with-condition
 for g_name in group_names:
@@ -236,8 +214,8 @@ for g_name in group_names:
             sisc_g_k_diag[i_comb] = np.diag(sisc_g_k_ij)
             tisc_g_k_diag[i_comb] = np.diag(tisc_g_k_ij)
         # collect the k-th example
-        sisc[g_name][g_name][k] = sisc_g_k_diag
-        tisc[g_name][g_name][k] = tisc_g_k_diag
+        sisc[g_name, g_name].append(sisc_g_k_diag)
+        tisc[g_name, g_name].append(tisc_g_k_diag)
 
 
 # between the two condition
@@ -266,8 +244,8 @@ for k in range(n_examples_te):
         sisc_g_k_diag[i_comb] = np.diag(sisc_g_k_ij) / 2
         tisc_g_k_diag[i_comb] = np.diag(tisc_g_k_ij) / 2
     # collect the k-th example
-    sisc['control']['patient'][k] = sisc_g_k_diag
-    tisc['control']['patient'][k] = tisc_g_k_diag
+    sisc['control', 'patient'].append(sisc_g_k_diag)
+    tisc['control', 'patient'].append(tisc_g_k_diag)
 
 
 '''compute stats'''
@@ -277,12 +255,12 @@ tisc_ddict = {}
 for i, g_name_i in enumerate(group_names):
     for j, g_name_j in enumerate(group_names):
         if i <= j:
-            msg = f'{g_name_i}-{g_name_j}: {np.shape(sisc[g_name_i][g_name_j])}'
+            msg = f'{g_name_i}-{g_name_j}: {np.shape(sisc[g_name_i,g_name_j])}'
             print(msg)
             sisc_ddict[f'{g_name_i}-{g_name_j}'] = np.ravel(
-                sisc[g_name_i][g_name_j])
+                sisc[g_name_i, g_name_j])
             tisc_ddict[f'{g_name_i}-{g_name_j}'] = np.ravel(
-                tisc[g_name_i][g_name_j])
+                tisc[g_name_i, g_name_j])
 
 
 def compute_isc_stats(iscs, average_over_subjs=False):
@@ -292,10 +270,10 @@ def compute_isc_stats(iscs, average_over_subjs=False):
     for j, g_name_j in enumerate(group_names):
         if i <= j:
             if average_over_subjs:
-                isc_ = np.mean(iscs[g_name_i][g_name_j], axis=1)
+                isc_ = np.mean(iscs[g_name_i, g_name_j], axis=1)
             else:
                 # isc_ = np.mean(iscs[g_name_i][g_name_j], axis=2)
-                isc_ = iscs[g_name_i][g_name_j]
+                isc_ = iscs[g_name_i, g_name_j]
             mu_, se_ = compute_stats(isc_)
             mu[f'{g_name_i}-{g_name_j}'] = mu_
             se[f'{g_name_i}-{g_name_j}'] = se_
@@ -304,15 +282,7 @@ def compute_isc_stats(iscs, average_over_subjs=False):
 
 '''Temporal ISC'''
 n_se = 1
-
 mu_tisc, se_tisc = compute_isc_stats(sisc)
-np.shape(mu_tisc)
-
-# np.shape(sisc[g_name_i][g_name_j])
-# np.shape(sisc[f'{g_name_i}'][f'{g_name_j}'])
-# np.shape()
-# np.shape(mu_tisc['control-control'])
-# sort_ids = np.argsort(mu_tisc['control-control'])[::-1]
 sort_ids = np.argsort(np.mean(mu_tisc['control-control'], axis=0))[::-1]
 
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
@@ -349,8 +319,6 @@ for i, key in enumerate(mu_sisc.keys()):
     np.shape(mu_sisc[key])
     mu_, se_ = compute_stats(mu_sisc[key])
     ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_*n_se, label=f'{key}')
-    # ax.errorbar(x=range(len(mu_sisc[key])), y=mu_sisc[key],
-    #             yerr=se_sisc[key]*n_se, label=f'{key}')
 ax.legend()
 ax.set_xlabel('Time')
 ax.set_ylabel('Spatial ISC')
@@ -359,7 +327,7 @@ sns.despine()
 mu_sub_ij_sisc = {k: np.mean(mu_sisc[k], axis=1) for k in mu_sisc.keys()}
 
 df = pd.DataFrame(mu_sub_ij_sisc)
-# df['ids'] = np.arange(n_param)
+# df['ids'] = np.arange(n_subj)
 dabest_data = dabest.load(
     data=df, idx=list(mu_sub_ij_sisc.keys()),
     # paired=True, id_col='ids',
