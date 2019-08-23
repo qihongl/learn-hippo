@@ -106,7 +106,7 @@ class LCALSTM(nn.Module):
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, leak_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, leak_t, comp_t, inps_t)
+        m_t = self.recall(c_t, 0, comp_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
