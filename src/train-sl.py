@@ -10,10 +10,11 @@ from models.LCALSTM_v9 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
-from utils.io import build_log_path, save_ckpt, save_all_params
+from vis import plot_pred_acc_full
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from vis import plot_pred_acc_full
+from utils.io import build_log_path, save_ckpt, save_all_params,  \
+    pickle_save_dict, get_test_data_dir, get_test_data_fname
 
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
@@ -250,3 +251,33 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+
+'''eval the model'''
+seed_test = 0
+pad_len_test = 0
+n_examples_test = 256
+fix_cond = None
+slience_recall_time = None
+scramble = False
+epoch_load = epoch_id+1
+
+np.random.seed(seed_test)
+torch.manual_seed(seed_test)
+
+for fix_penalty in np.arange(0, penalty+1, 2):
+    [results, metrics, XY] = run_tz(
+        agent, optimizer, task, p, n_examples_test,
+        supervised=False, learning=False, get_data=True,
+        fix_cond=fix_cond, fix_penalty=fix_penalty,
+        slience_recall_time=slience_recall_time, scramble=scramble
+    )
+    # save the data
+    test_params = [fix_penalty, pad_len_test, slience_recall_time]
+    test_data_dir, _ = get_test_data_dir(
+        log_subpath, epoch_load, test_params)
+    test_data_fname = get_test_data_fname(
+        n_examples_test, fix_cond, scramble)
+    test_data_dict = {'results': results, 'metrics': metrics, 'XY': XY}
+    fpath = os.path.join(test_data_dir, test_data_fname)
+    pickle_save_dict(test_data_dict, fpath)
