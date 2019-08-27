@@ -266,6 +266,11 @@ np.random.seed(seed_test)
 torch.manual_seed(seed_test)
 
 for fix_penalty in np.arange(0, penalty+1, 2):
+    task = SequenceLearning(
+        n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
+        p_rm_ob_enc=0, p_rm_ob_rcl=0,
+        similarity_cap=similarity_cap
+    )
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,

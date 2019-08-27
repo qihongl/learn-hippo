@@ -15,9 +15,10 @@ from models.initializer import initialize_weights
 # number of vector signal (lstm gates)
 N_VSIG = 3
 # number of scalar signal (sigma)
-N_SSIG = 3
+N_SSIG = 2
 # the ordering in the cache
-scalar_signal_names = ['input strength', 'leak', 'competition']
+# scalar_signal_names = ['input strength', 'leak', 'competition']
+scalar_signal_names = ['input strength', 'competition']
 vector_signal_names = ['f', 'i', 'o']
 #
 sigmoid = nn.Sigmoid()
@@ -47,7 +48,7 @@ class LCALSTM(nn.Module):
         self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
         self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
-        self.dnd = EM(dict_len, rnn_hidden_dim, kernel)
+        self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
@@ -105,8 +106,8 @@ class LCALSTM(nn.Module):
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
-        [inps_t, leak_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, 0, comp_t, inps_t)
+        [inps_t, comp_t] = torch.squeeze(phi_t)
+        m_t = self.recall(c_t, comp_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
@@ -119,13 +120,13 @@ class LCALSTM(nn.Module):
         h_t = h_t.view(1, h_t.size(0), -1)
         cm_t = cm_t.view(1, cm_t.size(0), -1)
         # scache results
-        scalar_signal = [inps_t, leak_t, comp_t]
+        scalar_signal = [inps_t, 0, comp_t]
         vector_signal = [f_t, i_t, o_t]
-        misc = [h_t, m_t, cm_t, dec_act_t, self.dnd.get_vals()]
+        misc = [h_t, m_t, cm_t, dec_act_t, self.em.get_vals()]
         cache = [vector_signal, scalar_signal, misc]
         return pi_a_t, value_t, (h_t, cm_t), cache
 
-    def recall(self, c_t, leak_t, comp_t, inps_t):
+    def recall(self, c_t, comp_t, inps_t):
         """run the "pattern completion" procedure
 
         Parameters
@@ -145,18 +146,18 @@ class LCALSTM(nn.Module):
             updated cell state, recalled item
 
         """
-        if self.dnd.retrieval_off:
+        if self.em.retrieval_off:
             m_t = torch.zeros_like(c_t)
         else:
             # retrieve memory
-            m_t = self.dnd.get_memory(
-                c_t, leak=leak_t, comp=comp_t, w_input=inps_t
+            m_t = self.em.get_memory(
+                c_t, leak=0, comp=comp_t, w_input=inps_t
             )
         return m_t
 
     def encode(self, cm_t):
-        if not self.dnd.encoding_off:
-            self.dnd.save_memory(cm_t)
+        if not self.em.encoding_off:
+            self.em.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.
@@ -180,7 +181,7 @@ class LCALSTM(nn.Module):
     def add_simple_lures(self, n_lures=1):
         lures = [sample_random_vector(self.rnn_hidden_dim)
                  for _ in range(n_lures)]
-        self.dnd.inject_memories(lures)
+        self.em.inject_memories(lures)
 
     def init_em_config(self):
         self.flush_episodic_memory()
@@ -188,19 +189,19 @@ class LCALSTM(nn.Module):
         self.retrieval_off()
 
     def flush_episodic_memory(self):
-        self.dnd.flush()
+        self.em.flush()
 
     def encoding_off(self):
-        self.dnd.encoding_off = True
+        self.em.encoding_off = True
 
     def retrieval_off(self):
-        self.dnd.retrieval_off = True
+        self.em.retrieval_off = True
 
     def encoding_on(self):
-        self.dnd.encoding_off = False
+        self.em.encoding_off = False
 
     def retrieval_on(self):
-        self.dnd.retrieval_off = False
+        self.em.retrieval_off = False
 
 
 def sample_random_vector(n_dim, scale=.1):
