@@ -92,7 +92,6 @@ class SequenceLearning():
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
             )
-
             # compute similarity(event_i vs. event_j) for j in prev-k-events
             _, Y_i_int = misc_i
             prev_sims = np.array([compute_event_similarity(Y_j_int, Y_i_int)
@@ -178,7 +177,7 @@ def _to_xy(sample_):
 '''how to use'''
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    # from analysis import compute_event_similarity_matrix
+    from task.utils import scramble_array
 
     n_param, n_branch = 6, 3
     n_parts = 2
@@ -198,6 +197,12 @@ if __name__ == "__main__":
     # get a sample
     i = 0
     X_i, Y_i = X[i], Y[i]
+
+    # # option 1: scramble observations
+    # X_i[:, :task.k_dim + task.v_dim] = scramble_array(
+    #     X_i[:, :task.k_dim+task.v_dim])
+    # # option 2: scramble observations + queries
+    # [X_i, Y_i] = scramble_array_list([X_i, Y_i])
 
     # compute time info
     T_total = np.shape(X_i)[0]
