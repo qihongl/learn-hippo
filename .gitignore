@@ -109,3 +109,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 src/scratch.py
+src/vis-group.py
