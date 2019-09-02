@@ -4,6 +4,11 @@ from utils.constants import TZ_COND_DICT
 from analysis import compute_stats
 
 
+def remove_none_from_list(input_list):
+    updated_list = [item for item in input_list if item is not None]
+    return updated_list
+
+
 def trim_data(n_examples_skip, data_list):
     return [data[n_examples_skip:] for data in data_list]
 
@@ -45,7 +50,7 @@ def process_cache(log_cache, T_total, p):
             [h_t, m_t, cm_t, des_act_t, V_i] = misc
             # cache data to np array
             inpt[i, t] = to_sqnp(inpt_it)
-            leak[i, t] = to_sqnp(leak_it)
+            leak[i, t] = leak_it
             comp[i, t] = to_sqnp(comp_it)
             H[i, t, :] = to_sqnp(h_t)
             M[i, t, :] = to_sqnp(m_t)

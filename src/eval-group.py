@@ -11,22 +11,19 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname
 
 log_root = '../log/'
-# exp_name = 'penalty-fixed-discrete-simple-smalllr'
-# exp_name = 'penalty-random-continuous'
-exp_name = 'penalty-random-continuous'
+# exp_name = 'penalty-random-discrete-highdp-'
+exp_name = 'penalty-fixed-discrete-leak0'
 
 seed = 0
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
-# supervised_epoch = 600
-# epoch_load = 900
-# learning_rate = 5e-4
 
-n_branch = 3
+n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 3
+def_prob = None
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -53,17 +50,15 @@ n_examples_test = 256
 similarity_cap_test = .75
 
 '''loop over conditions for testing'''
-# slience_recall_times = [range(n_param), None]
-slience_recall_times = [range(n_param)]
+slience_recall_times = [range(n_param), None]
+# slience_recall_times = [range(n_param)]
 # slience_recall_times = [None]
 
 # subj_id = 0
-subj_ids = np.arange(6)
+subj_ids = np.arange(10)
 # subj_ids = [0, 1]
-penaltys_train = [4]
-# penaltys_test = [2]
-# penaltys_train = [0, 2, 4]
-penaltys_test = [0, 2, 4]
+# penaltys_train = [4]
+penaltys_train = [0, 4]
 
 all_conds = ['RM', 'DM']
 # all_conds = ['DM']
@@ -77,14 +72,15 @@ for slience_recall_time in slience_recall_times:
             f'\nsubj : {subj_id}, penalty : {penalty_train}, cond : {fix_cond}')
         print(f'slience_recall_time : {slience_recall_time}')
 
-        penaltys_test_ = [fp for fp in penaltys_test if fp <= penalty_train]
-        # penaltys_test_ = [penalty_train]
+        # penaltys_test_ = [fp for fp in penaltys_train if fp <= penalty_train]
+        penaltys_test_ = [penalty_train]
         for fix_penalty in penaltys_test_:
             print(f'penalty_test : {fix_penalty}')
 
             p = P(
                 exp_name=exp_name, sup_epoch=supervised_epoch,
                 n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
+                def_prob=def_prob,
                 enc_size=enc_size, n_event_remember=n_event_remember,
                 penalty=penalty_train, penalty_random=penalty_random,
                 penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,

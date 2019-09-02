@@ -374,7 +374,8 @@ f, ax = plt.subplots(1, 1, figsize=(7, 4))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
-for i_c, cond in enumerate(cond_ids.keys()):
+for i_c, cond in enumerate(['RM', 'DM']):
+    # for i_c, cond in enumerate(cond_ids.keys()):
     if i_c >= i_rc:
         ax.errorbar(
             x=range(T_part),
@@ -386,6 +387,7 @@ for i_c, cond in enumerate(cond_ids.keys()):
 
 # ax.legend(bbox_to_anchor=(1, 1))
 ax.legend()
+ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel('Time')
 ax.set_ylabel('Linear Correlation')
@@ -416,7 +418,8 @@ f, ax = plt.subplots(1, 1, figsize=(9, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
-for i_c, cond in enumerate(cond_ids.keys()):
+# for i_c, cond in enumerate(cond_ids.keys()):
+for i_c, cond in enumerate(['RM', 'DM']):
     if i_c >= i_rc:
         ax.errorbar(
             x=range(dim_srm),
@@ -436,7 +439,7 @@ f.tight_layout()
 
 
 '''plot temporal isc - sliding window'''
-n_se = 3
+n_se = 2
 # compute stats
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
@@ -453,7 +456,8 @@ f, ax = plt.subplots(1, 1, figsize=(6, 4))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
-for i_c, cond in enumerate(cond_ids.keys()):
+for i_c, cond in enumerate(['RM', 'DM']):
+    # for i_c, cond in enumerate(cond_ids.keys()):
     print(i_c, cond)
     if i_c >= i_rc:
         ax.errorbar(
@@ -621,7 +625,7 @@ iris_dabest = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
 iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(4, 3),
+    swarm_label='Linear correlation', fig_size=(4, 3)
 )
 
 
