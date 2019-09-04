@@ -16,6 +16,8 @@ def run_tz(
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
+    switch_trainable_weights(agent, supervised)
+
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
@@ -247,3 +249,22 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
         # option 2: scramble observations + queries
         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
     return X_i, Y_i
+
+
+def freeze_weights(layer):
+    layer.weight.requires_grad = False
+    layer.bias.requires_grad = False
+
+
+def unfreeze_weights(layer):
+    layer.weight.requires_grad = True
+    layer.bias.requires_grad = True
+
+
+def switch_trainable_weights(agent, supervised):
+    if not supervised:
+        freeze_weights(agent.i2h)
+        # print('freeze weights agent.i2h')
+    else:
+        unfreeze_weights(agent.i2h)
+        # print('unfreeze weights agent.i2h')
