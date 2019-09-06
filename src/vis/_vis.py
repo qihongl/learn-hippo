@@ -13,7 +13,7 @@ def plot_pred_acc_full(
     f, ax,
     alpha=.3,
     title='Performance on the TZ task',
-    add_legend=True, legend_loc=(.98, .7),
+    add_legend=True, legend_loc=(.98, .7), show_ylabel=True,
 
 ):
     """plot the preformance on the tz task
@@ -60,9 +60,10 @@ def plot_pred_acc_full(
     # plot observation baseline
     # ax.plot(baseline, color='grey', ls='--')
     # add labels
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Probability')
     ax.set_title(title)
+    ax.set_xlabel('Time')
+    if show_ylabel:
+        ax.set_ylabel('Probability')
     # xyticks
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
@@ -79,14 +80,13 @@ def plot_pred_acc_rcl(
     f, ax,
     alpha=.3,
     title='Performance on the RNR task',
-    baseline_on=True,
-    legend_on=False,
+    # baseline_on=True,
+    show_ylabel=True,
+    add_legend=True,
+    legend_loc=(.98, .6)
 ):
-    if baseline_on:
-        legend_lab = ['baseline', 'uncertain', 'error', 'correct']
-        baseline = get_baseline(p.env.n_param, 1 / p.env.n_branch)[1:]
-    else:
-        legend_lab = ['uncertain', 'error', 'correct']
+
+    legend_lab = ['uncertain', 'error', 'correct']
     c_pal = sns.color_palette('colorblind', n_colors=4)
     total_event_len = np.shape(pa_mu)[0]
     x_ = range(total_event_len)
@@ -100,19 +100,17 @@ def plot_pred_acc_rcl(
     # plot error region
     ax.fill_between(x_, pa_or_dk_mu, ones, alpha=alpha, color=c_pal[3])
 
-    # plot observation baseline
-    if baseline_on:
-        ax.plot(baseline, color='grey', ls='--')
     # add labels
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Probability')
     ax.set_title(title)
+    ax.set_xlabel('Time')
+    if show_ylabel:
+        ax.set_ylabel('Probability')
     # xyticks
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
     # add legend
-    if legend_on:
-        f.legend(legend_lab, frameon=False, bbox_to_anchor=(.98, .6))
+    if add_legend:
+        f.legend(legend_lab, frameon=True, bbox_to_anchor=legend_loc)
     sns.despine()
     f.tight_layout()
 
