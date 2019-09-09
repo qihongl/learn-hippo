@@ -16,8 +16,7 @@ def run_tz(
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
-    switch_trainable_weights(agent, supervised)
-
+    # switch_trainable_weights(agent, supervised)
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
