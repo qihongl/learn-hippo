@@ -250,24 +250,24 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
     return X_i, Y_i
 
 
-def freeze_weights(layer):
-    layer.weight.requires_grad = False
-    layer.bias.requires_grad = False
-
-
-def unfreeze_weights(layer):
-    layer.weight.requires_grad = True
-    layer.bias.requires_grad = True
-
-
-def switch_trainable_weights(agent, supervised):
-    if not supervised:
-        freeze_weights(agent.i2h)
-        freeze_weights(agent.h2h)
-        # print('freeze weights agent.i2h')
-        # print('freeze weights agent.h2h')
-    else:
-        unfreeze_weights(agent.i2h)
-        unfreeze_weights(agent.h2h)
-        # print('unfreeze weights agent.i2h')
-        # print('unfreeze weights agent.h2h')
+# def freeze_weights(layer):
+#     layer.weight.requires_grad = False
+#     layer.bias.requires_grad = False
+#
+#
+# def unfreeze_weights(layer):
+#     layer.weight.requires_grad = True
+#     layer.bias.requires_grad = True
+#
+#
+# def switch_trainable_weights(agent, supervised):
+#     if not supervised:
+#         freeze_weights(agent.i2h)
+#         freeze_weights(agent.h2h)
+#         # print('freeze weights agent.i2h')
+#         # print('freeze weights agent.h2h')
+#     else:
+#         unfreeze_weights(agent.i2h)
+#         unfreeze_weights(agent.h2h)
+#         # print('unfreeze weights agent.i2h')
+#         # print('unfreeze weights agent.h2h')
