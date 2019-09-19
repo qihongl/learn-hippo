@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -t 8:55:00
+#SBATCH -t 23:55:00
 #SBATCH -c 1
-#SBATCH --mem-per-cpu 8G
+#SBATCH --mem-per-cpu 4G
 
 #SBATCH --job-name=lcarnn
 #SBATCH --mail-type=FAIL
@@ -33,6 +33,9 @@ echo $(date)
 #echo "penalty_random $18"
 #echo "penalty_discrete $19"
 #echo "penalty_onehot $20"
+#echo "normalize_return $21"
+#echo "def_prob $22"
+
 
 srun python -u train-sl.py --exp_name ${1} \
     --subj_id ${2} --penalty ${3} --n_param ${4} --n_branch ${5} \
@@ -40,7 +43,8 @@ srun python -u train-sl.py --exp_name ${1} \
     --n_epoch ${10} --sup_epoch ${11} \
     --p_rm_ob_enc ${12} --p_rm_ob_rcl ${13} --n_event_remember ${14} \
     --pad_len ${15} --enc_size ${16} --similarity_cap ${17} \
-    --penalty_random ${18} --penalty_discrete ${19} --penalty_onehot ${20}\
+    --penalty_random ${18} --penalty_discrete ${19} --penalty_onehot ${20} \
+    --normalize_return ${21} --def_prob ${22} \
     --log_root $DATADIR
 
 echo $(date)

@@ -82,7 +82,7 @@ log_root = args.log_root
 
 
 '''init'''
-seed_val = subj_id + 777
+seed_val = subj_id
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
