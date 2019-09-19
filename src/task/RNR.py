@@ -3,7 +3,7 @@ from utils.utils import to_pth
 from task.StimSampler import StimSampler
 from utils.constants import RNR_COND_DICT
 from itertools import combinations
-from scipy.misc import comb
+from scipy.special import comb
 # import matplotlib.pyplot as plt
 
 
