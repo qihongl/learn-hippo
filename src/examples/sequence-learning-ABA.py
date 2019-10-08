@@ -31,7 +31,7 @@ X_ab, Y_ab = X[i], Y[i]
 
 cmap = 'bone'
 f, axes = plt.subplots(
-    1, 2, figsize=(6, 12),
+    1, 2, figsize=(6, 12), sharey=True,
     gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
 )
 axes[0].imshow(X_ab, cmap=cmap, vmin=0, vmax=1)
@@ -50,5 +50,5 @@ yticks = [eb-n_param//2 for eb in np.arange(0, T_total+1, n_param)[1:]]
 yticklabels = ['A', 'B'] * n_parts
 axes[0].set_yticks(yticks)
 axes[0].set_yticklabels(yticklabels)
-
+f.tight_layout()
 f.savefig(f'examples/figs/seq-learn-ABA.png', dpi=100, bbox_inches='tight')
