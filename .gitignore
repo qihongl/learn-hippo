@@ -110,3 +110,4 @@ venv.bak/
 .mypy_cache/
 src/scratch.py
 src/vis-group.py
+src/task/EpisodicBandit.py
