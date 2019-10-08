@@ -25,24 +25,25 @@ from itertools import combinations
 from scipy.special import comb
 # plt.switch_backend('agg')
 
-sns.set(style='white', palette='colorblind', context='talk')
+sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-exp_name = 'penalty-fixed-discrete-simple_'
+# exp_name = 'penalty-fixed-discrete-simple_'
+exp_name = 'penalty-random-discrete'
 
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
 all_conds = ['RM', 'DM', 'NM']
 
-# supervised_epoch = 600
-# epoch_load = 900
-# learning_rate = 5e-4
-supervised_epoch = 300
-epoch_load = 600
-learning_rate = 1e-3
+supervised_epoch = 600
+epoch_load = 1000
+learning_rate = 7e-4
+# supervised_epoch = 300
+# epoch_load = 600
+# learning_rate = 1e-3
 
 n_param = 16
-n_branch = 3
+n_branch = 4
 enc_size = 16
 n_event_remember = 2
 
@@ -356,7 +357,7 @@ color_id_pick = [0, 1, 2, 3, 4, 7]
 c_pal = [c_pal[color_id] for color_id in color_id_pick]
 
 # compute stats
-n_se = 3
+n_se = 2
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 for ref_cond in cond_ids.keys():
@@ -370,7 +371,7 @@ for ref_cond in cond_ids.keys():
 
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(7, 4))
+f, ax = plt.subplots(1, 1, figsize=(6, 4))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
@@ -390,7 +391,7 @@ ax.legend()
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel('Time')
-ax.set_ylabel('Linear Correlation')
+ax.set_ylabel('Linear correlation')
 ax.set_title('Spatial inter-subject correlation')
 sns.despine()
 f.tight_layout()
@@ -399,7 +400,7 @@ f.tight_layout()
 '''plot temporal isc'''
 
 # compute stats
-n_se = 3
+n_se = 2
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 for ref_cond in cond_ids.keys():
@@ -471,7 +472,7 @@ ax.legend()
 # ax.axvline(T_part, color='red', linestyle='--', alpha=.5)
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel(f'Time (sliding window size = {win_size})')
-ax.set_ylabel('Linear Correlation')
+ax.set_ylabel('Linear correlation')
 ax.set_title('Temporal inter-subject correlation')
 sns.despine()
 f.tight_layout()
@@ -625,21 +626,38 @@ iris_dabest = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
 iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(4, 3)
+    swarm_label='Linear correlation', fig_size=(5, 4)
 )
 
-
-# xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
-# f, ax = plt.subplots(1, 1, figsize=(6, 4))
-# sns.swarmplot(data=[np.concatenate(r_val_sisc[cond]) for cond in has_memory_conds])
-# ax.axhline(0, color='grey', linestyle='--')
-# ax.set_xticks(range(len(xticklabels)))
-# ax.set_xticklabels(xticklabels)
-# ax.set_xlabel('Condition')
-# ax.set_ylabel('Linear Correlation')
-# ax.set_title('Correlation between recall and ISC change')
+# i_comb = 3
+# t = 1
+# rval_, pval_ = pearsonr(recall[i_comb, :, t], sisc_change_t[i_comb])
+# print(rval_, pval_)
+# f, ax = plt.subplots(1, 1, figsize=(5, 4))
+# sns.regplot(recall[i_comb, :, t], sisc_change_t[i_comb],
+#             marker='.', color=sns.color_palette('colorblind')[1], ax=ax)
+# ax.set_xlabel('Target memory activation')
+# ax.set_ylabel('ISC')
+# ax.set_title('r = %.2f' % (rval_))
 # sns.despine()
 # f.tight_layout()
+#
+#
+# f, ax = plt.subplots(1, 1, figsize=(5, 3))
+# # sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+# sns.swarmplot(data=np.mean(
+#     r_val_sisc['DM'], axis=-1), color=sns.color_palette('colorblind')[1])
+# # np.ravel(r_val_sisc[cond])
+# # sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+# ax.axhline(0, color='grey', linestyle='--')
+# ax.set_xticks(range(1))
+# ax.set_xticklabels(['RM-DM'])
+# # ax.set_xlabel('Condition')
+# ax.set_ylabel('Linear Correlation')
+# ax.set_title('Correlation: recall vs. spatial ISC change')
+# sns.despine()
+# f.tight_layout()
+
 
 '''plot t-isc'''
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
@@ -680,5 +698,5 @@ iris_dabest = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
 iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(4, 3),
+    swarm_label='Linear correlation', fig_size=(5, 4),
 )

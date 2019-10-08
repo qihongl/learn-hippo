@@ -35,15 +35,20 @@ sns.set(style='white', palette='colorblind', context='talk')
 log_root = '../log/'
 # exp_name = 'penalty-random-continuous'
 # subj_ids = np.arange(6)
-exp_name = 'penalty-fixed-discrete-simple_'
+# exp_name = 'penalty-fixed-discrete-simple_'
+exp_name = 'penalty-random-discrete'
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
 
-supervised_epoch = 300
-epoch_load = 600
-learning_rate = 1e-3
+supervised_epoch = 600
+epoch_load = 1000
+learning_rate = 7e-4
 
-n_branch = 3
+# supervised_epoch = 300
+# epoch_load = 600
+# learning_rate = 1e-3
+
+n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
@@ -309,7 +314,8 @@ dabest_data = dabest.load(
     paired=True, id_col='ids',
 )
 dabest_data.mean_diff.plot(
-    swarm_label='Temporal ISC', fig_size=(8, 9),
+    swarm_label='Temporal ISC', fig_size=(8, 8),
+    dpi=150,
     # raw_marker_size=5,
     # swarm_ylim=[.55, 1],
     # contrast_ylim=[-.28, .01]
@@ -341,6 +347,7 @@ dabest_data = dabest.load(
 )
 dabest_data.mean_diff.plot(
     swarm_label='Spatial ISC', fig_size=(8, 8),
+    dpi=150,
     # group_summaries='mean_sd',
     # raw_marker_size=5,
     # swarm_ylim=[.3, 1],

@@ -30,13 +30,18 @@ from sklearn.decomposition.pca import PCA
 
 warnings.filterwarnings("ignore")
 # plt.switch_backend('agg')
-sns.set(style='white', palette='colorblind', context='talk')
+sns.set(style='white', palette='colorblind', context='poster')
 
 all_conds = TZ_COND_DICT.values()
 
 log_root = '../log/'
-exp_name = 'penalty-fixed-discrete-leak0'
+# exp_name = 'penalty-fixed-discrete-simple_'
+# exp_name = 'penalty-random-discrete'
+exp_name = 'penalty-random-discrete'
 
+# supervised_epoch = 300
+# epoch_load = 600
+# learning_rate = 1e-3
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
@@ -66,16 +71,17 @@ pad_len_test = 0
 p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
-# slience_recall_time = None
-slience_recall_time = range(n_param)
+slience_recall_time = None
+# slience_recall_time = range(n_param)
 
 similarity_cap_test = .75
 n_examples_test = 256
 
+# subj_ids = [2, 3, 4, 5]
 subj_ids = np.arange(10)
 
-# penaltys_train = [0, 4]
 penaltys_train = [4]
+# penaltys_train = [4]
 
 
 n_subjs = len(subj_ids)
@@ -88,9 +94,10 @@ def prealloc_stats():
 
 
 for penalty_train in penaltys_train:
-    # penaltys_test_ = [fp for fp in penaltys_test if fp <= penalty_train]
-    penaltys_test_ = [penalty_train]
+    penaltys_test_ = np.arange(0, penalty_train+1, 2)
+    # penaltys_test_ = [penalty_train]
     for penalty_test in penaltys_test_:
+        # penalty_train, penalty_test = 0, 0
         print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
 
         acc_dict = prealloc_stats()
@@ -105,6 +112,11 @@ for penalty_train in penaltys_train:
         ma_cos_list = [None] * n_subjs
         tma_dm_p2_dict_bq = {qs: [None] * n_subjs for qs in DM_qsources}
         q_source_list = [None] * n_subjs
+        ms_lure_list = [None] * n_subjs
+        ms_targ_list = [None] * n_subjs
+        tpr_list = [None] * n_subjs
+        fpr_list = [None] * n_subjs
+        auc_list = [None] * n_subjs
 
         for i_s, subj_id in enumerate(subj_ids):
             np.random.seed(subj_id)
@@ -228,6 +240,39 @@ for penalty_train in penaltys_train:
             fig_path = os.path.join(fig_dir, f'tz-acc.png')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
+            '''plot behavioral performance - each cond separately, 2nd part'''
+
+            f, axes = plt.subplots(1, 3, figsize=(12, 4))
+            for i, cn in enumerate(['RM', 'DM', 'NM']):
+                Y_ = Y[cond_ids[cn], :]
+                dist_a_ = dist_a[cond_ids[cn], :]
+                # compute performance for this condition
+                acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
+                dk_mu = compute_dk(dist_a_)
+
+                if i == 0:
+                    add_legend = True
+                    show_ylabel = True
+                    legend_loc = (.33, .7)
+
+                else:
+                    add_legend = False
+                    show_ylabel = False
+
+                # plot
+                plot_pred_acc_rcl(
+                    acc_mu[T_part:], acc_er[T_part:],
+                    acc_mu[T_part:]+dk_mu[T_part:],
+                    p, f, axes[i],
+                    title=f'{cn}',
+                    add_legend=add_legend, legend_loc=legend_loc,
+                    show_ylabel=show_ylabel
+                )
+                # axes[i].set_ylabel()
+                axes[i].set_ylim([-.05, 1.05])
+            fig_path = os.path.join(fig_dir, f'tz-acc-horizontal.png')
+            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
             '''compare LCA params across conditions'''
             lca_param_names = ['input strength', 'competition']
             lca_param_dicts = [inpt_dict, comp_dict]
@@ -263,6 +308,30 @@ for penalty_train in penaltys_train:
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''compare LCA params across conditions'''
+            #
+            # for j, p_dict in enumerate(lca_param_dicts):
+            #     f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
+            #     for i, cn in enumerate(['RM', 'DM']):
+            #         ax.errorbar(
+            #             x=range(T_part),
+            #             y=p_dict[cn]['mu'][i_s][T_part:],
+            #             yerr=p_dict[cn]['er'][i_s][T_part:],
+            #             label=f'{cn}'
+            #         )
+            #     ax.legend()
+            #     ax.set_ylabel(lca_param_names[j])
+            #     ax.set_xlabel('Time, recall phase')
+            #     ax.set_xticks(np.arange(0, p.env.n_param, 5))
+            #     ax.set_ylim([-.05, .7])
+            #     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+            #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            #     if pad_len_test > 0:
+            #         ax.axvline(pad_len_test, color='grey', linestyle='--')
+            #     sns.despine()
+            #     f.tight_layout()
+            #     fig_path = os.path.join(
+            #         fig_dir, f'tz-lca-param-{lca_param_names[j]}.png')
+            #     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             # for j, p_dict in enumerate(lca_param_dicts):
             #     f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
@@ -310,45 +379,86 @@ for penalty_train in penaltys_train:
                             sim_lca_dict[cond][m_type], axis=-1
                         )
 
-            '''plot target/lure activation for all conditions'''
-            sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
+            # '''plot target/lure activation for all conditions'''
+            # sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
+            # ylim_bonds = {'LCA': None, 'cosine': None}
+            # for ker_name, sim_stats_plt_ in sim_stats_plt.items():
+            #     # print(ker_name, sim_stats_plt_)
+            #     tsf = (T_part + pad_len_test) / T_part
+            #     f, axes = plt.subplots(3, 1, figsize=(7 * tsf, 9))
+            #     for i, c_name in enumerate(cond_ids.keys()):
+            #         for m_type in memory_types:
+            #             if m_type == 'targ' and c_name == 'NM':
+            #                 continue
+            #             color_ = gr_pal[0] if m_type == 'targ' else gr_pal[1]
+            #             axes[i].errorbar(
+            #                 x=range(T_part),
+            #                 y=sim_stats_plt_[c_name][m_type]['mu'][T_part:],
+            #                 yerr=sim_stats_plt_[c_name][m_type]['er'][T_part:],
+            #                 label=f'{m_type}', color=color_
+            #             )
+            #             axes[i].set_title(c_name)
+            #             axes[i].set_ylabel('Memory activation')
+            #     axes[0].legend()
+            #     axes[-1].set_xlabel('Time, recall phase')
+            #     # make all ylims the same
+            #     ylim_bonds[ker_name] = get_ylim_bonds(axes)
+            #     # ylim_bonds[ker_name] = [-.05, .6]
+            #     for i, ax in enumerate(axes):
+            #         ax.set_ylim(ylim_bonds[ker_name])
+            #         ax.set_xticks(np.arange(0, p.env.n_param, 5))
+            #         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+            #         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            #
+            #     if pad_len_test > 0:
+            #         for ax in axes:
+            #             ax.axvline(pad_len_test, color='grey', linestyle='--')
+            #     f.tight_layout()
+            #     sns.despine()
+            #     fig_path = os.path.join(fig_dir, f'tz-memact-{ker_name}.png')
+            #     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+            '''plot target/lure activation for all conditions - horizontal'''
+            # sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
             ylim_bonds = {'LCA': None, 'cosine': None}
-            for ker_name, sim_stats_plt_ in sim_stats_plt.items():
-                # print(ker_name, sim_stats_plt_)
-                tsf = (T_part + pad_len_test) / T_part
-                f, axes = plt.subplots(3, 1, figsize=(7 * tsf, 9))
-                for i, c_name in enumerate(cond_ids.keys()):
-                    for m_type in memory_types:
-                        if m_type == 'targ' and c_name == 'NM':
-                            continue
-                        color_ = gr_pal[0] if m_type == 'targ' else gr_pal[1]
-                        axes[i].errorbar(
-                            x=range(T_part),
-                            y=sim_stats_plt_[c_name][m_type]['mu'][T_part:],
-                            yerr=sim_stats_plt_[c_name][m_type]['er'][T_part:],
-                            label=f'{m_type}', color=color_
-                        )
-                        axes[i].set_title(c_name)
-                        axes[i].set_ylabel('Memory activation')
-                axes[0].legend()
-                axes[-1].set_xlabel('Time, recall phase')
-                # make all ylims the same
-                ylim_bonds[ker_name] = get_ylim_bonds(axes)
-                for i, ax in enumerate(axes):
-                    ax.set_ylim(ylim_bonds[ker_name])
-                    ax.set_xticks(np.arange(0, p.env.n_param, 5))
-                    ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-                    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            ker_name, sim_stats_plt_ = 'LCA', sim_lca_stats
+            # print(ker_name, sim_stats_plt_)
+            tsf = (T_part + pad_len_test) / T_part
+            f, axes = plt.subplots(1, 3, figsize=(12, 4))
+            for i, c_name in enumerate(cond_ids.keys()):
+                for m_type in memory_types:
+                    if m_type == 'targ' and c_name == 'NM':
+                        continue
+                    color_ = gr_pal[0] if m_type == 'targ' else gr_pal[1]
+                    axes[i].errorbar(
+                        x=range(T_part),
+                        y=sim_stats_plt_[c_name][m_type]['mu'][T_part:],
+                        yerr=sim_stats_plt_[c_name][m_type]['er'][T_part:],
+                        label=f'{m_type}', color=color_
+                    )
+                    axes[i].set_title(c_name)
+                    axes[i].set_xlabel('Time')
+            axes[0].set_ylabel('Memory activation')
+            axes[0].legend()
 
-                if pad_len_test > 0:
-                    for ax in axes:
-                        ax.axvline(pad_len_test, color='grey', linestyle='--')
-                f.tight_layout()
-                sns.despine()
-                fig_path = os.path.join(fig_dir, f'tz-memact-{ker_name}.png')
-                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+            # make all ylims the same
+            ylim_bonds[ker_name] = get_ylim_bonds(axes)
+            # ylim_bonds[ker_name] = [-.05, .7]
+            for i, ax in enumerate(axes):
+                ax.set_ylim(ylim_bonds[ker_name])
+                ax.set_xticks([0, p.env.n_param-1])
+                ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+                ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
-            '''plot target/lure activation for all conditions'''
+            if pad_len_test > 0:
+                for ax in axes:
+                    ax.axvline(pad_len_test, color='grey', linestyle='--')
+            f.tight_layout()
+            sns.despine()
+            fig_path = os.path.join(fig_dir, f'tz-memact-{ker_name}-hori.png')
+            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+            # '''plot target/lure activation for all conditions'''
             # sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
             # for ker_name, sim_stats_plt_ in sim_stats_plt.items():
             #     # print(ker_name, sim_stats_plt_)
@@ -370,6 +480,7 @@ for penalty_train in penaltys_train:
             #         ax.set_xlabel('Time, recall phase')
             #         ax.legend()
             #
+            #         # ax.set_ylim([-.05, .625])
             #         ax.set_ylim(ylim_bonds[ker_name])
             #         ax.set_xticks(np.arange(0, p.env.n_param, 5))
             #         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
@@ -600,11 +711,14 @@ for penalty_train in penaltys_train:
                 if not np.all(np.isnan(mu_)):
                     ax.errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
             ax.set_ylabel(f'{param_name}')
-            ax.legend(fancybox=True)
+            # ax.legend(fancybox=True)
             ax.set_title(f'Target memory activation, {cond_name}')
-            ax.set_xlabel('Time, recall phase')
+            ax.set_xlabel('Time')
             ax.set_ylabel('Activation')
-            ax.legend(fancybox=True)
+            # ax.set_ylim([-.05, .75])
+            ax.set_xticks([0, p.env.n_param-1])
+            ax.legend(['not in WM', 'in WM'], fancybox=True)
+            # ax.legend([])
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
             f.tight_layout()
             sns.despine()
@@ -721,7 +835,7 @@ for penalty_train in penaltys_train:
                     dk_cond_p2_stats[source_][0],
                     p, f, ax,
                     title=f'Prediction performance, {source_}, {cond_name}',
-                    baseline_on=False, legend_on=True,
+                    add_legend=True,
                 )
                 # if slience_recall_time is not None:
                 #     ax.axvline(slience_recall_time, color='red',
@@ -757,28 +871,36 @@ for penalty_train in penaltys_train:
             tpr, fpr = compute_roc(dist_l, dist_r)
             auc = metrics.auc(fpr, tpr)
 
+            # collect group data
+            ms_lure_list[i_s] = ms_lure
+            ms_targ_list[i_s] = ms_targ
+            tpr_list[i_s] = tpr
+            fpr_list[i_s] = fpr
+            auc_list[i_s] = auc
+
             [dist_l_edges, dist_l_normed, dist_l_edges_mids, bin_width_l] = hist_info_l
             [dist_r_edges, dist_r_normed, dist_r_edges_mids, bin_width_r] = hist_info_r
 
             leg_ = ['NM', 'DM']
             f, axes = plt.subplots(
-                1, 2, figsize=(9, 3), gridspec_kw={'width_ratios': [2, 1]}
+                1, 2, figsize=(10, 3.3), gridspec_kw={'width_ratios': [2, 1]}
             )
             axes[0].bar(dist_l_edges_mids, dist_l_normed, width=bin_width_l,
                         alpha=.5, color=gr_pal[1])
             axes[0].bar(dist_r_edges_mids, dist_r_normed, width=bin_width_r,
                         alpha=.5, color=gr_pal[0])
-            axes[0].legend(leg_, frameon=False,)
-            axes[0].set_title('Max score distribution at peak time')
+            axes[0].legend(leg_, frameon=True)
+            axes[0].set_title('Max score distribution at recall')
             axes[0].set_xlabel('Recall strength')
             axes[0].set_ylabel('Probability')
-            axes[0].xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            axes[0].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+            axes[0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
             axes[1].plot(fpr, tpr)
             axes[1].plot([0, 1], [0, 1], linestyle='--', color='grey')
             axes[1].set_title('ROC, AUC = %.2f' % (auc))
-            axes[1].set_xlabel('FRP')
-            axes[1].set_ylabel('TRP')
+            axes[1].set_xlabel('FPR')
+            axes[1].set_ylabel('TPR')
             f.tight_layout()
             sns.despine()
             fig_path = os.path.join(fig_dir, f'ms-dist-t-peak.png')
@@ -894,8 +1016,8 @@ for penalty_train in penaltys_train:
             # fig_path = os.path.join(fig_dir, f'trdm-by-cond.png')
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-            # '''pca the deicison activity'''
-            #
+            '''pca the deicison activity'''
+
             # n_pcs = 5
             # data = DA
             # cond_name = 'DM'
@@ -947,10 +1069,10 @@ for penalty_train in penaltys_train:
             #     ax.set_xlabel('PC 1')
             #     ax.set_ylabel('PC 2')
             #     # ax.set_title(f'Pre-decision activity, time = {t}')
-            #     ax.set_title(f'Pre-decision activity')
+            #     ax.set_title(f'Decision activity')
             #     sns.despine(offset=10)
             #     f.tight_layout()
-            #
+
             # # plot cumulative variance explained curve
             # t = -1
             # pc_id = 1
@@ -976,11 +1098,11 @@ for penalty_train in penaltys_train:
 
         '''group level performance'''
         n_se = 1
-        f, axes = plt.subplots(3, 1, figsize=(7, 9))
+        f, axes = plt.subplots(1, 3, figsize=(14, 4))
         for i, cn in enumerate(all_conds):
             if i == 0:
                 add_legend = True
-                legend_loc = (.96, .91)
+                legend_loc = (.285, .7)
             else:
                 add_legend = False
             # plot
@@ -988,18 +1110,23 @@ for penalty_train in penaltys_train:
             acc_gmu_, acc_ger_ = compute_stats(vs_, n_se=n_se, axis=0)
             vs_ = [v_ for v_ in dk_dict[cn]['mu'] if v_ is not None]
             dk_gmu_ = np.mean(vs_, axis=0)
-            plot_pred_acc_full(
-                acc_gmu_, acc_ger_, acc_gmu_+dk_gmu_, [n_param], p, f, axes[i],
-                title=f'Prediction performance: {cn}',
+            plot_pred_acc_rcl(
+                acc_gmu_[T_part:], acc_ger_[T_part:],
+                acc_gmu_[T_part:]+dk_gmu_[T_part:],
+                p, f, axes[i],
+                title=f'{cn}',
                 add_legend=add_legend, legend_loc=legend_loc,
             )
             axes[i].set_ylim([0, 1.05])
+            axes[i].set_xlabel('Time, recall phase')
+        fname = f'../figs/p{penalty_train}-{penalty_test}-acc.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''group level LCA parameter by condition'''
         # lca_param_names = ['input strength', 'leak', 'competition']
         # lca_param_dicts = [inpt_dict, leak_dict, comp_dict]
         n_se = 1
-        f, axes = plt.subplots(2, 1, figsize=(7, 6))
+        f, axes = plt.subplots(1, 2, figsize=(10, 4))
         for i, cn in enumerate(all_conds):
             for j, p_dict in enumerate(lca_param_dicts):
                 p_dict_ = remove_none_from_list(p_dict[cn]['mu'])
@@ -1007,18 +1134,24 @@ for penalty_train in penaltys_train:
                 axes[j].errorbar(
                     x=range(T_part), y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
                 )
+        axes[0].legend()
         for i, ax in enumerate(axes):
-            ax.legend()
             ax.set_ylabel(lca_param_names[i])
             ax.set_xlabel('Time, recall phase')
-            ax.set_xticks(np.arange(0, p.env.n_param, 5))
+            ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         if pad_len_test > 0:
             for ax in axes:
                 ax.axvline(pad_len_test, color='grey', linestyle='--')
+
+        axes[0].set_ylim([-.05, .6])
+        axes[1].set_ylim([.1, .8])
+
         sns.despine()
         f.tight_layout()
+        fname = f'../figs/p{penalty_train}-{penalty_test}-lca.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''group level LCA parameter by q source'''
         n_se = 1
@@ -1045,11 +1178,12 @@ for penalty_train in penaltys_train:
         f.tight_layout()
 
         '''group level memory activation by condition'''
-        sns.set(style='whitegrid', palette='colorblind', context='talk')
+        # sns.set(style='whitegrid', palette='colorblind', context='talk')
         n_se = 1
-        # ma_list_ = ma_list
-        ma_list_ = ma_cos_list
-        f, axes = plt.subplots(3, 1, figsize=(7, 9))
+        ma_list_ = ma_list
+        # ma_list_ = ma_cos_list
+        # f, axes = plt.subplots(3, 1, figsize=(7, 9))
+        f, axes = plt.subplots(1, 3, figsize=(14, 4))
         for i, c_name in enumerate(cond_ids.keys()):
             for m_type in memory_types:
                 if m_type == 'targ' and c_name == 'NM':
@@ -1069,27 +1203,33 @@ for penalty_train in penaltys_train:
                     x=range(T_part), y=mu_, yerr=er_,
                     label=f'{m_type}', color=color_
                 )
-                axes[i].set_title(c_name)
-                axes[i].set_ylabel('Memory activation')
-        axes[0].legend()
-        axes[-1].set_xlabel('Time, recall phase')
+            axes[i].set_title(c_name)
+            axes[i].set_xlabel('Time, recall phase')
+        axes[0].set_ylabel('Memory activation')
         # make all ylims the same
         ylim_l, ylim_r = get_ylim_bonds(axes)
         for i, ax in enumerate(axes):
+            ax.legend()
+            ax.set_xlabel('Time, recall phase')
             ax.set_ylim([np.max([-.05, ylim_l]), ylim_r])
-            ax.set_xticks(np.arange(0, p.env.n_param, 5))
+            ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+            ax.set_yticks([0, .5])
+            ax.set_ylim([-.05, .6])
 
         if pad_len_test > 0:
             for ax in axes:
                 ax.axvline(pad_len_test, color='grey', linestyle='--')
         f.tight_layout()
         sns.despine()
+        fname = f'../figs/p{penalty_train}-{penalty_test}-rs.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''target memory activation by q source'''
         n_se = 1
-        f, ax = plt.subplots(1, 1, figsize=(7, 4))
+        f, ax = plt.subplots(1, 1, figsize=(6, 4.5))
         for qs in DM_qsources:
             # remove none
             tma_dm_p2_dict_bq_ = remove_none_from_list(tma_dm_p2_dict_bq[qs])
@@ -1099,12 +1239,62 @@ for penalty_train in penaltys_train:
             )
         ax.set_ylabel('Memory activation')
         ax.set_xlabel('Time, recall phase')
-        ax.legend()
-        ax.set_xticks(np.arange(0, p.env.n_param, 5))
+        ax.legend(['not in WM', 'in WM'])
+        ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+        ax.set_yticks([0, .5])
+        ax.set_ylim([-.05, .6])
+
         f.tight_layout()
         sns.despine()
+        fname = f'../figs/p{penalty_train}-{penalty_test}-rs-dm-byq.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
 
 # plt.plot(np.array(tma_dm_p2_dict_bq['EM only']).T - np.array(tma_dm_p2_dict_bq['both']).T)
+
+# pickle_save_dict(acc_dict, 'temp/acc_dict_8.pkl')
+
+        # ms_lure = get_max_score(sim_lca_dict['NM']['lure'])
+        # ms_targ = get_max_score(sim_lca_dict['DM']['targ'])
+
+        [dist_l, dist_r], [hist_info_l, hist_info_r] = get_hist_info(
+            np.concatenate(ms_lure_list),
+            np.concatenate(ms_targ_list)
+        )
+        tpr_g, fpr_g = compute_roc(dist_l, dist_r)
+        auc_g = metrics.auc(tpr_g, fpr_g)
+
+        [dist_l_edges, dist_l_normed, dist_l_edges_mids, bin_width_l] = hist_info_l
+        [dist_r_edges, dist_r_normed, dist_r_edges_mids, bin_width_r] = hist_info_r
+
+        leg_ = ['NM', 'DM']
+        f, axes = plt.subplots(
+            1, 2, figsize=(12, 4), gridspec_kw={'width_ratios': [2, 1]}
+        )
+        axes[0].bar(dist_l_edges_mids, dist_l_normed, width=bin_width_l,
+                    alpha=.5, color=gr_pal[1])
+        axes[0].bar(dist_r_edges_mids, dist_r_normed, width=bin_width_r,
+                    alpha=.5, color=gr_pal[0])
+        axes[0].legend(leg_, frameon=True)
+        # axes[0].set_title('Max score distribution at recall')
+        axes[0].set_xlabel('Max score')
+        axes[0].set_ylabel('Probability')
+        axes[0].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        axes[0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+
+        axes[1].plot(fpr_g, tpr_g)
+        axes[1].plot([0, 1], [0, 1], linestyle='--', color='grey')
+        axes[1].set_title('AUC = %.2f' % (np.mean(auc_list)))
+        axes[1].set_xlabel('FPR')
+        axes[1].set_ylabel('TPR')
+        axes[1].set_xticks([0, 1])
+        axes[1].set_yticks([0, 1])
+        f.tight_layout()
+        sns.despine()
+        fname = f'../figs/p{penalty_train}-{penalty_test}-roc.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+        # fig_path = os.path.join(fig_dir, f'ms-dist-t-peak.png')
+        # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
