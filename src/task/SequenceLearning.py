@@ -75,7 +75,10 @@ class SequenceLearning():
         else:
             self.similarity_cap = similarity_cap
 
-    def sample(self, n_samples, to_torch=True, return_misc=False):
+    def sample(
+            self, n_samples,
+            interleave=False, to_torch=True, return_misc=False
+    ):
         # prealloc, agnostic about sequence length
         X = [None] * n_samples
         Y = [None] * n_samples
@@ -104,6 +107,8 @@ class SequenceLearning():
                 misc[i] = misc_i
                 X[i], Y[i] = _to_xy(sample_i)
                 i += 1
+        if interleave:
+            X, Y = interleave_stories(X, Y, self.n_parts)
         # type conversion
         if to_torch:
             X = [to_pth(X[i]) for i in range(n_samples)]
@@ -191,11 +196,10 @@ def interleave_stories(X, Y, n_parts):
     # loop over all 2-samples pairs
     for i in np.arange(0, n_stories, 2):
         # get story a and story b
-        X_a, Y_a = X[i], Y[i]
-        X_b, Y_b = X[i+1], Y[i+1]
+        a, b = i, i+1
         # get sub-sequences for a and b
-        X_a_split, Y_a_split = _split_xy(X_a, Y_a, n_parts)
-        X_b_split, Y_b_split = _split_xy(X_b, Y_b, n_parts)
+        X_a_split, Y_a_split = _split_xy(X[a], Y[a], n_parts)
+        X_b_split, Y_b_split = _split_xy(X[b], Y[b], n_parts)
         # interleave them
         X_ab_ = np.vstack(_interleave_ab(X_a_split, X_b_split))
         Y_ab_ = np.vstack(_interleave_ab(Y_a_split, Y_b_split))
@@ -258,27 +262,14 @@ if __name__ == "__main__":
     axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
 
     '''interleaved story'''
-    # assert len(Y) % 2 == 0
-    #
-    # # loop over all 2-samples pairs
-    # for i in np.arange(0, len(Y), 2):
-    #     # get story a and story b
-    #     X_a, Y_a = X[i], Y[i]
-    #     X_b, Y_b = X[i+1], Y[i+1]
-    #     # get sub-sequences for a and b
-    #     X_a_split, Y_a_split = _split_xy(X_a, Y_a, n_parts)
-    #     X_b_split, Y_b_split = _split_xy(X_b, Y_b, n_parts)
-    #     # interleave them
-    #     X_ab = np.vstack(_interleave_ab(X_a_split, X_b_split))
-    #     Y_ab = np.vstack(_interleave_ab(Y_a_split, Y_b_split))
-    #
-    # np.shape(X_a_split)
-    # np.shape(Y_a_split)
-    # np.shape(X_ab)
-    # np.shape(Y_ab)
-
-    X_ab, Y_ab = interleave_stories(X, Y, n_parts)
-    X_ab, Y_ab = X_ab[0], Y_ab[0]
+    X, Y, misc = task.sample(
+        n_samples, interleave=True, to_torch=False, return_misc=True
+    )
+    # get a sample
+    i = 0
+    X_ab, Y_ab = X[i], Y[i]
+    # X_ab, Y_ab = interleave_stories(X, Y, n_parts)
+    # X_ab, Y_ab = X_ab[0], Y_ab[0]
 
     cmap = 'bone'
     f, axes = plt.subplots(
