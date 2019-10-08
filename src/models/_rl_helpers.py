@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-# from utils.utils import to_sqnp
+
 from torch.nn.functional import smooth_l1_loss
 
 '''helpers'''
@@ -75,9 +75,6 @@ def compute_returns(rewards, gamma=0, normalize=False):
     # normalize w.r.t to the statistics of this trajectory
     if normalize:
         returns = (returns - returns.mean()) / (returns.std() + eps)
-    # if verbose:
-    #     np.set_printoptions(precision=1)
-    #     print(to_sqnp(returns))
     return returns
 
 
