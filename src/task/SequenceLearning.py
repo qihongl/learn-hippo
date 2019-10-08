@@ -107,8 +107,11 @@ class SequenceLearning():
                 misc[i] = misc_i
                 X[i], Y[i] = _to_xy(sample_i)
                 i += 1
+
         if interleave:
             X, Y = interleave_stories(X, Y, self.n_parts)
+            n_samples = n_samples // 2
+
         # type conversion
         if to_torch:
             X = [to_pth(X[i]) for i in range(n_samples)]

@@ -3,15 +3,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from task import SequenceLearning
 sns.set(style='white', palette='colorblind', context='talk')
-# np.random.seed(2)
-
 
 n_param, n_branch = 6, 3
 n_parts = 3
 p_rm_ob_enc = 0.5
 p_rm_ob_rcl = 0.5
 similarity_cap = .5
-# pad_len = 'random'
 pad_len = 0
 task = SequenceLearning(
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
@@ -26,8 +23,6 @@ X, Y, misc = task.sample(
 # get a sample
 i = 0
 X_ab, Y_ab = X[i], Y[i]
-# X_ab, Y_ab = interleave_stories(X, Y, n_parts)
-# X_ab, Y_ab = X_ab[0], Y_ab[0]
 
 cmap = 'bone'
 f, axes = plt.subplots(
