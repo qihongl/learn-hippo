@@ -37,7 +37,7 @@ def run_tz(
 
         # get time info
         T_total = np.shape(X_i)[0]
-        T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
+        T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
         # prealloc

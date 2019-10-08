@@ -131,8 +131,8 @@ class SequenceLearning():
         T_part = T_total // self.n_parts
         pad_len = T_part - self.n_param
         event_ends = get_event_ends(T_part, self.n_parts)
-        event_bond = event_ends[0]+1
-        return T_part, pad_len, event_ends, event_bond
+        event_bonds = [event_ends[i]+1 for i in range(len(event_ends)-1)]
+        return T_part, pad_len, event_ends, event_bonds
 
     def get_pred_time_mask(self, T_total, T_part, pad_len, dtype=bool):
         """get a mask s.t.
@@ -174,20 +174,53 @@ def _to_xy(sample_):
     return x, y
 
 
+def _split_xy(X_, Y_, n_parts):
+    X_split_ = np.array_split(X_, n_parts, axis=0)
+    Y_split_ = np.array_split(Y_, n_parts, axis=0)
+    return X_split_, Y_split_
+
+
+def _interleave_ab(array_a, array_b):
+    return [ab for pair in zip(array_a, array_b) for ab in pair]
+
+
+def interleave_stories(X, Y, n_parts):
+    n_stories = len(Y)
+    assert n_stories % 2 == 0
+    X_ab, Y_ab = [], []
+    # loop over all 2-samples pairs
+    for i in np.arange(0, n_stories, 2):
+        # get story a and story b
+        X_a, Y_a = X[i], Y[i]
+        X_b, Y_b = X[i+1], Y[i+1]
+        # get sub-sequences for a and b
+        X_a_split, Y_a_split = _split_xy(X_a, Y_a, n_parts)
+        X_b_split, Y_b_split = _split_xy(X_b, Y_b, n_parts)
+        # interleave them
+        X_ab_ = np.vstack(_interleave_ab(X_a_split, X_b_split))
+        Y_ab_ = np.vstack(_interleave_ab(Y_a_split, Y_b_split))
+        # collect data
+        X_ab.append(X_ab_)
+        Y_ab.append(Y_ab_)
+    return X_ab, Y_ab
+
+
 '''how to use'''
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from task.utils import scramble_array
 
     n_param, n_branch = 6, 3
-    n_parts = 2
-    p_rm_ob_enc = 0.1
-    p_rm_ob_rcl = 0.1
+    n_parts = 3
+    p_rm_ob_enc = 0.5
+    p_rm_ob_rcl = 0.5
+    similarity_cap = .5
     # pad_len = 'random'
     pad_len = 0
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
-        p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+        p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl, n_parts=n_parts,
+        similarity_cap=similarity_cap
     )
 
     # gen samples
@@ -197,7 +230,8 @@ if __name__ == "__main__":
     # get a sample
     i = 0
     X_i, Y_i = X[i], Y[i]
-
+    np.shape(X_i)
+    np.shape(Y_i)
     # # option 1: scramble observations
     # X_i[:, :task.k_dim + task.v_dim] = scramble_array(
     #     X_i[:, :task.k_dim+task.v_dim])
@@ -206,7 +240,7 @@ if __name__ == "__main__":
 
     # compute time info
     T_total = np.shape(X_i)[0]
-    T_part, pad_len, event_ends, event_bond = task.get_time_param(T_total)
+    T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
 
     # plot
     cmap = 'bone'
@@ -216,10 +250,54 @@ if __name__ == "__main__":
     )
     axes[0].imshow(X_i, cmap=cmap, vmin=0, vmax=1)
     axes[1].imshow(Y_i, cmap=cmap, vmin=0, vmax=1)
-    # print(task.event_ends)
-    # print(task.event_bond)
 
     for ax in axes:
-        ax.axhline(event_bond-.5, color='red', linestyle='--')
+        for event_bond in event_bonds:
+            ax.axhline(event_bond-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
+
+    '''interleaved story'''
+    # assert len(Y) % 2 == 0
+    #
+    # # loop over all 2-samples pairs
+    # for i in np.arange(0, len(Y), 2):
+    #     # get story a and story b
+    #     X_a, Y_a = X[i], Y[i]
+    #     X_b, Y_b = X[i+1], Y[i+1]
+    #     # get sub-sequences for a and b
+    #     X_a_split, Y_a_split = _split_xy(X_a, Y_a, n_parts)
+    #     X_b_split, Y_b_split = _split_xy(X_b, Y_b, n_parts)
+    #     # interleave them
+    #     X_ab = np.vstack(_interleave_ab(X_a_split, X_b_split))
+    #     Y_ab = np.vstack(_interleave_ab(Y_a_split, Y_b_split))
+    #
+    # np.shape(X_a_split)
+    # np.shape(Y_a_split)
+    # np.shape(X_ab)
+    # np.shape(Y_ab)
+
+    X_ab, Y_ab = interleave_stories(X, Y, n_parts)
+    X_ab, Y_ab = X_ab[0], Y_ab[0]
+
+    cmap = 'bone'
+    f, axes = plt.subplots(
+        1, 2, figsize=(6, 12),
+        gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
+    )
+    axes[0].imshow(X_ab, cmap=cmap, vmin=0, vmax=1)
+    axes[1].imshow(Y_ab, cmap=cmap, vmin=0, vmax=1)
+
+    T_total = np.shape(Y_ab)[0]
+    for eb in np.arange(0, T_total, n_param)[1:]:
+        for ax in axes:
+            ax.axhline(eb-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
+    axes[0].set_xlabel('o-key | o-val | q-key')
+    axes[1].set_xlabel('q-val')
+
+    yticks = [eb-n_param//2 for eb in np.arange(0, T_total+1, n_param)[1:]]
+    yticklabels = ['A', 'B'] * n_parts
+    axes[0].set_yticks(yticks)
+    axes[0].set_yticklabels(yticklabels)
