@@ -11,10 +11,13 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname
 
 log_root = '../log/'
-# exp_name = 'penalty-random-discrete-highdp-'
-exp_name = 'penalty-fixed-discrete-leak0'
+exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-fixed-discrete-leak0'
 
 seed = 0
+# supervised_epoch = 1200
+# epoch_load = 1700
+# learning_rate = 5e-4
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
@@ -22,7 +25,7 @@ learning_rate = 7e-4
 n_branch = 4
 n_param = 16
 enc_size = 16
-n_event_remember = 3
+n_event_remember = 2
 def_prob = None
 
 n_hidden = 194
@@ -60,11 +63,12 @@ subj_ids = np.arange(10)
 # penaltys_train = [4]
 penaltys_train = [0, 4]
 
-all_conds = ['RM', 'DM']
-# all_conds = ['DM']
+# all_conds = ['RM', 'DM']
+# all_conds = ['NM']
+all_conds = ['RM']
 # all_conds = [None]
 
-scramble = False
+scramble = True
 
 for slience_recall_time in slience_recall_times:
     for subj_id, penalty_train, fix_cond in product(subj_ids, penaltys_train, all_conds):
