@@ -6,8 +6,8 @@ import pdb
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
-from task.utils import scramble_array, scramble_array_list
 from models import get_reward, compute_returns, compute_a2c_loss
+# from task.utils import scramble_array, scramble_array_list
 
 
 def run_aba(
@@ -34,7 +34,7 @@ def run_aba(
         X_i, Y_i = X[i], Y[i]
         # if scramble:
         #     X_i, Y_i = time_scramble(X_i, Y_i, task)
-
+        # pdb.set_trace()
         # get time info
         T_total = np.shape(X_i)[0]
         T_part, pad_len, event_ends, _ = task.get_time_param(T_total)
@@ -50,7 +50,8 @@ def run_aba(
         # print(penalty_val, penalty_rep)
 
         hc_t = agent.get_init_states()
-        # agent.retrieval_off()
+
+        agent.flush_episodic_memory()
         agent.retrieval_on()
         agent.encoding_off()
 
@@ -80,7 +81,7 @@ def run_aba(
             loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
             # flush at event boundary
-            if at_event_end:
+            if at_event_end and cond_i != 'RM':
                 hc_t = agent.get_init_states()
 
             # cache results for later analysis
@@ -97,10 +98,10 @@ def run_aba(
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
         if learning:
-            if supervised:
-                loss = loss_sup
-            else:
-                loss = loss_actor + loss_critic - pi_ent * p.net.eta
+            # if supervised:
+            #     loss = loss_sup
+            # else:
+            loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
