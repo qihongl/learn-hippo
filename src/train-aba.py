@@ -1,5 +1,5 @@
 import os
-import pdb
+# import pdb
 import time
 import torch
 import argparse
@@ -173,7 +173,7 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     # update lr scheduler
     neg_pol_score = np.mean(Log_mis[epoch_id]) - np.mean(Log_acc[epoch_id])
     scheduler.step(neg_pol_score)
-    pdb.set_trace()
+    # pdb.set_trace()
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
         save_ckpt(
