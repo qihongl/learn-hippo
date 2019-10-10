@@ -103,10 +103,11 @@ p = P(
 )
 # init env
 n_parts = 3
+p_rm_ob = .5
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
-    p_rm_ob_enc=p.env.p_rm_ob_enc, p_rm_ob_rcl=p.env.p_rm_ob_rcl,
     similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap,
+    p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
     n_parts=n_parts
 )
 # init agent
