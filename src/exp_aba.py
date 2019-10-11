@@ -32,13 +32,8 @@ def run_aba(
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
-        # if scramble:
-        #     X_i, Y_i = time_scramble(X_i, Y_i, task)
-        # pdb.set_trace()
-        # get time info
         T_total = np.shape(X_i)[0]
-        T_part, pad_len, event_ends, _ = task.get_time_param(T_total)
-        # enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
+        # T_part, pad_len, event_ends, _ = task.get_time_param(T_total)
 
         # prealloc
         loss_sup = 0
@@ -47,10 +42,8 @@ def run_aba(
 
         # init model wm and em
         penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
-        # print(penalty_val, penalty_rep)
 
         hc_t = agent.get_init_states()
-
         agent.flush_episodic_memory()
         agent.retrieval_on()
         agent.encoding_off()
@@ -88,19 +81,17 @@ def run_aba(
             if get_cache:
                 log_cache_i[t] = cache_t
             # for behavioral stuff, only record prediction time steps
-            if t % T_part >= pad_len:
-                log_dist_a[i].append(to_sqnp(pi_a_t))
-                log_targ_a[i].append(to_sqnp(Y_i[t]))
+            # pdb.set_trace()
+            # if t % T_part >= pad_len:
+            log_dist_a[i].append(to_sqnp(pi_a_t))
+            log_targ_a[i].append(to_sqnp(Y_i[t]))
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
         loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
-        # if learning and not supervised
+
         if learning:
-            # if supervised:
-            #     loss = loss_sup
-            # else:
             loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
