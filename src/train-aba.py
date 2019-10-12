@@ -88,11 +88,6 @@ seed_val = subj_id
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
-pad_len = 0
-n_parts = 3
-p_rm_ob = .3
-similarity_cap = .5
-
 p = P(
     exp_name=exp_name,
     sup_epoch=supervised_epoch,
@@ -106,8 +101,13 @@ p = P(
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
     lr=learning_rate, eta=eta,
 )
-# init env
 
+n_parts = 3
+p_rm_ob = .3
+pad_len = 0
+similarity_cap = .5
+
+# init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len,
     similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap,
