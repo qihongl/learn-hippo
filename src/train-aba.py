@@ -1,5 +1,5 @@
 import os
-# import pdb
+import pdb
 import time
 import torch
 import argparse
@@ -48,6 +48,7 @@ parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--n_event_remember', default=4, type=int)
+parser.add_argument('--n_event_remember_aba', default=2, type=int)
 parser.add_argument('--sup_epoch', default=600, type=int)
 parser.add_argument('--n_epoch', default=1000, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
@@ -102,10 +103,11 @@ p = P(
 )
 
 n_parts = 3
-p_rm_ob = .3
 pad_len = 0
+p_rm_ob = .3
 similarity_cap = .5
-n_event_remember = 4
+# n_event_remember = 4
+n_event_remember = args.n_event_remember_aba
 
 # init env
 task = SequenceLearning(
@@ -129,10 +131,17 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 
 # create logging dirs
 epoch_load = 1000
-log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
+_, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 agent, _ = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 if agent is None:
     raise ValueError('agent DNE')
+
+log_output_path = os.path.join(
+    log_subpath['ckpts'], f'n_event_remember-{n_event_remember}',
+    f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_cap}')
+if not os.path.exists(log_output_path):
+    os.makedirs(log_output_path)
+
 # pdb.set_trace()
 
 '''task definition'''
@@ -181,6 +190,4 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     # pdb.set_trace()
     # save weights
     if np.mod(epoch_id+1, log_freq) == 0:
-        save_ckpt(
-            epoch_load + epoch_id + 1, log_subpath['ckpts'], agent, optimizer
-        )
+        save_ckpt(epoch_load + epoch_id + 1, log_output_path, agent, optimizer)
