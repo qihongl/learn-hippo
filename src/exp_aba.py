@@ -33,7 +33,9 @@ def run_aba(
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
         T_total = np.shape(X_i)[0]
-        # T_part, pad_len, event_ends, _ = task.get_time_param(T_total)
+        event_ends = np.array(
+            [t for t in range(T_total+1) if t % p.env.n_param == 0][1:]
+        ) - 1
 
         # prealloc
         loss_sup = 0
@@ -49,8 +51,7 @@ def run_aba(
         agent.encoding_off()
 
         for t in range(T_total):
-            at_event_end = t % (p.env.n_param-1) == 0
-            if at_event_end and cond_i != 'NM':
+            if t in event_ends and cond_i != 'NM':
                 agent.encoding_on()
             else:
                 agent.encoding_off()
@@ -74,15 +75,13 @@ def run_aba(
             loss_sup += F.mse_loss(yhat_t, Y_i[t])
 
             # flush at event boundary
-            if at_event_end and cond_i != 'RM':
+            if t in event_ends and cond_i != 'RM':
                 hc_t = agent.get_init_states()
 
             # cache results for later analysis
             if get_cache:
                 log_cache_i[t] = cache_t
             # for behavioral stuff, only record prediction time steps
-            # pdb.set_trace()
-            # if t % T_part >= pad_len:
             log_dist_a[i].append(to_sqnp(pi_a_t))
             log_targ_a[i].append(to_sqnp(Y_i[t]))
 
@@ -153,29 +152,6 @@ def pick_condition(p, rm_only=True, fix_cond=None):
         return tz_cond
 
 
-# def set_encoding_flag(at_event_end, cond, agent):
-#     if at_event_end and cond != 'NM':
-#         agent.encoding_on()
-#     else:
-#         agent.encoding_off()
-
-# def
-#
-# def cond_manipulation(tz_cond, t, p, hc_t, agent, n_lures=1):
-#     '''condition specific manipulation
-#     such as flushing, insert lure, etc.
-#     '''
-#     agent.retrieval_on()
-#     if t %
-#
-#     # if t == event_bond:
-#     #     agent.retrieval_on()
-#     #     # flush WM unless RM
-#     #     if tz_cond != 'RM':
-#     #         hc_t = agent.get_init_states()
-#     return hc_t
-
-
 def sample_penalty(p, fix_penalty):
     # if penalty level is fixed, usually used during test
     if fix_penalty is not None:
@@ -196,39 +172,11 @@ def sample_penalty(p, fix_penalty):
     else:
         penalty_rep = penalty_val
     return torch.tensor(penalty_val), torch.tensor(penalty_rep)
-#
-#
-# def one_hot_penalty(penalty_int, p):
-#     assert penalty_int in p.env.penalty_range, \
-#         print(f'invalid penalty_int = {penalty_int}')
-#     one_hot_dim = len(p.env.penalty_range)
-#     penalty_id = p.env.penalty_range.index(penalty_int)
-#     return np.eye(one_hot_dim)[penalty_id, :]
 
 
-# def get_a0_r0(p):
-#     a_0 = torch.tensor(p.dk_id)
-#     r_0 = torch.tensor(0)
-#     return a_0, r_0
-
-
-# def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
-#     if scramble_obs_only:
-#         # option 1: scramble observations
-#         X_i[:, :task.k_dim + task.v_dim] = scramble_array(
-#             X_i[:, :task.k_dim+task.v_dim])
-#     else:
-#         # option 2: scramble observations + queries
-#         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
-#     return X_i, Y_i
-
-
-# def slience_recall(
-#         t_relative, in_2nd_part, slience_recall_time,
-#         agent
-# ):
-#     if in_2nd_part:
-#         if t_relative in slience_recall_time:
-#             agent.retrieval_off()
-#         else:
-#             agent.retrieval_on()
+def one_hot_penalty(penalty_int, p):
+    assert penalty_int in p.env.penalty_range, \
+        print(f'invalid penalty_int = {penalty_int}')
+    one_hot_dim = len(p.env.penalty_range)
+    penalty_id = p.env.penalty_range.index(penalty_int)
+    return np.eye(one_hot_dim)[penalty_id, :]
