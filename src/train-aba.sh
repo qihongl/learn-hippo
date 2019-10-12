@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 23:55:00
+#SBATCH -t 11:55:00
 #SBATCH -c 1
 #SBATCH --mem-per-cpu 4G
 
@@ -37,7 +37,7 @@ echo $(date)
 #echo "def_prob $22"
 
 
-srun python -u train-sl.py --exp_name ${1} \
+srun python -u train-aba.py --exp_name ${1} \
     --subj_id ${2} --penalty ${3} --n_param ${4} --n_branch ${5} \
     --n_hidden ${6} --n_hidden_dec ${7} --eta ${8} --lr ${9} \
     --n_epoch ${10} --sup_epoch ${11} \

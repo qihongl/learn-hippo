@@ -82,7 +82,6 @@ n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
 
-
 '''init'''
 seed_val = subj_id
 np.random.seed(seed_val)
@@ -106,11 +105,12 @@ n_parts = 3
 p_rm_ob = .3
 pad_len = 0
 similarity_cap = .5
+n_event_remember = 4
 
 # init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len,
-    similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap,
+    similarity_cap_lag=n_event_remember, similarity_cap=similarity_cap,
     p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
     n_parts=n_parts
 )
@@ -119,7 +119,7 @@ task = SequenceLearning(
 agent = Agent(
     input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-    dict_len=p.net.dict_len
+    dict_len=n_event_remember
 )
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
