@@ -35,6 +35,7 @@ echo $(date)
 #echo "penalty_onehot $20"
 #echo "normalize_return $21"
 #echo "def_prob $22"
+#echo "n_event_remember_aba"
 
 
 srun python -u train-aba.py --exp_name ${1} \
@@ -44,7 +45,7 @@ srun python -u train-aba.py --exp_name ${1} \
     --p_rm_ob_enc ${12} --p_rm_ob_rcl ${13} --n_event_remember ${14} \
     --pad_len ${15} --enc_size ${16} --similarity_cap ${17} \
     --penalty_random ${18} --penalty_discrete ${19} --penalty_onehot ${20} \
-    --normalize_return ${21} --def_prob ${22} \
+    --normalize_return ${21} --def_prob ${22} --n_event_remember_aba ${23} \
     --log_root $DATADIR
 
 echo $(date)

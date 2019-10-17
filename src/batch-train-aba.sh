@@ -19,7 +19,9 @@ penalty_onehot=0
 
 normalize_return=1
 
-for subj_id in {0..9}
+n_event_remember=2
+
+for subj_id in {0..4}
 do
     for penalty in 4
     do
@@ -27,7 +29,7 @@ do
         do
             for enc_size in 16
             do
-                for n_event_remember in 2
+                for n_event_remember_aba in 2 4
                 do
                     for n_hidden in 194
                     do
@@ -40,7 +42,7 @@ do
                                 ${p_rm_ob_enc} ${p_rm_ob_rcl} ${n_event_remember} \
                                 ${pad_len} ${enc_size} ${sim_cap} \
                                 ${penalty_random} ${penalty_discrete} ${penalty_onehot}\
-                                ${normalize_return} ${def_prob}
+                                ${normalize_return} ${def_prob} ${n_event_remember_aba}
                         done
                     done
                 done
