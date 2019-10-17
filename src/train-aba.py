@@ -157,12 +157,13 @@ Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples//2))
 
 # epoch_id, i, t = 0, 0, 0
+fix_cond = 'RM'
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     [results, metrics] = run_aba(
         agent, optimizer, task, p, n_examples,
-        supervised=False, fix_cond='DM', learning=True, get_cache=False,
+        supervised=False, fix_cond=fix_cond, learning=True, get_cache=False,
     )
 
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results

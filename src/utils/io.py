@@ -227,3 +227,17 @@ def pickle_save_df(input_df, save_path):
 
     """
     input_df.to_pickle(save_path)
+
+
+def load_env_metadata(log_subpath):
+    env_data_path = os.path.join(log_subpath['data'], 'env.json')
+    # test if the file exists
+    if not os.path.exists(log_subpath['data']):
+        print(log_subpath['data'])
+        raise ValueError('Data path not found')
+    if not os.path.isfile(env_data_path):
+        raise ValueError(f'File: env.json not found')
+    # load
+    with open(env_data_path, 'r') as f:
+        env_data = json.load(f)
+    return env_data
