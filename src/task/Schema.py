@@ -1,5 +1,6 @@
 import numpy as np
-
+from task.utils import sample_rand_path
+# import pdb
 VALID_SAMPLING_MODE = ['enumerative']
 KEY_REPRESENTATION = ['node', 'time']
 # KEY_REPRESENTATION = ['node', 'time', 'gaussian']
@@ -33,13 +34,14 @@ class Schema():
         # sampling mode
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
-        self._form_transition_matrix(def_path, def_prob)
+        self._form_transition_matrix()
         self._form_key_val_representation(key_rep_type)
         self._form_context_representation(
             context_onehot, context_drift, context_dim
         )
         assert key_rep_type in KEY_REPRESENTATION
         assert sampling_mode in VALID_SAMPLING_MODE
+        assert def_prob is None or 0 <= def_prob <= 1
 
     def sample(self):
         """sample an event sequence
@@ -125,7 +127,7 @@ class Schema():
                 dynamic=self.context_drift
             )
 
-    def _form_transition_matrix(self, def_path=None, def_prob=None):
+    def _form_transition_matrix(self):
         """form the transition matrix (P x B) of the event schema graph
 
         Parameters
@@ -137,25 +139,30 @@ class Schema():
 
         """
         # if the input graph params are un-specified, use uniform random graph
-        if def_prob is None:
-            def_prob = 1/self.n_branch
-        if def_path is None:
-            def_path = np.array([np.random.choice(range(self.n_branch))
-                                 for _ in range(self.n_param)])
+        if self.def_prob is None:
+            self.def_prob = 1/self.n_branch
+        if self.def_path is None:
+            self.def_path = sample_rand_path(self.n_branch, self.n_param)
         # input validation
-        assert 1/self.n_branch <= def_prob <= 1
-        assert len(def_path) == self.n_param
-        assert np.all(def_path < self.n_branch)
-        def_path = def_path.astype(np.int16)
+        assert 1/self.n_branch <= self.def_prob <= 1
+        assert len(self.def_path) == self.n_param
+        assert np.all(self.def_path < self.n_branch)
+        self.def_path = self.def_path.astype(np.int16)
 
         # form the transition matrix
         self.transition = np.zeros((self.n_param, self.n_branch))
+        # assign (1-p)/(B-1) to the rest
+        non_def_prob = (1-self.def_prob) / (self.n_branch - 1)
+        # compute the int (branch id) representation of the default path
+        def_path_int = np.argmax(self.def_path, axis=1)
         for t in range(self.n_param):
             # assign p to the default node
-            self.transition[t, def_path[t]] = def_prob
-            # assign (1-p)/(B-1) to the rest
-            non_def_prob = (1-def_prob) / (self.n_branch - 1)
+            self.transition[t, def_path_int[t]] = self.def_prob
             self.transition[t, self.transition[t, :] == 0] = non_def_prob
+        # print(self.transition)
+        # pdb.set_trace()
+        assert np.allclose(np.sum(self.transition, axis=1), 1), \
+            f'rows in the transition matrix must sum to 1\n{self.transition}'
 
 
 def sample_context_drift(
@@ -215,13 +222,13 @@ def sample_context_drift(
 if __name__ == "__main__":
     # import matplotlib.pyplot as plt
     # init a graph
-    n_param, n_branch = 6, 3
-    def_prob = .5
+    n_param, n_branch = 6, 4
+    def_prob = .75
     def_path = np.ones(n_param,).astype(np.int16)
     schema = Schema(
         n_param, n_branch,
-        # def_prob=def_prob,
-        # def_path=def_path,
+        def_prob=def_prob,
+        def_path=def_path,
         key_rep_type='time'
     )
     schema.key_rep_type
