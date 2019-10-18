@@ -51,7 +51,7 @@ class SequenceLearning():
         self.n_branch = n_branch
         self.n_parts = n_parts
         self.pad_len = pad_len
-        # #
+        #
         self.max_pad_len = self.stim_sampler.max_pad_len
         self.T_part_max = self.n_param + self.max_pad_len
         self.T_total_max = self.T_part_max * self.n_parts

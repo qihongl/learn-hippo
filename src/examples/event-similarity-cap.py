@@ -106,7 +106,8 @@ f.tight_layout()
 # sns.despine()
 
 
-similarity_caps = np.linspace(.3, .5, 5)
+similarity_caps = np.linspace(.35, .75, 5)
+similarity_cap_lag = 4
 n_iter = 5
 times = np.zeros((len(similarity_caps), n_iter))
 
@@ -115,6 +116,7 @@ n_branch = 4
 n_samples = 256
 
 for i, similarity_cap in enumerate(similarity_caps):
+    print(similarity_cap)
     for j in range(n_iter):
         t0 = time.time()
         task = SequenceLearning(

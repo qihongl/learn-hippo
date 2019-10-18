@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+# import json
 
 from itertools import product
 from models.LCALSTM_v9 import LCALSTM as Agent
@@ -8,10 +9,11 @@ from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
-    get_test_data_dir, get_test_data_fname
+    get_test_data_dir, get_test_data_fname, load_env_metadata
 
 log_root = '../log/'
-exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-random-discrete'
+exp_name = 'penalty-random-discrete-highdp'
 # exp_name = 'penalty-fixed-discrete-leak0'
 
 seed = 0
@@ -26,7 +28,7 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
-def_prob = None
+def_prob = .9
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -53,22 +55,22 @@ n_examples_test = 256
 similarity_cap_test = .75
 
 '''loop over conditions for testing'''
-slience_recall_times = [range(n_param), None]
+# slience_recall_times = [range(n_param), None]
 # slience_recall_times = [range(n_param)]
-# slience_recall_times = [None]
+slience_recall_times = [None]
 
 # subj_id = 0
-subj_ids = np.arange(10)
+subj_ids = np.arange(2)
 # subj_ids = [0, 1]
 # penaltys_train = [4]
 penaltys_train = [0, 4]
 
 # all_conds = ['RM', 'DM']
 # all_conds = ['NM']
-all_conds = ['RM']
-# all_conds = [None]
+# all_conds = ['RM']
+all_conds = [None]
 
-scramble = True
+scramble = False
 
 for slience_recall_time in slience_recall_times:
     for subj_id, penalty_train, fix_cond in product(subj_ids, penaltys_train, all_conds):
@@ -99,10 +101,18 @@ for slience_recall_time in slience_recall_times:
             )
 
             # init env
+            env_data = load_env_metadata(log_subpath)
+            # def_path = env_data['def_path']
+            def_path = np.array(env_data['def_path']).astype(np.int16)
+            # p.env.def_path = def_path
+            # p.env.def_prob = def_prob
+            # task.stim_sampler.schema.transition
+            # def_prob_ = .25
             task = SequenceLearning(
                 n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
                 p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
-                similarity_cap=similarity_cap_test
+                similarity_cap=similarity_cap_test,
+                def_prob=def_prob, def_path=def_path
             )
 
             # load the agent back
@@ -114,9 +124,10 @@ for slience_recall_time in slience_recall_times:
 
             agent, optimizer = load_ckpt(
                 epoch_load, log_subpath['ckpts'], agent)
+
             # if data dir does not exsits ... skip
             if agent is None:
-                print('DNE')
+                print('Agent DNE')
                 continue
 
             # training objective
