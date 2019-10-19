@@ -130,7 +130,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     verbose=True)
 
 # create logging dirs
-epoch_load = 1000
+epoch_load = 600
 _, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 agent, _ = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 if agent is None:
