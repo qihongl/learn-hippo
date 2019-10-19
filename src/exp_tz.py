@@ -47,8 +47,7 @@ def run_tz(
 
         # init model wm and em
         penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
-        # print(penalty_val, penalty_rep)
-        # a_t, r_t = get_a0_r0(p)
+
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
@@ -65,7 +64,6 @@ def run_tz(
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            # x_it = append_prev_info(X_i[t], [a_t, r_t, penalty])
             x_it = append_prev_info(X_i[t], [penalty_rep])
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)

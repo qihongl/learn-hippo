@@ -5,8 +5,7 @@ goal: send the entropy back to influence recall parameter
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pdb
-
+# import pdb
 from models.EM import EM
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
@@ -17,10 +16,9 @@ N_VSIG = 3
 # number of scalar signal (sigma)
 N_SSIG = 2
 # the ordering in the cache
-# scalar_signal_names = ['input strength', 'leak', 'competition']
 scalar_signal_names = ['input strength', 'competition']
 vector_signal_names = ['f', 'i', 'o']
-#
+
 sigmoid = nn.Sigmoid()
 gain = 1
 
