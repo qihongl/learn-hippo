@@ -106,7 +106,7 @@ f.tight_layout()
 # sns.despine()
 
 
-similarity_caps = np.linspace(.35, .75, 5)
+similarity_caps = np.linspace(.3, .8, 6)
 similarity_cap_lag = 4
 n_iter = 5
 times = np.zeros((len(similarity_caps), n_iter))
@@ -115,6 +115,7 @@ n_param = 15
 n_branch = 4
 n_samples = 256
 
+sim_mu = np.zeros((len(similarity_caps), n_iter))
 for i, similarity_cap in enumerate(similarity_caps):
     print(similarity_cap)
     for j in range(n_iter):
@@ -123,21 +124,35 @@ for i, similarity_cap in enumerate(similarity_caps):
             n_param, n_branch, n_parts=2,
             similarity_cap=similarity_cap, similarity_cap_lag=similarity_cap_lag
         )
-        _, _, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
+        X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
         # record run time
         times[i, j] = time.time() - t0
 
+        # compute inter-event similarity
+        similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
+        similarity_matrix_tril = similarity_matrix[np.tril_indices(
+            n_samples, k=-1)]
+        sim_mu[i, j] = np.mean(similarity_matrix_tril)
 
 mu_t, er_t = compute_stats(times.T)
+mu_sim_mu, er_sim_mu = compute_stats(sim_mu.T)
 xticks = range(len(similarity_caps))
-xlabs = ['%.2f' % s for s in similarity_caps]
+xlabs = ['%.1f' % s for s in similarity_caps]
 
-f, ax = plt.subplots(1, 1, figsize=(7, 5))
-ax.errorbar(x=xticks, y=mu_t, yerr=er_t)
-ax.set_title('Run time for sampling')
-ax.set_ylabel('Run time (sec)')
-ax.set_xlabel('Similarity cap')
-ax.set_xticks(xticks)
-ax.set_xticklabels(xlabs)
+f, axes = plt.subplots(2, 1, figsize=(8, 10))
+axes[0].errorbar(x=xticks, y=mu_t, yerr=er_t)
+# axes[0].set_title('Run time for sampling')
+axes[0].set_ylabel('Run time (sec)')
+
+axes[1].errorbar(x=xticks, y=mu_sim_mu, yerr=er_sim_mu)
+axes[1].set_ylabel('Average similarity')
+axes[1].axhline(1 / n_branch, color='grey', linestyle='--')
+for ax in axes:
+    ax.set_xlabel('Similarity cap')
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabs)
+
+# axes[0].yaxis.set_major_formatter(FormatStrFormatter('%4.1f'))
+# axes[1].yaxis.set_major_formatter(FormatStrFormatter('%3.3f'))
 sns.despine()
 f.tight_layout()
