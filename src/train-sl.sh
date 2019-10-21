@@ -29,23 +29,23 @@ echo $(date)
 #echo "n_event_remember $14"
 #echo "pad_len $15"
 #echo "enc_size $16"
-#echo "similarity_cap $17"
-#echo "penalty_random $18"
-#echo "penalty_discrete $19"
-#echo "penalty_onehot $20"
-#echo "normalize_return $21"
-#echo "def_prob $22"
-
+#echo "similarity_max $17"
+#echo "similarity_min $18"
+#echo "penalty_random $19"
+#echo "penalty_discrete $20"
+#echo "penalty_onehot $21"
+#echo "normalize_return $22"
+#echo "def_prob $23"
 
 srun python -u train-sl.py --exp_name ${1} \
     --subj_id ${2} --penalty ${3} --n_param ${4} --n_branch ${5} \
     --n_hidden ${6} --n_hidden_dec ${7} --eta ${8} --lr ${9} \
     --n_epoch ${10} --sup_epoch ${11} \
     --p_rm_ob_enc ${12} --p_rm_ob_rcl ${13} --n_event_remember ${14} \
-    --pad_len ${15} --enc_size ${16} --similarity_cap ${17} \
-    --penalty_random ${18} --penalty_discrete ${19} --penalty_onehot ${20} \
-    --normalize_return ${21} --def_prob ${22} \
+    --pad_len ${15} --enc_size ${16} \
+    --similarity_max ${17} --similarity_min ${18} \
+    --penalty_random ${19} --penalty_discrete ${20} --penalty_onehot ${21} \
+    --normalize_return ${22} --def_prob ${23} \
     --log_root $DATADIR
 
 echo $(date)
-

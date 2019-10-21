@@ -8,12 +8,12 @@ n_param, n_branch = 6, 3
 n_parts = 3
 p_rm_ob_enc = 0.5
 p_rm_ob_rcl = 0.5
-similarity_cap = .5
+similarity_max = .5
 pad_len = 0
 task = SequenceLearning(
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl, n_parts=n_parts,
-    similarity_cap=similarity_cap
+    similarity_max=similarity_max
 )
 
 n_samples = 10

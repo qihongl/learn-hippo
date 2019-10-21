@@ -4,7 +4,6 @@ from utils.utils import to_pth
 from task.utils import get_event_ends
 from analysis.task import compute_event_similarity
 from task.StimSampler import StimSampler
-
 # import pdb
 # pdb.set_trace()
 
@@ -28,7 +27,8 @@ class SequenceLearning():
             p_rm_ob_enc=0,
             p_rm_ob_rcl=0,
             n_rm_fixed=False,
-            similarity_cap=None,
+            similarity_max=None,
+            similarity_min=None,
             similarity_cap_lag=4,
             permute_queries=False,
             key_rep_type='time',
@@ -69,11 +69,14 @@ class SequenceLearning():
         # stats
         # expected inter event similarity under uniform assumption
         self.similarity_cap_lag = similarity_cap_lag
-        self.expected_similarity = 1 / n_branch
-        if similarity_cap is None:
-            self.similarity_cap = np.min([self.expected_similarity * 2, .99])
+        if similarity_max is None:
+            self.similarity_max = (n_branch-1) / n_branch
         else:
-            self.similarity_cap = similarity_cap
+            self.similarity_max = similarity_max
+        if similarity_min is None:
+            self.similarity_min = 0
+        else:
+            self.similarity_min = similarity_min
 
     def sample(
             self, n_samples,
@@ -99,7 +102,7 @@ class SequenceLearning():
             _, Y_i_int = misc_i
             prev_sims = np.array([compute_event_similarity(Y_j_int, Y_i_int)
                                   for Y_j_int in prev_events])
-            if np.any(prev_sims > self.similarity_cap):
+            if np.any(prev_sims > self.similarity_max) or np.any(prev_sims < self.similarity_min):
                 continue
             else:
                 # collect data
@@ -221,13 +224,14 @@ if __name__ == "__main__":
     n_parts = 3
     p_rm_ob_enc = 0.5
     p_rm_ob_rcl = 0.5
-    similarity_cap = .5
+    similarity_max = .5
+    similarity_min = 1/n_branch
     # pad_len = 'random'
     pad_len = 0
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
         p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl, n_parts=n_parts,
-        similarity_cap=similarity_cap
+        similarity_max=similarity_max, similarity_min=similarity_min
     )
 
     # gen samples

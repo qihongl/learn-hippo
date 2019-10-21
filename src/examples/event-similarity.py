@@ -12,7 +12,7 @@ n_param = 15
 n_branch = 4
 n_samples = 101
 expected_similarity = 1 / n_branch
-# similarity_cap = expected_similarity * 2
+# similarity_max = expected_similarity * 2
 
 # init
 task = SequenceLearning(n_param, n_branch, n_parts=1)
@@ -25,9 +25,9 @@ print(np.shape(Y))
 # compute similarity
 normalize = True
 if not normalize:
-    similarity_cap = task.similarity_cap * n_param
+    similarity_max = task.similarity_max * n_param
 else:
-    similarity_cap = task.similarity_cap
+    similarity_max = task.similarity_max
 
 similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 # plot the similarity matrix
@@ -58,7 +58,7 @@ sns.distplot(
     ax=ax
 )
 ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
-ax.axvline(similarity_cap, linestyle='--',
+ax.axvline(similarity_max, linestyle='--',
            color='grey', alpha=.5, linewidth=linewidth//2)
 ax.set_xlabel(xlabel)
 ax.set_ylabel('Freq.')

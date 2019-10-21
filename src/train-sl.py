@@ -41,7 +41,8 @@ parser.add_argument('--penalty_onehot', default=0, type=int)
 parser.add_argument('--normalize_return', default=1, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
-parser.add_argument('--similarity_cap', default=None, type=float)
+parser.add_argument('--similarity_max', default=None, type=float)
+parser.add_argument('--similarity_min', default=None, type=float)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--n_hidden_dec', default=32, type=int)
 parser.add_argument('--lr', default=5e-4, type=float)
@@ -69,7 +70,8 @@ penalty_onehot = args.penalty_onehot
 normalize_return = args.normalize_return
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
-similarity_cap = args.similarity_cap
+similarity_max = args.similarity_max
+similarity_min = args.similarity_min
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -103,7 +105,8 @@ p = P(
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
     p_rm_ob_enc=p.env.p_rm_ob_enc, p_rm_ob_rcl=p.env.p_rm_ob_rcl,
-    similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap,
+    similarity_cap_lag=p.n_event_remember,
+    similarity_max=similarity_max, similarity_min=similarity_min,
 )
 # init agent
 agent = Agent(
@@ -269,7 +272,7 @@ for fix_penalty in np.arange(0, penalty+1, 2):
     task = SequenceLearning(
         n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
         p_rm_ob_enc=0, p_rm_ob_rcl=0,
-        similarity_cap=similarity_cap
+        similarity_max=similarity_max, similarity_min=similarity_min,
     )
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,

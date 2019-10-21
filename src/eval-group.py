@@ -13,7 +13,7 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
 
 log_root = '../log/'
 # exp_name = 'penalty-random-discrete'
-exp_name = 'penalty-random-discrete-highdp'
+exp_name = 'penalty-random-discrete-lowsim'
 # exp_name = 'penalty-fixed-discrete-leak0'
 
 seed = 0
@@ -28,7 +28,7 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
-def_prob = .9
+def_prob = .25
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -52,7 +52,8 @@ p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 n_examples_test = 256
 
-similarity_cap_test = .75
+similarity_max_test = .75
+similarity_min_test = .75
 
 '''loop over conditions for testing'''
 # slience_recall_times = [range(n_param), None]
@@ -111,8 +112,9 @@ for slience_recall_time in slience_recall_times:
             task = SequenceLearning(
                 n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
                 p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
-                similarity_cap=similarity_cap_test,
-                def_prob=def_prob, def_path=def_path
+                similarity_max=similarity_max_test, similarity_min=similarity_min_test,
+                def_prob=def_prob,
+                def_path=def_path
             )
 
             # load the agent back

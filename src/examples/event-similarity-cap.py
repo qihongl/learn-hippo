@@ -12,16 +12,14 @@ sns.set(style='white', palette='colorblind', context='poster')
 n_param = 15
 n_branch = 4
 n_samples = 101
-# expected_similarity = 1 / n_branch
-# similarity_cap = expected_similarity * 2
-similarity_cap = .35
+similarity_max = .35
 similarity_cap_lag = 4
 
 # init
 
 task = SequenceLearning(
     n_param, n_branch, n_parts=2,
-    similarity_cap=similarity_cap, similarity_cap_lag=similarity_cap_lag
+    similarity_max=similarity_max, similarity_cap_lag=similarity_cap_lag
 )
 # sample
 _, _, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
@@ -34,9 +32,9 @@ Y = np.array([Misc[i][1] for i in range(n_samples)])
 # compute similarity
 normalize = True
 if not normalize:
-    similarity_cap = task.similarity_cap * n_param
+    similarity_max = task.similarity_max * n_param
 else:
-    similarity_cap = task.similarity_cap
+    similarity_max = task.similarity_max
 
 similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 # plot the similarity matrix
@@ -51,13 +49,11 @@ ax.set_ylabel('event j')
 ax.set_title('inter-event similarity')
 
 
-similarity_matrix
 one_matrix = np.ones((n_samples, n_samples))
 tril_mask = np.tril(one_matrix, k=-1).astype(bool)
 tril_k_mask = np.tril(one_matrix, k=-task.similarity_cap_lag).astype(bool)
 similarity_mask_recent = np.logical_and(tril_mask, ~tril_k_mask)
 similarity_mask_distant = tril_k_mask
-
 
 mu_rc, er_rc = compute_stats(similarity_matrix[similarity_mask_recent])
 mu_dt, er_dt = compute_stats(similarity_matrix[similarity_mask_distant])
@@ -67,7 +63,6 @@ xticks = range(len(bar_height))
 xlabs = ['recent', 'distant']
 
 f, ax = plt.subplots(1, 1, figsize=(5, 4))
-
 ax.bar(x=xticks, height=bar_height, yerr=bar_yerr)
 ax.set_title('Event similarity')
 ax.set_ylabel('Param overlap')
@@ -77,52 +72,53 @@ sns.despine()
 f.tight_layout()
 
 
-# '''plot the distribution (for the lower triangular part)'''
-# similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
-# bins = len(np.unique(similarity_matrix_tril))
-# linewidth = 10
-# max_bond = 1 if normalize else n_param
-# title = 'Inter-event similarity (mu = %.2f, sd= %.2f)' % (
-#     np.mean(similarity_matrix_tril), np.std(similarity_matrix_tril))
-# xlabel = '% Param value shared' if normalize else '# Param value shared'
-# # plot the distribution
-# f, ax = plt.subplots(1, 1, figsize=(6, 5))
-# sns.distplot(
-#     similarity_matrix_tril,
-#     kde=False, bins=bins, norm_hist=True,
-#     ax=ax
-# )
-# ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
-# ax.axvline(similarity_cap, linestyle='--',
-#            color='grey', alpha=.5, linewidth=linewidth//2)
-# ax.set_xlabel(xlabel)
-# ax.set_ylabel('Freq.')
-# ax.set_title(title)
-# ax.set_xlim([0, max_bond])
-# if normalize:
-#     ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-# else:
-#     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-# sns.despine()
+'''plot the distribution (for the lower triangular part)'''
+similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
+bins = len(np.unique(similarity_matrix_tril))
+linewidth = 10
+max_bond = 1 if normalize else n_param
+title = 'Inter-event similarity (mu = %.2f, sd= %.2f)' % (
+    np.mean(similarity_matrix_tril), np.std(similarity_matrix_tril))
+xlabel = '% Param value shared' if normalize else '# Param value shared'
+# plot the distribution
+f, ax = plt.subplots(1, 1, figsize=(6, 5))
+sns.distplot(
+    similarity_matrix_tril,
+    kde=False, bins=bins, norm_hist=True,
+    ax=ax
+)
+ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
+ax.axvline(similarity_max, linestyle='--',
+           color='grey', alpha=.5, linewidth=linewidth//2)
+ax.set_xlabel(xlabel)
+ax.set_ylabel('Freq.')
+ax.set_title(title)
+ax.set_xlim([0, max_bond])
+if normalize:
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+else:
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+sns.despine()
 
 
-similarity_caps = np.linspace(.3, .8, 6)
+'''vary similarity maxs'''
+similarity_maxs = np.linspace(.35, .75, 5)
 similarity_cap_lag = 4
 n_iter = 5
-times = np.zeros((len(similarity_caps), n_iter))
+times = np.zeros((len(similarity_maxs), n_iter))
 
 n_param = 15
 n_branch = 4
 n_samples = 256
 
-sim_mu = np.zeros((len(similarity_caps), n_iter))
-for i, similarity_cap in enumerate(similarity_caps):
-    print(similarity_cap)
+sim_mu = np.zeros((len(similarity_maxs), n_iter))
+for i, similarity_max in enumerate(similarity_maxs):
+    print(similarity_max)
     for j in range(n_iter):
         t0 = time.time()
         task = SequenceLearning(
             n_param, n_branch, n_parts=2,
-            similarity_cap=similarity_cap, similarity_cap_lag=similarity_cap_lag
+            similarity_max=similarity_max, similarity_cap_lag=similarity_cap_lag
         )
         X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
         # record run time
@@ -136,14 +132,12 @@ for i, similarity_cap in enumerate(similarity_caps):
 
 mu_t, er_t = compute_stats(times.T)
 mu_sim_mu, er_sim_mu = compute_stats(sim_mu.T)
-xticks = range(len(similarity_caps))
-xlabs = ['%.1f' % s for s in similarity_caps]
+xticks = range(len(similarity_maxs))
+xlabs = ['%.1f' % s for s in similarity_maxs]
 
 f, axes = plt.subplots(2, 1, figsize=(8, 10))
 axes[0].errorbar(x=xticks, y=mu_t, yerr=er_t)
-# axes[0].set_title('Run time for sampling')
 axes[0].set_ylabel('Run time (sec)')
-
 axes[1].errorbar(x=xticks, y=mu_sim_mu, yerr=er_sim_mu)
 axes[1].set_ylabel('Average similarity')
 axes[1].axhline(1 / n_branch, color='grey', linestyle='--')
@@ -151,8 +145,96 @@ for ax in axes:
     ax.set_xlabel('Similarity cap')
     ax.set_xticks(xticks)
     ax.set_xticklabels(xlabs)
+sns.despine()
+f.tight_layout()
 
-# axes[0].yaxis.set_major_formatter(FormatStrFormatter('%4.1f'))
-# axes[1].yaxis.set_major_formatter(FormatStrFormatter('%3.3f'))
+
+'''vary similarity MINS'''
+similarity_max = .75
+similarity_mins = np.linspace(0, .4, 3)
+similarity_cap_lag = 4
+n_iter = 5
+times = np.zeros((len(similarity_mins), n_iter))
+
+n_param = 15
+n_branch = 4
+n_samples = 256
+
+sim_mu = np.zeros((len(similarity_mins), n_iter))
+for i, similarity_min in enumerate(similarity_mins):
+    print(similarity_min)
+    for j in range(n_iter):
+        t0 = time.time()
+        task = SequenceLearning(
+            n_param, n_branch, n_parts=2, similarity_cap_lag=similarity_cap_lag,
+            similarity_min=similarity_min, similarity_max=similarity_max
+        )
+        X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
+        # record run time
+        times[i, j] = time.time() - t0
+
+        # compute inter-event similarity
+        similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
+        similarity_matrix_tril = similarity_matrix[np.tril_indices(
+            n_samples, k=-1)]
+        sim_mu[i, j] = np.mean(similarity_matrix_tril)
+
+mu_t, er_t = compute_stats(times.T)
+mu_sim_mu, er_sim_mu = compute_stats(sim_mu.T)
+xticks = range(len(similarity_mins))
+xlabs = ['%.1f' % s for s in similarity_mins]
+
+f, axes = plt.subplots(2, 1, figsize=(8, 10))
+axes[0].errorbar(x=xticks, y=mu_t, yerr=er_t)
+axes[0].set_ylabel('Run time (sec)')
+axes[1].errorbar(x=xticks, y=mu_sim_mu, yerr=er_sim_mu)
+axes[1].set_ylabel('Average similarity')
+axes[1].axhline(1 / n_branch, color='grey', linestyle='--')
+for ax in axes:
+    ax.set_xlabel('Similarity cap')
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabs)
+sns.despine()
+f.tight_layout()
+
+
+'''effective similarity'''
+t0 = time.time()
+similarity_min = .4
+similarity_max = .75
+task = SequenceLearning(
+    n_param, n_branch, n_parts=2, similarity_cap_lag=similarity_cap_lag,
+    similarity_min=similarity_min, similarity_max=similarity_max
+)
+X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
+# record run time
+rt = time.time() - t0
+print(rt)
+
+# compute inter-event similarity
+similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
+similarity_matrix_tril = similarity_matrix[np.tril_indices(
+    n_samples, k=-1)]
+sim_mu[i, j] = np.mean(similarity_matrix_tril)
+
+one_matrix = np.ones((n_samples, n_samples))
+tril_mask = np.tril(one_matrix, k=-1).astype(bool)
+tril_k_mask = np.tril(one_matrix, k=-task.similarity_cap_lag).astype(bool)
+similarity_mask_recent = np.logical_and(tril_mask, ~tril_k_mask)
+similarity_mask_distant = tril_k_mask
+
+mu_rc, er_rc = compute_stats(similarity_matrix[similarity_mask_recent])
+mu_dt, er_dt = compute_stats(similarity_matrix[similarity_mask_distant])
+bar_height = [mu_rc, mu_dt]
+bar_yerr = [er_rc, er_dt]
+xticks = range(len(bar_height))
+xlabs = ['recent', 'distant']
+
+f, ax = plt.subplots(1, 1, figsize=(5, 4))
+ax.bar(x=xticks, height=bar_height, yerr=bar_yerr)
+ax.set_title('Event similarity')
+ax.set_ylabel('Param overlap')
+ax.set_xticks(xticks)
+ax.set_xticklabels(xlabs)
 sns.despine()
 f.tight_layout()
