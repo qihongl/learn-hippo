@@ -200,8 +200,8 @@ f.tight_layout()
 
 '''effective similarity'''
 t0 = time.time()
-similarity_min = .4
-similarity_max = .75
+similarity_min = 0.4
+similarity_max = 1
 task = SequenceLearning(
     n_param, n_branch, n_parts=2, similarity_cap_lag=similarity_cap_lag,
     similarity_min=similarity_min, similarity_max=similarity_max
@@ -209,7 +209,7 @@ task = SequenceLearning(
 X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
 # record run time
 rt = time.time() - t0
-print(rt)
+print(rt / 60)
 
 # compute inter-event similarity
 similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)

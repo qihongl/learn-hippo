@@ -11,20 +11,25 @@ sns.set(style='white', palette='colorblind', context='poster')
 '''study inter-event similarity as a function of n_branch, n_param'''
 n_param = 16
 n_branch = 4
-n_samples = 101
+n_samples = 300
 similarity_cap_lag = 2
 
+def_probs = [.25, .9]
+def_prob = .25
+# similarity_pairs = [[0.0, 1], [.35, .75]]
+similarity_pairs = [[0.0, .35], [.35, .7]]
 
-'''effective similarity'''
-similarity_pairs = [[0.0, .4], [.35, 1]]
 similarity_labels = ['low', 'high']
 n_conditions = len(similarity_pairs)
 
 event_sims = np.zeros((n_conditions, n_samples-1))
+# for i, def_prob in enumerate(def_probs):
+#     similarity_min, similarity_max = [0, .9]
 for i, (similarity_min, similarity_max) in enumerate(similarity_pairs):
     task = SequenceLearning(
         n_param, n_branch, n_parts=2, similarity_cap_lag=similarity_cap_lag,
-        similarity_min=similarity_min, similarity_max=similarity_max
+        similarity_min=similarity_min, similarity_max=similarity_max,
+        def_prob=def_prob
     )
     X, Y, Misc = task.sample(n_samples, to_torch=False, return_misc=True)
 
@@ -51,10 +56,15 @@ data_dict = dict(zip(col_names, data))
 
 df = pd.DataFrame.from_dict(data_dict)
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
-sns.barplot(
-    x=col_names[1], y=col_names[0], ci=99,
+# sns.barplot(
+#     x=col_names[1], y=col_names[0], ci=99,
+#     data=df, ax=ax
+# )
+sns.boxplot(
+    x=col_names[1], y=col_names[0],
     data=df, ax=ax
 )
+# ax.set_ylim([0, .6])
 ax.set_ylabel('Event similarity')
 ax.set_xlabel('Condition')
 sns.despine()
