@@ -23,6 +23,15 @@ def get_event_ends(T_part, n_repeats):
     return [T_part * (k+1)-1 for k in range(n_repeats)]
 
 
+def sample_def_tps(n_param, n_def_tps):
+    def_tps = np.zeros(n_param,)
+    if n_def_tps == 0:
+        return def_tps
+    def_tps_ids = np.random.choice(np.arange(n_param), n_def_tps, replace=False)
+    def_tps[def_tps_ids] = True
+    return list(def_tps)
+
+
 def sample_rand_path(B, T):
     """sample a random path on the event graph
 

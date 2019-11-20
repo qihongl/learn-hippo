@@ -1,5 +1,6 @@
 import numpy as np
 from task.utils import sample_rand_path
+
 # import pdb
 VALID_SAMPLING_MODE = ['enumerative']
 KEY_REPRESENTATION = ['node', 'time']
@@ -24,6 +25,7 @@ class Schema():
             context_drift=False,
             def_path=None,
             def_prob=None,
+            def_tps=None,
             key_rep_type='node',
             sampling_mode='enumerative',
     ):
@@ -31,9 +33,12 @@ class Schema():
         self.n_branch = n_branch
         self.def_prob = def_prob
         self.def_path = def_path
+        self.def_tps = def_tps
         # sampling mode
         self.key_rep_type = key_rep_type
         self.sampling_mode = sampling_mode
+        #
+        self._set_def_values()
         self._form_transition_matrix()
         self._form_key_val_representation(key_rep_type)
         self._form_context_representation(
@@ -127,6 +132,15 @@ class Schema():
                 dynamic=self.context_drift
             )
 
+    def _set_def_values(self):
+        # if the input graph params are un-specified, use uniform random graph
+        if self.def_prob is None:
+            self.def_prob = 1/self.n_branch
+        if self.def_path is None:
+            self.def_path = sample_rand_path(self.n_branch, self.n_param)
+        if self.def_tps is None:
+            self.def_tps = np.ones(self.n_param,).astype(np.bool)
+
     def _form_transition_matrix(self):
         """form the transition matrix (P x B) of the event schema graph
 
@@ -138,11 +152,6 @@ class Schema():
             the probability of following the default path
 
         """
-        # if the input graph params are un-specified, use uniform random graph
-        if self.def_prob is None:
-            self.def_prob = 1/self.n_branch
-        if self.def_path is None:
-            self.def_path = sample_rand_path(self.n_branch, self.n_param)
         # input validation
         assert 1/self.n_branch <= self.def_prob <= 1
         assert len(self.def_path) == self.n_param
@@ -156,11 +165,13 @@ class Schema():
         # compute the int (branch id) representation of the default path
         def_path_int = np.argmax(self.def_path, axis=1)
         for t in range(self.n_param):
-            # assign p to the default node
-            self.transition[t, def_path_int[t]] = self.def_prob
-            self.transition[t, self.transition[t, :] == 0] = non_def_prob
-        # print(self.transition)
-        # pdb.set_trace()
+            if self.def_tps[t] == 1:
+                # assign p to the default node
+                self.transition[t, def_path_int[t]] = self.def_prob
+                self.transition[t, self.transition[t, :] == 0] = non_def_prob
+            else:
+                # if not follow defaut prob/path, use uniform distribution
+                self.transition[t, :] = 1 / self.n_branch
         assert np.allclose(np.sum(self.transition, axis=1), 1), \
             f'rows in the transition matrix must sum to 1\n{self.transition}'
 
@@ -220,15 +231,22 @@ def sample_context_drift(
 
 '''tests'''
 if __name__ == "__main__":
+    from task.utils import sample_def_tps
     # import matplotlib.pyplot as plt
     # init a graph
     n_param, n_branch = 6, 4
     def_prob = .75
-    def_path = np.ones(n_param,).astype(np.int16)
+    def_path = np.zeros((n_param, n_branch))
+    def_path[:, 0] = 1
+    n_def_tps = 3
+    def_tps = sample_def_tps(n_param, n_def_tps)
+    # list(def_tps)
+
     schema = Schema(
         n_param, n_branch,
         def_prob=def_prob,
         def_path=def_path,
+        def_tps=def_tps,
         key_rep_type='time'
     )
     schema.key_rep_type

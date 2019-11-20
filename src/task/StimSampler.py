@@ -17,6 +17,7 @@ class StimSampler():
             max_pad_len=None,
             def_path=None,
             def_prob=None,
+            def_tps=None,
             key_rep_type='time',
             rm_kv=False,
             context_onehot=True,
@@ -33,6 +34,7 @@ class StimSampler():
         #
         self.def_path = def_path
         self.def_prob = def_prob
+        self.def_tps = def_tps
         #
         self.context_onehot = context_onehot
         self.context_dim = context_dim
@@ -54,6 +56,7 @@ class StimSampler():
             n_branch=self.n_branch,
             def_path=self.def_path,
             def_prob=self.def_prob,
+            def_tps=self.def_tps,
             context_onehot=self.context_onehot,
             context_dim=self.context_dim,
             context_drift=self.context_drift,

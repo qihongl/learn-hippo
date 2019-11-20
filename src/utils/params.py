@@ -1,6 +1,6 @@
 '''parameter config class'''
 
-from task.utils import sample_rand_path
+from task.utils import sample_rand_path, sample_def_tps
 from utils.constants import ALL_ENC_MODE
 
 
@@ -13,6 +13,7 @@ class P():
         pad_len=0,
         def_path=None,
         def_prob=None,
+        n_def_tps=None,
         penalty=1,
         penalty_random=0,
         penalty_discrete=1,
@@ -53,13 +54,16 @@ class P():
             def_path = sample_rand_path(n_branch, n_param)
         if def_prob is None:
             def_prob = 1/n_branch
+        if n_def_tps is None:
+            n_def_tps = n_param
+        def_tps = sample_def_tps(n_param, n_def_tps)
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.dk_id = self.a_dim-1
 
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,
-            def_path, def_prob,
+            def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
             normalize_return,
             rm_ob_probabilistic,
@@ -86,6 +90,14 @@ class P():
         else:
             self.extra_x_dim = 1
 
+    def update_enc_size(self, enc_size):
+        assert enc_size is not None
+        assert 0 < enc_size <= self.env.n_param
+        assert self.env.n_param % enc_size == 0
+        self.n_segments = self.env.n_param // enc_size
+        self.net.enc_size = enc_size
+        self.net.dict_len = self.n_event_remember * self.n_segments
+
     def __repr__(self):
         repr_ = str(self.env.__repr__) + '\n' + str(self.net.__repr__)
         return repr_
@@ -97,7 +109,7 @@ class env():
             self,
             exp_name,
             n_param, n_branch, pad_len,
-            def_path, def_prob,
+            def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
             normalize_return,
             rm_ob_probabilistic,
@@ -117,6 +129,7 @@ class env():
         self.mode_rm_ob_enc = mode_rm_ob_enc
         self.def_path = def_path
         self.def_prob = def_prob
+        self.def_tps = def_tps
         self.penalty = penalty
         self.penalty_random = _zero_one_to_true_false(penalty_random)
         self.penalty_discrete = _zero_one_to_true_false(penalty_discrete)
@@ -137,8 +150,9 @@ class env():
         exp_name = {self.exp_name}
         n_param = {self.n_param}, n_branch = {self.n_branch},
         p_remove_observation = {self.p_rm_ob_rcl}
-        def_prob = {self.def_prob}
         penalty = {self.penalty}
+        def_tps = {self.def_tps}
+        def_prob = {self.def_prob}
         def_path = {self.def_path}
         '''
         return repr_
