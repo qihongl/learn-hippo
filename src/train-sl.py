@@ -107,6 +107,7 @@ p = P(
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
     p_rm_ob_enc=p.env.p_rm_ob_enc, p_rm_ob_rcl=p.env.p_rm_ob_rcl,
+    def_path=p.env.def_path, def_prob=p.env.def_prob, def_tps=p.env.def_tps,
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
@@ -259,23 +260,25 @@ for cond_name_ in list(TZ_COND_DICT.values()):
 
 
 '''eval the model'''
-seed_test = 0
 pad_len_test = 0
+p_rm_ob = 0
 n_examples_test = 256
 fix_cond = None
 slience_recall_time = None
 scramble = False
 epoch_load = epoch_id+1
 
-np.random.seed(seed_test)
-torch.manual_seed(seed_test)
+np.random.seed(seed_val)
+torch.manual_seed(seed_val)
+task = SequenceLearning(
+    n_param=p.env.n_param, n_branch=p.env.n_branch,
+    def_path=p.env.def_path, def_prob=p.env.def_prob, def_tps=p.env.def_tps,
+    pad_len=pad_len_test, p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
+    similarity_max=similarity_max, similarity_min=similarity_min,
+    similarity_cap_lag=p.n_event_remember,
+)
 
 for fix_penalty in np.arange(0, penalty+1, 2):
-    task = SequenceLearning(
-        n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
-        p_rm_ob_enc=0, p_rm_ob_rcl=0,
-        similarity_max=similarity_max, similarity_min=similarity_min,
-    )
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
