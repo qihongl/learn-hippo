@@ -32,6 +32,7 @@ class LCALSTM(nn.Module):
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
+            noisy_encoding=0,
     ):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
@@ -50,6 +51,12 @@ class LCALSTM(nn.Module):
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
         self.init_state_trainable = init_state_trainable
+        if noisy_encoding == 0:
+            self.noisy_encoding = False
+        elif noisy_encoding == 1:
+            self.noisy_encoding = True
+        else:
+            raise ValueError('noisy_encoding arg must be 0 or 1')
         self.init_model()
 
     def init_model(self):
@@ -155,7 +162,14 @@ class LCALSTM(nn.Module):
 
     def encode(self, cm_t):
         if not self.em.encoding_off:
-            self.em.save_memory(cm_t)
+            if self.noisy_encoding:
+                # a two memory case, a bit artificial
+                # can generalize to n-memory case with random noise
+                noise = sample_random_vector(self.rnn_hidden_dim, scale=1)
+                self.em.save_memory(cm_t + noise)
+                self.em.save_memory(cm_t - noise)
+            else:
+                self.em.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.
