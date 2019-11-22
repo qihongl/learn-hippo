@@ -28,7 +28,7 @@ def sample_def_tps(n_param, n_def_tps):
     if n_def_tps == 0:
         return def_tps
     def_tps_ids = np.random.choice(np.arange(n_param), n_def_tps, replace=False)
-    def_tps[def_tps_ids] = True
+    def_tps[def_tps_ids] = 1
     return list(def_tps)
 
 
