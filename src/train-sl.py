@@ -33,7 +33,7 @@ parser.add_argument('--n_param', default=6, type=int)
 parser.add_argument('--n_branch', default=3, type=int)
 parser.add_argument('--pad_len', default=0, type=int)
 parser.add_argument('--def_prob', default=None, type=float)
-parser.add_argument('--n_def_tps', default=None, type=int)
+parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=None, type=int)
 parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--penalty_random', default=0, type=int)
@@ -103,7 +103,7 @@ p = P(
     normalize_return=normalize_return,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta,
+    lr=learning_rate, eta=eta, noisy_encoding=noisy_encoding
 )
 # init env
 task = SequenceLearning(
