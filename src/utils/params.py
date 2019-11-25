@@ -28,6 +28,7 @@ class P():
         n_mvs_rnr=3,
         enc_size=None,
         enc_mode='cum',
+        noisy_encoding=0,
         n_event_remember=4,
         recall_func='LCA',
         kernel='cosine',
@@ -73,7 +74,7 @@ class P():
             n_mvs_rnr
         )
         self.net = net(
-            recall_func, kernel, enc_mode, enc_size, dict_len,
+            recall_func, kernel, enc_mode, enc_size, noisy_encoding, dict_len,
             n_hidden, n_hidden_dec, lr, gamma, eta,
             n_param, n_branch
         )
@@ -162,7 +163,7 @@ class net():
     def __init__(
         self,
         recall_func, kernel,
-        enc_mode, enc_size, dict_len,
+        enc_mode, enc_size, noisy_encoding, dict_len,
         n_hidden, n_hidden_dec, lr, gamma, eta,
         n_param, n_branch
     ):
@@ -170,12 +171,15 @@ class net():
         self.kernel = kernel
         self.enc_mode = enc_mode
         self.enc_size = enc_size
+        self.noisy_encoding = noisy_encoding
         self.n_hidden = n_hidden
         self.n_hidden_dec = n_hidden_dec
         self.lr = lr
         self.gamma = gamma
         self.eta = eta
         self.dict_len = dict_len
+        if noisy_encoding == 1:
+            self.dict_len *= 2
         # inferred params
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
         self.dk_id = self.a_dim-1
