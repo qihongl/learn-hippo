@@ -4,8 +4,16 @@ from utils.constants import TZ_COND_DICT
 from analysis import compute_stats
 
 
-def remove_none_from_list(input_list):
-    updated_list = [item for item in input_list if item is not None]
+def remove_none(input_list, return_missing_idx=False):
+    updated_list = []
+    missing_ids = []
+    for i, item in enumerate(input_list):
+        if item is not None:
+            updated_list.append(item)
+        else:
+            missing_ids.append(i)
+    if return_missing_idx:
+        return updated_list, np.array(missing_ids)
     return updated_list
 
 
