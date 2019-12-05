@@ -5,7 +5,7 @@ goal: send the entropy back to influence recall parameter
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# import pdb
+import pdb
 from models.EM import EM
 from torch.distributions import Categorical
 from models.initializer import initialize_weights
@@ -37,7 +37,7 @@ class LCALSTM(nn.Module):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
         self.rnn_hidden_dim = rnn_hidden_dim
-        self.n_hidden_total = (N_VSIG+1) * rnn_hidden_dim + N_SSIG
+        self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
         self.i2h = nn.Linear(input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
@@ -46,7 +46,7 @@ class LCALSTM(nn.Module):
         self.actor = nn.Linear(dec_hidden_dim, output_dim)
         self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
-        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
+        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim + 1, N_SSIG)
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
@@ -93,11 +93,13 @@ class LCALSTM(nn.Module):
         h_prev = h_prev.view(h_prev.size(1), -1)
         c_prev = c_prev.view(c_prev.size(1), -1)
         x_t = x_t.view(x_t.size(1), -1)
+        # pdb.set_trace()
+        x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
         # transform the input info
         preact = self.i2h(x_t) + self.h2h(h_prev)
         # get all gate values
         gates = preact[:, : N_VSIG * self.rnn_hidden_dim].sigmoid()
-        c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim+N_SSIG:].tanh()
+        c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim + N_SSIG:].tanh()
         # split input(write) gate, forget gate, output(read) gate
         f_t = gates[:, :self.rnn_hidden_dim]
         o_t = gates[:, self.rnn_hidden_dim:2 * self.rnn_hidden_dim]
@@ -109,7 +111,7 @@ class LCALSTM(nn.Module):
         dec_act_t = F.relu(self.ih(h_t))
         # pdb.set_trace()
         # recall / encode
-        hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
+        hpc_input_t = torch.cat([c_t, dec_act_t, penalty_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, comp_t] = torch.squeeze(phi_t)
         m_t = self.recall(c_t, comp_t, inps_t)

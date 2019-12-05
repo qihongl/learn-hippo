@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v9 import LCALSTM as Agent
+from models.LCALSTM import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -115,19 +115,19 @@ task = SequenceLearning(
 )
 # init agent
 agent = Agent(
-    input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
+    input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len, noisy_encoding=noisy_encoding
 )
 
 optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler_sup = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_sup, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    optimizer_sup, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
 
 optimizer_rl = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_rl, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    optimizer_rl, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
 
 
@@ -193,8 +193,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         scheduler_rl.step(neg_pol_score)
 
     # save weights
-    if np.mod(epoch_id+1, log_freq) == 0:
-        save_ckpt(epoch_id+1, log_subpath['ckpts'], agent, optimizer)
+    if np.mod(epoch_id + 1, log_freq) == 0:
+        save_ckpt(epoch_id + 1, log_subpath['ckpts'], agent, optimizer)
 
 
 '''plot learning curves'''
@@ -220,9 +220,9 @@ for ip in range(2):
     avg_err = np.mean(Log_mis[-10:, ip])
     axes[2, ip].set_title(f'part {ip+1}, err = %.2f' % (avg_err))
     axes[2, ip].plot(Log_acc[:, ip], label='acc')
-    axes[2, ip].plot(Log_acc[:, ip]+Log_dk[:, ip], label='acc+dk')
+    axes[2, ip].plot(Log_acc[:, ip] + Log_dk[:, ip], label='acc+dk')
     axes[2, ip].plot(
-        Log_acc[:, ip]+Log_dk[:, ip] + Log_mis[:, ip],
+        Log_acc[:, ip] + Log_dk[:, ip] + Log_mis[:, ip],
         label='acc+dk_err', linestyle='--', color='red'
     )
 axes[2, -1].legend()
@@ -252,7 +252,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     dk_mu = compute_dk(dist_a_)
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_pred_acc_full(
-        acc_mu, acc_er, acc_mu+dk_mu,
+        acc_mu, acc_er, acc_mu + dk_mu,
         [n_param], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
@@ -268,7 +268,7 @@ n_examples_test = 256
 fix_cond = None
 slience_recall_time = None
 scramble = False
-epoch_load = epoch_id+1
+epoch_load = epoch_id + 1
 
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
@@ -280,7 +280,7 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
 )
 
-for fix_penalty in np.arange(0, penalty+1, 2):
+for fix_penalty in np.arange(0, penalty + 1, 2):
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
