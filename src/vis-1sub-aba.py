@@ -14,7 +14,7 @@ from analysis import compute_acc, compute_dk, compute_stats, \
     compute_event_similarity, batch_compute_true_dk, \
     process_cache, get_trial_cond_ids, compute_n_trials_to_skip,\
     compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
-    get_qsource, trim_data, compute_roc, get_hist_info, remove_none_from_list
+    get_qsource, trim_data, compute_roc, get_hist_info, remove_none
 
 from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
     plot_time_course_for_all_conds
@@ -26,6 +26,7 @@ sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
 exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-random-discrete-highdp'
 
 seed = 0
 supervised_epoch = 600
@@ -62,22 +63,23 @@ n_examples_test = 256
 
 '''loop over conditions for testing'''
 
-subj_ids = np.arange(10)
-epoch_load = 1400
+# subj_ids = np.arange(5)
+epoch_load = 1200
 penalty_train = 4
 penalty_test = 4
 fix_cond = 'DM'
 
 n_event_remember_test = 2
-similarity_cap_test = .5
-p_rm_ob = .3
+similarity_max_test = .4
+similarity_min_test = 0
+p_rm_ob = 0.5
 n_examples = 256
 n_parts = 3
 scramble = False
 slience_recall_time = None
 
 
-subj_id = 3
+subj_id = 0
 np.random.seed(subj_id)
 torch.manual_seed(subj_id)
 
@@ -99,7 +101,7 @@ log_path, log_subpath = build_log_path(
 test_data_fname = get_test_data_fname(n_examples_test, fix_cond=fix_cond)
 log_data_path = os.path.join(
     log_subpath['data'], f'n_event_remember-{n_event_remember_test}',
-    f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_cap_test}')
+    f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_min_test}_{similarity_max_test}')
 fpath = os.path.join(log_data_path, test_data_fname)
 if not os.path.exists(fpath):
     print('DNE')
@@ -251,6 +253,8 @@ for ax in axes:
     ax.set_xlabel('Time')
     ax.legend(range(n_parts), title='Block ID')
     ax.set_ylim([-.05, 1.05])
+    ax.axhline(1, color='grey', linestyle='--')
+    ax.axhline(0, color='grey', linestyle='--')
 
 axes[0].set_ylabel('Accuracy')
 axes[1].set_ylabel('Don\'t knows')
@@ -272,7 +276,8 @@ axes[0].bar(
 axes[0].set_xticks(xticks)
 # ax.set_xticklabels(xticklabels)
 axes[0].set_xlabel('Block ID')
-axes[0].set_ylabel('Input strength')
+axes[0].set_ylabel('Input gate')
+axes[0].set_ylim([.06, None])
 
 axes[1].bar(
     x=xticks,
@@ -284,6 +289,7 @@ axes[1].set_xticks(xticks)
 # ax.set_xticklabels(xticklabels)
 axes[1].set_xlabel('Block ID')
 axes[1].set_ylabel('Competition')
+axes[1].set_ylim([.6, None])
 # axes[1].set_ylim([np.mean(cmpt_mu_bp)-.1, None])
 sns.despine()
 f.tight_layout()
@@ -307,7 +313,7 @@ for ax in axes:
     ax.legend(range(n_parts), title='Block ID')
     ax.set_ylim([-.05, 1.05])
 
-axes[0].set_ylabel('Input strength')
+axes[0].set_ylabel('Input gate')
 axes[1].set_ylabel('Competition')
 sns.despine()
 f.tight_layout()
@@ -323,6 +329,7 @@ np.shape(C[i])
 i = 0
 for i in range(n_examples//2):
     C_i_z = (C[i] - np.mean(C[i], axis=0)) / np.std(C[i], axis=0)
+    # C_i_z = C[i]
     C_i_splits = np.array(np.array_split(C_i_z, n_parts*n_events))
 
     C_i_A = C_i_splits[np.arange(0, n_parts*n_events, 2), :, :]
@@ -383,7 +390,9 @@ for i in np.arange(n_parts)[::-1]:
         x=range(n_param*n_events), y=rs_B_mu_splits[i], yerr=rs_B_se_splits[i],
         color=cb_pal[1], alpha=alphas[i]
     )
-ax.legend(lines, labels, ncol=2, bbox_to_anchor=(0.145, 1.05))
+ax.legend(lines, labels, ncol=2,
+          # bbox_to_anchor=(0.15, 1.05)
+          )
 ax.axhline(0, color='grey', alpha=.3, linestyle='--')
 ax.set_xlabel('Time')
 ax.set_ylabel('Pattern similarity')
