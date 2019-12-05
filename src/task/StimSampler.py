@@ -186,7 +186,7 @@ class StimSampler():
         n_parts = len(o_keys_vec)
         # get a list of p_rm, only the 1st phase is the encoding phase
         # the rest of phases are considered as recall phases
-        p_rms = [p_rm_ob_enc] + [p_rm_ob_rcl] * (n_parts-1)
+        p_rms = [p_rm_ob_enc] * (n_parts-1) + [p_rm_ob_rcl]
         # zero out random rows (time steps)
         for ip in range(n_parts):
             # zero out both key and values
