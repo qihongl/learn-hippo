@@ -83,6 +83,6 @@ f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
 # np.array([get_know_label(t, x, y) for t in range(n_param)]).T
 
 #
-# task.pad_len, task.T_part
-# for t in range(task.T_total):
-#     print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)
+task.pad_len, task.T_part
+for t in range(task.T_total):
+    print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)
