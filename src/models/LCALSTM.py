@@ -46,7 +46,7 @@ class LCALSTM(nn.Module):
         self.actor = nn.Linear(dec_hidden_dim + 1, output_dim)
         self.critic = nn.Linear(dec_hidden_dim + 1, 1)
         # memory
-        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
+        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim + 1, N_SSIG)
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
@@ -109,7 +109,8 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        dec_act_t = F.relu(self.ih(h_t))
+        # dec_act_t = F.relu(self.ih(h_t))
+        dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
         # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
