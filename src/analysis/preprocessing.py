@@ -24,7 +24,7 @@ def trim_data(n_examples_skip, data_list):
 def compute_n_trials_to_skip(log_cond, p):
     # skip examples untill em buffer is full
     non_nm_trials = np.where(log_cond != TZ_COND_DICT.inverse['NM'])[0]
-    n_examples_skip = non_nm_trials[p.n_event_remember+1]
+    n_examples_skip = non_nm_trials[p.n_event_remember + 1]
     return n_examples_skip
 
 
@@ -47,7 +47,7 @@ def process_cache(log_cache, T_total, p):
     H = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     M = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-    DA = np.full((n_examples, T_total, p.net.n_hidden_dec), np.nan)
+    DA = np.full((n_examples, T_total, p.net.n_hidden_dec + 1), np.nan)
     V = [None] * n_examples
 
     for i in range(n_examples):
