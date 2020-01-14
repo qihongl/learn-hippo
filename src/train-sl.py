@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import pdb
 from models.LCALSTM_v1 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
@@ -158,6 +158,11 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         optimizer = optimizer_sup
     else:
         optimizer = optimizer_rl
+        # pdb.set_trace()
+        agent.i2h.weight.requires_grad = False
+        agent.i2h.bias.requires_grad = False
+        agent.h2h.weight.requires_grad = False
+        agent.h2h.bias.requires_grad = False
 
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples,
