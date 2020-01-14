@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 13:55:00
+#SBATCH -t 17:55:00
 #SBATCH -c 1
 #SBATCH --mem-per-cpu 4G
 
@@ -19,7 +19,7 @@ echo $(date)
 #echo "n_param $4"
 #echo "n_branch $5"
 #echo "n_hidden $6"
-# echo "n_hidden_dec $7"
+#echo "n_hidden_dec $7"
 #echo "eta $8"
 #echo "lr $9"
 #echo "n_epoch $10"
@@ -36,6 +36,7 @@ echo $(date)
 #echo "penalty_onehot $21"
 #echo "normalize_return $22"
 #echo "def_prob $23"
+#echo "n_def_tps $24"
 
 srun python -u train-sl.py --exp_name ${1} \
     --subj_id ${2} --penalty ${3} --n_param ${4} --n_branch ${5} \
@@ -45,7 +46,7 @@ srun python -u train-sl.py --exp_name ${1} \
     --pad_len ${15} --enc_size ${16} \
     --similarity_max ${17} --similarity_min ${18} \
     --penalty_random ${19} --penalty_discrete ${20} --penalty_onehot ${21} \
-    --normalize_return ${22} --def_prob ${23} \
+    --normalize_return ${22} --def_prob ${23} --n_def_tps ${24} \
     --log_root $DATADIR
 
 echo $(date)
