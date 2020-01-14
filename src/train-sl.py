@@ -52,7 +52,6 @@ parser.add_argument('--n_event_remember', default=4, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
-parser.add_argument('--noisy_encoding', default=0, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -83,7 +82,6 @@ n_event_remember = args.n_event_remember
 n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
-noisy_encoding = args.noisy_encoding
 log_root = args.log_root
 
 
@@ -103,7 +101,7 @@ p = P(
     normalize_return=normalize_return,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta, noisy_encoding=noisy_encoding
+    lr=learning_rate, eta=eta
 )
 # init env
 task = SequenceLearning(
@@ -117,7 +115,7 @@ task = SequenceLearning(
 agent = Agent(
     input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-    dict_len=p.net.dict_len, noisy_encoding=noisy_encoding
+    dict_len=p.net.dict_len,
 )
 
 optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
