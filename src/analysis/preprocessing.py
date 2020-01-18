@@ -47,7 +47,7 @@ def process_cache(log_cache, T_total, p):
     H = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     M = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
     CM = np.full((n_examples, T_total, p.net.n_hidden), np.nan)
-    DA = np.full((n_examples, T_total, p.net.n_hidden_dec + 1), np.nan)
+    DA = np.full((n_examples, T_total, p.net.n_hidden_dec), np.nan)
     V = [None] * n_examples
 
     for i in range(n_examples):
