@@ -42,7 +42,8 @@ parser.add_argument('--penalty_onehot', default=0, type=int)
 parser.add_argument('--normalize_return', default=1, type=int)
 parser.add_argument('--p_rm_ob_enc', default=.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=.3, type=float)
-parser.add_argument('--similarity_cap', default=.75, type=float)
+parser.add_argument('--similarity_max', default=None, type=float)
+parser.add_argument('--similarity_min', default=None, type=float)
 parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
@@ -72,7 +73,8 @@ penalty_onehot = args.penalty_onehot
 normalize_return = args.normalize_return
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
-similarity_cap = args.similarity_cap
+similarity_max = args.similarity_max
+similarity_min = args.similarity_min
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -105,28 +107,28 @@ p = P(
 n_parts = 3
 pad_len = 0
 p_rm_ob = .5
-similarity_cap = .3
+# similarity_cap = .3
 # n_event_remember = 4
 n_event_remember = args.n_event_remember_aba
 
 # init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len,
-    similarity_cap_lag=n_event_remember, similarity_cap=similarity_cap,
-    p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
-    n_parts=n_parts
+    similarity_cap_lag=n_event_remember,
+    p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob, n_parts=n_parts,
+    similarity_max=similarity_max, similarity_min=similarity_min,
 )
 # init agent
 # dict_len = 2
 agent = Agent(
-    input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
+    input_dim=task.x_dim + p.extra_x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=n_event_remember
 )
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
 
 # create logging dirs
@@ -138,7 +140,7 @@ if agent is None:
 
 log_output_path = os.path.join(
     log_subpath['ckpts'], f'n_event_remember-{n_event_remember}',
-    f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_cap}')
+    f'p_rm_ob-{p_rm_ob}', f'similarity-{similarity_min}-{similarity_max}')
 if not os.path.exists(log_output_path):
     os.makedirs(log_output_path)
 
@@ -154,7 +156,7 @@ Log_pi_ent = np.zeros(n_epoch,)
 Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
-Log_cond = np.zeros((n_epoch, n_examples//2))
+Log_cond = np.zeros((n_epoch, n_examples // 2))
 
 # epoch_id, i, t = 0, 0, 0
 fix_cond = 'DM'
@@ -190,5 +192,5 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     scheduler.step(neg_pol_score)
     # pdb.set_trace()
     # save weights
-    if np.mod(epoch_id+1, log_freq) == 0:
+    if np.mod(epoch_id + 1, log_freq) == 0:
         save_ckpt(epoch_load + epoch_id + 1, log_output_path, agent, optimizer)
