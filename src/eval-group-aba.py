@@ -1,21 +1,21 @@
 import os
 import torch
 import numpy as np
-
-from itertools import product
+# from itertools import product
 from models.LCALSTM_v9 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_aba import run_aba
 from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
-    get_test_data_dir, get_test_data_fname
+    get_test_data_fname
 
 log_root = '../log/'
-exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-random-discrete'
+exp_name = 'penalty2pol-cmpt.9-lowsim'
 
 seed = 0
 supervised_epoch = 600
-epoch_load = 1400
+epoch_load = 1200
 learning_rate = 7e-4
 n_event_remember_train = 2
 
@@ -44,16 +44,18 @@ pad_len_test = 0
 
 '''loop over conditions for testing'''
 
-subj_ids = np.arange(5)
+subj_ids = np.arange(8)
 penalty_train = 4
 fix_penalty = 4
 fix_cond = 'DM'
 
 n_examples_test = 256
-similarity_cap_test = .5
+# similarity_cap_test = .3
+similarity_max_test = .4
+similarity_min_test = 0
 
-n_event_remember_test = 4
-p_rm_ob = .3
+n_event_remember_test = 2
+p_rm_ob = 0.5
 n_parts = 3
 pad_len = 0
 scramble = False
@@ -81,20 +83,21 @@ for subj_id in subj_ids:
     # init env
     task = SequenceLearning(
         n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len,
-        p_rm_ob_enc=p.env.p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob,
-        similarity_cap_lag=p.n_event_remember, similarity_cap=similarity_cap_test,
+        p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=0,
+        similarity_cap_lag=p.n_event_remember,
+        similarity_max=similarity_max_test, similarity_min=similarity_min_test,
         n_parts=n_parts
     )
 
     # load the agent back
     agent = Agent(
-        input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
+        input_dim=task.x_dim + p.extra_x_dim, output_dim=p.a_dim,
         rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
         dict_len=n_event_remember_test
     )
     log_output_path = os.path.join(
         log_subpath['ckpts'], f'n_event_remember-{n_event_remember_test}',
-        f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_cap_test}')
+        f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_min_test}_{similarity_max_test}')
     agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
     # if data dir does not exsits ... skip
     if agent is None:
@@ -112,7 +115,7 @@ for subj_id in subj_ids:
     # save the data
     log_data_path = os.path.join(
         log_subpath['data'], f'n_event_remember-{n_event_remember_test}',
-        f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_cap_test}')
+        f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_min_test}_{similarity_max_test}')
     if not os.path.exists(log_data_path):
         os.makedirs(log_data_path)
     test_data_fname = get_test_data_fname(

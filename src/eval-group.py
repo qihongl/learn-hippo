@@ -4,7 +4,7 @@ import numpy as np
 # import json
 
 from itertools import product
-from models.LCALSTM_v9 import LCALSTM as Agent
+from models.LCALSTM_v1 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -13,13 +13,12 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
 
 log_root = '../log/'
 # exp_name = 'penalty-random-discrete'
-exp_name = 'penalty-random-discrete-lowsim'
+# exp_name = 'penalty-random-discrete-schema'
+exp_name = 'penalty2pol-cmpt.9-lowsim-v1'
+# exp_name = 'penalty-random-discrete-lowsim'
 # exp_name = 'penalty-fixed-discrete-leak0'
 
 seed = 0
-# supervised_epoch = 1200
-# epoch_load = 1700
-# learning_rate = 5e-4
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
@@ -28,7 +27,10 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
+# def_prob = .25
 def_prob = .25
+# n_def_tps = n_param // 2
+n_def_tps = 0
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -52,25 +54,26 @@ p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 n_examples_test = 256
 
-similarity_max_test = .75
-similarity_min_test = .75
+similarity_max_test = .4
+similarity_min_test = 0
+# similarity_max_test = .9
+# similarity_min_test = .35
 
 '''loop over conditions for testing'''
 # slience_recall_times = [range(n_param), None]
 # slience_recall_times = [range(n_param)]
 slience_recall_times = [None]
 
-# subj_id = 0
-subj_ids = np.arange(2)
+subj_ids = np.arange(20)
 # subj_ids = [0, 1]
+# subj_ids = [1]
 # penaltys_train = [4]
 penaltys_train = [0, 4]
 
-# all_conds = ['RM', 'DM']
+# all_conds = ['RM', 'DM', 'NM']
 # all_conds = ['NM']
-# all_conds = ['RM']
-all_conds = [None]
-
+all_conds = ['RM']
+# all_conds = [None]
 scramble = False
 
 for slience_recall_time in slience_recall_times:
@@ -87,7 +90,7 @@ for slience_recall_time in slience_recall_times:
             p = P(
                 exp_name=exp_name, sup_epoch=supervised_epoch,
                 n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-                def_prob=def_prob,
+                def_prob=def_prob, n_def_tps=n_def_tps,
                 enc_size=enc_size, n_event_remember=n_event_remember,
                 penalty=penalty_train, penalty_random=penalty_random,
                 penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
@@ -103,23 +106,24 @@ for slience_recall_time in slience_recall_times:
 
             # init env
             env_data = load_env_metadata(log_subpath)
-            # def_path = env_data['def_path']
-            def_path = np.array(env_data['def_path']).astype(np.int16)
-            # p.env.def_path = def_path
+            def_path = env_data['def_path']
+            p.env.def_path = def_path
             # p.env.def_prob = def_prob
-            # task.stim_sampler.schema.transition
             # def_prob_ = .25
+            # p.update_enc_size(8)
+            #
             task = SequenceLearning(
                 n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
                 p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
                 similarity_max=similarity_max_test, similarity_min=similarity_min_test,
-                def_prob=def_prob,
-                def_path=def_path
+                similarity_cap_lag=p.n_event_remember,
+                # def_prob=def_prob,
+                # def_path=def_path
             )
 
             # load the agent back
             agent = Agent(
-                input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
+                input_dim=task.x_dim, output_dim=p.a_dim,
                 rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
                 dict_len=p.net.dict_len
             )
