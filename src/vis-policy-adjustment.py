@@ -74,15 +74,15 @@ for i_ms in sorted(missing_subjects, reverse=True):
 
 '''process the data: extract differences between the two penalty conds'''
 
-ptest1 = 0
-ptest2 = 4
-
 
 def extract_part2_diff(val, cond):
     tmp = np.array(val[ptest2][cond]['mu']) - \
         np.array(val[ptest1][cond]['mu'])
     return tmp[:, T:]
 
+
+ptest1 = 0
+ptest2 = 4
 
 # extract differences
 rt = {ptest: None for ptest in penaltys_test}
@@ -96,13 +96,6 @@ for ptest in penaltys_test:
     rt[ptest] = np.reshape(np.dot(ig_p2_norm.T, time_vector), (-1,))
     # rt[ptest] = np.mean(rt_all_subjs)
 
-
-# np.shape()
-# i = 5
-# plt.plot(ig_p2_[:, i])
-# plt.title(np.dot(ig_p2_[:, i], time_vector))
-# plt.plot(np.array(lca_param[ptest2][0]['DM']['mu'])[:, T:].T)
-# plt.plot(np.array(lca_param[ptest1][0]['DM']['mu'])[:, T:].T)
 
 lca_param_diff = {
     lca_pname_: {
@@ -128,32 +121,6 @@ for cond in all_conds:
 rt_diff = rt[ptest2] - rt[ptest1]
 
 '''regression models'''
-# auc ~ change in input gate and competition
-# cond = 'DM'
-# f, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
-# for lca_pid, lca_pname in lca_pnames.items():
-#     iv_ = np.mean(lca_param_diff[lca_pname][cond], axis=1)
-#     sns.regplot(iv_, auc_diff, 'x', ax=axes[lca_pid])
-#     axes[lca_pid].set_ylabel(r'$\Delta$ AUC')
-#     axes[lca_pid].set_xlabel(r'$\Delta$ %s' % (lca_pname))
-# sns.despine()
-# f.tight_layout()
-
-# # auc ~ change in input gate x competition
-# iv_ = np.ones(shape=np.shape(iv_))
-# for lca_pid, lca_pname in lca_pnames.items():
-#     iv_ *= np.mean(lca_param_diff[lca_pname][cond], axis=1)
-#
-# r_val, p_val = pearsonr(iv_, auc_diff)
-# f, ax = plt.subplots(1, 1, figsize=(5, 4))
-# sns.regplot(iv_, auc_diff, 'x')
-# ax.set_ylabel(r'$\Delta$ AUC')
-# ax.set_xlabel(r'$\Delta$ interaction')
-# ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
-#     0.05, 0.05), xycoords='axes fraction')
-# sns.despine()
-# f.tight_layout()
-
 # auc ~ recall time (center of mass of input gate)
 cond = 'DM'
 
@@ -192,33 +159,3 @@ for i, (dv_name_i, dv_diff_i) in enumerate(diff_data.items()):
     axes[i].axvline(0, color='grey', alpha=.3, linestyle='--')
 sns.despine()
 f.tight_layout()
-
-
-# for data_name, diff_data_ in diff_data.items():
-#     dv_ = np.mean(diff_data_[cond], axis=1)
-#     f, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
-#     for lca_pid, lca_pname in lca_pnames.items():
-#         iv_ = np.mean(lca_param_diff[lca_pname][cond], axis=1)
-#         r_val, p_val = pearsonr(iv_, dv_)
-#         sns.regplot(iv_, dv_, 'x', ax=axes[lca_pid])
-#         axes[lca_pid].set_ylabel(r'$\Delta$ %s' % (data_name))
-#         axes[lca_pid].set_xlabel(r'$\Delta$ %s' % (lca_pname))
-#         axes[lca_pid].annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
-#             0.05, 0.05), xycoords='axes fraction')
-#     sns.despine()
-#     f.tight_layout()
-#
-#
-# dv_ = np.mean(acc_diff[cond], axis=1)
-# r_val, p_val = pearsonr(iv_, dv_)
-#
-# f, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
-# for lca_pid, lca_pname in lca_pnames.items():
-#     iv_ = np.mean(lca_param_diff[lca_pname][cond], axis=1)
-#     sns.regplot(iv_, dv_, 'x', ax=axes[lca_pid])
-#     axes[lca_pid].set_ylabel(r'$\Delta$ AUC')
-#     axes[lca_pid].set_xlabel(r'$\Delta$ %s' % (lca_pname))
-#     axes[lca_pid].annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
-#         0.05, 0.05), xycoords='axes fraction')
-# sns.despine()
-# f.tight_layout()
