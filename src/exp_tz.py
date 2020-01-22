@@ -1,3 +1,4 @@
+from task.utils import sample_def_tps
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -16,7 +17,6 @@ def run_tz(
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
-    # switch_trainable_weights(agent, supervised)
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
@@ -46,8 +46,6 @@ def run_tz(
         log_cache_i = [None] * T_total
 
         # init model wm and em
-        penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
-
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
@@ -55,6 +53,11 @@ def run_tz(
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
+            # get the penalty
+            if not in_2nd_part:
+                penalty_val, penalty_rep = sample_penalty(p, fix_penalty, True)
+            else:
+                penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
             # testing condition
             if slience_recall_time is not None:
                 slience_recall(t_relative, in_2nd_part,
@@ -112,9 +115,9 @@ def run_tz(
         # after every event sequence, log stuff
         log_loss_sup += loss_sup / n_examples
         log_pi_ent += pi_ent.item() / n_examples
-        log_return += torch.stack(rewards).sum().item()/n_examples
-        log_loss_actor += loss_actor.item()/n_examples
-        log_loss_critic += loss_critic.item()/n_examples
+        log_return += torch.stack(rewards).sum().item() / n_examples
+        log_loss_actor += loss_actor.item() / n_examples
+        log_loss_critic += loss_critic.item() / n_examples
         log_cond[i] = TZ_COND_DICT.inverse[cond_i]
         if get_cache:
             log_cache[i] = log_cache_i
@@ -154,7 +157,7 @@ def tensor_length(tensor):
 
 def get_enc_times(enc_size, n_param, pad_len):
     n_segments = n_param // enc_size
-    enc_times_ = [enc_size * (k+1) for k in range(n_segments)]
+    enc_times_ = [enc_size * (k + 1) for k in range(n_segments)]
     enc_times = [pad_len + et - 1 for et in enc_times_]
     return enc_times
 
@@ -201,17 +204,20 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
-def sample_penalty(p, fix_penalty):
+def sample_penalty(p, fix_penalty, get_mean=False):
     # if penalty level is fixed, usually used during test
     if fix_penalty is not None:
         penalty_val = fix_penalty
     else:
         # otherwise sample a penalty level
         if p.env.penalty_random:
-            if p.env.penalty_discrete:
-                penalty_val = np.random.choice(p.env.penalty_range)
+            if get_mean:
+                penalty_val = p.env.penalty / 2
             else:
-                penalty_val = np.random.uniform(0, p.env.penalty)
+                if p.env.penalty_discrete:
+                    penalty_val = np.random.choice(p.env.penalty_range)
+                else:
+                    penalty_val = np.random.uniform(0, p.env.penalty)
         else:
             # or train with a fixed penalty level
             penalty_val = p.env.penalty
@@ -241,31 +247,13 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
     if scramble_obs_only:
         # option 1: scramble observations
         X_i[:, :task.k_dim + task.v_dim] = scramble_array(
-            X_i[:, :task.k_dim+task.v_dim])
+            X_i[:, :task.k_dim + task.v_dim])
     else:
         # option 2: scramble observations + queries
         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
     return X_i, Y_i
 
 
-# def freeze_weights(layer):
-#     layer.weight.requires_grad = False
-#     layer.bias.requires_grad = False
-#
-#
-# def unfreeze_weights(layer):
-#     layer.weight.requires_grad = True
-#     layer.bias.requires_grad = True
-#
-#
-# def switch_trainable_weights(agent, supervised):
-#     if not supervised:
-#         freeze_weights(agent.i2h)
-#         freeze_weights(agent.h2h)
-#         # print('freeze weights agent.i2h')
-#         # print('freeze weights agent.h2h')
-#     else:
-#         unfreeze_weights(agent.i2h)
-#         unfreeze_weights(agent.h2h)
-#         # print('unfreeze weights agent.i2h')
-#         # print('unfreeze weights agent.h2h')
+# '''tests'''
+# if __name__ == "__main__":
+#     # import matplotlib.pyplot as plt
