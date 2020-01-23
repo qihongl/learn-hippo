@@ -49,15 +49,19 @@ def run_tz(
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
-
+        #
+        penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
+        penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
+        print()
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
             # get the penalty
             if not in_2nd_part:
-                penalty_val, penalty_rep = sample_penalty(p, fix_penalty, True)
+                penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
-                penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
+                penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
+            print(in_2nd_part, penalty_val, penalty_rep)
             # testing condition
             if slience_recall_time is not None:
                 slience_recall(t_relative, in_2nd_part,
@@ -205,22 +209,22 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
 
 
 def sample_penalty(p, fix_penalty, get_mean=False):
-    # if penalty level is fixed, usually used during test
-    if fix_penalty is not None:
-        penalty_val = fix_penalty
+    if get_mean:
+        penalty_val = p.env.penalty / 2
     else:
-        # otherwise sample a penalty level
-        if p.env.penalty_random:
-            if get_mean:
-                penalty_val = p.env.penalty / 2
-            else:
+        # if penalty level is fixed, usually used during test
+        if fix_penalty is not None:
+            penalty_val = fix_penalty
+        else:
+            # otherwise sample a penalty level
+            if p.env.penalty_random:
                 if p.env.penalty_discrete:
                     penalty_val = np.random.choice(p.env.penalty_range)
                 else:
                     penalty_val = np.random.uniform(0, p.env.penalty)
-        else:
-            # or train with a fixed penalty level
-            penalty_val = p.env.penalty
+            else:
+                # or train with a fixed penalty level
+                penalty_val = p.env.penalty
     # form the input representation of the current penalty signal
     if p.env.penalty_onehot:
         penalty_rep = one_hot_penalty(penalty_val, p)
