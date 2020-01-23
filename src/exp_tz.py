@@ -52,7 +52,7 @@ def run_tz(
         #
         penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
         penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
-        print()
+        # print()
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
@@ -61,7 +61,7 @@ def run_tz(
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
                 penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
-            print(in_2nd_part, penalty_val, penalty_rep)
+            # print(in_2nd_part, penalty_val, penalty_rep)
             # testing condition
             if slience_recall_time is not None:
                 slience_recall(t_relative, in_2nd_part,
