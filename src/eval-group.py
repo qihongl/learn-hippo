@@ -1,10 +1,9 @@
 import os
 import torch
 import numpy as np
-# import json
 
 from itertools import product
-from models.LCALSTM_v1 import LCALSTM as Agent
+from models.LCALSTM_v2 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -12,9 +11,7 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata
 
 log_root = '../log/'
-# exp_name = 'penalty-random-discrete'
-# exp_name = 'penalty-random-discrete-schema'
-exp_name = 'penalty2pol-cmpt.9-lowsim-v1'
+exp_name = 'lowsim-randomcont-penalty-randompad-cmpt.9-rawreturn'
 # exp_name = 'penalty-random-discrete-lowsim'
 # exp_name = 'penalty-fixed-discrete-leak0'
 
@@ -23,12 +20,12 @@ supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
 
-n_branch = 4
+n_branch = 3
 n_param = 16
 enc_size = 16
 n_event_remember = 2
 # def_prob = .25
-def_prob = .25
+def_prob = None
 # n_def_tps = n_param // 2
 n_def_tps = 0
 
@@ -38,14 +35,14 @@ eta = .1
 
 penalty_random = 1
 # testing param, ortho to the training directory
-penalty_discrete = 1
+penalty_discrete = 0
 penalty_onehot = 0
-normalize_return = 1
+normalize_return = 0
 
 # loading params
 pad_len_load = -1
-p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_enc_load = 0
+p_rm_ob_rcl_load = 0
 
 # testing params
 pad_len_test = 0
@@ -64,16 +61,15 @@ similarity_min_test = 0
 # slience_recall_times = [range(n_param)]
 slience_recall_times = [None]
 
-subj_ids = np.arange(20)
-# subj_ids = [0, 1]
-# subj_ids = [1]
-# penaltys_train = [4]
-penaltys_train = [0, 4]
+subj_ids = np.arange(5)
+
+penaltys_train = [0, 1, 2, 4]
+penaltys_test = np.array(penaltys_train)
 
 # all_conds = ['RM', 'DM', 'NM']
 # all_conds = ['NM']
-all_conds = ['RM']
-# all_conds = [None]
+# all_conds = ['RM']
+all_conds = [None]
 scramble = False
 
 for slience_recall_time in slience_recall_times:
@@ -82,8 +78,8 @@ for slience_recall_time in slience_recall_times:
             f'\nsubj : {subj_id}, penalty : {penalty_train}, cond : {fix_cond}')
         print(f'slience_recall_time : {slience_recall_time}')
 
-        # penaltys_test_ = [fp for fp in penaltys_train if fp <= penalty_train]
-        penaltys_test_ = [penalty_train]
+        penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
+        # penaltys_test_ = np.arange(0, penalty_train + 1, 2)
         for fix_penalty in penaltys_test_:
             print(f'penalty_test : {fix_penalty}')
 
