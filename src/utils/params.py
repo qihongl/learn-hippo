@@ -53,7 +53,7 @@ class P():
 
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
-        if def_prob is None:
+        if def_prob is None or def_prob == -1:
             def_prob = 1 / n_branch
         if n_def_tps is None:
             n_def_tps = n_param

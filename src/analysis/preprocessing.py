@@ -54,12 +54,12 @@ def process_cache(log_cache, T_total, p):
         for t in range(T_total):
             # unpack data for i,t
             [vector_signal, scalar_signal, misc] = log_cache[i][t]
-            [inpt_it, leak_it, comp_it] = scalar_signal
+            [inpt_it] = scalar_signal
             [h_t, m_t, cm_t, des_act_t, V_i] = misc
             # cache data to np array
             inpt[i, t] = to_sqnp(inpt_it)
-            leak[i, t] = leak_it
-            comp[i, t] = to_sqnp(comp_it)
+            # leak[i, t] = leak_it
+            # comp[i, t] = to_sqnp(comp_it)
             H[i, t, :] = to_sqnp(h_t)
             M[i, t, :] = to_sqnp(m_t)
             CM[i, t, :] = to_sqnp(cm_t)
@@ -71,7 +71,7 @@ def process_cache(log_cache, T_total, p):
 
     # pack data
     activity = [C, H, M, CM, DA, V]
-    ctrl_param = [inpt, leak, comp]
+    ctrl_param = [inpt]
     return activity, ctrl_param
 
 
