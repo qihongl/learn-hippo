@@ -58,52 +58,28 @@ args = parser.parse_args()
 print(args)
 
 # process args
-exp_name = args.exp_name
-subj_id = args.subj_id
-n_param = args.n_param
-n_branch = args.n_branch
-pad_len = args.pad_len
-def_prob = args.def_prob
-n_def_tps = args.n_def_tps
-enc_size = args.enc_size
-cmpt = args.cmpt
-penalty = args.penalty
-penalty_random = args.penalty_random
-penalty_discrete = args.penalty_discrete
-penalty_onehot = args.penalty_onehot
-normalize_return = args.normalize_return
-p_rm_ob_enc = args.p_rm_ob_enc
-p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
-n_hidden = args.n_hidden
-n_hidden_dec = args.n_hidden_dec
-learning_rate = args.lr
-eta = args.eta
-n_event_remember = args.n_event_remember
 n_examples = args.n_examples
 n_epoch = args.n_epoch
-supervised_epoch = args.sup_epoch
-log_root = args.log_root
-
+penalty_test_all = np.array([0, 1, 2, 4])
 
 '''init'''
-seed_val = subj_id
+seed_val = args.subj_id
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
 p = P(
-    exp_name=exp_name,
-    sup_epoch=supervised_epoch,
-    n_param=n_param, n_branch=n_branch, pad_len=pad_len,
-    def_prob=def_prob, n_def_tps=n_def_tps,
-    enc_size=enc_size, n_event_remember=n_event_remember,
-    penalty=penalty, penalty_random=penalty_random,
-    penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
-    normalize_return=normalize_return,
-    p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
-    n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta, cmpt=cmpt
+    exp_name=args.exp_name, sup_epoch=args.sup_epoch,
+    n_param=args.n_param, n_branch=args.n_branch, pad_len=args.pad_len,
+    def_prob=args.def_prob, n_def_tps=args.n_def_tps,
+    enc_size=args.enc_size, n_event_remember=args.n_event_remember,
+    penalty=args.penalty, penalty_random=args.penalty_random,
+    penalty_discrete=args.penalty_discrete, penalty_onehot=args.penalty_onehot,
+    normalize_return=args.normalize_return,
+    p_rm_ob_enc=args.p_rm_ob_enc, p_rm_ob_rcl=args.p_rm_ob_rcl,
+    n_hidden=args.n_hidden, n_hidden_dec=args.n_hidden_dec,
+    lr=args.lr, eta=args.eta, cmpt=args.cmpt
 )
 # init env
 task = SequenceLearning(
@@ -132,7 +108,7 @@ scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
 
 
 # create logging dirs
-log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
+log_path, log_subpath = build_log_path(args.subj_id, p, log_root=args.log_root)
 # save experiment params initial weights
 save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer_sup)
@@ -155,7 +131,7 @@ epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     # training objective
-    supervised = epoch_id < supervised_epoch
+    supervised = epoch_id < args.sup_epoch
     if supervised:
         optimizer = optimizer_sup
     else:
@@ -234,7 +210,7 @@ axes[2, -1].legend()
 axes[2, 0].set_ylabel('% behavior')
 
 for i, ax in enumerate(f.axes):
-    ax.axvline(supervised_epoch, color='grey', linestyle='--')
+    ax.axvline(args.sup_epoch, color='grey', linestyle='--')
 
 axes[-1, 0].set_xlabel('Epoch')
 axes[-1, 1].set_xlabel('Epoch')
@@ -258,7 +234,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_pred_acc_full(
         acc_mu, acc_er, acc_mu + dk_mu,
-        [n_param], p,
+        [p.env.n_param], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
     )
@@ -285,7 +261,8 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
 )
 
-for fix_penalty in np.arange(0, penalty + 1, 2):
+penalty_test = penalty_test_all[penalty_test_all <= args.penalty]
+for fix_penalty in penalty_test:
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
