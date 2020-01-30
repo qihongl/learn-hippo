@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pdb
-from models.LCALSTM_v2 import LCALSTM as Agent
+from models.LCALSTM_v3 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -36,7 +36,7 @@ parser.add_argument('--def_prob', default=None, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=None, type=int)
 parser.add_argument('--cmpt', default=.9, type=float)
-parser.add_argument('--penalty', default=0, type=int)
+parser.add_argument('--penalty', default=2, type=int)
 parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=0, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
@@ -263,6 +263,7 @@ task = SequenceLearning(
 
 penalty_test = penalty_test_all[penalty_test_all <= args.penalty]
 for fix_penalty in penalty_test:
+    # print(fix_penalty)
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
