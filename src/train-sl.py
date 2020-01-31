@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pdb
-from models.LCALSTM_v3 import LCALSTM as Agent
+from models.LCALSTM_v4 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
