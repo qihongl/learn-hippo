@@ -52,6 +52,9 @@ def run_tz(
         #
         penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
         penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
+        #
+        penalty_val_p1, penalty_rep_p1 = penalty_val_p2, penalty_rep_p2
+        # print(penalty_val_p1, penalty_val_p2)
         # print()
         for t in range(T_total):
             t_relative = t % T_part
