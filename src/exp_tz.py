@@ -105,9 +105,7 @@ def run_tz(
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
-        loss_actor, loss_critic = compute_a2c_loss(
-            probs, values, returns, use_V=False
-        )
+        loss_actor, loss_critic = compute_a2c_loss(probs, values, returns)
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
         if learning:
