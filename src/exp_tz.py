@@ -112,9 +112,9 @@ def run_tz(
         # after every event sequence, log stuff
         log_loss_sup += loss_sup / n_examples
         log_pi_ent += pi_ent.item() / n_examples
-        log_return += torch.stack(rewards).sum().item()/n_examples
-        log_loss_actor += loss_actor.item()/n_examples
-        log_loss_critic += loss_critic.item()/n_examples
+        log_return += torch.stack(rewards).sum().item() / n_examples
+        log_loss_actor += loss_actor.item() / n_examples
+        log_loss_critic += loss_critic.item() / n_examples
         log_cond[i] = TZ_COND_DICT.inverse[cond_i]
         if get_cache:
             log_cache[i] = log_cache_i
@@ -154,7 +154,7 @@ def tensor_length(tensor):
 
 def get_enc_times(enc_size, n_param, pad_len):
     n_segments = n_param // enc_size
-    enc_times_ = [enc_size * (k+1) for k in range(n_segments)]
+    enc_times_ = [enc_size * (k + 1) for k in range(n_segments)]
     enc_times = [pad_len + et - 1 for et in enc_times_]
     return enc_times
 
@@ -241,7 +241,7 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
     if scramble_obs_only:
         # option 1: scramble observations
         X_i[:, :task.k_dim + task.v_dim] = scramble_array(
-            X_i[:, :task.k_dim+task.v_dim])
+            X_i[:, :task.k_dim + task.v_dim])
     else:
         # option 2: scramble observations + queries
         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
