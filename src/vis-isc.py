@@ -1,3 +1,6 @@
+import pandas as pd
+import dabest
+from brainiak.funcalign.srm import SRM
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,7 +31,6 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-# exp_name = 'penalty-fixed-discrete-simple_'
 exp_name = 'penalty-random-discrete'
 
 subj_ids = np.arange(10)
@@ -38,9 +40,6 @@ all_conds = ['RM', 'DM', 'NM']
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
-# supervised_epoch = 300
-# epoch_load = 600
-# learning_rate = 1e-3
 
 n_param = 16
 n_branch = 4
@@ -82,19 +81,8 @@ def prealloc():
 CMs_dlist = {cond: [] for cond in all_conds}
 DAs_dlist = {cond: [] for cond in all_conds}
 
-# C_dlist = {cond: None for cond in all_conds}
-# V_dlist = {cond: None for cond in all_conds}
-# inpt_dlist = {cond: None for cond in all_conds}
-# leak_dlist = {cond: None for cond in all_conds}
-# comp_dlist = {cond: None for cond in all_conds}
-
-# cond_ids_dlist = {cond: None for cond in all_conds}
-# cond_ids_combined = {cond: [] for cond in all_conds}
-
 has_memory_conds = ['RM', 'DM']
 ma_dlist = {cond: [] for cond in has_memory_conds}
-
-# fix_cond = 'RM'
 
 for subj_id in subj_ids:
     print(f'\nsubj_id = {subj_id}: ', end='')
@@ -200,14 +188,13 @@ for cond in all_conds:
 
 '''isc'''
 
-from brainiak.funcalign.srm import SRM
 # from sklearn.preprocessing import StandardScaler
 dim_srm = 16
 srm = SRM(features=dim_srm)
 
 test_prop = .5
-n_examples_tr = int(n_examples * (1-test_prop))
-n_examples_te = n_examples-n_examples_tr
+n_examples_tr = int(n_examples * (1 - test_prop))
+n_examples_te = n_examples - n_examples_tr
 
 # data = CMs_darray
 data = DAs_darray
@@ -291,11 +278,11 @@ def compute_bs_bc_isc(
     for (i_s, j_s) in combinations(range(n_subjs), 2):
         isc_mu_ij = []
         # compute sliding window averages
-        for t in np.arange(T_part, T_total-win_size):
+        for t in np.arange(T_part, T_total - win_size):
             isc_mu_ij.append(
                 np.mean(np.diag(np.corrcoef(
-                    data_te_srm_rm_i[i_s][:, t: t+win_size],
-                    data_te_srm_xm_i[j_s][:, t: t+win_size]
+                    data_te_srm_rm_i[i_s][:, t: t + win_size],
+                    data_te_srm_xm_i[j_s][:, t: t + win_size]
                 )[dim_srm:, :dim_srm]))
             )
         isc_mu_ij = np.array(isc_mu_ij)
@@ -480,47 +467,13 @@ f.tight_layout()
 
 '''prediction isc change'''
 
-# rm_dm_sisc_p2 = np.array(bs_bc_sisc['RM']['DM'])[:, T_part:].T
-# mu_sisc, se_sisc = compute_stats(rm_dm_sisc_p2.T)
-# rm_dm_tisc_p2 = np.array(bs_bc_sw_tisc['RM']['DM']).T
-# mu_tisc, se_tisc = compute_stats(rm_dm_tisc_p2.T)
-
-#
-# f, axes = plt.subplots(2, 1, figsize=(7, 8))
-# axes[0].plot(rm_dm_sisc_p2, color=c_pal[0], alpha=.05)
-# axes[0].errorbar(
-#     x=range(len(mu_sisc)), y=mu_sisc, yerr=se_sisc * n_se,
-#     color='k'
-# )
-# axes[0].set_title('Spatial ISC')
-# axes[0].set_xlabel(f'Time')
-#
-# axes[1].plot(rm_dm_tisc_p2, color=c_pal[2], alpha=.1)
-# axes[1].errorbar(
-#     x=range(len(mu_tisc)), y=mu_tisc, yerr=se_tisc * n_se,
-#     color='k'
-# )
-# axes[1].set_title('Temporal ISC')
-# axes[1].set_xlabel(f'Time (sliding window size = {win_size})')
-# for ax in axes:
-#     ax.set_ylabel('Linear Corr.')
-#     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-#     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-# f.tight_layout()
-# sns.despine()
-
-
 '''analyze isc change'''
 n_tps = 9
 n_subj_pairs = int(comb(n_subjs, 2))
 
-# compute recall scores
 tma_dm_p2_test = tma['DM'][:, T_part:, n_examples_tr:]
 recall = np.mean(tma_dm_p2_test, axis=0)
-# np.shape(tma_dm_p2_test)
-# np.shape(recall)
 
-# cond = 'RM'
 
 r_val_sisc = {cond: np.zeros((n_subj_pairs, n_tps))
               for cond in has_memory_conds}
@@ -539,7 +492,7 @@ r_se_tisc = {cond: None for cond in has_memory_conds}
 for cond in has_memory_conds:
 
     rmdm_sisc = np.zeros((n_subj_pairs, n_examples_te, T_part))
-    rmdm_tisc = np.zeros((n_subj_pairs, n_examples_te, T_part-win_size))
+    rmdm_tisc = np.zeros((n_subj_pairs, n_examples_te, T_part - win_size))
 
     for i in range(n_examples_te):
         # for this trial ...
@@ -564,14 +517,14 @@ for cond in has_memory_conds:
         recall[i_comb] = recall_ij.T
 
     for t in range(n_tps):
-        sisc_change_t = rmdm_sisc[:, :, t+1]-rmdm_sisc[:, :, t]
+        sisc_change_t = rmdm_sisc[:, :, t + 1] - rmdm_sisc[:, :, t]
         for i_comb in range(n_subj_pairs):
             r_val_sisc[cond][i_comb, t], p_val_sisc[cond][i_comb, t] = pearsonr(
                 recall[i_comb, :, t], sisc_change_t[i_comb])
 
-    for t in range(n_tps-win_size):
-        tisc_change_t = rmdm_tisc[:, :, t+1]-rmdm_tisc[:, :, t]
-        recall_win_t = np.mean(recall[:, :, t:t+win_size], axis=-1)
+    for t in range(n_tps - win_size):
+        tisc_change_t = rmdm_tisc[:, :, t + 1] - rmdm_tisc[:, :, t]
+        recall_win_t = np.mean(recall[:, :, t:t + win_size], axis=-1)
         for i_comb in range(n_subj_pairs):
             r_val_tisc[cond][i_comb, t], p_val_tisc[cond][i_comb, t] = pearsonr(
                 recall_win_t[i_comb], tisc_change_t[i_comb])
@@ -614,8 +567,6 @@ ax.set_title('Correlation: recall vs. spatial ISC change')
 sns.despine()
 f.tight_layout()
 
-import dabest
-import pandas as pd
 # data_dict = r_mu_sisc
 data_dict = {}
 for cond in list(r_mu_sisc.keys()):
@@ -628,35 +579,6 @@ iris_dabest = dabest.load(
 iris_dabest.mean_diff.plot(
     swarm_label='Linear correlation', fig_size=(5, 4)
 )
-
-# i_comb = 3
-# t = 1
-# rval_, pval_ = pearsonr(recall[i_comb, :, t], sisc_change_t[i_comb])
-# print(rval_, pval_)
-# f, ax = plt.subplots(1, 1, figsize=(5, 4))
-# sns.regplot(recall[i_comb, :, t], sisc_change_t[i_comb],
-#             marker='.', color=sns.color_palette('colorblind')[1], ax=ax)
-# ax.set_xlabel('Target memory activation')
-# ax.set_ylabel('ISC')
-# ax.set_title('r = %.2f' % (rval_))
-# sns.despine()
-# f.tight_layout()
-#
-#
-# f, ax = plt.subplots(1, 1, figsize=(5, 3))
-# # sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# sns.swarmplot(data=np.mean(
-#     r_val_sisc['DM'], axis=-1), color=sns.color_palette('colorblind')[1])
-# # np.ravel(r_val_sisc[cond])
-# # sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# ax.axhline(0, color='grey', linestyle='--')
-# ax.set_xticks(range(1))
-# ax.set_xticklabels(['RM-DM'])
-# # ax.set_xlabel('Condition')
-# ax.set_ylabel('Linear Correlation')
-# ax.set_title('Correlation: recall vs. spatial ISC change')
-# sns.despine()
-# f.tight_layout()
 
 
 '''plot t-isc'''

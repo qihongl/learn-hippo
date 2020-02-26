@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_ import LCALSTM as Agent
+from models.LCALSTM_v1 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -19,13 +19,6 @@ from utils.io import build_log_path, save_ckpt, save_all_params,  \
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
-'''learning to tz with a2c. e.g. cmd:
-python -u train-tz.py --exp_name testing --subj_id 0 \
---penalty 4 --n_param 6 --n_hidden 64 --eta .1\
---n_epoch 300 --sup_epoch 50 --train_init_state 0 \
---log_root ../log/
-'''
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', default='test', type=str)
 parser.add_argument('--subj_id', default=99, type=int)
@@ -36,7 +29,7 @@ parser.add_argument('--def_prob', default=None, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=None, type=int)
 parser.add_argument('--penalty', default=4, type=int)
-parser.add_argument('--penalty_random', default=0, type=int)
+parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=1, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
 parser.add_argument('--normalize_return', default=1, type=int)
@@ -150,7 +143,6 @@ Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 
-# epoch_id, i, t = 0, 0, 0
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()

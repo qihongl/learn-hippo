@@ -32,7 +32,7 @@ for i, cn in enumerate(all_conds):
     acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
     dk_mu = compute_dk(dist_a_)
     T_part = 16
-    ax.errorbar(x=range(T_part*2), y=acc_mu, yerr=acc_er,
+    ax.errorbar(x=range(T_part * 2), y=acc_mu, yerr=acc_er,
                 label='encode at event boundary')
 
     Y_ = Y8[cond_ids8[cn], :]
@@ -41,7 +41,7 @@ for i, cn in enumerate(all_conds):
     acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
     dk_mu = compute_dk(dist_a_)
 
-    ax.errorbar(x=range(T_part*2), y=acc_mu, yerr=acc_er,
+    ax.errorbar(x=range(T_part * 2), y=acc_mu, yerr=acc_er,
                 label='also encode within an event')
 
     ax.axvline(16, color='red', linestyle='--', alpha=.5)
@@ -127,7 +127,7 @@ xticks = range(2)
 n_se = 1
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
 ax.bar(
-    x=xticks, height=np.array(acc_mumu), yerr=np.array(acc_musd)*n_se,
+    x=xticks, height=np.array(acc_mumu), yerr=np.array(acc_musd) * n_se,
     color=sns.color_palette('colorblind')[:2]
 )
 ax.set_xlabel('Condition')
@@ -138,23 +138,3 @@ ax.set_ylabel('Prediction Accuracy')
 sns.despine()
 f.tight_layout()
 f.savefig('temp/enc.png', dpi=150)
-
-run_id = np.array([0, 0, 0, 1, 1, 1])
-y = np.array([1, 2, 3, 1, 2, 3])
-run_id[y != 1]
-
-# sns.swarmplot(accs)
-
-# np.shape(acc_mu)
-#
-# np.shape(Y_)
-# np.shape(dist_a_)
-#
-#
-# def get_accs_forall_trials(dist_actions, targets):
-#     argmax_dist_a = np.argmax(dist_actions, axis=2)
-#     # argmax the targets one hot vecs
-#     argmax_Y = np.argmax(targets, axis=2)
-#     corrects_ = argmax_Y == argmax_dist_a
-#     corrects_p2 = corrects_[:, T_part:]
-#     return np.mean(corrects_p2, axis=1)

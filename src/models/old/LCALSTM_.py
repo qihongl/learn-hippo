@@ -1,7 +1,3 @@
-"""
-a fork from LCALSTM 07/03
-goal: send the entropy back to influence recall parameter
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -164,7 +160,7 @@ class LCALSTM(nn.Module):
         else:
             # retrieve memory
             m_t = self.em.get_memory(
-                c_t, leak=0, comp=.5, w_input=inps_t
+                c_t, leak=0, comp=.8, w_input=inps_t
             )
         return m_t
 

@@ -1,7 +1,3 @@
-"""
-a fork from LCALSTM 07/03
-goal: send the entropy back to influence recall parameter
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -37,7 +33,7 @@ class LCALSTM(nn.Module):
         super(LCALSTM, self).__init__()
         self.input_dim = input_dim
         self.rnn_hidden_dim = rnn_hidden_dim
-        self.n_hidden_total = (N_VSIG+1) * rnn_hidden_dim + N_SSIG
+        self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
         self.i2h = nn.Linear(input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
@@ -97,7 +93,7 @@ class LCALSTM(nn.Module):
         preact = self.i2h(x_t) + self.h2h(h_prev)
         # get all gate values
         gates = preact[:, : N_VSIG * self.rnn_hidden_dim].sigmoid()
-        c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim+N_SSIG:].tanh()
+        c_t_new = preact[:, N_VSIG * self.rnn_hidden_dim + N_SSIG:].tanh()
         # split input(write) gate, forget gate, output(read) gate
         f_t = gates[:, :self.rnn_hidden_dim]
         o_t = gates[:, self.rnn_hidden_dim:2 * self.rnn_hidden_dim]

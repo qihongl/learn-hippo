@@ -54,12 +54,13 @@ class P():
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
         if def_prob is None:
-            def_prob = 1/n_branch
+            def_prob = 1 / n_branch
         if n_def_tps is None:
             n_def_tps = n_param
         def_tps = sample_def_tps(n_param, n_def_tps)
-        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
-        self.dk_id = self.a_dim-1
+        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(
+            n_param, n_branch)
+        self.dk_id = self.a_dim - 1
 
         # init param classes
         self.env = env(
@@ -136,7 +137,7 @@ class env():
         self.penalty_discrete = _zero_one_to_true_false(penalty_discrete)
         self.penalty_onehot = _zero_one_to_true_false(penalty_onehot)
         # self.penalty_range = [i for i in range(penalty+1) if i % 2 == 0]
-        self.penalty_range = [i for i in range(penalty+1)]
+        self.penalty_range = [i for i in range(penalty + 1)]
         self.normalize_return = _zero_one_to_true_false(normalize_return)
         #
         self.chance = 1 / n_branch
@@ -181,8 +182,9 @@ class net():
         if noisy_encoding == 1:
             self.dict_len *= 2
         # inferred params
-        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(n_param, n_branch)
-        self.dk_id = self.a_dim-1
+        self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(
+            n_param, n_branch)
+        self.dk_id = self.a_dim - 1
         self.validate_args()
 
     def validate_args(self):
@@ -230,14 +232,14 @@ def get_event_ends(T_part, n_repeats):
         the end points of event seqs
 
     """
-    return [T_part * (k+1)-1 for k in range(n_repeats)]
+    return [T_part * (k + 1) - 1 for k in range(n_repeats)]
 
 
 def _infer_data_dims(n_param, n_branch):
     # infer params
     x_dim = (n_param * n_branch) * 2 + n_branch
     y_dim = n_branch
-    a_dim = n_branch+1
+    a_dim = n_branch + 1
     return x_dim, y_dim, a_dim
 
 

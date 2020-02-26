@@ -10,9 +10,7 @@ from itertools import product
 from scipy.stats import pearsonr
 from sklearn import metrics
 from task import SequenceLearning
-# from exp_tz import run_tz
 from utils.params import P
-# from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
 from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, get_test_data_dir, \
     pickle_load_dict, get_test_data_fname, pickle_save_dict, load_env_metadata
@@ -37,7 +35,7 @@ log_root = '../log/'
 # exp_name = 'penalty-fixed-discrete-simple_'
 # exp_name = 'penalty-random-discrete'
 # exp_name = 'penalty-random-discrete-lowsim'
-exp_name = 'penalty-random-discrete-highsim'
+exp_name = '0220-v1-widesim-comp.8'
 # exp_name = 'penalty-random-discrete-schema'
 
 supervised_epoch = 600
@@ -50,22 +48,23 @@ enc_size = 16
 n_event_remember = 2
 # def_prob = .9
 def_prob = .25
-n_def_tps = n_param//2
+# n_def_tps = n_param // 2
+n_def_tps = 0
 
 n_hidden = 194
 n_hidden_dec = 128
 eta = .1
 
-penalty_random = 0
+penalty_random = 1
 # testing param, ortho to the training directory
-penalty_discrete = 1
+penalty_discrete = 0
 penalty_onehot = 0
 normalize_return = 1
 
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 
 # testing params
 enc_size_test = 16
@@ -80,7 +79,7 @@ slience_recall_time = None
 # similarity_max_test = .4
 # similarity_min_test = 0
 similarity_max_test = .9
-similarity_min_test = .35
+similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [2, 3, 4, 5]
@@ -103,7 +102,7 @@ def prealloc_stats():
 
 
 for penalty_train in penaltys_train:
-    penaltys_test_ = np.arange(0, penalty_train+1, 4)
+    penaltys_test_ = np.arange(0, penalty_train + 1, 4)
     # penaltys_test_ = [penalty_train]
     # penaltys_test_ = [penalty_train]
     for penalty_test in penaltys_test_:
@@ -340,7 +339,7 @@ for penalty_train in penaltys_train:
                 # plot
                 plot_pred_acc_rcl(
                     acc_mu[T_part:], acc_er[T_part:],
-                    acc_mu[T_part:]+dk_mu[T_part:],
+                    acc_mu[T_part:] + dk_mu[T_part:],
                     p, f, axes[i],
                     title=f'{cn}',
                     add_legend=add_legend, legend_loc=legend_loc,
@@ -576,7 +575,7 @@ for penalty_train in penaltys_train:
             ylim_bonds[ker_name] = [-.05, .6]
             for i, ax in enumerate(axes):
                 ax.set_ylim(ylim_bonds[ker_name])
-                ax.set_xticks([0, p.env.n_param-1])
+                ax.set_xticks([0, p.env.n_param - 1])
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
@@ -642,7 +641,8 @@ for penalty_train in penaltys_train:
                 colors = [sns.color_palette()[0], sns.color_palette()
                           [3], 'grey']
 
-                f, axes = plt.subplots(1, len(dvs), figsize=(5*len(dvs), 4.5))
+                f, axes = plt.subplots(
+                    1, len(dvs), figsize=(5 * len(dvs), 4.5))
                 for i, ax in enumerate(axes):
                     r_val, p_val = pearsonr(sum_lure_act_dmp2, dvs[i])
                     sns.regplot(
@@ -727,9 +727,9 @@ for penalty_train in penaltys_train:
                 axes[i].bar(range(n_param), prop_true(wo_cd_p2), label='WM', width=width,
                             bottom=prop_true(eo_cd_p2))
                 axes[i].bar(range(n_param), prop_true(bt_cd_p2), label='both', width=width,
-                            bottom=prop_true(eo_cd_p2)+prop_true(wo_cd_p2))
+                            bottom=prop_true(eo_cd_p2) + prop_true(wo_cd_p2))
                 axes[i].bar(range(n_param), prop_true(nt_cd_p2), label='neither', width=width,
-                            bottom=prop_true(eo_cd_p2)+prop_true(wo_cd_p2)+prop_true(bt_cd_p2))
+                            bottom=prop_true(eo_cd_p2) + prop_true(wo_cd_p2) + prop_true(bt_cd_p2))
                 axes[i].set_ylabel('Proportion (%)')
                 axes[i].set_title(f'{cd_name}')
                 axes[i].legend()
@@ -753,7 +753,8 @@ for penalty_train in penaltys_train:
                 avg_ma[cond_name][m_type][:, T_part:].T,
                 alpha=.1, color=gr_pal[0]
             )
-            axes[0, 0].errorbar(x=range(T_part), y=mu_, yerr=er_, color='black')
+            axes[0, 0].errorbar(x=range(T_part), y=mu_,
+                                yerr=er_, color='black')
             axes[0, 0].set_xlabel('Time, recall phase')
             axes[0, 0].set_ylabel(ylab)
             axes[0, 0].set_title(f'All trials')
@@ -762,7 +763,8 @@ for penalty_train in penaltys_train:
 
             trials_ = np.random.choice(
                 range(len(avg_ma[cond_name][m_type])), n_trials_)
-            axes[0, 1].plot(avg_ma[cond_name][m_type][:, T_part:][trials_, :].T)
+            axes[0, 1].plot(avg_ma[cond_name][m_type]
+                            [:, T_part:][trials_, :].T)
 
             axes[0, 1].set_xlabel('Time, recall phase')
             axes[0, 1].set_ylabel(ylab)
@@ -774,7 +776,8 @@ for penalty_train in penaltys_train:
             mu_, er_ = compute_stats(sorted_targ_act_cond_p2, n_se=3)
             axes[1, 0].plot(sorted_targ_act_cond_p2.T,
                             alpha=.1, color=gr_pal[0])
-            axes[1, 0].errorbar(x=range(T_part), y=mu_, yerr=er_, color='black')
+            axes[1, 0].errorbar(x=range(T_part), y=mu_,
+                                yerr=er_, color='black')
             axes[1, 0].set_ylabel(ylab)
             axes[1, 0].set_xlabel(f'Time (the sorting axis)')
             axes[1, 0].set_title(f'Sorted')
@@ -912,7 +915,7 @@ for penalty_train in penaltys_train:
             # use CURRENT uncertainty to predict memory activation
             cond_name = 'DM'
             targ_act_cond_p2_stats = sep_by_qsource(
-                avg_ma[cond_name]['targ'][:, T_part+pad_len_test:],
+                avg_ma[cond_name]['targ'][:, T_part + pad_len_test:],
                 q_source[cond_name],
                 n_se=n_se
             )
@@ -930,7 +933,7 @@ for penalty_train in penaltys_train:
             ax.set_xlabel('Time')
             ax.set_ylabel('Activation')
             # ax.set_ylim([-.05, .75])
-            ax.set_xticks([0, p.env.n_param-1])
+            ax.set_xticks([0, p.env.n_param - 1])
             ax.legend(['not in WM', 'in WM'], fancybox=True)
             # ax.legend([])
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
@@ -990,8 +993,10 @@ for penalty_train in penaltys_train:
             tma_incrt_mu, tma_incrt_er = np.zeros(n_param,), np.zeros(n_param,)
             for t in range(n_param):
                 sel_op = q_source[cond_name]['EM only'][:, t]
-                tma_ = avg_ma[cond_name][m_type][sel_op, T_part+t+pad_len_test]
-                crt_ = corrects_cond_p2[q_source[cond_name]['EM only'][:, t], t]
+                tma_ = avg_ma[cond_name][m_type][sel_op,
+                                                 T_part + t + pad_len_test]
+                crt_ = corrects_cond_p2[q_source[cond_name]
+                                        ['EM only'][:, t], t]
                 tma_crt_mu[t], tma_crt_er[t] = compute_stats(tma_[crt_])
                 tma_incrt_mu[t], tma_incrt_er[t] = compute_stats(tma_[~crt_])
 
@@ -1017,7 +1022,8 @@ for penalty_train in penaltys_train:
             tma_dk_mu, tma_dk_er = np.zeros(n_param,), np.zeros(n_param,)
             for t in range(n_param):
                 sel_op = q_source[cond_name]['EM only'][:, t]
-                tma_ = avg_ma[cond_name][m_type][sel_op, T_part+t+pad_len_test]
+                tma_ = avg_ma[cond_name][m_type][sel_op,
+                                                 T_part + t + pad_len_test]
                 dk_ = dk_cond_p2[q_source[cond_name]['EM only'][:, t], t]
                 tma_k_mu[t], tma_k_er[t] = compute_stats(tma_[~dk_])
                 tma_dk_mu[t], tma_dk_er[t] = compute_stats(tma_[dk_])
@@ -1123,9 +1129,9 @@ for penalty_train in penaltys_train:
             '''compute inter-event similarity'''
             targ_raw = np.argmax(np.array(Y_raw), axis=-1)
 
-            ambiguity = np.zeros((n_examples, n_event_remember-1))
+            ambiguity = np.zeros((n_examples, n_event_remember - 1))
             for i in range(n_examples):
-                cur_mem_ids = np.arange(i-n_event_remember+1, i)
+                cur_mem_ids = np.arange(i - n_event_remember + 1, i)
                 for j, j_raw in enumerate(cur_mem_ids):
                     ambiguity[i, j] = compute_event_similarity(
                         targ_raw[i], targ_raw[j])
@@ -1192,7 +1198,7 @@ for penalty_train in penaltys_train:
                         ind_var[cond_name], dep_vars[info_name][cond_name]
                     )
                     str_ = 'r = %.2f, p = %.2f' % (corr, pval)
-                    str_ = str_+'*' if pval < .05 else str_
+                    str_ = str_ + '*' if pval < .05 else str_
                     str_ = cond_name + '\n' + str_ if row_id == 0 else str_
                     axes[row_id, col_id].set_title(str_)
                     axes[row_id, 0].set_ylabel(info_name)
@@ -1337,7 +1343,7 @@ for penalty_train in penaltys_train:
             dk_gmu_ = np.mean(vs_, axis=0)
             plot_pred_acc_rcl(
                 acc_gmu_[T_part:], acc_ger_[T_part:],
-                acc_gmu_[T_part:]+dk_gmu_[T_part:],
+                acc_gmu_[T_part:] + dk_gmu_[T_part:],
                 p, f, axes[i],
                 title=f'{cn}',
                 add_legend=add_legend, legend_loc=legend_loc,
@@ -1394,7 +1400,7 @@ for penalty_train in penaltys_train:
         for i, ax in enumerate(axes):
             ax.set_ylabel(lca_param_names[i])
             ax.set_xlabel('Time, recall phase')
-            ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
+            ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         if pad_len_test > 0:
@@ -1519,7 +1525,7 @@ for penalty_train in penaltys_train:
                 ax.legend()
                 ax.set_xlabel('Time, recall phase')
                 ax.set_ylim([np.max([-.05, ylim_l]), ylim_r])
-                ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
+                ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 if metric_name == 'lca':
@@ -1589,7 +1595,7 @@ for penalty_train in penaltys_train:
         ax.set_ylabel('Memory activation')
         ax.set_xlabel('Time, recall phase')
         ax.legend(['not in WM', 'in WM'])
-        ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param-1))
+        ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
@@ -1656,7 +1662,7 @@ for penalty_train in penaltys_train:
 
         f, ax = plt.subplots(1, 1, figsize=(5, 4))
         iv_ = (np.sum(effective_cmpt['DM'], axis=1) +
-               np.sum(effective_cmpt['NM'], axis=1))/2
+               np.sum(effective_cmpt['NM'], axis=1)) / 2
         # iv_ = np.mean(cmpt_by_cond['DM'], axis=1)
 
         r_val, p_val = pearsonr(iv_, np.array(auc_list))
@@ -1679,7 +1685,7 @@ for penalty_train in penaltys_train:
         ig_p2 = np.array(p_dict_)[:, T_part:]
         ig_p2_norm = ig_p2 / np.sum(ig_p2, axis=1, keepdims=True)
 
-        rt = ig_p2 * (np.arange(T_part)+1)
+        rt = ig_p2 * (np.arange(T_part) + 1)
         mrt = np.mean(rt, axis=1)
         r_val, p_val = pearsonr(mrt, np.array(auc_list))
 

@@ -1,7 +1,3 @@
-"""
-a fork from LCALSTM 07/03
-goal: send the entropy back to influence recall parameter
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -16,7 +16,6 @@ def run_tz(
         slience_recall_time=None, scramble=False,
         learning=True, get_cache=True, get_data=False,
 ):
-    # switch_trainable_weights(agent, supervised)
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
     # logger
@@ -63,7 +62,6 @@ def run_tz(
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
                 penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
-            # print(penalty_val, penalty_rep)
 
             # testing condition
             if slience_recall_time is not None:
@@ -211,28 +209,6 @@ def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
     return hc_t
 
 
-# def sample_penalty(p, fix_penalty):
-#     # if penalty level is fixed, usually used during test
-#     if fix_penalty is not None:
-#         penalty_val = fix_penalty
-#     else:
-#         # otherwise sample a penalty level
-#         if p.env.penalty_random:
-#             if p.env.penalty_discrete:
-#                 penalty_val = np.random.choice(p.env.penalty_range)
-#             else:
-#                 penalty_val = np.random.uniform(0, p.env.penalty)
-#         else:
-#             # or train with a fixed penalty level
-#             penalty_val = p.env.penalty
-#     # form the input representation of the current penalty signal
-#     if p.env.penalty_onehot:
-#         penalty_rep = one_hot_penalty(penalty_val, p)
-#     else:
-#         penalty_rep = penalty_val
-#     return torch.tensor(penalty_val), torch.tensor(penalty_rep)
-
-
 def sample_penalty(p, fix_penalty, get_mean=False):
     if get_mean:
         penalty_val = p.env.penalty / 2
@@ -281,26 +257,3 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
         # option 2: scramble observations + queries
         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
     return X_i, Y_i
-
-
-# def freeze_weights(layer):
-#     layer.weight.requires_grad = False
-#     layer.bias.requires_grad = False
-#
-#
-# def unfreeze_weights(layer):
-#     layer.weight.requires_grad = True
-#     layer.bias.requires_grad = True
-#
-#
-# def switch_trainable_weights(agent, supervised):
-#     if not supervised:
-#         freeze_weights(agent.i2h)
-#         freeze_weights(agent.h2h)
-#         # print('freeze weights agent.i2h')
-#         # print('freeze weights agent.h2h')
-#     else:
-#         unfreeze_weights(agent.i2h)
-#         unfreeze_weights(agent.h2h)
-#         # print('unfreeze weights agent.i2h')
-#         # print('unfreeze weights agent.h2h')

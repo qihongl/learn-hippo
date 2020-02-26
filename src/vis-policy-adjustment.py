@@ -89,11 +89,8 @@ rt = {ptest: None for ptest in penaltys_test}
 for ptest in penaltys_test:
     rt_ = np.array(lca_param[ptest][0]['DM']['mu'])[:, T:].T
     rt_ / np.sum(rt_)
-    rt[ptest] = np.mean(rt_ * np.reshape(np.arange(T)+1, (T, 1)), axis=0)
+    rt[ptest] = np.mean(rt_ * np.reshape(np.arange(T) + 1, (T, 1)), axis=0)
 
-
-# plt.plot(np.array(lca_param[ptest2][0]['DM']['mu'])[:, T:].T)
-# plt.plot(np.array(lca_param[ptest1][0]['DM']['mu'])[:, T:].T)
 
 lca_param_diff = {
     lca_pname_: {
@@ -146,7 +143,7 @@ sns.despine()
 f.tight_layout()
 
 # auc ~ recall time (center of mass of input gate)
-rt_diff = rt[ptest2]-rt[ptest1]
+rt_diff = rt[ptest2] - rt[ptest1]
 r_val, p_val = pearsonr(rt_diff, auc_diff)
 f, ax = plt.subplots(1, 1, figsize=(5, 4))
 sns.regplot(rt_diff, auc_diff, 'x')
