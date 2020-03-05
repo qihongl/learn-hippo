@@ -1,3 +1,5 @@
+import pandas as pd
+import dabest
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +21,7 @@ from analysis import compute_acc, compute_dk, compute_stats, \
 
 from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
     plot_time_course_for_all_conds
+from brainiak.funcalign.srm import SRM
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
 from itertools import combinations
@@ -29,7 +32,8 @@ sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
 # exp_name = 'penalty-fixed-discrete-simple_'
-exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-random-discrete'
+exp_name = '0226-v1-widesim-comp.8'
 
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
@@ -51,7 +55,7 @@ n_hidden = 194
 n_hidden_dec = 128
 eta = .1
 
-penalty_random = 0
+penalty_random = 1
 # testing param, ortho to the training directory
 penalty_discrete = 1
 penalty_onehot = 0
@@ -59,7 +63,7 @@ normalize_return = 1
 
 # loading params
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 pad_len_load = -1
 penalty_train = 4
 # testing params
@@ -162,7 +166,12 @@ for subj_id in subj_ids:
         cond_ids = get_trial_cond_ids(log_cond)
         activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
         [C, H, M, CM, DA, V] = activity_
-        [inpt, leak, comp] = ctrl_param_
+        # [inpt, leak, comp] = ctrl_param_
+        [inpt] = ctrl_param_
+        comp_val = .8
+        leak_val = 0
+        comp = np.full(np.shape(inpt), comp_val)
+        leak = np.full(np.shape(inpt), leak_val)
 
         # collect data
         CMs_dlist[fix_cond].append(CM)
@@ -200,14 +209,13 @@ for cond in all_conds:
 
 '''isc'''
 
-from brainiak.funcalign.srm import SRM
 # from sklearn.preprocessing import StandardScaler
 dim_srm = 16
 srm = SRM(features=dim_srm)
 
 test_prop = .5
-n_examples_tr = int(n_examples * (1-test_prop))
-n_examples_te = n_examples-n_examples_tr
+n_examples_tr = int(n_examples * (1 - test_prop))
+n_examples_te = n_examples - n_examples_tr
 
 # data = CMs_darray
 data = DAs_darray
@@ -291,11 +299,11 @@ def compute_bs_bc_isc(
     for (i_s, j_s) in combinations(range(n_subjs), 2):
         isc_mu_ij = []
         # compute sliding window averages
-        for t in np.arange(T_part, T_total-win_size):
+        for t in np.arange(T_part, T_total - win_size):
             isc_mu_ij.append(
                 np.mean(np.diag(np.corrcoef(
-                    data_te_srm_rm_i[i_s][:, t: t+win_size],
-                    data_te_srm_xm_i[j_s][:, t: t+win_size]
+                    data_te_srm_rm_i[i_s][:, t: t + win_size],
+                    data_te_srm_xm_i[j_s][:, t: t + win_size]
                 )[dim_srm:, :dim_srm]))
             )
         isc_mu_ij = np.array(isc_mu_ij)
@@ -357,7 +365,7 @@ color_id_pick = [0, 1, 2, 3, 4, 7]
 c_pal = [c_pal[color_id] for color_id in color_id_pick]
 
 # compute stats
-n_se = 2
+n_se = 3
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 for ref_cond in cond_ids.keys():
@@ -371,7 +379,7 @@ for ref_cond in cond_ids.keys():
 
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(6, 4))
+f, ax = plt.subplots(1, 1, figsize=(7, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
@@ -395,7 +403,7 @@ ax.set_ylabel('Linear correlation')
 ax.set_title('Spatial inter-subject correlation')
 sns.despine()
 f.tight_layout()
-
+f.savefig('temp/sisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 
 '''plot temporal isc'''
 
@@ -440,7 +448,7 @@ f.tight_layout()
 
 
 '''plot temporal isc - sliding window'''
-n_se = 2
+n_se = 3
 # compute stats
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
@@ -453,7 +461,7 @@ for ref_cond in cond_ids.keys():
 
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(6, 4))
+f, ax = plt.subplots(1, 1, figsize=(7, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
 # for i_rc, ref_cond in enumerate(cond_ids.keys()):
@@ -476,6 +484,7 @@ ax.set_ylabel('Linear correlation')
 ax.set_title('Temporal inter-subject correlation')
 sns.despine()
 f.tight_layout()
+f.savefig('temp/tisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 
 
 '''prediction isc change'''
@@ -539,7 +548,7 @@ r_se_tisc = {cond: None for cond in has_memory_conds}
 for cond in has_memory_conds:
 
     rmdm_sisc = np.zeros((n_subj_pairs, n_examples_te, T_part))
-    rmdm_tisc = np.zeros((n_subj_pairs, n_examples_te, T_part-win_size))
+    rmdm_tisc = np.zeros((n_subj_pairs, n_examples_te, T_part - win_size))
 
     for i in range(n_examples_te):
         # for this trial ...
@@ -564,14 +573,14 @@ for cond in has_memory_conds:
         recall[i_comb] = recall_ij.T
 
     for t in range(n_tps):
-        sisc_change_t = rmdm_sisc[:, :, t+1]-rmdm_sisc[:, :, t]
+        sisc_change_t = rmdm_sisc[:, :, t + 1] - rmdm_sisc[:, :, t]
         for i_comb in range(n_subj_pairs):
             r_val_sisc[cond][i_comb, t], p_val_sisc[cond][i_comb, t] = pearsonr(
                 recall[i_comb, :, t], sisc_change_t[i_comb])
 
-    for t in range(n_tps-win_size):
-        tisc_change_t = rmdm_tisc[:, :, t+1]-rmdm_tisc[:, :, t]
-        recall_win_t = np.mean(recall[:, :, t:t+win_size], axis=-1)
+    for t in range(n_tps - win_size):
+        tisc_change_t = rmdm_tisc[:, :, t + 1] - rmdm_tisc[:, :, t]
+        recall_win_t = np.mean(recall[:, :, t:t + win_size], axis=-1)
         for i_comb in range(n_subj_pairs):
             r_val_tisc[cond][i_comb, t], p_val_tisc[cond][i_comb, t] = pearsonr(
                 recall_win_t[i_comb], tisc_change_t[i_comb])
@@ -598,24 +607,22 @@ ax.legend()
 sns.despine()
 f.tight_layout()
 
+#
+# xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
+# f, ax = plt.subplots(1, 1, figsize=(6, 4))
+# # sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+# sns.violinplot(data=[np.ravel(r_val_sisc[cond]) for cond in has_memory_conds])
+# # np.ravel(r_val_sisc[cond])
+# # sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+# ax.axhline(0, color='grey', linestyle='--')
+# ax.set_xticks(range(len(xticklabels)))
+# ax.set_xticklabels(xticklabels)
+# ax.set_xlabel('Condition')
+# ax.set_ylabel('Linear Correlation')
+# ax.set_title('Correlation: recall vs. spatial ISC change')
+# sns.despine()
+# f.tight_layout()
 
-xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
-f, ax = plt.subplots(1, 1, figsize=(6, 4))
-# sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-sns.violinplot(data=[np.ravel(r_val_sisc[cond]) for cond in has_memory_conds])
-# np.ravel(r_val_sisc[cond])
-# sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-ax.axhline(0, color='grey', linestyle='--')
-ax.set_xticks(range(len(xticklabels)))
-ax.set_xticklabels(xticklabels)
-ax.set_xlabel('Condition')
-ax.set_ylabel('Linear Correlation')
-ax.set_title('Correlation: recall vs. spatial ISC change')
-sns.despine()
-f.tight_layout()
-
-import dabest
-import pandas as pd
 # data_dict = r_mu_sisc
 data_dict = {}
 for cond in list(r_mu_sisc.keys()):
@@ -626,7 +633,7 @@ iris_dabest = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
 iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(5, 4)
+    swarm_label='Linear correlation', fig_size=(7, 5)
 )
 
 # i_comb = 3
@@ -698,5 +705,5 @@ iris_dabest = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
 iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(5, 4),
+    swarm_label='Linear correlation', fig_size=(7, 5),
 )

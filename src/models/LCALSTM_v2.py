@@ -41,7 +41,7 @@ class LCALSTM(nn.Module):
         # rnn module
         self.i2h = nn.Linear(input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
-        # deicion module
+        # decision module
         self.ih = nn.Linear(rnn_hidden_dim + 1, dec_hidden_dim)
         self.actor = nn.Linear(dec_hidden_dim, output_dim)
         self.critic = nn.Linear(dec_hidden_dim, 1)

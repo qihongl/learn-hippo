@@ -31,7 +31,7 @@ class LCALSTM(nn.Module):
             rnn_hidden_dim, dec_hidden_dim,
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
-            init_state_trainable=False,
+            # init_state_trainable=False,
             noisy_encoding=0,
     ):
         super(LCALSTM, self).__init__()
@@ -50,7 +50,7 @@ class LCALSTM(nn.Module):
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
-        self.init_state_trainable = init_state_trainable
+        # self.init_state_trainable = init_state_trainable
         if noisy_encoding == 0:
             self.noisy_encoding = False
         elif noisy_encoding == 1:
@@ -67,24 +67,10 @@ class LCALSTM(nn.Module):
         self.ssig_names = scalar_signal_names
         # init params
         initialize_weights(self, self.weight_init_scheme)
-        if self.init_state_trainable:
-            self.init_init_states()
-
-    def init_init_states(self):
-        scale = 1 / self.rnn_hidden_dim
-        self.h_0 = torch.nn.Parameter(
-            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-        )
-        self.c_0 = torch.nn.Parameter(
-            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-        )
 
     def get_init_states(self, scale=.1, device='cpu'):
-        if self.init_state_trainable:
-            h_0_, c_0_ = self.h_0, self.c_0
-        else:
-            h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
-            c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+        h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+        c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
         return (h_0_, c_0_)
 
     def forward(self, x_t, hc_prev, beta=1):

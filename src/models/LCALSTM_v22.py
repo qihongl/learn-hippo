@@ -85,6 +85,7 @@ class LCALSTM(nn.Module):
         i_t = gates[:, -self.rnn_hidden_dim:]
         # new cell state = gated(prev_c) + gated(new_stuff)
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
+        # print(c_t.size())
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
         hp_t = torch.cat([h_t, penalty_t], dim=1)

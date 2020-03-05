@@ -41,7 +41,7 @@ similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
 sns.heatmap(
     similarity_matrix,
-    xticklabels=n_samples//2, yticklabels=n_samples//2,
+    xticklabels=n_samples // 2, yticklabels=n_samples // 2,
     cmap='viridis', ax=ax
 )
 ax.set_xlabel('event i')
@@ -89,7 +89,7 @@ sns.distplot(
 )
 ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
 ax.axvline(similarity_max, linestyle='--',
-           color='grey', alpha=.5, linewidth=linewidth//2)
+           color='grey', alpha=.5, linewidth=linewidth // 2)
 ax.set_xlabel(xlabel)
 ax.set_ylabel('Freq.')
 ax.set_title(title)
@@ -150,7 +150,7 @@ f.tight_layout()
 
 
 '''vary similarity MINS'''
-similarity_max = .75
+similarity_max = .9
 similarity_mins = np.linspace(0, .4, 3)
 similarity_cap_lag = 4
 n_iter = 5
@@ -200,8 +200,10 @@ f.tight_layout()
 
 '''effective similarity'''
 t0 = time.time()
-similarity_min = 0.4
-similarity_max = 1
+similarity_min = 0.0
+similarity_max = .4
+similarity_min = .35
+similarity_max = .9
 task = SequenceLearning(
     n_param, n_branch, n_parts=2, similarity_cap_lag=similarity_cap_lag,
     similarity_min=similarity_min, similarity_max=similarity_max
@@ -234,6 +236,7 @@ f, ax = plt.subplots(1, 1, figsize=(5, 4))
 ax.bar(x=xticks, height=bar_height, yerr=bar_yerr)
 ax.set_title('Event similarity')
 ax.set_ylabel('Param overlap')
+ax.axhline(1 / n_branch, color='grey', linestyle='--')
 ax.set_xticks(xticks)
 ax.set_xticklabels(xlabs)
 sns.despine()

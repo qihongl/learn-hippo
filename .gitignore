@@ -1,6 +1,7 @@
 log/
 figs/
 temp/
+paper/
 .DS_Store
 
 *scratch*

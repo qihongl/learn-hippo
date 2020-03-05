@@ -1,9 +1,12 @@
+import dabest
+import pandas as pd
 import os
 import numpy as np
 from utils.io import pickle_load_dict
 from utils.constants import TZ_COND_DICT
 from analysis import compute_stats, remove_none
 from scipy.stats import pearsonr
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='white', palette='colorblind', context='poster')
@@ -23,6 +26,8 @@ auc = {ptest: None for ptest in penaltys_test}
 acc = {ptest: None for ptest in penaltys_test}
 mis = {ptest: None for ptest in penaltys_test}
 dk = {ptest: None for ptest in penaltys_test}
+ma_lca = defaultdict()
+ma_cosine = defaultdict()
 
 # for ptrain in penaltys_train:
 ptrain = penaltys_train[0]
@@ -38,6 +43,8 @@ for ptest in penaltys_test:
     acc[ptest] = data['acc_dict']
     mis[ptest] = data['mis_dict']
     dk[ptest] = data['dk_dict']
+    ma_lca[ptest] = data['lca_ma_list']
+    ma_cosine[ptest] = data['cosine_ma_list']
 
 n_subjs_total = len(auc[ptest])
 
@@ -67,6 +74,7 @@ for i_ms in sorted(missing_subjects, reverse=True):
             del acc[ptest][cond]['er'][i_ms]
             del mis[ptest][cond]['er'][i_ms]
             del dk[ptest][cond]['er'][i_ms]
+            # del ma_lca_dm[ptest][i_ms]
             for lca_pid, lca_pname in lca_pnames.items():
                 del lca_param[ptest][lca_pid][cond]['mu'][i_ms]
                 del lca_param[ptest][lca_pid][cond]['er'][i_ms]
@@ -81,8 +89,8 @@ def extract_part2_diff(val, cond):
     return tmp[:, T:]
 
 
-ptest1 = 0
-ptest2 = 4
+ptest1 = penaltys_test[0]
+ptest2 = penaltys_test[1]
 
 # extract differences
 rt = {ptest: None for ptest in penaltys_test}
@@ -119,6 +127,33 @@ for cond in all_conds:
         lca_param_diff[lca_pname][cond] = tmp[:, T:]
 
 rt_diff = rt[ptest2] - rt[ptest1]
+
+
+def compute_reward(ptest_):
+    cond = 'DM'
+    acc_mu_p2 = np.array(acc[ptest_][cond]['mu'])[:, T:]
+    mis_mu_p2 = np.array(mis[ptest_][cond]['mu'])[:, T:]
+    reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
+        np.sum(mis_mu_p2, axis=1) * ptest_
+    return reward_ptest_
+
+
+reward = {ptest: compute_reward(ptest) for ptest in penaltys_test}
+reward_diff = reward[ptest2] - reward[ptest1]
+
+r_val, p_val = pearsonr(rt_diff, reward_diff)
+f, ax = plt.subplots(1, 1, figsize=(6, 5))
+sns.regplot(rt_diff, reward_diff)
+ax.set_ylabel(r'$\Delta$ Reward')
+ax.set_xlabel(r'$\Delta$ recall time')
+# ax.set_title('Effect of current penalty')
+ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
+    0.05, 0.05), xycoords='axes fraction')
+ax.axvline(0, color='grey', alpha=.3, linestyle='--')
+ax.axhline(0, color='grey', alpha=.3, linestyle='--')
+sns.despine()
+f.tight_layout()
+
 
 '''regression models'''
 # auc ~ recall time (center of mass of input gate)
@@ -159,3 +194,15 @@ for i, (dv_name_i, dv_diff_i) in enumerate(diff_data.items()):
     axes[i].axvline(0, color='grey', alpha=.3, linestyle='--')
 sns.despine()
 f.tight_layout()
+
+'''slope graph'''
+data_dict = {'Penalty 0': rt[0], 'Penalty 4': rt[4]}
+df = pd.DataFrame(data_dict)
+df['ids'] = np.arange(n_subjs)
+df.head()
+
+# Load the data into dabest
+dabest_data = dabest.load(
+    data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
+)
+dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(8, 5))

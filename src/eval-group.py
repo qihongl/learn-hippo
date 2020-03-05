@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from itertools import product
-from models.LCALSTM_v2 import LCALSTM as Agent
+from models.LCALSTM_v1 import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -11,7 +11,7 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata
 
 log_root = '../log/'
-exp_name = 'lowsim-randomcont-penalty-randompad-cmpt.9-rawreturn'
+exp_name = '0220-v1-widesim-comp.8'
 # exp_name = 'penalty-random-discrete-lowsim'
 # exp_name = 'penalty-fixed-discrete-leak0'
 
@@ -20,7 +20,7 @@ supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
 
-n_branch = 3
+n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
@@ -35,13 +35,13 @@ eta = .1
 
 penalty_random = 1
 # testing param, ortho to the training directory
-penalty_discrete = 0
+penalty_discrete = 1
 penalty_onehot = 0
-normalize_return = 0
+normalize_return = 1
 
 # loading params
 pad_len_load = -1
-p_rm_ob_enc_load = 0
+p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
 
 # testing params
@@ -51,7 +51,7 @@ p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 n_examples_test = 256
 
-similarity_max_test = .4
+similarity_max_test = .9
 similarity_min_test = 0
 # similarity_max_test = .9
 # similarity_min_test = .35
@@ -61,10 +61,13 @@ similarity_min_test = 0
 # slience_recall_times = [range(n_param)]
 slience_recall_times = [None]
 
-subj_ids = np.arange(5)
+subj_ids = np.arange(10)
 
-penaltys_train = [0, 1, 2, 4]
-penaltys_test = np.array(penaltys_train)
+penaltys_train = [4]
+penaltys_test = np.array([4])
+# penaltys_test = np.array(penaltys_train)
+# penaltys_train = [0, 1, 2, 4, 8]
+# penaltys_test = np.array([0, 1, 2, 4, 8])
 
 # all_conds = ['RM', 'DM', 'NM']
 # all_conds = ['NM']

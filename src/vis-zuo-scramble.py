@@ -36,7 +36,8 @@ log_root = '../log/'
 # exp_name = 'penalty-random-continuous'
 # subj_ids = np.arange(6)
 # exp_name = 'penalty-fixed-discrete-simple_'
-exp_name = 'penalty-random-discrete'
+# exp_name = 'penalty-random-discrete'
+exp_name = '0220-v1-widesim-comp.8'
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
 
@@ -58,7 +59,7 @@ n_hidden = 194
 n_hidden_dec = 128
 eta = .1
 
-penalty_random = 0
+penalty_random = 1
 # testing param, ortho to the training directory
 penalty_discrete = 1
 penalty_onehot = 0
@@ -66,7 +67,7 @@ normalize_return = 1
 
 # loading params
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 pad_len_load = -1
 penalty_train = 4
 # testing params
@@ -139,7 +140,7 @@ for scb_cond, scramble in scb_dict.items():
             T_part = n_param + pad_len_test
             T_total = T_part * task.n_parts
             #
-            n_conds = len(TZ_COND_DICT)
+            # n_conds = len(TZ_COND_DICT)
             memory_types = ['targ', 'lure']
             ts_predict = np.array(
                 [t % T_part >= pad_len_test for t in range(T_total)])
@@ -169,8 +170,8 @@ for scb_cond, scramble in scb_dict.items():
 # from sklearn.preprocessing import StandardScaler
 dim_srm = 64
 test_prop = .5
-n_examples_tr = int(n_examples * (1-test_prop))
-n_examples_te = n_examples-n_examples_tr
+n_examples_tr = int(n_examples * (1 - test_prop))
+n_examples_te = n_examples - n_examples_tr
 
 # data = CM
 data = DA
@@ -210,7 +211,7 @@ X_test_srm_ = X_test_srm_.reshape(
 X_test_srm = defaultdict(list)
 temp_id = 0
 for scb_cond, g_name in product(scb_conds, group_names):
-    X_test_srm[scb_cond, g_name] = X_test_srm_[temp_id:temp_id+n_subjs]
+    X_test_srm[scb_cond, g_name] = X_test_srm_[temp_id:temp_id + n_subjs]
     temp_id += n_subjs
 
 
@@ -286,7 +287,7 @@ def chunks(lst, chunk_size):
     https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     '''
     assert chunk_size >= 1
-    return [lst[i:i+chunk_size] for i in np.arange(0, len(lst), chunk_size)]
+    return [lst[i:i + chunk_size] for i in np.arange(0, len(lst), chunk_size)]
 
 
 '''Temporal ISC'''
@@ -298,7 +299,7 @@ sort_ids = np.argsort(np.mean(mu_tisc[list(mu_tisc.keys())[0]], axis=0))[::-1]
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
 for i, key in enumerate(mu_tisc.keys()):
     mu_, se_ = compute_stats(mu_tisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids]*n_se,
+    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids] * n_se,
                 label=f'{key}')
 ax.legend()
 ax.set_xlabel('Components (ordered by ISC value)')
@@ -331,7 +332,7 @@ for i, key in enumerate(mu_sisc.keys()):
     print(key)
     np.shape(mu_sisc[key])
     mu_, se_ = compute_stats(mu_sisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_*n_se, label=f'{key}')
+    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_ * n_se, label=f'{key}')
 ax.legend()
 ax.set_xlabel('Time')
 ax.set_ylabel('Spatial ISC')

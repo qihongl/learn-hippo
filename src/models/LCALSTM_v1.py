@@ -31,16 +31,18 @@ class LCALSTM(nn.Module):
             rnn_hidden_dim, dec_hidden_dim,
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
+            init_state_trainable=False,
+            noisy_encoding=0,
     ):
         super(LCALSTM, self).__init__()
-        self.input_dim = input_dim
+        self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
-        self.i2h = nn.Linear(input_dim, self.n_hidden_total)
+        self.i2h = nn.Linear(self.input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
         # deicion module
-        self.ih = nn.Linear(rnn_hidden_dim + 1, dec_hidden_dim)
+        self.ih = nn.Linear(rnn_hidden_dim, dec_hidden_dim)
         self.actor = nn.Linear(dec_hidden_dim, output_dim)
         self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
@@ -48,6 +50,13 @@ class LCALSTM(nn.Module):
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
+        self.init_state_trainable = init_state_trainable
+        if noisy_encoding == 0:
+            self.noisy_encoding = False
+        elif noisy_encoding == 1:
+            self.noisy_encoding = True
+        else:
+            raise ValueError('noisy_encoding arg must be 0 or 1')
         self.init_model()
 
     def init_model(self):
@@ -58,10 +67,24 @@ class LCALSTM(nn.Module):
         self.ssig_names = scalar_signal_names
         # init params
         initialize_weights(self, self.weight_init_scheme)
+        if self.init_state_trainable:
+            self.init_init_states()
+
+    def init_init_states(self):
+        scale = 1 / self.rnn_hidden_dim
+        self.h_0 = torch.nn.Parameter(
+            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
+        )
+        self.c_0 = torch.nn.Parameter(
+            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
+        )
 
     def get_init_states(self, scale=.1, device='cpu'):
-        h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
-        c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+        if self.init_state_trainable:
+            h_0_, c_0_ = self.h_0, self.c_0
+        else:
+            h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+            c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
         return (h_0_, c_0_)
 
     def forward(self, x_t, hc_prev, beta=1):
@@ -71,7 +94,7 @@ class LCALSTM(nn.Module):
         c_prev = c_prev.view(c_prev.size(1), -1)
         x_t = x_t.view(x_t.size(1), -1)
         # pdb.set_trace()
-        x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
+        # x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
         # penalty_t = x_t[:, -1].view(1, -1)
         # transform the input info
         preact = self.i2h(x_t) + self.h2h(h_prev)
@@ -86,9 +109,8 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        hp_t = torch.cat([h_t, penalty_t], dim=1)
-        dec_act_t = F.relu(self.ih(hp_t))
-        # dec_act_t = F.relu(self.ih(h_t))
+        # hp_t = torch.cat([h_t, penalty_t], dim=1)
+        dec_act_t = F.relu(self.ih(h_t))
         # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
         # pdb.set_trace()
         # recall / encode
@@ -101,11 +123,10 @@ class LCALSTM(nn.Module):
         '''final decision attempt'''
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
+        # hp_t = torch.cat([h_t, penalty_t], dim=1)
+        dec_act_t = F.relu(self.ih(h_t))
         # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
         # dec_act_t = F.relu(self.ih(h_t))
-        hp_t = torch.cat([h_t, penalty_t], dim=1)
-        dec_act_t = F.relu(self.ih(hp_t))
-
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
         # reshape data
@@ -143,13 +164,20 @@ class LCALSTM(nn.Module):
         else:
             # retrieve memory
             m_t = self.em.get_memory(
-                c_t, leak=0, comp=.9, w_input=inps_t
+                c_t, leak=0, comp=.8, w_input=inps_t
             )
         return m_t
 
     def encode(self, cm_t):
         if not self.em.encoding_off:
-            self.em.save_memory(cm_t)
+            if self.noisy_encoding:
+                # a two memory case, a bit artificial
+                # can generalize to n-memory case with random noise
+                noise = sample_random_vector(self.rnn_hidden_dim, scale=1)
+                self.em.save_memory(cm_t + noise)
+                self.em.save_memory(cm_t - noise)
+            else:
+                self.em.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.

@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
 
+
 from itertools import product
 from scipy.stats import pearsonr
 from sklearn import metrics
 from task import SequenceLearning
-# from exp_tz import run_tz
+from copy import deepcopy
 from utils.params import P
 # from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
 from utils.constants import TZ_COND_DICT
@@ -34,13 +35,9 @@ sns.set(style='white', palette='colorblind', context='poster')
 all_conds = TZ_COND_DICT.values()
 
 log_root = '../log/'
-# exp_name = 'penalty-random-discrete-lowsim'
-# exp_name = 'penalty-random-discrete-highsim'
-# exp_name = 'penalty-random-discrete-schema'
-# exp_name = 'penalty2inptctrl-lowsim-highdp'
-# exp_name = 'penalty2pol-lowsim'
-exp_name = 'penalty2pol-cmpt.9-lowsim'
-exp_name = 'penalty2pol-highcmpt-lowsim'
+# exp_name = '0205-lowsim-v22-normreturn-pdiscrete'
+# exp_name = '0214-v1-widesim-randomp-comp.8'
+exp_name = '0220-v1-widesim-comp.8'
 
 supervised_epoch = 600
 epoch_load = 1000
@@ -50,17 +47,23 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
-# def_prob = .9
-def_prob = .25
-# n_def_tps = n_param // 2
+
+def_prob = None
 n_def_tps = 0
+# def_prob = .95
+# n_def_tps = 8
+
+comp_val = .9
+leak_val = 0
 
 n_hidden = 194
 n_hidden_dec = 128
+# n_hidden = 256
+# n_hidden_dec = 194
 eta = .1
 
-penalty_random = 0
 # testing param, ortho to the training directory
+penalty_random = 1
 penalty_discrete = 1
 penalty_onehot = 0
 normalize_return = 1
@@ -68,7 +71,7 @@ normalize_return = 1
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 
 # testing params
 enc_size_test = 16
@@ -80,24 +83,25 @@ p_rm_ob_rcl_test = p_test
 slience_recall_time = None
 # slience_recall_time = range(n_param)
 
-similarity_max_test = .4
-similarity_min_test = 0
 # similarity_max_test = .9
 # similarity_min_test = .35
+similarity_max_test = .4
+similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [2, 3, 4, 5]
-subj_ids = np.arange(8)
-# subj_ids = np.arange(2)
-# subj_ids = [1]
+subj_ids = np.arange(10)
 
-# penaltys_train = [0]
 penaltys_train = [0, 4]
-# penaltys_train = [6]
-
+penaltys_test = np.array([0, 2, 4])
+# penaltys_train = [0, 1, 2, 4, 8]
+# penaltys_test = np.array([0, 1, 2, 4, 8])
 
 n_subjs = len(subj_ids)
 DM_qsources = ['EM only', 'both']
+
+if not os.path.isdir(f'../figs/{exp_name}'):
+    os.makedirs(f'../figs/{exp_name}')
 
 
 def prealloc_stats():
@@ -106,9 +110,8 @@ def prealloc_stats():
 
 
 for penalty_train in penaltys_train:
-    penaltys_test_ = np.arange(0, penalty_train + 1, 2)
-    # penaltys_test_ = [penalty_train]
-    # penaltys_test_ = [penalty_train]
+    penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
+    # print(penalty_train, penaltys_test_)
     for penalty_test in penaltys_test_:
         # penalty_train, penalty_test = 0, 0
         print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
@@ -132,7 +135,7 @@ for penalty_train in penaltys_train:
         tpr_list = [None] * n_subjs
         fpr_list = [None] * n_subjs
         auc_list = [None] * n_subjs
-        cmpt_bar_list = [None] * n_subjs
+        # cmpt_bar_list = [None] * n_subjs
         def_tps_list = [None] * n_subjs
 
         for i_s, subj_id in enumerate(subj_ids):
@@ -159,9 +162,10 @@ for penalty_train in penaltys_train:
             env = load_env_metadata(log_subpath)
             def_path = np.array(env['def_path'])
 
-            def_tps = env['def_tps']
-            def_tps_list[i_s] = def_tps
-
+            # def_tps = env['def_tps']
+            # def_tps_list[i_s] = def_tps
+            log_subpath['data']
+            print(log_subpath['data'])
             p.update_enc_size(enc_size_test)
 
             # init env
@@ -215,7 +219,11 @@ for penalty_train in penaltys_train:
             cond_ids = get_trial_cond_ids(log_cond)
             activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
             [C, H, M, CM, DA, V] = activity_
-            [inpt, leak, comp] = ctrl_param_
+            [inpt] = ctrl_param_
+            # [inpt, leak, comp] = ctrl_param_
+
+            comp = np.full(np.shape(inpt), comp_val)
+            leak = np.full(np.shape(inpt), leak_val)
 
             # onehot to int
             actions = np.argmax(dist_a, axis=-1)
@@ -268,8 +276,8 @@ for penalty_train in penaltys_train:
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''plot behavioral performance - vertically aligned'''
-            # input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
-            # pickle_save_dict(input_dict, 'temp/enc8.pkl')
+            input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
+            pickle_save_dict(input_dict, f'temp/enc{enc_size_test}.pkl')
 
             # f, axes = plt.subplots(3, 1, figsize=(7, 9))
 
@@ -290,38 +298,40 @@ for penalty_train in penaltys_train:
                 dk_dict[cn]['mu'][i_s] = dk_mu
 
             '''P(error | schema cons) vs. P(error | schema in-cons)'''
-            # f, axes = plt.subplots(1, 3, figsize=(17, 5))
-            # for i, cn in enumerate(all_conds):
-            #     mis_c = mis_dict[cn]['mu'][i_s][T_part:][np.array(
-            #         def_tps).astype(np.bool)]
-            #     mis_ic = mis_dict[cn]['mu'][i_s][T_part:][~np.array(
-            #         def_tps).astype(np.bool)]
-            #     mis_er_c = mis_dict[cn]['er'][i_s][T_part:][np.array(
-            #         def_tps).astype(np.bool)]
-            #     mis_er_ic = mis_dict[cn]['er'][i_s][T_part:][np.array(
-            #         def_tps).astype(np.bool)]
-            #
-            #     heights = [np.mean(mis_c), np.mean(mis_ic)]
-            #     yerrs = [np.std(mis_er_c), np.std(mis_er_ic)]
-            #     xticklabels = ['schematic', 'nonschematic']
-            #     xticks = range(len(heights))
-            #
-            #     # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-            #     axes[i].bar(
-            #         x=xticks, height=heights, yerr=yerrs,
-            #         color=sns.color_palette('colorblind')[3]
-            #     )
-            #     axes[i].axhline(0, color='grey', linestyle='--')
-            #     axes[i].set_title(cn)
-            #     axes[i].set_xlabel('Transition type')
-            #     axes[i].set_xticks(xticks)
-            #     axes[i].set_ylim([-.05, .5])
-            #     axes[i].set_xticklabels(xticklabels)
-            #     axes[i].set_ylabel('P(error)')
-            #     f.tight_layout()
-            #     sns.despine()
-            # fig_path = os.path.join(fig_dir, f'error-schema-effect.png')
-            # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+            if n_def_tps > 0:
+                f, axes = plt.subplots(1, 3, figsize=(17, 5))
+                for i, cn in enumerate(all_conds):
+                    mis_c = mis_dict[cn]['mu'][i_s][T_part:][np.array(
+                        def_tps).astype(np.bool)]
+                    mis_ic = mis_dict[cn]['mu'][i_s][T_part:][~np.array(
+                        def_tps).astype(np.bool)]
+                    mis_er_c = mis_dict[cn]['er'][i_s][T_part:][np.array(
+                        def_tps).astype(np.bool)]
+                    mis_er_ic = mis_dict[cn]['er'][i_s][T_part:][np.array(
+                        def_tps).astype(np.bool)]
+
+                    heights = [np.mean(mis_c), np.mean(mis_ic)]
+                    yerrs = [np.std(mis_er_c), np.std(mis_er_ic)]
+                    xticklabels = ['schematic', 'nonschematic']
+                    xticks = range(len(heights))
+
+                    # f, ax = plt.subplots(1, 1, figsize=(6, 5))
+                    axes[i].bar(
+                        x=xticks, height=heights, yerr=yerrs,
+                        color=sns.color_palette('colorblind')[3]
+                    )
+                    axes[i].axhline(0, color='grey', linestyle='--')
+                    axes[i].set_title(cn)
+                    axes[i].set_xlabel('Transition type')
+                    axes[i].set_xticks(xticks)
+                    axes[i].set_ylim([-.05, .5])
+                    # axes[i].set_ylim([-.015, .15])
+                    axes[i].set_xticklabels(xticklabels)
+                    axes[i].set_ylabel('P(error)')
+                    f.tight_layout()
+                    sns.despine()
+                fig_path = os.path.join(fig_dir, f'error-schema-effect.png')
+                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''plot behavioral performance - each cond separately, 2nd part'''
 
@@ -390,78 +400,6 @@ for penalty_train in penaltys_train:
             fig_path = os.path.join(fig_dir, f'tz-lca-param.png')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-            '''comp'''
-            # i_s = 1
-            # n_se = 3
-            # mean_cmpt_by_cond = [
-            #     np.mean(p_dict[cn]['mu'][i_s][T_part:])
-            #     for cn in all_conds
-            # ]
-            # se_cmpt_by_cond = [
-            #     n_se * np.std(p_dict[cn]['mu'][i_s][T_part:]) / np.sqrt(T_part)
-            #     for cn in all_conds
-            # ]
-            #
-            # f, ax = plt.subplots(1, 1, figsize=(5, 4))
-            # xticks = range(len(all_conds))
-            # ax.bar(
-            #     x=xticks, height=mean_cmpt_by_cond, yerr=se_cmpt_by_cond,
-            #     color=sns.color_palette('colorblind')
-            # )
-            # ax.set_xticks(list(xticks))
-            # ax.set_xticklabels(list(all_conds))
-            # ax.set_ylim([0, 1])
-            # ax.set_ylabel('Competition')
-            # sns.despine()
-            # fig_path = os.path.join(fig_dir, f'tz-lca-cmpt-bar.png')
-            # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''compare LCA params across conditions'''
-            # for j, p_dict in enumerate(lca_param_dicts):
-            #     f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
-            #     for i, cn in enumerate(['RM', 'DM']):
-            #         ax.errorbar(
-            #             x=range(T_part),
-            #             y=p_dict[cn]['mu'][i_s][T_part:],
-            #             yerr=p_dict[cn]['er'][i_s][T_part:],
-            #             label=f'{cn}'
-            #         )
-            #     ax.legend()
-            #     ax.set_ylabel(lca_param_names[j])
-            #     ax.set_xlabel('Time, recall phase')
-            #     ax.set_xticks(np.arange(0, p.env.n_param, 5))
-            #     ax.set_ylim([-.05, .7])
-            #     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-            #     if pad_len_test > 0:
-            #         ax.axvline(pad_len_test, color='grey', linestyle='--')
-            #     sns.despine()
-            #     f.tight_layout()
-            #     fig_path = os.path.join(
-            #         fig_dir, f'tz-lca-param-{lca_param_names[j]}.png')
-            #     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            # for j, p_dict in enumerate(lca_param_dicts):
-            #     f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
-            #     ax.errorbar(
-            #         x=range(T_part),
-            #         y=p_dict['DM']['mu'][i_s][T_part:],
-            #         yerr=p_dict['DM']['er'][i_s][T_part:],
-            #     )
-            #     # ax.legend()
-            #     ax.set_ylabel(lca_param_names[j])
-            #     ax.set_xlabel('Time, recall phase')
-            #     ax.set_xticks(np.arange(0, p.env.n_param, 5))
-            #     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-            #     if pad_len_test > 0:
-            #         ax.axvline(pad_len_test, color='grey', linestyle='--')
-            #     sns.despine()
-            #     f.tight_layout()
-            #     fig_path = os.path.join(
-            #         fig_dir, f'tz-lca-param-{lca_param_names[j]}.png')
-            #     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
             '''compute cell-memory similarity / memory activation '''
             # compute similarity between cell state vs. memories
             sim_cos, sim_lca = compute_cell_memory_similarity(
@@ -489,30 +427,30 @@ for penalty_train in penaltys_train:
                         )
 
             '''mem_act | schema cons vs. mem_act | schema in-cons'''
-
-            # cn = 'DM'
-            # ma_dm_p2 = avg_ma[cn]['targ'][:, T_part:]
-            # ma_dm_p2_c = ma_dm_p2[:, np.array(def_tps).astype(np.bool)]
-            # ma_dm_p2_ic = ma_dm_p2[:, ~np.array(def_tps).astype(np.bool)]
-            # ma_dm_p2_c = np.mean(ma_dm_p2_c, axis=1)
-            # ma_dm_p2_ic = np.mean(ma_dm_p2_ic, axis=1)
-            # heights = [np.mean(ma_dm_p2_c), np.mean(ma_dm_p2_ic)]
-            # xticks = range(len(heights))
-            # xticklabels = ['schematic', 'nonschematic']
-            # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-            # ax.bar(
-            #     x=xticks, height=heights,
-            #     color=sns.color_palette('colorblind')[2]
-            # )
-            # ax.axhline(0, color='grey', linestyle='--')
-            # ax.set_title(cn)
-            # ax.set_xlabel('Transition type')
-            # ax.set_xticks(xticks)
-            # # ax.set_ylim([-.05, .5])
-            # ax.set_xticklabels(xticklabels)
-            # ax.set_ylabel('Memory activation')
-            # f.tight_layout()
-            # sns.despine()
+            if n_def_tps > 0:
+                cn = 'DM'
+                ma_dm_p2 = avg_ma[cn]['targ'][:, T_part:]
+                ma_dm_p2_c = ma_dm_p2[:, np.array(def_tps).astype(np.bool)]
+                ma_dm_p2_ic = ma_dm_p2[:, ~np.array(def_tps).astype(np.bool)]
+                ma_dm_p2_c = np.mean(ma_dm_p2_c, axis=1)
+                ma_dm_p2_ic = np.mean(ma_dm_p2_ic, axis=1)
+                heights = [np.mean(ma_dm_p2_c), np.mean(ma_dm_p2_ic)]
+                xticks = range(len(heights))
+                xticklabels = ['schematic', 'nonschematic']
+                f, ax = plt.subplots(1, 1, figsize=(6, 5))
+                ax.bar(
+                    x=xticks, height=heights,
+                    color=sns.color_palette('colorblind')[2]
+                )
+                ax.axhline(0, color='grey', linestyle='--')
+                ax.set_title(cn)
+                ax.set_xlabel('Transition type')
+                ax.set_xticks(xticks)
+                # ax.set_ylim([-.05, .5])
+                ax.set_xticklabels(xticklabels)
+                ax.set_ylabel('Memory activation')
+                f.tight_layout()
+                sns.despine()
 
             '''plot target/lure activation for all conditions'''
             # sim_stats_plt = {'LCA': sim_lca_stats, 'cosine': sim_cos_stats}
@@ -578,7 +516,12 @@ for penalty_train in penaltys_train:
 
             # make all ylims the same
             ylim_bonds[ker_name] = get_ylim_bonds(axes)
-            ylim_bonds[ker_name] = [-.05, .6]
+            ylim_bonds[ker_name] = (
+                np.max((ylim_bonds[ker_name][0], -.05)
+                       ), np.round((ylim_bonds[ker_name][1] + .1), decimals=1)
+            )
+            # np.round(ylim_bonds[ker_name][1] + .1, decimals=1)
+            # ylim_bonds[ker_name] = [-.05, .6]
             for i, ax in enumerate(axes):
                 ax.set_ylim(ylim_bonds[ker_name])
                 ax.set_xticks([0, p.env.n_param - 1])
@@ -1011,7 +954,7 @@ for penalty_train in penaltys_train:
                         yerr=tma_crt_er, label='correct')
             ax.errorbar(x=range(n_param), y=tma_incrt_mu,
                         yerr=tma_incrt_er, label='incorrect')
-            ax.set_ylim([-.05, None])
+            # ax.set_ylim([-.05, None])
             ax.legend()
             ax.set_title(f'Target memory activation, {cond_name}')
             ax.set_ylabel('Activation')
@@ -1244,60 +1187,60 @@ for penalty_train in penaltys_train:
 
             '''pca the deicison activity'''
 
-            # n_pcs = 5
-            # data = DA
-            # cond_name = 'DM'
-            #
-            # # fit PCA
-            # pca = PCA(n_pcs)
-            # # np.shape(data)
-            # # np.shape(data_cond)
-            # data_cond = data[cond_ids[cond_name], :, :]
-            # data_cond = data_cond[:, ts_predict, :]
-            # targets_cond = targets[cond_ids[cond_name]]
-            # mistakes_cond = mistakes_by_cond[cond_name]
-            # dks_cond = dks[cond_ids[cond_name], :]
-            #
-            # # Loop over timepoints
-            # pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
-            # for t in range(np.sum(ts_predict)):
-            #     data_pca = pca.fit_transform(data_cond[:, t, :])
-            #     pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
-            #
-            #     f, ax = plt.subplots(1, 1, figsize=(7, 5))
-            #     # plot the data
-            #     for y_val in range(p.y_dim):
-            #         y_sel_op = y_val == targets_cond
-            #         sel_op_ = np.logical_and(
-            #             ~dks[cond_ids[cond_name], t], y_sel_op[:, t])
-            #         ax.scatter(
-            #             data_pca[sel_op_, 0], data_pca[sel_op_, 1],
-            #             marker='o', alpha=alpha,
-            #         )
-            #     ax.scatter(
-            #         data_pca[dks[cond_ids[cond_name], t], 0],
-            #         data_pca[dks[cond_ids[cond_name], t], 1],
-            #         marker='o', color='grey', alpha=alpha,
-            #     )
-            #     legend_list = [f'choice {k}' for k in range(
-            #         task.y_dim)] + ['uncertain']
-            #     if np.sum(mistakes_cond[:, t]) > 0:
-            #         legend_list += ['error']
-            #         ax.scatter(
-            #             data_pca[mistakes_cond[:, t],
-            #                      0], data_pca[mistakes_cond[:, t], 1],
-            #             facecolors='none', edgecolors='red',
-            #         )
-            #     # add legend
-            #     ax.legend(legend_list, fancybox=True, bbox_to_anchor=(1, .5),
-            #               loc='center left')
-            #     # mark the plot
-            #     ax.set_xlabel('PC 1')
-            #     ax.set_ylabel('PC 2')
-            #     # ax.set_title(f'Pre-decision activity, time = {t}')
-            #     ax.set_title(f'Decision activity')
-            #     sns.despine(offset=10)
-            #     f.tight_layout()
+            n_pcs = 5
+            data = DA
+            cond_name = 'DM'
+
+            # fit PCA
+            pca = PCA(n_pcs)
+            # np.shape(data)
+            # np.shape(data_cond)
+            data_cond = data[cond_ids[cond_name], :, :]
+            data_cond = data_cond[:, ts_predict, :]
+            targets_cond = targets[cond_ids[cond_name]]
+            mistakes_cond = mistakes_by_cond[cond_name]
+            dks_cond = dks[cond_ids[cond_name], :]
+
+            # Loop over timepoints
+            pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
+            for t in range(np.sum(ts_predict)):
+                data_pca = pca.fit_transform(data_cond[:, t, :])
+                pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
+
+                f, ax = plt.subplots(1, 1, figsize=(7, 5))
+                # plot the data
+                for y_val in range(p.y_dim):
+                    y_sel_op = y_val == targets_cond
+                    sel_op_ = np.logical_and(
+                        ~dks[cond_ids[cond_name], t], y_sel_op[:, t])
+                    ax.scatter(
+                        data_pca[sel_op_, 0], data_pca[sel_op_, 1],
+                        marker='o', alpha=alpha,
+                    )
+                ax.scatter(
+                    data_pca[dks[cond_ids[cond_name], t], 0],
+                    data_pca[dks[cond_ids[cond_name], t], 1],
+                    marker='o', color='grey', alpha=alpha,
+                )
+                legend_list = [f'choice {k}' for k in range(
+                    task.y_dim)] + ['uncertain']
+                if np.sum(mistakes_cond[:, t]) > 0:
+                    legend_list += ['error']
+                    ax.scatter(
+                        data_pca[mistakes_cond[:, t],
+                                 0], data_pca[mistakes_cond[:, t], 1],
+                        facecolors='none', edgecolors='red',
+                    )
+                # add legend
+                ax.legend(legend_list, fancybox=True, bbox_to_anchor=(1, .5),
+                          loc='center left')
+                # mark the plot
+                ax.set_xlabel('PC 1')
+                ax.set_ylabel('PC 2')
+                # ax.set_title(f'Pre-decision activity, time = {t}')
+                ax.set_title(f'Decision activity')
+                sns.despine(offset=10)
+                f.tight_layout()
 
             # # plot cumulative variance explained curve
             # t = -1
@@ -1328,6 +1271,9 @@ for penalty_train in penaltys_train:
             'acc_dict': acc_dict,
             'dk_dict': dk_dict,
             'mis_dict': mis_dict,
+            'lca_ma_list': ma_list,
+            'cosine_ma_list': ma_cos_list,
+
         }
         fname = f'p{penalty_train}-{penalty_test}-data.pkl'
         gdata_outdir = 'temp/'
@@ -1356,38 +1302,8 @@ for penalty_train in penaltys_train:
             )
             axes[i].set_ylim([0, 1.05])
             axes[i].set_xlabel('Time, recall phase')
-        fname = f'../figs/p{penalty_train}-{penalty_test}-acc.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-acc.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-        ''' compute effective cmpt '''
-        # effective_cmpt = {cn: [] for cn in all_conds}
-        # for i, cn in enumerate(all_conds):
-        #     inpt_ = lca_param_dicts[0]
-        #     cmpt_ = lca_param_dicts[1]
-        #     inpt_cn_ = remove_none(inpt_[cn]['mu'])
-        #     cmpt_cn_ = remove_none(cmpt_[cn]['mu'])
-        #     # effective_cmpt[cn] = np.array(
-        #     #     inpt_cn_)[:, T_part:] * np.array(cmpt_cn_)[:, T_part:]
-        #     effective_cmpt[cn] = np.array(
-        #         inpt_cn_)[:, T_part:]
-        #     # effective_cmpt[cn] = np.array(np.array(inpt_cn_)[:, T_part:] > .02).astype(
-        #     #     np.float) * np.array(cmpt_cn_)[:, T_part:]
-        #
-        # with sns.axes_style("whitegrid"):
-        #     mu_, se_ = compute_stats(np.sum(effective_cmpt['DM'], axis=1))
-        #     f, ax = plt.subplots(1, 1, figsize=(3, 4))
-        #     xticks = range(len(all_conds))
-        #     ax.bar(
-        #         x=0, height=mu_, yerr=se_ * n_se,
-        #         color=sns.color_palette('colorblind')
-        #     )
-        #     ax.set_xticks([0])
-        #     ax.set_xticklabels([''])
-        #     ax.set_ylim([0, 1])
-        #     sns.despine()
-        #     f.tight_layout()
-        #     fname = f'../figs/p{penalty_train}-{penalty_test}-lca-effcmpt.png'
-        #     f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''group level input gate by condition'''
         n_se = 1
@@ -1400,7 +1316,7 @@ for penalty_train in penaltys_train:
                 x=range(T_part), y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
             )
         ax.legend()
-        ax.set_ylim([-.05, .6])
+        ax.set_ylim([-.05, .7])
         ax.set_ylabel(lca_param_names[0])
         ax.set_xlabel('Time, recall phase')
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
@@ -1410,86 +1326,8 @@ for penalty_train in penaltys_train:
             ax.axvline(pad_len_test, color='grey', linestyle='--')
         sns.despine()
         f.tight_layout()
-        fname = f'../figs/p{penalty_train}-{penalty_test}-ig.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-        '''group level LCA parameter by condition'''
-
-        # n_se = 1
-        # f, axes = plt.subplots(1, 2, figsize=(10, 4))
-        # for i, cn in enumerate(all_conds):
-        #     for j, p_dict in enumerate(lca_param_dicts):
-        #         p_dict_ = remove_none(p_dict[cn]['mu'])
-        #         mu_, er_ = compute_stats(p_dict_, n_se=n_se, axis=0)
-        #         axes[j].errorbar(
-        #             x=range(T_part), y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
-        #         )
-        # axes[0].legend()
-        # for i, ax in enumerate(axes):
-        #     ax.set_ylabel(lca_param_names[i])
-        #     ax.set_xlabel('Time, recall phase')
-        #     ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
-        #     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-        #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-        # if pad_len_test > 0:
-        #     for ax in axes:
-        #         ax.axvline(pad_len_test, color='grey', linestyle='--')
-        #
-        # axes[0].set_ylim([-.05, .6])
-        # axes[1].set_ylim([.1, .8])
-        #
-        # sns.despine()
-        # f.tight_layout()
-        # fname = f'../figs/p{penalty_train}-{penalty_test}-lca.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-        '''cmpt bar plot'''
-        # cmpt_by_cond = {cn: None for cn in all_conds}
-        # cmpt_by_cond_mu = np.zeros(len(all_conds))
-        # cmpt_by_cond_se = np.zeros(len(all_conds))
-        # for i, cn in enumerate(all_conds):
-        #     p_dict = lca_param_dicts[1]
-        #     p_dict_ = remove_none(p_dict[cn]['mu'])
-        #     p_dict_p2 = [p_dict_s[T_part:] for p_dict_s in p_dict_]
-        #     cmpt_by_cond[cn] = np.array(p_dict_p2)
-        #     cmpt_by_cond_mu[i] = np.mean(p_dict_p2)
-        #     cmpt_by_cond_se[i] = np.std(
-        #         p_dict_p2) / np.sqrt(np.shape(p_dict_p2)[0])
-        #
-        # with sns.axes_style("whitegrid"):
-        #     f, ax = plt.subplots(1, 1, figsize=(5, 4))
-        #     xticks = range(len(all_conds))
-        #     ax.bar(
-        #         x=xticks, height=cmpt_by_cond_mu, yerr=cmpt_by_cond_se * n_se,
-        #         color=sns.color_palette('colorblind')
-        #     )
-        #     ax.set_xticks(xticks)
-        #     ax.set_xticklabels(all_conds)
-        #     ax.set_ylabel('Competition')
-        #     ax.set_ylim([0, 1])
-        #     sns.despine()
-        #     f.tight_layout()
-        #
-        #     fname = f'../figs/p{penalty_train}-{penalty_test}-lca-cmpt.png'
-        #     f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-        '''cmpt bar plot'''
-        # with sns.axes_style("whitegrid"):
-        #     f, ax = plt.subplots(1, 1, figsize=(3, 4))
-        #     xticks = range(len(all_conds))
-        #     ax.bar(
-        #         x=0, height=np.mean(cmpt_by_cond_mu), yerr=np.mean(cmpt_by_cond_se) * n_se,
-        #         color=sns.color_palette('colorblind')
-        #     )
-        #     ax.set_xticks([0])
-        #     ax.set_xticklabels([''])
-        #     # ax.set_ylabel('Competition')
-        #     ax.set_ylim([0, 1])
-        #     sns.despine()
-        #     f.tight_layout()
-        #
-        #     fname = f'../figs/p{penalty_train}-{penalty_test}-lca-cmpt-mu.png'
-        #     f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''group level LCA parameter by q source'''
         # sns.set(style='whitegrid', palette='colorblind', context='poster')
@@ -1557,8 +1395,8 @@ for penalty_train in penaltys_train:
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 if metric_name == 'lca':
-                    ax.set_yticks([0, .5])
-                    ax.set_ylim([-.05, .6])
+                    ax.set_yticks([0, .2, .4])
+                    ax.set_ylim([-.01, .45])
                 else:
                     ax.set_yticks([0, .5, 1])
                     ax.set_ylim([-.05, 1.05])
@@ -1568,7 +1406,8 @@ for penalty_train in penaltys_train:
                     ax.axvline(pad_len_test, color='grey', linestyle='--')
             f.tight_layout()
             sns.despine()
-            fname = f'../figs/p{penalty_train}-{penalty_test}-{metric_name}-rs.png'
+
+            fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-{metric_name}-rs.png'
             f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''ma raw'''
@@ -1627,12 +1466,12 @@ for penalty_train in penaltys_train:
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
-        ax.set_yticks([0, .5])
-        ax.set_ylim([-.05, .6])
+        ax.set_yticks([0, .2, .4])
+        ax.set_ylim([-.01, .45])
 
         f.tight_layout()
         sns.despine()
-        fname = f'../figs/p{penalty_train}-{penalty_test}-rs-dm-byq.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-rs-dm-byq.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         # ms_lure = get_max_score(sim_lca_dict['NM']['lure'])
@@ -1683,7 +1522,7 @@ for penalty_train in penaltys_train:
         axes[1].set_yticks([0, 1])
         f.tight_layout()
         sns.despine()
-        fname = f'../figs/p{penalty_train}-{penalty_test}-roc.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-roc.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
         # fig_path = os.path.join(fig_dir, f'ms-dist-t-peak.png')
         # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
@@ -1703,7 +1542,7 @@ for penalty_train in penaltys_train:
         #     0.05, 0.05), xycoords='axes fraction')
         # sns.despine()
         # f.tight_layout()
-        # fname = f'../figs/p{penalty_train}-{penalty_test}-reg-effcmpt-auc.png'
+        # fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-reg-effcmpt-auc.png'
         # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''auc ~ center of mass of input gate'''
@@ -1711,21 +1550,26 @@ for penalty_train in penaltys_train:
         cn = 'DM'
         p_dict_ = remove_none(lca_param_dicts[0][cn]['mu'])
         ig_p2 = np.array(p_dict_)[:, T_part:]
-        ig_p2_norm = ig_p2 / np.sum(ig_p2, axis=1, keepdims=True)
+        # ig_p2_norm = ig_p2 / np.sum(ig_p2, axis=1, keepdims=True)
+        # ig_p2_norm = ig_p2 / np.mean(ig_p2, axis=1, keepdims=True)
+        ig_p2_norm = ig_p2
+        # np.shape(ig_p2)
+        # plt.plot(ig_p2.T)
+        # plt.plot(ig_p2_norm.T)
+        # np.shape(np.sum(ig_p2, axis=1, keepdims=True))
 
-        rt = ig_p2 * (np.arange(T_part) + 1)
-        mrt = np.mean(rt, axis=1)
-        r_val, p_val = pearsonr(mrt, np.array(auc_list))
+        rt = np.dot(ig_p2_norm, (np.arange(T_part) + 1))
+        r_val, p_val = pearsonr(rt, np.array(auc_list))
 
         f, ax = plt.subplots(1, 1, figsize=(5, 4))
-        sns.regplot(mrt, auc_list)
+        sns.regplot(rt, auc_list)
         ax.set_xlabel('Recall time')
         ax.set_ylabel('AUC')
         ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
             0.05, 0.05), xycoords='axes fraction')
         sns.despine()
         f.tight_layout()
-        fname = f'../figs/p{penalty_train}-{penalty_test}-reg-rt-auc.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-reg-rt-auc.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         # f, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -1746,125 +1590,161 @@ for penalty_train in penaltys_train:
         # if pad_len_test > 0:
         #     for ax in axes:
         #         ax.axvline(pad_len_test, color='grey', linestyle='--')
-        #
         # axes[0].set_ylim([-.05, .6])
         # axes[1].set_ylim([.1, .8])
-        #
         # sns.despine()
         # f.tight_layout()
 
-        '''p(error | schema consistent) vs. p(error | schema inconsistent)'''
+        def compute_corr2behav(behav_data):
+            cond = 'DM'
+            temp = deepcopy(behav_data[cond]['mu'])
+            temp = remove_none(temp)
+            bd_p2 = np.array(temp)[:, T_part:]
+            bd_p2_mu = np.mean(bd_p2, axis=1)
+            r_val, p_val = pearsonr(rt, bd_p2_mu)
+            return bd_p2_mu, r_val, p_val
 
-        # mis_dict_mu = {cn: None for cn in all_conds}
-        # missing_ids = {cn: None for cn in all_conds}
-        # for i, cn in enumerate(all_conds):
-        #     # print(cn)
-        #     mis_dict_mu[cn], missing_ids[cn] = remove_none(
-        #         mis_dict[cn]['mu'], return_missing_idx=True
-        #     )
-        #     mis_dict_mu[cn] = np.array(mis_dict_mu[cn])[:, T_part:]
-        #
-        # if len(missing_ids['DM']) > 0:
-        #     # this is wrong, earlier poped ideas shift the indexing
-        #     for missing_subject_id in missing_ids['DM']:
-        #         def_tps_list.pop(missing_subject_id)
-        #
-        # sc_sel_op = np.array(def_tps_list).astype(np.bool)
-        # f, axes = plt.subplots(1, 3, figsize=(17, 5))
-        # for i, cn in enumerate(all_conds):
-        #     mis_gsc, mis_gsic = [], []
-        #     for i_s in range(len(mis_dict_mu[cn])):
-        #         mis_gsc.append(mis_dict_mu[cn][i_s][sc_sel_op[i_s]])
-        #         mis_gsic.append(mis_dict_mu[cn][i_s][~sc_sel_op[i_s]])
-        #     mis_gsc_mu, mis_gsc_se = compute_stats(np.mean(mis_gsc, axis=1))
-        #     mis_gsic_mu, mis_gsic_se = compute_stats(np.mean(mis_gsic, axis=1))
-        #
-        #     heights = [mis_gsc_mu, mis_gsic_mu]
-        #     yerrs = [mis_gsc_se, mis_gsic_se]
-        #     xticklabels = ['schematic', 'nonschematic']
-        #     xticks = range(len(heights))
-        #
-        #     # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-        #     axes[i].bar(
-        #         x=xticks, height=heights, yerr=yerrs,
-        #         color=sns.color_palette('colorblind')[3]
-        #     )
-        #     axes[i].axhline(0, color='grey', linestyle='--')
-        #     axes[i].set_title(cn)
-        #     axes[i].set_xlabel('Transition type')
-        #     axes[i].set_xticks(xticks)
-        #     axes[i].set_ylim([-.05, .5])
-        #     axes[i].set_xticklabels(xticklabels)
-        #     axes[i].set_ylabel('P(error)')
-        #     f.tight_layout()
-        #     sns.despine()
-        #
-        # fname = f'../figs/p{penalty_train}-{penalty_test}-error-schema-effect.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+        behav_data_dict = {
+            'Accuracy': acc_dict, 'Don\'t know': dk_dict, 'Mistakes': mis_dict,
+        }
+        cb_pal = sns.color_palette('colorblind', n_colors=4)
+        # sns.palplot(cb_pal)
+        behav_colors = [cb_pal[0], 'grey', cb_pal[3]]
+        f, axes = plt.subplots(3, 1, figsize=(5, 12))
+        for i, (behav_data_name, behav_data) in enumerate(
+                behav_data_dict.items()):
+
+            bd_p2_mu, r_val, p_val = compute_corr2behav(behav_data)
+            sns.regplot(rt, bd_p2_mu, ax=axes[i], color=behav_colors[i])
+            axes[i].set_xlabel('Recall time')
+            axes[i].set_ylabel(behav_data_name)
+            # axes[i].axvline(0, linestyle='--', color='grey')
+            axes[i].set_xlim([0, None])
+            axes[i].annotate(
+                r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val),
+                xy=(0.05, 0.05), xycoords='axes fraction'
+            )
+        sns.despine()
+        f.tight_layout()
+
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-reg-rt-behav.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
+        '''p(error | schema consistent) vs. p(error | schema inconsistent)'''
+        if n_def_tps > 0:
+            mis_dict_mu = {cn: None for cn in all_conds}
+            missing_ids = {cn: None for cn in all_conds}
+            for i, cn in enumerate(all_conds):
+                # print(cn)
+                mis_dict_mu[cn], missing_ids[cn] = remove_none(
+                    mis_dict[cn]['mu'], return_missing_idx=True
+                )
+                mis_dict_mu[cn] = np.array(mis_dict_mu[cn])[:, T_part:]
+
+            if len(missing_ids['DM']) > 0:
+                # this is wrong, earlier poped ideas shift the indexing
+                for missing_subject_id in missing_ids['DM']:
+                    def_tps_list.pop(missing_subject_id)
+
+            sc_sel_op = np.array(def_tps_list).astype(np.bool)
+            f, axes = plt.subplots(1, 3, figsize=(17, 5))
+            for i, cn in enumerate(all_conds):
+                mis_gsc, mis_gsic = [], []
+                for i_s in range(len(mis_dict_mu[cn])):
+                    mis_gsc.append(mis_dict_mu[cn][i_s][sc_sel_op[i_s]])
+                    mis_gsic.append(mis_dict_mu[cn][i_s][~sc_sel_op[i_s]])
+                mis_gsc_mu, mis_gsc_se = compute_stats(
+                    np.mean(mis_gsc, axis=1))
+                mis_gsic_mu, mis_gsic_se = compute_stats(
+                    np.mean(mis_gsic, axis=1))
+
+                heights = [mis_gsc_mu, mis_gsic_mu]
+                yerrs = [mis_gsc_se, mis_gsic_se]
+                xticklabels = ['schematic', 'nonschematic']
+                xticks = range(len(heights))
+
+                # f, ax = plt.subplots(1, 1, figsize=(6, 5))
+                axes[i].bar(
+                    x=xticks, height=heights, yerr=yerrs,
+                    color=sns.color_palette('colorblind')[3]
+                )
+                axes[i].axhline(0, color='grey', linestyle='--')
+                axes[i].set_title(cn)
+                axes[i].set_xlabel('Transition type')
+                axes[i].set_xticks(xticks)
+                axes[i].set_ylim([-.05, .5])
+                # axes[i].set_ylim([-.015, .15])
+                axes[i].set_xticklabels(xticklabels)
+                axes[i].set_ylabel('P(error)')
+                f.tight_layout()
+                sns.despine()
+
+            fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-error-schema-effect.png'
+            f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''input gate | schema consistent vs. schema inconsistent'''
 
-        # def split_data_byschema(inp_data):
-        #     d_gsc, d_gsic = [], []
-        #     for i_s in range(len(inp_data)):
-        #         d_gsc.append(inp_data[i_s][sc_sel_op[i_s]])
-        #         d_gsic.append(inp_data[i_s][~sc_sel_op[i_s]])
-        #     d_gsc_mu, d_gsc_se = compute_stats(np.mean(d_gsc, axis=1))
-        #     d_gsic_mu, d_gsic_se = compute_stats(np.mean(d_gsic, axis=1))
-        #     heights = [d_gsc_mu, d_gsic_mu]
-        #     yerrs = [d_gsc_se, d_gsic_se]
-        #     return heights, yerrs
-        #
-        # # for ii in range(n_subjs):
-        # #     sc_sel_op[ii] = np.roll(sc_sel_op[ii], -1, axis=None)
-        #
-        # n_se = 1
-        # # f, axes = plt.subplots(1, 2, figsize=(10, 4))
-        # f, axes = plt.subplots(1, 3, figsize=(17, 5))
-        # for i, cn in enumerate(all_conds):
-        #     ig = lca_param_dicts[0][cn]['mu']
-        #     ig = np.array(remove_none(ig))[:, T_part:]
-        #     heights, yerrs = split_data_byschema(ig)
-        #     # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-        #     axes[i].bar(
-        #         x=xticks, height=heights, yerr=yerrs,
-        #         color=sns.color_palette('colorblind')[0]
-        #     )
-        #     axes[i].axhline(0, color='grey', linestyle='--')
-        #     axes[i].set_title(cn)
-        #     axes[i].set_xlabel('Transition type')
-        #     axes[i].set_xticks(xticks)
-        #     axes[i].set_ylim([-.025, .2])
-        #     axes[i].set_xticklabels(xticklabels)
-        #     axes[i].set_ylabel('Input gate')
-        #     f.tight_layout()
-        #     sns.despine()
-        # fname = f'../figs/p{penalty_train}-{penalty_test}-ig-schema-effect.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+        def split_data_byschema(inp_data):
+            d_gsc, d_gsic = [], []
+            for i_s in range(len(inp_data)):
+                d_gsc.append(inp_data[i_s][sc_sel_op[i_s]])
+                d_gsic.append(inp_data[i_s][~sc_sel_op[i_s]])
+            d_gsc_mu, d_gsc_se = compute_stats(np.mean(d_gsc, axis=1))
+            d_gsic_mu, d_gsic_se = compute_stats(np.mean(d_gsic, axis=1))
+            heights = [d_gsc_mu, d_gsic_mu]
+            yerrs = [d_gsc_se, d_gsic_se]
+            return heights, yerrs
 
-        # # f, axes = plt.subplots(1, 2, figsize=(10, 4))
-        # f, axes = plt.subplots(1, 3, figsize=(17, 5))
-        # for i, cn in enumerate(all_conds):
-        #     ig = lca_param_dicts[1][cn]['mu']
-        #     ig = np.array(remove_none(ig))[:, T_part:]
-        #     heights, yerrs = split_data_byschema(ig)
-        #     # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-        #     axes[i].bar(
-        #         x=xticks, height=heights, yerr=yerrs,
-        #         color=sns.color_palette('colorblind')[0]
-        #     )
-        #     axes[i].axhline(0, color='grey', linestyle='--')
-        #     axes[i].set_title(cn)
-        #     axes[i].set_xlabel('Transition type')
-        #     axes[i].set_xticks(xticks)
-        #     axes[i].set_ylim([-.05, .9])
-        #     axes[i].set_xticklabels(xticklabels)
-        #     axes[i].set_ylabel('Competition')
-        #     f.tight_layout()
-        #     sns.despine()
-#
-#     # xticklabels = ['schematic', 'nonschematic']
-#     # xticks = range(len(heights))
-#
-#
-# # plt.plot(np.sum(np.array(def_tps_list),axis=0))
+            # for ii in range(n_subjs):
+            #     sc_sel_op[ii] = np.roll(sc_sel_op[ii], -1, axis=None)
+        if n_def_tps > 0:
+            n_se = 1
+            # f, axes = plt.subplots(1, 2, figsize=(10, 4))
+            f, axes = plt.subplots(1, 3, figsize=(17, 5))
+            for i, cn in enumerate(all_conds):
+                ig = lca_param_dicts[0][cn]['mu']
+                ig = np.array(remove_none(ig))[:, T_part:]
+                heights, yerrs = split_data_byschema(ig)
+                # f, ax = plt.subplots(1, 1, figsize=(6, 5))
+                axes[i].bar(
+                    x=xticks, height=heights, yerr=yerrs,
+                    color=sns.color_palette('colorblind')[0]
+                )
+                axes[i].axhline(0, color='grey', linestyle='--')
+                axes[i].set_title(cn)
+                axes[i].set_xlabel('Transition type')
+                axes[i].set_xticks(xticks)
+                axes[i].set_ylim([-.025, .2])
+                axes[i].set_xticklabels(xticklabels)
+                axes[i].set_ylabel('Input gate')
+                f.tight_layout()
+                sns.despine()
+            fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig-schema-effect.png'
+            f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
+    #         # f, axes = plt.subplots(1, 2, figsize=(10, 4))
+    #         f, axes = plt.subplots(1, 3, figsize=(17, 5))
+    #         for i, cn in enumerate(all_conds):
+    #             ig = lca_param_dicts[1][cn]['mu']
+    #             ig = np.array(remove_none(ig))[:, T_part:]
+    #             heights, yerrs = split_data_byschema(ig)
+    #             # f, ax = plt.subplots(1, 1, figsize=(6, 5))
+    #             axes[i].bar(
+    #                 x=xticks, height=heights, yerr=yerrs,
+    #                 color=sns.color_palette('colorblind')[0]
+    #             )
+    #             axes[i].axhline(0, color='grey', linestyle='--')
+    #             axes[i].set_title(cn)
+    #             axes[i].set_xlabel('Transition type')
+    #             axes[i].set_xticks(xticks)
+    #             axes[i].set_ylim([-.05, .9])
+    #             axes[i].set_xticklabels(xticklabels)
+    #             axes[i].set_ylabel('Competition')
+    #             f.tight_layout()
+    #             sns.despine()
+    #
+    #     # xticklabels = ['schematic', 'nonschematic']
+    #     # xticks = range(len(heights))
+    #
+    #
+    # # plt.plot(np.sum(np.array(def_tps_list),axis=0))
