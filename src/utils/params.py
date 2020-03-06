@@ -37,6 +37,7 @@ class P():
         lr=1e-3,
         gamma=0,
         eta=.1,
+        cmpt=.8,
         sup_epoch=None,
         n_epoch=None,
         n_example=None,
@@ -76,7 +77,7 @@ class P():
         )
         self.net = net(
             recall_func, kernel, enc_mode, enc_size, noisy_encoding, dict_len,
-            n_hidden, n_hidden_dec, lr, gamma, eta,
+            n_hidden, n_hidden_dec, lr, gamma, eta, cmpt,
             n_param, n_branch
         )
         self.misc = misc(sup_epoch, n_epoch, n_example)
@@ -165,7 +166,7 @@ class net():
         self,
         recall_func, kernel,
         enc_mode, enc_size, noisy_encoding, dict_len,
-        n_hidden, n_hidden_dec, lr, gamma, eta,
+        n_hidden, n_hidden_dec, lr, gamma, eta, cmpt,
         n_param, n_branch
     ):
         self.recall_func = recall_func
@@ -178,6 +179,7 @@ class net():
         self.lr = lr
         self.gamma = gamma
         self.eta = eta
+        self.cmpt = cmpt
         self.dict_len = dict_len
         if noisy_encoding == 1:
             self.dict_len *= 2

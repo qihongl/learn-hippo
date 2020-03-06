@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models.LCALSTM_v1 import LCALSTM as Agent
+from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -41,6 +41,7 @@ parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--n_hidden_dec', default=32, type=int)
 parser.add_argument('--lr', default=5e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
+parser.add_argument('--cmpt', default=0.8, type=float)
 parser.add_argument('--n_event_remember', default=4, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
@@ -71,6 +72,7 @@ similarity_min = args.similarity_min
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
+cmpt = args.cmpt
 eta = args.eta
 n_event_remember = args.n_event_remember
 n_examples = args.n_examples
@@ -96,7 +98,7 @@ p = P(
     normalize_return=normalize_return,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta, noisy_encoding=noisy_encoding
+    lr=learning_rate, eta=eta, cmpt=cmpt
 )
 # init env
 task = SequenceLearning(
@@ -110,7 +112,7 @@ task = SequenceLearning(
 agent = Agent(
     input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-    dict_len=p.net.dict_len, noisy_encoding=noisy_encoding
+    dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
 
 optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)

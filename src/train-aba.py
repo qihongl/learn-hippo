@@ -119,14 +119,14 @@ task = SequenceLearning(
 # init agent
 # dict_len = 2
 agent = Agent(
-    input_dim=task.x_dim+p.extra_x_dim, output_dim=p.a_dim,
+    input_dim=task.x_dim + p.extra_x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=n_event_remember
 )
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, factor=1/2, patience=30, threshold=1e-3, min_lr=1e-8,
+    optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
     verbose=True)
 
 # create logging dirs
@@ -154,7 +154,7 @@ Log_pi_ent = np.zeros(n_epoch,)
 Log_acc = np.zeros((n_epoch, task.n_parts))
 Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
-Log_cond = np.zeros((n_epoch, n_examples//2))
+Log_cond = np.zeros((n_epoch, n_examples // 2))
 
 # epoch_id, i, t = 0, 0, 0
 fix_cond = 'DM'
@@ -190,5 +190,5 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     scheduler.step(neg_pol_score)
     # pdb.set_trace()
     # save weights
-    if np.mod(epoch_id+1, log_freq) == 0:
+    if np.mod(epoch_id + 1, log_freq) == 0:
         save_ckpt(epoch_load + epoch_id + 1, log_output_path, agent, optimizer)

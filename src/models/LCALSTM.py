@@ -28,9 +28,10 @@ class LCALSTM(nn.Module):
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
-            noisy_encoding=0,
+            noisy_encoding=0, cmpt=.8
     ):
         super(LCALSTM, self).__init__()
+        self.cmpt = cmpt
         self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
@@ -113,7 +114,7 @@ class LCALSTM(nn.Module):
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, comp_t, inps_t)
+        m_t = self.recall(c_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
@@ -135,7 +136,7 @@ class LCALSTM(nn.Module):
         cache = [vector_signal, scalar_signal, misc]
         return pi_a_t, value_t, (h_t, cm_t), cache
 
-    def recall(self, c_t, comp_t, inps_t):
+    def recall(self, c_t, inps_t, comp_t=None):
         """run the "pattern completion" procedure
 
         Parameters
@@ -155,12 +156,15 @@ class LCALSTM(nn.Module):
             updated cell state, recalled item
 
         """
+        if comp_t is None:
+            comp_t = self.cmpt
+
         if self.em.retrieval_off:
             m_t = torch.zeros_like(c_t)
         else:
             # retrieve memory
             m_t = self.em.get_memory(
-                c_t, leak=0, comp=.8, w_input=inps_t
+                c_t, leak=0, comp=comp_t, w_input=inps_t
             )
         return m_t
 
