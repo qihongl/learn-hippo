@@ -30,13 +30,8 @@ def run_tz(
         # pick a condition
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         cond_indicator = -1 if cond_i == 'NM' else 1
-        cond_flag = torch.cat((torch.zeros(p.env.n_param, 1),
-                               cond_indicator * torch.ones(p.env.n_param, 1)), 0)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
-
-        if p.env.attach_cond:
-            X_i = torch.cat((X_i, cond_flag), 1)
 
         # pdb.set_trace()
         if scramble:
@@ -46,6 +41,12 @@ def run_tz(
         T_total = np.shape(X_i)[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
+
+        # attach cond flag
+        cond_flag = torch.zeros(T_total, 1)
+        cond_flag[-T_part:] = cond_indicator
+        if p.env.attach_cond:
+            X_i = torch.cat((X_i, cond_flag), 1)
 
         # prealloc
         loss_sup = 0
