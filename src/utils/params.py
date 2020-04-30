@@ -19,6 +19,7 @@ class P():
         penalty_discrete=1,
         penalty_onehot=0,
         normalize_return=1,
+        attach_cond=0,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -68,7 +69,7 @@ class P():
             exp_name, n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return,
+            normalize_return, attach_cond,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -114,7 +115,7 @@ class env():
             n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return,
+            normalize_return, attach_cond,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -140,6 +141,7 @@ class env():
         # self.penalty_range = [i for i in range(penalty+1) if i % 2 == 0]
         self.penalty_range = [i for i in range(penalty + 1)]
         self.normalize_return = _zero_one_to_true_false(normalize_return)
+        self.attach_cond = True if attach_cond == 1 else False
         #
         self.chance = 1 / n_branch
 

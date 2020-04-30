@@ -29,8 +29,16 @@ def run_tz(
     for i in range(n_examples):
         # pick a condition
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
+        cond_indicator = -1 if cond_i == 'NM' else 1
+        cond_flag = torch.cat((torch.zeros(p.env.n_param, 1),
+                               cond_indicator * torch.ones(p.env.n_param, 1)), 0)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
+
+        if p.env.attach_cond:
+            X_i = torch.cat((X_i, cond_flag), 1)
+
+        # pdb.set_trace()
         if scramble:
             X_i, Y_i = time_scramble(X_i, Y_i, task)
 
