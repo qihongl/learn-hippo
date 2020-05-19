@@ -8,7 +8,7 @@ sns.set(style='white', palette='colorblind', context='talk')
 
 # pick some gamma
 n_gs = 3
-gammas = np.linspace(.1, .9, n_gs)
+gammas = np.linspace(0, .9, n_gs)
 normalize = True
 
 # some example r_t sequences
@@ -27,6 +27,7 @@ legend_loc = (1.1, 1)
 f, axes = plt.subplots(2, 1, figsize=(8, 7))
 for i, gamma in enumerate(gammas):
     returns = to_np(compute_returns(r, gamma=gamma, normalize=normalize))
+    print(returns)
     axes[0].plot(returns, color=c_pals[i])
 axes[0].plot(r, color='k')
 axes[0].axhline(0, color='grey', linestyle='--', alpha=.3)
@@ -40,7 +41,7 @@ axes[0].legend(legend_gammas, title='gamma',
 c_pals = sns.color_palette('Reds', n_colors=n_gs)
 for i, gamma in enumerate(gammas):
     returns = to_np(compute_returns(r, gamma=gamma, normalize=normalize))
-    axes[1].plot(returns-r, color=c_pals[i])
+    axes[1].plot(returns - r, color=c_pals[i])
 axes[1].axhline(0, color='grey', linestyle='--', alpha=.3)
 axes[1].set_xlabel('Time')
 axes[1].set_ylabel(r'$R_t - r_t$')

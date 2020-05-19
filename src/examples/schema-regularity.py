@@ -10,13 +10,13 @@ n_param = 10
 n_branch = 4
 n_samples = 500
 # init
-# def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
+def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
 # def_path = np.ones(n_param,)
 def_prob = .5
-def_prob = None
+# def_prob = None
 task = SequenceLearning(
     n_param, n_branch, n_parts=1,
-    # def_path=def_path,
+    def_path=def_path,
     def_prob=def_prob,
 )
 # sample
@@ -43,7 +43,7 @@ sns.heatmap(
 ax.set_title('P(s next = i)')
 ax.set_ylabel('Time')
 ax.set_xlabel('Next state')
-# f.tight_layout
+f.tight_layout()
 
 
 '''how modify Schematicity impact average event-event similarity'''
@@ -77,7 +77,7 @@ xlabs = ['%.2f' % s for s in def_probs]
 n_se = 3
 
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
-ax.errorbar(x=xticks, y=mu_sim_mu, yerr=er_sim_mu*n_se)
+ax.errorbar(x=xticks, y=mu_sim_mu, yerr=er_sim_mu * n_se)
 ax.axhline(1 / n_branch, color='grey', linestyle='--')
 ax.set_ylabel('Average event similarity')
 ax.set_xlabel('Schematicity (def prob)')

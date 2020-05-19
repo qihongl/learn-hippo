@@ -52,9 +52,9 @@ axes[1].set_xlabel('q-val')
 axes[0].set_ylabel('Time')
 
 for ax in axes:
-    ax.axhline(n_param + pad_len-.5, color='red', linestyle='--')
-axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
-axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
+    ax.axhline(n_param + pad_len - .5, color='red', linestyle='--')
+axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
+axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
 
 f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
           dpi=100, bbox_inches='tight')
@@ -83,6 +83,6 @@ f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
 # np.array([get_know_label(t, x, y) for t in range(n_param)]).T
 
 #
-task.pad_len, task.T_part
-for t in range(task.T_total):
-    print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)
+# task.pad_len, task.T_part
+# for t in range(task.T_total):
+#     print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)

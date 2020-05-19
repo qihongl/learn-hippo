@@ -15,7 +15,7 @@ def_path = np.array([np.mod(t, n_branch) for t in np.arange(n_param)])
 # def_path = np.ones(n_param,)
 def_prob = .95
 # def_prob = None
-n_def_tps = 3
+n_def_tps = 5
 def_tps = sample_def_tps(n_param, n_def_tps)
 task = SequenceLearning(
     n_param, n_branch, n_parts=1,
@@ -38,7 +38,7 @@ for t in range(T_total):
     p_s_next[t, :] = counts / n_samples
 
 # plot
-f, ax = plt.subplots(1, 1, figsize=(6, 10))
+f, ax = plt.subplots(1, 1, figsize=(8, 12))
 sns.heatmap(
     p_s_next,
     vmin=0, vmax=1, annot=True,
@@ -47,4 +47,4 @@ sns.heatmap(
 ax.set_title('P(s next = i)')
 ax.set_ylabel('Time')
 ax.set_xlabel('Next state')
-# f.tight_layout
+f.tight_layout()
