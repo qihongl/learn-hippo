@@ -14,7 +14,7 @@ from task import SequenceLearning
 from copy import deepcopy
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from utils.utils import find_factors
+from utils.utils import chunk
 from utils.io import build_log_path, get_test_data_dir, \
     pickle_load_dict, get_test_data_fname, pickle_save_dict, load_env_metadata
 from analysis import compute_acc, compute_dk, compute_stats, \
@@ -37,7 +37,7 @@ all_conds = TZ_COND_DICT.values()
 log_root = '../log/'
 # exp_name = '0429-widesim-attachcond'
 # exp_name = '0220-v1-widesim-comp.8'
-exp_name = '0425-schema.7-comp.8'
+exp_name = '0425-schema.4-comp.8'
 
 supervised_epoch = 600
 epoch_load = 1000
@@ -50,7 +50,7 @@ n_event_remember = 2
 
 # def_prob = None
 # n_def_tps = 0
-def_prob = .7
+def_prob = .4
 n_def_tps = 8
 
 comp_val = .8
@@ -312,130 +312,130 @@ for penalty_train in penaltys_train:
 
             '''Schematicity influence'''
 
-            schema_consistency = np.array([
-                np.sum(np.argmax(def_path, axis=1) == targets_i[T_part:])
-                for targets_i in targets
-            ])
-            schema_consistency -= np.min(schema_consistency)
-            schema_consistency = schema_consistency / \
-                np.max(schema_consistency)
-            # plt.hist(schema_consistency)
-            np.shape(corrects)
-            cond_ = 'DM'
-            dvs = [corrects, dks, mistakes]
-            dv_names = ['corrects', 'dks', 'mistakes']
-            f, axes = plt.subplots(1, 3, figsize=(12, 4))
-            for i, dv_i in enumerate(dvs):
-                dv = np.mean(dv_i[:, T_part:], axis=1)
-                r_val, p_val = pearsonr(
-                    schema_consistency[cond_ids[cond_]], dv[cond_ids[cond_]]
-                )
-                sns.regplot(
-                    schema_consistency[cond_ids[cond_]], dv[cond_ids[cond_]],
-                    scatter_kws={'s': 40, 'alpha': .5},
-                    x_jitter=.1, y_jitter=.01,
-                    ax=axes[i],
-                )
-                axes[i].set_title('r = %.2f, p = %.2f' % (r_val, p_val))
-                axes[i].set_ylabel(dv_names[i])
-                axes[i].set_xlabel('Schematicity')
-                axes[i].set_xlim([0, 1])
-            sns.despine()
-            f.tight_layout()
-            fig_path = os.path.join(
-                fig_dir, f'performance-{cond_}-schema-effect.png')
-            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''plot behavioral performance - vertically aligned'''
-            input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
-            pickle_save_dict(input_dict, f'temp/enc{enc_size_test}.pkl')
-
-            # f, axes = plt.subplots(3, 1, figsize=(7, 9))
-
-            for i, cn in enumerate(all_conds):
-                # f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
-                Y_ = Y[cond_ids[cn], :]
-                dist_a_ = dist_a[cond_ids[cn], :]
-                # compute performance for this condition
-                acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
-                dk_mu = compute_dk(dist_a_)
-                mis_mu, mis_er = compute_mistake(Y_, dist_a_, return_er=True)
-
-                # cache data for all cond-subj
-                acc_dict[cn]['mu'][i_s] = acc_mu
-                acc_dict[cn]['er'][i_s] = acc_er
-                mis_dict[cn]['mu'][i_s] = mis_mu
-                mis_dict[cn]['er'][i_s] = mis_er
-                dk_dict[cn]['mu'][i_s] = dk_mu
-
-            '''P(error | schema cons) vs. P(error | schema in-cons)'''
-            if n_def_tps > 0:
-                f, axes = plt.subplots(1, 3, figsize=(17, 5))
-                for i, cn in enumerate(all_conds):
-                    mis_c = mis_dict[cn]['mu'][i_s][T_part:][np.array(
-                        def_tps).astype(np.bool)]
-                    mis_ic = mis_dict[cn]['mu'][i_s][T_part:][~np.array(
-                        def_tps).astype(np.bool)]
-                    mis_er_c = mis_dict[cn]['er'][i_s][T_part:][np.array(
-                        def_tps).astype(np.bool)]
-                    mis_er_ic = mis_dict[cn]['er'][i_s][T_part:][np.array(
-                        def_tps).astype(np.bool)]
-
-                    heights = [np.mean(mis_c), np.mean(mis_ic)]
-                    yerrs = [np.std(mis_er_c), np.std(mis_er_ic)]
-                    xticklabels = ['schematic', 'nonschematic']
-                    xticks = range(len(heights))
-
-                    # f, ax = plt.subplots(1, 1, figsize=(6, 5))
-                    axes[i].bar(
-                        x=xticks, height=heights, yerr=yerrs,
-                        color=sns.color_palette('colorblind')[3]
-                    )
-                    axes[i].axhline(0, color='grey', linestyle='--')
-                    axes[i].set_title(cn)
-                    axes[i].set_xlabel('Transition type')
-                    axes[i].set_xticks(xticks)
-                    axes[i].set_ylim([-.05, .5])
-                    # axes[i].set_ylim([-.015, .15])
-                    axes[i].set_xticklabels(xticklabels)
-                    axes[i].set_ylabel('P(error)')
-                    f.tight_layout()
-                    sns.despine()
-                fig_path = os.path.join(fig_dir, f'error-schema-effect.png')
-                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''plot behavioral performance - each cond separately, 2nd part'''
-
-            f, axes = plt.subplots(1, 3, figsize=(12, 4))
-            for i, cn in enumerate(['RM', 'DM', 'NM']):
-                Y_ = Y[cond_ids[cn], :]
-                dist_a_ = dist_a[cond_ids[cn], :]
-                # compute performance for this condition
-                acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
-                dk_mu = compute_dk(dist_a_)
-
-                if i == 0:
-                    add_legend = True
-                    show_ylabel = True
-                    legend_loc = (.33, .7)
-
-                else:
-                    add_legend = False
-                    show_ylabel = False
-
-                # plot
-                plot_pred_acc_rcl(
-                    acc_mu[T_part:], acc_er[T_part:],
-                    acc_mu[T_part:] + dk_mu[T_part:],
-                    p, f, axes[i],
-                    title=f'{cn}',
-                    add_legend=add_legend, legend_loc=legend_loc,
-                    show_ylabel=show_ylabel
-                )
-                # axes[i].set_ylabel()
-                axes[i].set_ylim([-.05, 1.05])
-            fig_path = os.path.join(fig_dir, f'tz-acc-horizontal.png')
-            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+            # schema_consistency = np.array([
+            #     np.sum(np.argmax(def_path, axis=1) == targets_i[T_part:])
+            #     for targets_i in targets
+            # ])
+            # schema_consistency -= np.min(schema_consistency)
+            # schema_consistency = schema_consistency / \
+            #     np.max(schema_consistency)
+            # # plt.hist(schema_consistency)
+            # np.shape(corrects)
+            # cond_ = 'DM'
+            # dvs = [corrects, dks, mistakes]
+            # dv_names = ['corrects', 'dks', 'mistakes']
+            # f, axes = plt.subplots(1, 3, figsize=(12, 4))
+            # for i, dv_i in enumerate(dvs):
+            #     dv = np.mean(dv_i[:, T_part:], axis=1)
+            #     r_val, p_val = pearsonr(
+            #         schema_consistency[cond_ids[cond_]], dv[cond_ids[cond_]]
+            #     )
+            #     sns.regplot(
+            #         schema_consistency[cond_ids[cond_]], dv[cond_ids[cond_]],
+            #         scatter_kws={'s': 40, 'alpha': .5},
+            #         x_jitter=.1, y_jitter=.01,
+            #         ax=axes[i],
+            #     )
+            #     axes[i].set_title('r = %.2f, p = %.2f' % (r_val, p_val))
+            #     axes[i].set_ylabel(dv_names[i])
+            #     axes[i].set_xlabel('Schematicity')
+            #     axes[i].set_xlim([0, 1])
+            # sns.despine()
+            # f.tight_layout()
+            # fig_path = os.path.join(
+            #     fig_dir, f'performance-{cond_}-schema-effect.png')
+            # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+            #
+            # '''plot behavioral performance - vertically aligned'''
+            # input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
+            # pickle_save_dict(input_dict, f'temp/enc{enc_size_test}.pkl')
+            #
+            # # f, axes = plt.subplots(3, 1, figsize=(7, 9))
+            #
+            # for i, cn in enumerate(all_conds):
+            #     # f, ax = plt.subplots(1, 1, figsize=(7, 3.5))
+            #     Y_ = Y[cond_ids[cn], :]
+            #     dist_a_ = dist_a[cond_ids[cn], :]
+            #     # compute performance for this condition
+            #     acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
+            #     dk_mu = compute_dk(dist_a_)
+            #     mis_mu, mis_er = compute_mistake(Y_, dist_a_, return_er=True)
+            #
+            #     # cache data for all cond-subj
+            #     acc_dict[cn]['mu'][i_s] = acc_mu
+            #     acc_dict[cn]['er'][i_s] = acc_er
+            #     mis_dict[cn]['mu'][i_s] = mis_mu
+            #     mis_dict[cn]['er'][i_s] = mis_er
+            #     dk_dict[cn]['mu'][i_s] = dk_mu
+            #
+            # '''P(error | schema cons) vs. P(error | schema in-cons)'''
+            # if n_def_tps > 0:
+            #     f, axes = plt.subplots(1, 3, figsize=(17, 5))
+            #     for i, cn in enumerate(all_conds):
+            #         mis_c = mis_dict[cn]['mu'][i_s][T_part:][np.array(
+            #             def_tps).astype(np.bool)]
+            #         mis_ic = mis_dict[cn]['mu'][i_s][T_part:][~np.array(
+            #             def_tps).astype(np.bool)]
+            #         mis_er_c = mis_dict[cn]['er'][i_s][T_part:][np.array(
+            #             def_tps).astype(np.bool)]
+            #         mis_er_ic = mis_dict[cn]['er'][i_s][T_part:][np.array(
+            #             def_tps).astype(np.bool)]
+            #
+            #         heights = [np.mean(mis_c), np.mean(mis_ic)]
+            #         yerrs = [np.std(mis_er_c), np.std(mis_er_ic)]
+            #         xticklabels = ['schematic', 'nonschematic']
+            #         xticks = range(len(heights))
+            #
+            #         # f, ax = plt.subplots(1, 1, figsize=(6, 5))
+            #         axes[i].bar(
+            #             x=xticks, height=heights, yerr=yerrs,
+            #             color=sns.color_palette('colorblind')[3]
+            #         )
+            #         axes[i].axhline(0, color='grey', linestyle='--')
+            #         axes[i].set_title(cn)
+            #         axes[i].set_xlabel('Transition type')
+            #         axes[i].set_xticks(xticks)
+            #         axes[i].set_ylim([-.05, .5])
+            #         # axes[i].set_ylim([-.015, .15])
+            #         axes[i].set_xticklabels(xticklabels)
+            #         axes[i].set_ylabel('P(error)')
+            #         f.tight_layout()
+            #         sns.despine()
+            #     fig_path = os.path.join(fig_dir, f'error-schema-effect.png')
+            #     f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+            #
+            # '''plot behavioral performance - each cond separately, 2nd part'''
+            #
+            # f, axes = plt.subplots(1, 3, figsize=(12, 4))
+            # for i, cn in enumerate(['RM', 'DM', 'NM']):
+            #     Y_ = Y[cond_ids[cn], :]
+            #     dist_a_ = dist_a[cond_ids[cn], :]
+            #     # compute performance for this condition
+            #     acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
+            #     dk_mu = compute_dk(dist_a_)
+            #
+            #     if i == 0:
+            #         add_legend = True
+            #         show_ylabel = True
+            #         legend_loc = (.33, .7)
+            #
+            #     else:
+            #         add_legend = False
+            #         show_ylabel = False
+            #
+            #     # plot
+            #     plot_pred_acc_rcl(
+            #         acc_mu[T_part:], acc_er[T_part:],
+            #         acc_mu[T_part:] + dk_mu[T_part:],
+            #         p, f, axes[i],
+            #         title=f'{cn}',
+            #         add_legend=add_legend, legend_loc=legend_loc,
+            #         show_ylabel=show_ylabel
+            #     )
+            #     # axes[i].set_ylabel()
+            #     axes[i].set_ylim([-.05, 1.05])
+            # fig_path = os.path.join(fig_dir, f'tz-acc-horizontal.png')
+            # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''schema effect analysis
             '''
@@ -660,6 +660,7 @@ for penalty_train in penaltys_train:
             # from sklearn.datasets import load_breast_cancer
             from sklearn.linear_model import RidgeClassifier, LogisticRegression
             from sklearn.model_selection import PredefinedSplit
+            from sklearn.svm import SVC
             # from sklearn.svm import LinearSVC
 
             def build_yob(o_keys_p, o_vals_p, def_yob_val=-1):
@@ -910,55 +911,93 @@ for penalty_train in penaltys_train:
             trial_id_mat = np.tile(trial_id, (T_total, 1)).T
             trial_id_unroll = np.reshape(trial_id_mat, (n_trials * T_total, ))
 
-            # set up holdout set params
-            n_trials_factors = find_factors(n_trials)
-            if len(n_trials_factors) == 2:
-                n_test_trial = n_trials_factors[0]
-            else:
-                m_ = np.max(np.where(np.array(n_trials_factors) < 10)[0])
-                n_test_trial = n_trials_factors[m_]
+            # cv split
+            n_folds = 10
+            # print(f'n_perfect_trials = {n_perfect_trials}')
+            cvsplits = chunk(list(range(n_trials)), n_folds)
+
+            # # set up holdout set params
+            # n_trials_factors = find_factors(n_trials)
+            # if len(n_trials_factors) == 2:
+            #     n_test_trial = n_trials_factors[0]
+            # else:
+            #     m_ = np.max(np.where(np.array(n_trials_factors) < 10)[0])
+            #     n_test_trial = n_trials_factors[m_]
 
             # n_test_trial = n_trials_factors[2]
-            n_test_tps = n_test_trial * T_total
-            testset_ids = np.reshape(trial_id, (-1, n_test_trial))
-            n_folds = np.shape(testset_ids)[0]
+            #
+            # n_test_tps = n_test_trial * T_total
+            # testset_ids = np.reshape(trial_id, (-1, n_test_trial))
+            # n_folds = np.shape(testset_ids)[0]
 
             # start decoding
-            rc_alpha = 1
+            rc_alpha = 10
             cm_rc = [LogisticRegression(penalty='l2', C=rc_alpha)
                      for _ in range(T_part)]
-            Yob_hat_ = np.zeros((n_folds, n_test_tps, T_part))
+            # cm_rc = [SVC(C=rc_alpha, kernel='rbf', probability=True)
+            #          for _ in range(T_part)]
+            # Yob_hat_ = np.zeros((n_folds, n_test_tps, T_part))
             Yob_proba_ = np.zeros((n_trials, T_part, T_total, n_branch + 1))
-            for fid, testset_ids_i in enumerate(testset_ids):
-                tmask = np.logical_and(
+
+            for fid, testset_ids_i in enumerate(cvsplits):
+                temask = np.logical_and(
                     trial_id_unroll >= testset_ids_i[0],
                     trial_id_unroll <= testset_ids_i[-1])
                 # for the n/t-th classifier
                 for n in range(T_part):
                     # print(n)
-                    cm_rc[n].fit(CM_rs[~tmask], Yob_rs[~tmask, n])
-                    Yob_hat_[fid, :, n] = cm_rc[n].predict(CM_rs[tmask])
+                    cm_rc[n].fit(CM_rs[~temask], Yob_rs[~temask, n])
+                    # Yob_hat_[fid, :, n] = cm_rc[n].predict(CM_rs[temask])
                     # probabilistic estimates for the i-th
                     for ii in testset_ids_i:
                         Yob_proba_[ii, n] = cm_rc[n].predict_proba(CM[ii])
 
-            Yob_hat_rs = np.reshape(Yob_hat_, np.shape(Yob_rs))
-            Yob_hat = np.reshape(Yob_hat_rs, np.shape(Yob))
-            acc = np.sum(Yob_hat == Yob) / Yob.size
+            # Yob_hat_rs = np.reshape(Yob_hat_, np.shape(Yob_rs))
+            # Yob_hat = np.reshape(Yob_hat_rs, np.shape(Yob))
+            # acc = np.sum(Yob_hat == Yob) / Yob.size
             # print(acc)
 
-            Yob_hat_p2 = Yob_hat[:, T_part:, :]
-            Yob_hat_p2_v = np.vstack([Yob_hat_p2[:, t, t]
-                                      for t in range(T_part)]).T
+            # np.shape(Yob_proba_)
+            def compute_matches(proba_, target_):
+                proba_ag = np.argmax(proba_, axis=3)
+                proba_ag_tp = np.transpose(proba_ag, (0, 2, 1))
+                assert np.shape(proba_ag_tp) == np.shape(target_),\
+                    f'{np.shape(proba_ag_tp)}!={np.shape(target_)}'
+                matches = target_ == proba_ag_tp - 1
+                # matches_p2 = matches[:, T_part:, ]
+                match_rate = np.sum(matches) / matches.size
+                print(match_rate)
+                return matches, match_rate
+
+            matches, match_rate = compute_matches(Yob_proba_, Yob)
+            print(match_rate)
+            np.shape(Yob_proba_)
+
+            Yob_dm = Yob[cond_ids['DM']]
+            matches, match_rate = compute_matches(
+                Yob_proba_hm[:, :, T_part:, :], Yob_dm[has_mistake, T_part:, :]
+            )
+            print(match_rate)
+            matches, match_rate = compute_matches(
+                Yob_proba_nm[:, :, T_part:,
+                             :], Yob_dm[~has_mistake, T_part:, :]
+            )
+            print(match_rate)
+
+            # Yob_hat_p2 = Yob_hat[:, T_part:, :]
+            # Yob_hat_p2_v = np.vstack([Yob_hat_p2[:, t, t]
+            #                           for t in range(T_part)]).T
             # plt.imshow(Yob_hat_p2_v)
             # np.shape(np.vstack([Yob_hat_p2[:, t, t] for t in range(T_part)]).T)
 
             # np.shape(actions_p2)
-            yconsistency = np.sum(Yob_hat_p2_v == actions_p2) / actions_p2.size
-            print(yconsistency, acc)
-            # plt.imshow(Yob_rs[~tmask, :], aspect='auto')
+            # yconsistency = np.sum(Yob_hat_p2_v == actions_p2) / actions_p2.size
+            # print(yconsistency, acc)
 
             '''plot'''
+            Yob_proba_dm = Yob_proba_[cond_ids['DM']]
+            Yob_proba_hm = Yob_proba_dm[has_mistake, :]
+            Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
             # Yobrs_dmp1hm_proba = Yobrs_dmp1_proba[has_mistake, :]
             # Yobrs_dmp2hm_proba = Yobrs_dmp2_proba[has_mistake, :]
             # Yobrs_dmp1nm_proba = Yobrs_dmp1_proba[~has_mistake, :]
@@ -972,7 +1011,7 @@ for penalty_train in penaltys_train:
                 mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
                 for j in range(len(mistake_feature_i)):
 
-                    decoded_feat_mat = Yob_proba_[i, mistake_feature_i[j]]
+                    decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
                     # decoded_feat_mat=np.vstack([
                     #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :],
                     #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :]
@@ -1031,7 +1070,7 @@ for penalty_train in penaltys_train:
                 # when/what feature were mistaken
                 correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
                 for j in range(len(correct_feature_i)):
-                    decoded_feat_mat = Yob_proba_[i, correct_feature_i[j]]
+                    decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
                     # decoded_feat_mat = np.vstack([
                     #     Yobrs_dmp1nm_proba[i, correct_feature_i[j], :, :],
                     #     Yobrs_dmp2nm_proba[i, correct_feature_i[j], :, :]
