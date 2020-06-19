@@ -28,3 +28,16 @@ def get_bw_pal(contrast=100):
     bw_pal = sns.color_palette(palette='Greys', n_colors=contrast)
     bw_pal = [bw_pal[-1], bw_pal[0]]
     return bw_pal
+
+
+def print_dict(d, indent=0):
+    '''
+    reference:https://stackoverflow.com/questions/
+    3229419/how-to-pretty-print-nested-dictionaries
+    '''
+    for key, value in d.items():
+        print('\t' * indent + str(key))
+        if isinstance(value, dict):
+            print_dict(value, indent + 1)
+        else:
+            print('\t' * (indent + 1) + str(value))

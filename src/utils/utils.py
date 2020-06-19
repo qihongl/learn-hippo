@@ -25,3 +25,32 @@ def get_th_data(tensor_list):
 def vprint(verbose, msg):
     if verbose:
         print(msg)
+
+
+def find_factors(x):
+    factors = []
+    for i in range(1, x + 1):
+        if x % i == 0:
+            factors.append(i)
+    return factors
+
+
+def chunk(lst, n_chunks):
+    """
+    https://stackoverflow.com/questions/2130016/
+    splitting-a-list-into-n-parts-of-approximately-equal-length
+
+    Parameters
+    ----------
+    lst : list
+    n_chunks : int
+
+    Returns
+    -------
+    list
+        chunked list
+
+    """
+    k, m = divmod(len(lst), n_chunks)
+    return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)]
+            for i in range(n_chunks)]
