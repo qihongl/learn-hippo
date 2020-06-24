@@ -98,6 +98,7 @@ for def_prob10 in np.arange(3, 10):
 
     print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
     enc_acc_g = [None] * n_subjs
+    schematic_enc_err_rate_g = [None] * n_subjs
     df_g = [None] * n_subjs
     prop_pfenc_g = [None] * n_subjs
 
@@ -421,8 +422,19 @@ for def_prob10 in np.arange(3, 10):
         enc_acc_g[i_s] = np.sum(enc_acc_mat_dm) / enc_acc_mat_dm.size
         prop_pfenc_g[i_s] = np.sum(
             trial_enc_perfectly) / trial_enc_perfectly.size
-        # print(enc_acc_g[i_s])
-        # np.shape(enc_acc_mat_dm)
+
+        # compute % schema consistent encoding error
+        enc_err_locs = np.where(enc_acc_mat_dm == False)
+
+        n_schematic_enc_err = 0
+        schematic_enc_err_rate = 0
+        n_enc_errs = len(enc_err_locs[0])
+        if n_enc_errs > 0:
+            for loc_i, loc_j in zip(enc_err_locs[0], enc_err_locs[1]):
+                if is_def_tp[loc_j]:
+                    n_schematic_enc_err += 1
+            schematic_enc_err_rate = n_schematic_enc_err / n_enc_errs
+        schematic_enc_err_rate_g[i_s] = schematic_enc_err_rate
 
         '''stats'''
         n_trials_dm = np.sum(cond_ids['DM'])
@@ -615,7 +627,9 @@ for def_prob10 in np.arange(3, 10):
 
     # df_g
     mvpa_data_dict = {
-        'enc_acc_g': enc_acc_g, 'prop_pfenc_g': prop_pfenc_g, 'df_g': df_g
+        'enc_acc_g': enc_acc_g, 'prop_pfenc_g': prop_pfenc_g,
+        'schematic_enc_err_rate_g': schematic_enc_err_rate_g,
+        'df_g': df_g
     }
     mvpa_data_dict_fname = f'mvpa-schema-{def_prob}.pkl'
     pickle_save_dict(mvpa_data_dict, os.path.join(
