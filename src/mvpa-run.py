@@ -29,7 +29,7 @@ sns.set(style='white', palette='colorblind', context='poster')
 all_conds = TZ_COND_DICT.values()
 
 log_root = '../log/'
-# def_prob10 = 4
+# def_prob10 = 8
 for def_prob10 in np.arange(3, 10):
     # exp_name = '0425-schema.4-comp.8'
     exp_name = '0425-schema.%d-comp.8' % (def_prob10)
@@ -99,7 +99,8 @@ for def_prob10 in np.arange(3, 10):
     print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
     enc_acc_g = [None] * n_subjs
     schematic_enc_err_rate_g = [None] * n_subjs
-    df_g = [None] * n_subjs
+    df_grcl = [None] * n_subjs
+    df_genc = [None] * n_subjs
     prop_pfenc_g = [None] * n_subjs
 
     for i_s, subj_id in enumerate(subj_ids):
@@ -128,7 +129,7 @@ for def_prob10 in np.arange(3, 10):
 
         def_tps = env['def_tps']
         # def_tps_list[i_s] = def_tps
-        log_subpath['data']
+        # log_subpath['data']
         print(log_subpath['data'])
         p.update_enc_size(enc_size_test)
 
@@ -433,7 +434,7 @@ for def_prob10 in np.arange(3, 10):
             for loc_i, loc_j in zip(enc_err_locs[0], enc_err_locs[1]):
                 if is_def_tp[loc_j]:
                     n_schematic_enc_err += 1
-            schematic_enc_err_rate = n_schematic_enc_err / n_enc_errs
+                    schematic_enc_err_rate = n_schematic_enc_err / n_enc_errs
         schematic_enc_err_rate_g[i_s] = schematic_enc_err_rate
 
         '''stats'''
@@ -446,22 +447,23 @@ for def_prob10 in np.arange(3, 10):
             qbe4o[:, t] = o_keys_dmp2[:, t] > t
         # plt.plot(np.mean(qbe4o, axis=0))
 
-        # init a df
+        # init a df_rcl
         # schema_consistent in {'T','F', na}
         # outcome in {'correct', 'dk', 'mistake'}
         # max_response in {'studied', 'dk', 'schematic', 'other'}
-        df = pd.DataFrame(
-            columns=['trial_id', 'time', 'schema_consistent', 'has_enc_err', 'outcome',
-                     'max_response', 'max_response_schematic', 'act_response',
-                     'act_response_schematic'],
-            # index=range(n_trials_dm)
+        df_rcl = pd.DataFrame(
+            columns=['trial_id', 'time', 'schema_consistent', 'has_enc_err',
+                     'outcome', 'max_response', 'max_response_schematic',
+                     'act_response', 'act_response_schematic'],
+        )
+        df_enc = pd.DataFrame(
+            columns=['trial_id', 'time', 'schema_consistent', 'has_enc_err',
+                     'max_response'],
         )
         i, t = 0, 0
+
         for i in range(n_trials_dm):
             for t in range(T_part):
-                # only analyze qbe4o trial
-                if not qbe4o[i, t]:
-                    continue
 
                 p_max_it = Yob_maxp_dmp2[i, t, t]
                 is_schematic = def_tps[t]
@@ -470,7 +472,7 @@ for def_prob10 in np.arange(3, 10):
 
                 if is_schematic:
                     schema_consistent = targets_dmp2[i, t] == def_path_int[t]
-                    if p_max_it == def_path_int[t]:
+                    if p_max_it == def_path_int[t] + 1:
                         max_response_schematic = True
                     else:
                         max_response_schematic = False
@@ -483,12 +485,25 @@ for def_prob10 in np.arange(3, 10):
                     max_response_schematic = np.nan
                     act_response_schematic = np.nan
 
+                # get the t-th encoded feature for the i-th trial
+                # classify it into {other-S, other-NS, studied, dk}
+                if feat_val_enc[i, t] == 0:
+                    enc_type = 'dk'
+                elif feat_val_enc[i, t] == feat_val_true[i, t]:
+                    enc_type = 'studied'
+                else:
+                    enc_type = 'other'
+
+                # for part 2, memory based prediction phase
                 if dks_dmp2[i, t]:
                     outcome = 'dk'
                 elif corrects_dmp2[i, t]:
                     outcome = 'correct'
                 elif mistakes_dmp2[i, t]:
-                    outcome = 'mistake'
+                    if act_response_schematic:
+                        outcome = 'mistake-S'
+                    else:
+                        outcome = 'mistake'
                 else:
                     raise ValueError('must be dk or correct or mistake')
 
@@ -496,22 +511,34 @@ for def_prob10 in np.arange(3, 10):
                     max_response = 'dk'
                 elif p_max_it == 1 + targets_dmp2[i, t]:
                     max_response = 'studied'
+                elif max_response_schematic:
+                    max_response = 'other-S'
                 else:
                     max_response = 'other'
 
-                df = df.append({
+                # only count qbe4o trial
+                df_enc = df_rcl.append({
                     'trial_id': i,
                     'time': t,
                     'schema_consistent': schema_consistent,
                     'has_enc_err': has_enc_err,
-                    'outcome': outcome,
-                    'max_response': max_response,
-                    'max_response_schematic': max_response_schematic,
-                    'act_response': act_response,
-                    'act_response_schematic': act_response_schematic
+                    'max_response': enc_type
                 }, ignore_index=True)
+                if not qbe4o[i, t]:
+                    df_rcl = df_rcl.append({
+                        'trial_id': i,
+                        'time': t,
+                        'schema_consistent': schema_consistent,
+                        'has_enc_err': has_enc_err,
+                        'outcome': outcome,
+                        'max_response': max_response,
+                        'max_response_schematic': max_response_schematic,
+                        'act_response': act_response,
+                        'act_response_schematic': act_response_schematic
+                    }, ignore_index=True)
 
-        df_g[i_s] = df
+        df_grcl[i_s] = df_rcl
+        df_genc[i_s] = df_enc
 
         # '''plot'''
         # Yob_proba_dm = Yob_proba[cond_ids['DM']]
@@ -625,12 +652,12 @@ for def_prob10 in np.arange(3, 10):
     # enc_acc_gmu, enc_acc_gse = compute_stats(enc_acc_g)
     # print(enc_acc_gmu, enc_acc_gse)
 
-    # df_g
+    # df_grcl
     mvpa_data_dict = {
         'enc_acc_g': enc_acc_g, 'prop_pfenc_g': prop_pfenc_g,
         'schematic_enc_err_rate_g': schematic_enc_err_rate_g,
-        'df_g': df_g
+        'df_grcl': df_grcl, 'df_genc': df_genc
     }
-    mvpa_data_dict_fname = f'mvpa-schema-{def_prob}.pkl'
+    mvpa_data_dict_fname = f'new-mvpa-schema-{def_prob}.pkl'
     pickle_save_dict(mvpa_data_dict, os.path.join(
         'temp', mvpa_data_dict_fname))

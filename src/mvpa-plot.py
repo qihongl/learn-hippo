@@ -18,27 +18,30 @@ def_prob_range = np.arange(.3, .9, .1)
 len(def_prob_range)
 
 # prealloc
-all_counts_dicts = {'%.1f' % def_prob: None for def_prob in def_prob_range}
+all_scom_counts_dicts = {'%.1f' %
+                         def_prob: None for def_prob in def_prob_range}
+all_scmo_counts_dicts = {'%.1f' %
+                         def_prob: None for def_prob in def_prob_range}
 all_pmu_dicts = {'%.1f' % def_prob: None for def_prob in def_prob_range}
 all_pse_dicts = {'%.1f' % def_prob: None for def_prob in def_prob_range}
-prop_dict_co_mu = {c: {o: np.zeros((len(def_prob_range), 3)) for o in all_outcome}
+prop_dict_co_mu = {c: {o: np.zeros((len(def_prob_range), 4)) for o in all_outcome}
                    for c in all_conditions}
-prop_dict_co_se = {c: {o: np.zeros((len(def_prob_range), 3)) for o in all_outcome}
+prop_dict_co_se = {c: {o: np.zeros((len(def_prob_range), 4)) for o in all_outcome}
                    for c in all_conditions}
 prop_dict_cm_mu = {
-    c: {mrt: np.zeros((len(def_prob_range), 3)) for mrt in max_response_type}
+    c: {mrt: np.zeros((len(def_prob_range), 4)) for mrt in max_response_type}
     for c in all_conditions
 }
 prop_dict_cm_se = {
-    c: {mrt: np.zeros((len(def_prob_range), 3)) for mrt in max_response_type}
+    c: {mrt: np.zeros((len(def_prob_range), 4)) for mrt in max_response_type}
     for c in all_conditions
 }
 enc_acc_gmu = np.zeros(len(def_prob_range))
 enc_acc_gse = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gmu = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
-schm_v_mr_schematic = {
-    '%.1f' % def_prob: [] for def_prob in def_prob_range}
+schm_v_mr_schematic = {'%.1f' % def_prob: [] for def_prob in def_prob_range}
+schm_v_mis_schematic = {'%.1f' % def_prob: [] for def_prob in def_prob_range}
 
 # for all schema levels
 for dpi, def_prob in enumerate(def_prob_range):
@@ -76,33 +79,43 @@ for dpi, def_prob in enumerate(def_prob_range):
         df_is_ns = df_g[i_s].loc[np.isnan(
             list(df_g[i_s]['schema_consistent']))]
         all_df = [df_is_ns, df_is_sc, df_is_sic]
-
+        # outcome = 'mistake'
         # prealloc
         counts_com_dict = {condition: None for condition in all_conditions}
         counts_cmo_dict = {condition: None for condition in all_conditions}
         # loop over all schema-based condition
-        for condition, df_i in zip(all_conditions, all_df):
-            df_i = df_i.loc[df_i['has_enc_err'] == True]
+        for condition, df_sc in zip(all_conditions, all_df):
+            df_sc = df_sc.loc[df_sc['has_enc_err'] == True]
             # prealloc
             outcome_counts = {o: 0 for o in all_outcome}
             for outcome in all_outcome:
                 # extract df for a specific outcome
-                df_io = df_i.loc[df_i['outcome'] == outcome]
+                df_sco = df_sc.loc[df_sc['outcome'] == outcome]
                 # get the max responses
-                vcounts = df_io['max_response'].value_counts()
+                vcounts = df_sco['max_response'].value_counts()
                 values = vcounts.keys().tolist()
                 counts = vcounts.tolist()
+
                 # form a response_type -> count dict
                 dict_io = {mrt: 0 for mrt in max_response_type}
                 for mrt, count_i in zip(values, counts):
                     dict_io[mrt] = count_i
                 # print(dict_io)
-                #
+                n_schematic_err_ = 0
                 if outcome == 'mistake' and condition == 'schema violated':
-                    df_io_other = df_io.loc[df_io['max_response'] == 'other']
-                    schm_v_mr_schematic['%.1f' % def_prob].extend(
-                        list(df_io_other['max_response_schematic'])
-                    )
+                    df_sco_other = df_sco.loc[df_sco['max_response'] == 'other']
+                    mr_schematic = list(df_sco_other['max_response_schematic'])
+                    # mr_schematic = list(df_sco_other['act_response_schematic'])
+                    n_schematic_err_ = np.array(mr_schematic).sum()
+                    schm_v_mr_schematic['%.1f' % def_prob].extend(mr_schematic)
+
+                # if there are schematic errors, update it
+                if n_schematic_err_ > 0:
+                    dict_io['other'] = dict_io['other'] - n_schematic_err_
+                    dict_io['other-schematic'] = n_schematic_err_
+                else:
+                    dict_io['other-schematic'] = 0
+
                 # collect the data
                 outcome_counts[outcome] = list(dict_io.values())
             counts_com_dict[condition] = outcome_counts
@@ -110,15 +123,31 @@ for dpi, def_prob in enumerate(def_prob_range):
             # get scmo count data
             mrt_counts = {mrt: 0 for mrt in max_response_type}
             for mrt in max_response_type:
-                df_im = df_i.loc[df_i['max_response'] == mrt]
-                vcounts = df_im['outcome'].value_counts()
+                df_scm = df_sc.loc[df_sc['max_response'] == mrt]
+                vcounts = df_scm['outcome'].value_counts()
                 values = vcounts.keys().tolist()
                 counts = vcounts.tolist()
 
-                dict_im = {o: 0 for o in all_outcome}
+                dict_scm = {o: 0 for o in all_outcome}
                 for o, count_i in zip(values, counts):
-                    dict_im[o] = count_i
-                mrt_counts[mrt] = list(dict_im.values())
+                    dict_scm[o] = count_i
+
+                # n_schematic_err_ = 0
+                df_scm_mistake = df_scm.loc[df_scm['outcome'] == 'mistake']
+                # mr_schematic = list(df_scm_mistake['max_response_schematic'])
+                mr_schematic = list(df_scm_mistake['act_response_schematic'])
+                schm_v_mis_schematic['%.1f' % def_prob].extend(mr_schematic)
+                n_schematic_err_ = np.array(mr_schematic).sum()
+                # if there are schematic errors, update it
+                if n_schematic_err_ > 0:
+                    dict_scm['mistake'] = dict_scm['mistake'] - \
+                        n_schematic_err_
+                    dict_scm['mistake-schematic'] = n_schematic_err_
+                else:
+                    dict_scm['mistake-schematic'] = 0
+
+                mrt_counts[mrt] = list(dict_scm.values())
+
             counts_cmo_dict[condition] = mrt_counts
 
         # collect the data for this subj
@@ -144,10 +173,8 @@ for dpi, def_prob in enumerate(def_prob_range):
             counts_co_dict_mu[condition][outcome] = mu_
             counts_co_dict_se[condition][outcome] = se_
             if np.sum(mu_) == 0:
-                prop_dict_co_mu[condition][outcome][dpi,
-                                                    :] = np.array([np.nan] * 3)
-                prop_dict_co_se[condition][outcome][dpi,
-                                                    :] = np.array([np.nan] * 3)
+                prop_dict_co_mu[condition][outcome][dpi, :] = np.nan
+                prop_dict_co_se[condition][outcome][dpi, :] = np.nan
             else:
                 prop_dict_co_mu[condition][outcome][dpi, :] = pmu_
                 prop_dict_co_se[condition][outcome][dpi, :] = pse_
@@ -167,16 +194,16 @@ for dpi, def_prob in enumerate(def_prob_range):
             counts_co_dict_mu[condition][mrt] = mu_
             counts_co_dict_se[condition][mrt] = se_
             if np.sum(mu_) == 0:
-                prop_dict_cm_mu[condition][mrt][dpi,
-                                                :] = np.array([np.nan] * 3)
-                prop_dict_cm_se[condition][mrt][dpi,
-                                                :] = np.array([np.nan] * 3)
+                prop_dict_cm_mu[condition][mrt][dpi, :] = np.nan
+                prop_dict_cm_se[condition][mrt][dpi, :] = np.nan
             else:
                 prop_dict_cm_mu[condition][mrt][dpi, :] = pmu_
                 prop_dict_cm_se[condition][mrt][dpi, :] = pse_
 
     # collect by schema level
-    all_counts_dicts['%.1f' % def_prob] = counts_scom_dicts
+    all_scom_counts_dicts['%.1f' % def_prob] = counts_scom_dicts
+    all_scmo_counts_dicts['%.1f' % def_prob] = counts_scmo_dicts
+
 #     all_pmu_dicts['%.1f' % def_prob] = prop_dict_co_mu
 #     all_pse_dicts['%.1f' % def_prob] = prop_dict_co_se
 
@@ -189,22 +216,32 @@ outcome_mu = {'%.1f' % def_prob: None for def_prob in def_prob_range}
 outcome_se = {'%.1f' % def_prob: None for def_prob in def_prob_range}
 dr_mu = {'%.1f' % def_prob: None for def_prob in def_prob_range}
 dr_se = {'%.1f' % def_prob: None for def_prob in def_prob_range}
+# all_outcome_ext = all_outcome + ['mistake-schema']
 for dpi, def_prob in enumerate(def_prob_range):
-    counts_dicts_dpi = all_counts_dicts['%.1f' % def_prob]
-    n_subj_dpi = len(counts_dicts_dpi)
+    scom_counts_dicts_dpi = all_scom_counts_dicts['%.1f' % def_prob]
+    scmo_counts_dicts_dpi = all_scmo_counts_dicts['%.1f' % def_prob]
+
+    n_subj_dpi = len(scom_counts_dicts_dpi)
     outcome_mu_bycond = {condition: None for condition in all_conditions}
     outcome_se_bycond = {condition: None for condition in all_conditions}
     dr_mu_bycond = {condition: None for condition in all_conditions}
     dr_se_bycond = {condition: None for condition in all_conditions}
+
     for ci, condition in enumerate(all_conditions):
         outcome_bysub = np.zeros((len(all_outcome), n_subj_dpi))
-        dr_bysub = np.zeros((len(max_response_type), n_subj_dpi))
+        dr_bysub = np.zeros((len(max_response_type) + 1, n_subj_dpi))
+        outcome_bysub = np.zeros((len(all_outcome) + 1, n_subj_dpi))
+
         for si in range(n_subj_dpi):
-            for oi, outcome in enumerate(all_outcome):
-                outcome_bysub[oi, si] = np.sum(
-                    counts_dicts_dpi[si][condition][outcome])
+            # for oi, outcome in enumerate(all_outcome):
+            #     outcome_bysub[oi, si] = np.sum(
+            #         scom_counts_dicts_dpi[si][condition][outcome])
+
+            outcome_cond_si = np.sum(np.array([scmo_counts_dicts_dpi[si][condition][mrt]
+                                               for mrt in max_response_type]), axis=0)
+            outcome_bysub[:, si] = outcome_cond_si
             # collapse across outcomes, merge decoded responses
-            dr_cond_si = np.sum(np.array([counts_dicts_dpi[si][condition][outcome]
+            dr_cond_si = np.sum(np.array([scom_counts_dicts_dpi[si][condition][outcome]
                                           for outcome in all_outcome]), axis=0)
             dr_bysub[:, si] = dr_cond_si
         # each mu number is the average outcome count across all subjs
@@ -263,19 +300,24 @@ for ci, condition in enumerate(all_conditions):
     correct_mu_bars = np.array(outcome_mu_byss[condition])[:, 0]
     mistake_mu_bars = np.array(outcome_mu_byss[condition])[:, 1]
     dk_mu_bars = np.array(outcome_mu_byss[condition])[:, 2]
+    mistake_sc_mu_bars = np.array(outcome_mu_byss[condition])[:, 3]
     correct_se_bars = np.array(outcome_se_byss[condition])[:, 0]
     mistake_se_bars = np.array(outcome_se_byss[condition])[:, 1]
     dk_se_bars = np.array(outcome_se_byss[condition])[:, 2]
+    mistake_sc_se_bars = np.array(outcome_se_byss[condition])[:, 3]
 
     axes[ci].bar(xticks, correct_mu_bars, width,
                  yerr=correct_se_bars, label='correct', color=color_g,
                  error_kw=error_kw)
     axes[ci].bar(xticks, dk_mu_bars, width,
                  yerr=dk_se_bars, bottom=correct_mu_bars,
-                 label='mistake', color=color_r, error_kw=error_kw)
+                 label='dk', color=color_b, error_kw=error_kw)
     axes[ci].bar(xticks, mistake_mu_bars, width, yerr=mistake_se_bars,
                  bottom=correct_mu_bars + dk_mu_bars,
-                 label='dk', color=color_b, error_kw=error_kw)
+                 label='mistake-NS', color=color_r, error_kw=error_kw)
+    axes[ci].bar(xticks, mistake_sc_mu_bars, width, yerr=mistake_sc_se_bars,
+                 bottom=correct_mu_bars + dk_mu_bars + mistake_mu_bars,
+                 label='mistake-S', color=color_y, error_kw=error_kw)
     axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
     axes[ci].set_xticks(xticks)
@@ -297,9 +339,11 @@ for ci, condition in enumerate(all_conditions):
     stud_mu_bars = np.array(dr_mu_byss[condition])[:, 0]
     dk_mu_bars = np.array(dr_mu_byss[condition])[:, 1]
     other_mu_bars = np.array(dr_mu_byss[condition])[:, 2]
+    other_sc_mu_bars = np.array(dr_mu_byss[condition])[:, 3]
     stud_se_bars = np.array(dr_se_byss[condition])[:, 0]
     dk_se_bars = np.array(dr_se_byss[condition])[:, 1]
     other_se_bars = np.array(dr_se_byss[condition])[:, 2]
+    other_sc_se_bars = np.array(dr_se_byss[condition])[:, 3]
 
     axes[ci].bar(xticks, stud_mu_bars, width,
                  yerr=stud_se_bars, label='studied', color=color_g,
@@ -309,7 +353,10 @@ for ci, condition in enumerate(all_conditions):
                  label='dk', color=color_b, error_kw=error_kw)
     axes[ci].bar(xticks, other_mu_bars, width, yerr=other_se_bars,
                  bottom=stud_mu_bars + dk_mu_bars,
-                 label='other', color=color_r, error_kw=error_kw)
+                 label='other-NS', color=color_r, error_kw=error_kw)
+    axes[ci].bar(xticks, other_sc_mu_bars, width, yerr=other_sc_se_bars,
+                 bottom=stud_mu_bars + dk_mu_bars,
+                 label='other-S', color=color_y, error_kw=error_kw)
     axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
     axes[ci].set_xticks(xticks)
@@ -337,17 +384,22 @@ for condition in all_conditions:
         mrt_stud = prop_dict_co_mu[condition][outcome][:, 0]
         mrt_dk = prop_dict_co_mu[condition][outcome][:, 1]
         mrt_other = prop_dict_co_mu[condition][outcome][:, 2]
+        mrt_other_sc = prop_dict_co_mu[condition][outcome][:, 3]
         mrt_stud_se = prop_dict_co_se[condition][outcome][:, 0]
         mrt_dk_se = prop_dict_co_se[condition][outcome][:, 1]
         mrt_other_se = prop_dict_co_se[condition][outcome][:, 2]
+        mrt_other_sc_se = prop_dict_co_se[condition][outcome][:, 3]
 
         axes[i].bar(xticks, mrt_stud, width, yerr=mrt_stud_se,
                     label='studied', color=color_g, error_kw=error_kw)
         axes[i].bar(xticks, mrt_dk, width, yerr=mrt_dk_se,
                     bottom=mrt_stud, label='dk', color=color_b, error_kw=error_kw)
         axes[i].bar(xticks, mrt_other, width, yerr=mrt_other_se,
-                    bottom=mrt_stud + mrt_dk, label='other', color=color_r,
+                    bottom=mrt_stud + mrt_dk, label='other-NS', color=color_r,
                     error_kw=error_kw)
+        axes[i].bar(xticks, mrt_other_sc, width, yerr=mrt_other_sc_se,
+                    bottom=mrt_stud + mrt_dk + mrt_other, label='other-S',
+                    color=color_y, error_kw=error_kw)
 
         if i == 0:
             axes[i].set_title(f'Condition = {condition}\noutcome = {outcome}')
@@ -374,20 +426,25 @@ for condition in all_conditions:
     f, axes = plt.subplots(3, 1, figsize=(8, 12))
     for i, mrt in enumerate(max_response_type):
         # max_response_type
-        mrt_stud = prop_dict_cm_mu[condition][mrt][:, 0]
-        mrt_dk = prop_dict_cm_mu[condition][mrt][:, 1]
-        mrt_other = prop_dict_cm_mu[condition][mrt][:, 2]
-        mrt_stud_se = prop_dict_cm_se[condition][mrt][:, 0]
-        mrt_dk_se = prop_dict_cm_se[condition][mrt][:, 1]
-        mrt_other_se = prop_dict_cm_se[condition][mrt][:, 2]
+        o_correct = prop_dict_cm_mu[condition][mrt][:, 0]
+        o_dk = prop_dict_cm_mu[condition][mrt][:, 2]
+        o_mistake = prop_dict_cm_mu[condition][mrt][:, 1]
+        o_mistake_sc = prop_dict_cm_mu[condition][mrt][:, 3]
+        o_correct_se = prop_dict_cm_se[condition][mrt][:, 0]
+        o_dk_se = prop_dict_cm_se[condition][mrt][:, 2]
+        o_mistake_se = prop_dict_cm_se[condition][mrt][:, 1]
+        o_mistake_sc_se = prop_dict_cm_se[condition][mrt][:, 3]
 
-        axes[i].bar(xticks, mrt_stud, width, yerr=mrt_stud_se,
+        axes[i].bar(xticks, o_correct, width, yerr=o_correct_se,
                     label='correct', color=color_g, error_kw=error_kw)
-        axes[i].bar(xticks, mrt_dk, width, yerr=mrt_dk_se,
-                    bottom=mrt_stud, label='mistake', color=color_r, error_kw=error_kw)
-        axes[i].bar(xticks, mrt_other, width, yerr=mrt_other_se,
-                    bottom=mrt_stud + mrt_dk, label='dk', color=color_b,
+        axes[i].bar(xticks, o_dk, width, yerr=o_dk_se,
+                    bottom=o_correct, label='dk', color=color_b, error_kw=error_kw)
+        axes[i].bar(xticks, o_mistake, width, yerr=o_mistake_se,
+                    bottom=o_correct + o_dk, label='mistake-NS', color=color_r,
                     error_kw=error_kw)
+        axes[i].bar(xticks, o_mistake_sc, width, yerr=o_mistake_sc_se,
+                    bottom=o_correct + o_dk + o_mistake, label='mistake-S',
+                    color=color_y, error_kw=error_kw)
 
         if i == 0:
             axes[i].set_title(f'Condition = {condition}\ndecoded = {mrt}')
@@ -446,13 +503,38 @@ ax.bar(xticks, mr_schematic_rate, width)
 ax.set_xlabel('Schema strength')
 ax.set_ylabel('%')
 ax.set_title(
-    'Average proportion schematic response \nfor all schema violation trials')
+    '% schematic states (decoded) \nfor all schema violation trials')
 ax.set_xticks(xticks)
 ax.set_xticklabels(['%.1f' % dp for dp in def_prob_range])
 ax.set_yticks([0, .25])
-ax.set_ylim([-.01, .35])
+# ax.set_ylim([-.01, .35])
 ax.set_xlim([-.5, 6.5])
 sns.despine()
 f.tight_layout()
 img_name = 'prop-other-sch-con.png'
+f.savefig(os.path.join('../figs', img_name))
+
+
+mr_schematic_rate = np.zeros(len(def_prob_range))
+for dpi, def_prob in enumerate(def_prob_range):
+    arr_ = np.array(schm_v_mis_schematic['%.1f' % def_prob])
+    arr_ = arr_[~np.isnan(arr_)]
+    mr_schematic_rate[dpi] = np.sum(arr_) / len(arr_)
+
+'''MR schema consistent in schema vio trials'''
+f, ax = plt.subplots(1, 1, figsize=(8, 5))
+ax.bar(xticks, mr_schematic_rate, width)
+ax.axhline(1, linestyle='--', color='grey')
+ax.set_xlabel('Schema strength')
+ax.set_ylabel('%')
+ax.set_title(
+    '% schematic mistakes \nfor all schema violation trials')
+ax.set_xticks(xticks)
+ax.set_xticklabels(['%.1f' % dp for dp in def_prob_range])
+ax.set_yticks([0, .5, 1])
+ax.set_ylim([-.01, 1.05])
+ax.set_xlim([-.5, 6.5])
+sns.despine()
+f.tight_layout()
+img_name = 'prop-mistake-sch-con.png'
 f.savefig(os.path.join('../figs', img_name))
