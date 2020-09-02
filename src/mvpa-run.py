@@ -12,6 +12,7 @@ from itertools import product
 from scipy.stats import pearsonr
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, PredefinedSplit
 from task import SequenceLearning
 from utils.params import P
 from utils.constants import TZ_COND_DICT
@@ -29,12 +30,16 @@ sns.set(style='white', palette='colorblind', context='poster')
 all_conds = TZ_COND_DICT.values()
 
 log_root = '../log/'
-# def_prob10 = 8
-for def_prob10 in np.arange(3, 10):
-    # exp_name = '0425-schema.4-comp.8'
-    exp_name = '0425-schema.%d-comp.8' % (def_prob10)
-    def_prob = def_prob10 / 10
-    print(exp_name)
+
+exp_name = '0717-dp'
+def_prob_range = np.arange(.25, 1, .1)
+def_prob_range = np.arange(.55, 1, .1)
+# def_prob_range = [.25]
+
+for def_prob in def_prob_range:
+
+    # def_prob = .95
+    print(def_prob)
 
     supervised_epoch = 600
     epoch_load = 1000
@@ -78,7 +83,7 @@ for def_prob10 in np.arange(3, 10):
 
     similarity_max_test = .9
     similarity_min_test = 0
-    n_examples_test = 1024
+    n_examples_test = 512
 
     # subj_ids = [9]
     subj_ids = np.arange(9)
@@ -102,6 +107,7 @@ for def_prob10 in np.arange(3, 10):
     df_grcl = [None] * n_subjs
     df_genc = [None] * n_subjs
     prop_pfenc_g = [None] * n_subjs
+    match_rate_g = [None] * n_subjs
 
     for i_s, subj_id in enumerate(subj_ids):
         np.random.seed(subj_id)
@@ -364,6 +370,10 @@ for def_prob10 in np.arange(3, 10):
         # start decoding
         n_folds = 10
         rc_alpha = 10
+
+        rc_alphas = np.logspace(-2, 5, num=4)
+        parameters = {'C': rc_alphas}
+
         cvsplits = chunk(list(range(n_trials)), n_folds)
         cm_lr = [LogisticRegression(penalty='l2', C=rc_alpha)
                  for _ in range(T_part)]
@@ -375,10 +385,34 @@ for def_prob10 in np.arange(3, 10):
                 trial_id_unroll <= testset_ids_i[-1])
             # for the n/t-th classifier
             for n in range(T_part):
-                cm_lr[n].fit(CM_rs[~temask], Yob_rs[~temask, n])
+                # make inner cv ids
+                sub_n_trials = len(Yob_rs[~temask, n])
+                sub_cvsplits = chunk(list(range(sub_n_trials)), n_folds // 2)
+                sub_cvids = np.zeros(sub_n_trials)
+                for i, sub_cvsplits_i in enumerate(sub_cvsplits):
+                    sub_cvids[np.array(sub_cvsplits_i)] = i
+
+                cvgs = GridSearchCV(
+                    LogisticRegression(penalty='l2'), parameters,
+                    cv=PredefinedSplit(sub_cvids), return_train_score=True
+                )
+                cvgs.fit(CM_rs[~temask], Yob_rs[~temask, n])
+                # np.shape(CM_rs[~temask])
+                # np.shape(Yob_rs[~temask, n])
+                # print()
+                # print(cvgs.cv_results_['mean_train_score'])
+                cvgs.best_estimator_.fit(CM_rs[~temask], Yob_rs[~temask, n])
+                # cm_lr[n].fit(CM_rs[~temask], Yob_rs[~temask, n])
+
+                obsed_class = [i in (np.unique(Yob_rs[~temask, n]) + 1)
+                               for i in np.arange(n_branch + 1)]
+
                 # probabilistic estimates for the i-th
                 for ii in testset_ids_i:
-                    Yob_proba[ii, n] = cm_lr[n].predict_proba(CM[ii])
+                    # Yob_proba[ii, n][:, obsed_class] = cm_lr[n].predict_proba(
+                    #     CM[ii])
+                    Yob_proba[ii, n][:, obsed_class] = cvgs.best_estimator_.predict_proba(
+                        CM[ii])
 
         def compute_matches(proba_, target_):
             proba_ag = np.argmax(proba_, axis=3)
@@ -392,6 +426,7 @@ for def_prob10 in np.arange(3, 10):
 
         matches, match_rate = compute_matches(Yob_proba, Yob)
         print(match_rate)
+        match_rate_g[i_s] = match_rate
 
         # Yob_dm = Yob[cond_ids['DM']]
         # matches, match_rate = compute_matches(
@@ -488,11 +523,15 @@ for def_prob10 in np.arange(3, 10):
                 # get the t-th encoded feature for the i-th trial
                 # classify it into {other-S, other-NS, studied, dk}
                 if feat_val_enc[i, t] == 0:
+                    # np.sum(feat_val_enc==0)
                     enc_type = 'dk'
                 elif feat_val_enc[i, t] == feat_val_true[i, t]:
                     enc_type = 'studied'
                 else:
-                    enc_type = 'other'
+                    if feat_val_enc[i, t] == def_path_int[t] + 1:
+                        enc_type = 'other-S'
+                    else:
+                        enc_type = 'other'
 
                 # for part 2, memory based prediction phase
                 if dks_dmp2[i, t]:
@@ -517,14 +556,15 @@ for def_prob10 in np.arange(3, 10):
                     max_response = 'other'
 
                 # only count qbe4o trial
-                df_enc = df_rcl.append({
+                df_enc = df_enc.append({
                     'trial_id': i,
                     'time': t,
                     'schema_consistent': schema_consistent,
                     'has_enc_err': has_enc_err,
                     'max_response': enc_type
                 }, ignore_index=True)
-                if not qbe4o[i, t]:
+
+                if qbe4o[i, t]:
                     df_rcl = df_rcl.append({
                         'trial_id': i,
                         'time': t,
@@ -540,113 +580,125 @@ for def_prob10 in np.arange(3, 10):
         df_grcl[i_s] = df_rcl
         df_genc[i_s] = df_enc
 
-        # '''plot'''
-        # Yob_proba_dm = Yob_proba[cond_ids['DM']]
-        # Yob_proba_hm = Yob_proba_dm[has_mistake, :]
-        # Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
-        #
-        # # for the i-th mistakes trial, plot the j-th mistake
-        # i, j = 0, 0
-        # for i in range(np.shape(mistakes_dmp2hm)[0]):
-        #     # when/what feature were mistaken
-        #     mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
-        #     for j in range(len(mistake_feature_i)):
-        #
-        #         decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
-        #
-        #         feat_otimes = np.where(
-        #             o_keys_dmhm[i] == mistake_feature_i[j])[0]
-        #         feat_ovals = o_vals_dmhm[i][feat_otimes]
-        #
-        #         feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
-        #
-        #         f, ax = plt.subplots(1, 1, figsize=(9, 4))
-        #         # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-        #         ax.imshow(
-        #             decoded_feat_mat.T, aspect='auto', cmap='bone')
-        #         ax.axvline(T_part - .5, linestyle='--', color='grey')
-        #
-        #         for fot, fqt in zip(feat_otimes, feat_qtimes):
-        #             rect = patches.Rectangle(
-        #                 (fot - .5, targets_dmhm[i, :][fqt] - .5), 1, 1,
-        #                 edgecolor='green', facecolor='none', linewidth=3
-        #             )
-        #
-        #             ax.add_patch(rect)
-        #         for fqt in feat_qtimes:
-        #             rect = patches.Rectangle(
-        #                 (fqt - .5, actions_dmhm[i, :][fqt] - .5), 1, 1,
-        #                 edgecolor='orange', facecolor='none', linewidth=3
-        #             )
-        #             ax.add_patch(rect)
-        #         if is_def_tp[feat_qtimes[0]]:
-        #             ax.scatter(
-        #                 feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
-        #
-        #         ax.set_xlabel('Part 1                    Part 2')
-        #         ax.set_ylabel('Choice')
-        #         ax.set_xticks([0, T_part - 1, T_total - 1])
-        #         ax.set_xticklabels([0, T_part - 1, T_total - 1])
-        #         ax.set_yticks(np.arange(n_branch + 1))
-        #         ax.set_yticklabels(np.arange(n_branch + 1))
-        #         f.tight_layout()
-        #
-        #         td_dir_path = os.path.join(fig_dir, 'trial_data')
-        #         if not os.path.exists(td_dir_path):
-        #             os.makedirs(td_dir_path)
-        #
-        #         fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
-        #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-        #
-        # '''corrects'''
-        # i, j = 0, 0
-        # for i in range(np.shape(corrects_dmp2nm)[0]):
-        #     # when/what feature were mistaken
-        #     correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
-        #     for j in range(len(correct_feature_i)):
-        #         decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
-        #         feat_otimes = np.where(
-        #             o_keys_dmnm[i] == correct_feature_i[j])[0]
-        #         feat_ovals = o_vals_dmnm[i][feat_otimes]
-        #
-        #         feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
-        #
-        #         f, ax = plt.subplots(1, 1, figsize=(9, 4))
-        #         # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-        #         ax.imshow(
-        #             decoded_feat_mat.T, aspect='auto', cmap='bone')
-        #         ax.axvline(T_part - .5, linestyle='--', color='grey')
-        #         for fot, fqt in zip(feat_otimes, feat_qtimes):
-        #             rect = patches.Rectangle(
-        #                 (fot - .5, targets_dmnm[i, :][fqt] - .5), 1, 1,
-        #                 edgecolor='green', facecolor='none', linewidth=3
-        #             )
-        #             ax.add_patch(rect)
-        #         for fqt in feat_qtimes:
-        #             rect = patches.Rectangle(
-        #                 (fqt - .5, actions_dmnm[i, :][fqt] - .5), 1, 1,
-        #                 edgecolor='orange', facecolor='none', linewidth=3
-        #             )
-        #             ax.add_patch(rect)
-        #         if is_def_tp[feat_qtimes[0]]:
-        #             ax.scatter(
-        #                 feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
-        #
-        #         ax.set_xlabel('Part 1                    Part 2')
-        #         ax.set_ylabel('Choice')
-        #         ax.set_xticks([0, T_part - 1, T_total - 1])
-        #         ax.set_xticklabels([0, T_part - 1, T_total - 1])
-        #         ax.set_yticks(np.arange(n_branch + 1))
-        #         ax.set_yticklabels(np.arange(n_branch + 1))
-        #         f.tight_layout()
-        #
-        #         td_dir_path = os.path.join(fig_dir, 'trial_data')
-        #         if not os.path.exists(td_dir_path):
-        #             os.makedirs(td_dir_path)
-        #
-        #         fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
-        #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-        #
+        '''plot'''
+
+        Yob_proba_dm = Yob_proba[cond_ids['DM']]
+        Yob_proba_hm = Yob_proba_dm[has_mistake, :]
+        Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
+
+        # for the i-th mistakes trial, plot the j-th mistake
+        i, j = 0, 0
+        for i in range(np.shape(mistakes_dmp2hm)[0]):
+            # when/what feature were mistaken
+            mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
+            for j in range(len(mistake_feature_i)):
+
+                decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
+
+                feat_otimes = np.where(
+                    o_keys_dmhm[i] == mistake_feature_i[j])[0]
+                feat_ovals = o_vals_dmhm[i][feat_otimes]
+
+                feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
+
+                f, ax = plt.subplots(1, 1, figsize=(9, 4))
+                # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
+                ax.imshow(
+                    decoded_feat_mat.T, aspect='auto', cmap='bone')
+                ax.axvline(T_part - .5, linestyle='--', color='grey')
+
+                for fot, fqt in zip(feat_otimes, feat_qtimes):
+                    rect = patches.Rectangle(
+                        (fot - .5, targets_dmhm[i, :][fqt] - .5), 1, 1,
+                        edgecolor='green', facecolor='none', linewidth=3
+                    )
+
+                    ax.add_patch(rect)
+                for fqt in feat_qtimes:
+                    rect = patches.Rectangle(
+                        (fqt - .5, actions_dmhm[i, :][fqt] - .5), 1, 1,
+                        edgecolor='orange', facecolor='none', linewidth=3
+                    )
+                    ax.add_patch(rect)
+                if is_def_tp[feat_qtimes[0]] and def_prob != 1 / n_branch:
+                    ax.scatter(
+                        feat_qtimes,
+                        1 + np.array([def_path_int[feat_qtimes[0]]] * 2),
+                        s=50, color='red'
+                    )
+
+                ax.set_xlabel('Part 1                    Part 2')
+                ax.set_ylabel('Choice')
+                ax.set_xticks([0, T_part - 1, T_total - 1])
+                ax.set_xticklabels([0, T_part - 1, T_total - 1])
+                ax.set_yticks(np.arange(n_branch + 1))
+                ax.set_yticklabels(np.arange(n_branch + 1))
+                f.tight_layout()
+
+                td_dir_path = os.path.join(fig_dir, 'trial_data')
+                if not os.path.exists(td_dir_path):
+                    os.makedirs(td_dir_path)
+                fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
+                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+                # print()
+
+                if np.any(i == enc_err_locs[0]):
+                    td_dir_path = os.path.join(fig_dir, 'trial_data/sverr')
+                    if not os.path.exists(td_dir_path):
+                        os.makedirs(td_dir_path)
+                    fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
+                    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+        '''corrects'''
+        i, j = 0, 0
+        for i in range(np.shape(corrects_dmp2nm)[0]):
+            # when/what feature were mistaken
+            correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
+            for j in range(len(correct_feature_i)):
+                decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
+                feat_otimes = np.where(
+                    o_keys_dmnm[i] == correct_feature_i[j])[0]
+                feat_ovals = o_vals_dmnm[i][feat_otimes]
+
+                feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
+
+                f, ax = plt.subplots(1, 1, figsize=(9, 4))
+                # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
+                ax.imshow(
+                    decoded_feat_mat.T, aspect='auto', cmap='bone')
+                ax.axvline(T_part - .5, linestyle='--', color='grey')
+                for fot, fqt in zip(feat_otimes, feat_qtimes):
+                    rect = patches.Rectangle(
+                        (fot - .5, targets_dmnm[i, :][fqt] - .5), 1, 1,
+                        edgecolor='green', facecolor='none', linewidth=3
+                    )
+                    ax.add_patch(rect)
+                for fqt in feat_qtimes:
+                    rect = patches.Rectangle(
+                        (fqt - .5, actions_dmnm[i, :][fqt] - .5), 1, 1,
+                        edgecolor='orange', facecolor='none', linewidth=3
+                    )
+                    ax.add_patch(rect)
+                if is_def_tp[feat_qtimes[0]] and def_prob != 1 / n_branch:
+                    ax.scatter(
+                        feat_qtimes, 1 +
+                        np.array([def_path_int[feat_qtimes[0]]] * 2),
+                        s=50, color='red')
+
+                ax.set_xlabel('Part 1                    Part 2')
+                ax.set_ylabel('Choice')
+                ax.set_xticks([0, T_part - 1, T_total - 1])
+                ax.set_xticklabels([0, T_part - 1, T_total - 1])
+                ax.set_yticks(np.arange(n_branch + 1))
+                ax.set_yticklabels(np.arange(n_branch + 1))
+                f.tight_layout()
+
+                td_dir_path = os.path.join(fig_dir, 'trial_data')
+                if not os.path.exists(td_dir_path):
+                    os.makedirs(td_dir_path)
+
+                fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
+                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     '''compute average encoding accuracy across subjects'''
     # enc_acc_gmu, enc_acc_gse = compute_stats(enc_acc_g)
@@ -656,8 +708,8 @@ for def_prob10 in np.arange(3, 10):
     mvpa_data_dict = {
         'enc_acc_g': enc_acc_g, 'prop_pfenc_g': prop_pfenc_g,
         'schematic_enc_err_rate_g': schematic_enc_err_rate_g,
-        'df_grcl': df_grcl, 'df_genc': df_genc
+        'df_grcl': df_grcl, 'df_genc': df_genc, match_rate_g: 'match_rate_g'
     }
-    mvpa_data_dict_fname = f'new-mvpa-schema-{def_prob}.pkl'
+    mvpa_data_dict_fname = f'new-mvpa-schema-%.2f.pkl' % def_prob
     pickle_save_dict(mvpa_data_dict, os.path.join(
         'temp', mvpa_data_dict_fname))

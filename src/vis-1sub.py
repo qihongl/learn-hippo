@@ -31,13 +31,23 @@ from sklearn.decomposition.pca import PCA
 warnings.filterwarnings("ignore")
 # plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='poster')
-
+log_root = '../log/'
 all_conds = TZ_COND_DICT.values()
 
-log_root = '../log/'
+
+# exp_name = '0717-dp'
+# def_prob_range = np.arange(.25, 1, .1)
+#
+# for def_prob in def_prob_range:
+# exp_name = '0425-schema.%d-comp.8' % (def_prob10)
+# def_prob = def_prob10 / 10
+# print(exp_name)
+
 # exp_name = '0429-widesim-attachcond'
+exp_name = '0220-v1-lowsim-comp.8'
 # exp_name = '0220-v1-widesim-comp.8'
-exp_name = '0425-schema.4-comp.8'
+# exp_name = '0425-schema.9-comp.8'
+# exp_name = '0220-v1-widesim-highdp-comp.8'
 
 supervised_epoch = 600
 epoch_load = 1000
@@ -48,10 +58,10 @@ n_param = 16
 enc_size = 16
 n_event_remember = 2
 
-# def_prob = None
-# n_def_tps = 0
-def_prob = .4
-n_def_tps = 8
+def_prob = None
+n_def_tps = 0
+# def_prob = .95
+# n_def_tps = 8
 
 comp_val = .8
 leak_val = 0
@@ -98,9 +108,6 @@ penaltys_test = np.array([2])
 penaltys_train = [4]
 # penaltys_test = np.array([0, 2, 4])
 
-# penaltys_train = [0, 1, 2, 4, 8]
-# penaltys_test = np.array([0, 1, 2, 4, 8])
-
 n_subjs = len(subj_ids)
 DM_qsources = ['EM only', 'both']
 
@@ -118,7 +125,8 @@ for penalty_train in penaltys_train:
     # print(penalty_train, penaltys_test_)
     for penalty_test in penaltys_test_:
         # penalty_train, penalty_test = 0, 0
-        print(f'penalty_train={penalty_train}, penalty_test={penalty_test}')
+        print(
+            f'penalty_train={penalty_train}, penalty_test={penalty_test}')
 
         acc_dict = prealloc_stats()
         mis_dict = prealloc_stats()
@@ -139,7 +147,6 @@ for penalty_train in penaltys_train:
         tpr_list = [None] * n_subjs
         fpr_list = [None] * n_subjs
         auc_list = [None] * n_subjs
-        # cmpt_bar_list = [None] * n_subjs
         def_tps_list = [None] * n_subjs
 
         inpt_wproto_c_g = [None] * n_subjs
@@ -157,6 +164,9 @@ for penalty_train in penaltys_train:
         n_sic_mistakes_g = np.zeros(n_subjs)
         n_corrects_g = np.zeros(n_subjs)
         n_dks_g = np.zeros(n_subjs)
+        delta_norm_g = np.zeros((n_subjs, 2))
+        d_norm_g = np.zeros((n_subjs, 3))
+        norm_data_g = np.zeros((n_subjs, 3))
 
         for i_s, subj_id in enumerate(subj_ids):
             np.random.seed(subj_id)
@@ -213,8 +223,6 @@ for penalty_train in penaltys_train:
 
             [dist_a_, Y_, log_cache_, log_cond_] = results
             [X_raw, Y_raw] = XY
-            # np.shape(X_raw)
-            # np.shape(Y_)
 
             # compute ground truth / objective uncertainty (delay phase removed)
             true_dk_wm_, true_dk_em_ = batch_compute_true_dk(X_raw, task)
@@ -267,13 +275,13 @@ for penalty_train in penaltys_train:
             corrects_p2 = corrects[:, T_part:]
             mistakes_p1 = mistakes[:, :T_part]
             mistakes_p2 = mistakes[:, T_part:]
-            dks_p2 = dks[:, T_part:]
+            dks_p1, dks_p2 = dks[:, :T_part], dks[:, T_part:]
             inpt_p2 = inpt[:, T_part:]
-            # np.shape(inpt_p2)
-            # plt.plot(inpt_p2[:10,:].T)
-            targets_p1, targets_p2 = targets[:, :T_part], targets[:, T_part:]
-            actions_p1, actions_p2 = actions[:, :T_part], actions[:, T_part:]
 
+            targets_p1 = targets[:, :T_part]
+            targets_p2 = targets[:, T_part:]
+            actions_p1 = actions[:, :T_part]
+            actions_p2 = actions[:, T_part:]
             # pre-extract p2 data for the DM condition
             corrects_dmp2 = corrects_p2[cond_ids['DM']]
             mistakes_dmp2 = mistakes_p2[cond_ids['DM']]
@@ -441,82 +449,84 @@ for penalty_train in penaltys_train:
             '''
             def_path_int = np.argmax(def_path, axis=1)
             n_trials_dm = np.sum(cond_ids['DM'])
-            time_hasproto = np.array(def_tps).astype(np.bool)
+            is_def_tp = np.array(def_tps).astype(np.bool)
 
-            # proto_response = np.argmax(def_path, axis=1)
-            # proto_response_dmp2 = np.tile(
-            #     proto_response, (np.sum(cond_ids['DM']), 1))
-            #
-            # schema_consistent_responses = actions_dmp2 == proto_response_dmp2
-            # schema_consistent_responses = np.logical_and(
-            #     time_hasproto, schema_consistent_responses)
-            #
-            # dp_consistent = targets_dmp2 == np.tile(
-            #     def_path_int, [n_trials_dm, 1])
-            #
-            # dp_consistent_wproto = dp_consistent[:, time_hasproto]
-            # dp_consistent_woproto = dp_consistent[:, ~time_hasproto]
-            #
-            # corrects_dmp2_wproto = corrects_dmp2[:, time_hasproto]
-            # corrects_dmp2_woproto = corrects_dmp2[:, ~time_hasproto]
-            # mistakes_dmp2_wproto = mistakes_dmp2[:, time_hasproto]
-            # mistakes_dmp2_woproto = mistakes_dmp2[:, ~time_hasproto]
-            # dks_dmp2_wproto = dks_dmp2[:, time_hasproto]
-            # dks_dmp2_woproto = dks_dmp2[:, ~time_hasproto]
-            #
-            # n_mistakes = np.sum(mistakes_dmp2_wproto)
-            # n_dks = np.sum(dks_dmp2_wproto)
-            # n_corrects = np.sum(corrects_dmp2_wproto)
-            #
-            # # np.shape(schema_consistent_responses[:, time_hasproto])
-            # sc_responses_wproto = schema_consistent_responses[:, time_hasproto]
-            # sc_mistakes = np.logical_and(
-            #     sc_responses_wproto, mistakes_dmp2_wproto)
-            # n_sc_mistakes = np.sum(sc_mistakes)
-            # n_sic_mistakes = n_mistakes - np.sum(n_sc_mistakes)
-            #
-            # corrects_dmp2_wproto_c = corrects_dmp2_wproto[dp_consistent_wproto]
-            # corrects_dmp2_wproto_ic = corrects_dmp2_wproto[~dp_consistent_wproto]
-            # corrects_dmp2_woproto_c = corrects_dmp2_woproto[dp_consistent_woproto]
-            # corrects_dmp2_woproto_ic = corrects_dmp2_woproto[~dp_consistent_woproto]
-            #
-            # mistakes_dmp2_wproto_c = mistakes_dmp2_wproto[dp_consistent_wproto]
-            # mistakes_dmp2_wproto_ic = mistakes_dmp2_wproto[~dp_consistent_wproto]
-            # mistakes_dmp2_woproto_c = mistakes_dmp2_woproto[dp_consistent_woproto]
-            # mistakes_dmp2_woproto_ic = mistakes_dmp2_woproto[~dp_consistent_woproto]
-            #
-            # dks_dmp2_wproto_c = dks_dmp2_wproto[dp_consistent_wproto]
-            # dks_dmp2_wproto_ic = dks_dmp2_wproto[~dp_consistent_wproto]
-            # dks_dmp2_woproto_c = dks_dmp2_woproto[dp_consistent_woproto]
-            # dks_dmp2_woproto_ic = dks_dmp2_woproto[~dp_consistent_woproto]
-            #
-            # inpt_wproto = inpt_dmp2[:, time_hasproto]
-            # inpt_woproto = inpt_dmp2[:, ~time_hasproto]
-            #
-            # inpt_wproto_c = inpt_wproto[dp_consistent_wproto]
-            # inpt_wproto_ic = inpt_wproto[~dp_consistent_wproto]
-            # inpt_woproto_c = inpt_woproto[dp_consistent_woproto]
-            # inpt_woproto_ic = inpt_woproto[~dp_consistent_woproto]
-            #
-            # inpt_wproto_c_g[i_s] = inpt_wproto_c
-            # inpt_wproto_ic_g[i_s] = inpt_wproto_ic
-            # inpt_woproto_c_g[i_s] = inpt_woproto_c
-            # inpt_woproto_ic_g[i_s] = inpt_woproto_ic
-            # corrects_dmp2_wproto_c_g[i_s] = corrects_dmp2_wproto_c
-            # corrects_dmp2_wproto_ic_g[i_s] = corrects_dmp2_wproto_ic
-            # corrects_dmp2_woproto_c_g[i_s] = corrects_dmp2_woproto_c
-            # corrects_dmp2_woproto_ic_g[i_s] = corrects_dmp2_woproto_ic
-            #
-            # dk_wproto_cic = [np.mean(dks_dmp2_wproto_c),
-            #                  np.mean(dks_dmp2_wproto_ic)]
-            # dk_woproto_cic = [
-            #     np.mean(dks_dmp2_woproto_c), np.mean(dks_dmp2_woproto_ic)]
-            #
-            # inpt_wproto_cic = [np.mean(inpt_wproto_c), np.mean(inpt_wproto_ic)]
-            # inpt_woproto_cic = [np.mean(inpt_woproto_c),
-            #                     np.mean(inpt_woproto_ic)]
-            # xticks = range(len(heights))
-            # xticklabels = ['consistent', 'violated']
+            proto_response = np.argmax(def_path, axis=1)
+            proto_response_dmp2 = np.tile(
+                proto_response, (np.sum(cond_ids['DM']), 1))
+
+            schema_consistent_responses = actions_dmp2 == proto_response_dmp2
+            schema_consistent_responses = np.logical_and(
+                is_def_tp, schema_consistent_responses)
+
+            dp_consistent = targets_dmp2 == np.tile(
+                def_path_int, [n_trials_dm, 1])
+
+            dp_consistent_wproto = dp_consistent[:, is_def_tp]
+            dp_consistent_woproto = dp_consistent[:, ~is_def_tp]
+
+            corrects_dmp2_wproto = corrects_dmp2[:, is_def_tp]
+            corrects_dmp2_woproto = corrects_dmp2[:, ~is_def_tp]
+            mistakes_dmp2_wproto = mistakes_dmp2[:, is_def_tp]
+            mistakes_dmp2_woproto = mistakes_dmp2[:, ~is_def_tp]
+            dks_dmp2_wproto = dks_dmp2[:, is_def_tp]
+            dks_dmp2_woproto = dks_dmp2[:, ~is_def_tp]
+
+            n_mistakes = np.sum(mistakes_dmp2_wproto)
+            n_dks = np.sum(dks_dmp2_wproto)
+            n_corrects = np.sum(corrects_dmp2_wproto)
+
+            # np.shape(schema_consistent_responses[:, is_def_tp])
+            sc_responses_wproto = schema_consistent_responses[:, is_def_tp]
+            sc_mistakes = np.logical_and(
+                sc_responses_wproto, mistakes_dmp2_wproto)
+            n_sc_mistakes = np.sum(sc_mistakes)
+            n_sic_mistakes = n_mistakes - np.sum(n_sc_mistakes)
+
+            corrects_dmp2_wproto_c = corrects_dmp2_wproto[dp_consistent_wproto]
+            corrects_dmp2_wproto_ic = corrects_dmp2_wproto[~dp_consistent_wproto]
+            corrects_dmp2_woproto_c = corrects_dmp2_woproto[dp_consistent_woproto]
+            corrects_dmp2_woproto_ic = corrects_dmp2_woproto[~dp_consistent_woproto]
+
+            mistakes_dmp2_wproto_c = mistakes_dmp2_wproto[dp_consistent_wproto]
+            mistakes_dmp2_wproto_ic = mistakes_dmp2_wproto[~dp_consistent_wproto]
+            mistakes_dmp2_woproto_c = mistakes_dmp2_woproto[dp_consistent_woproto]
+            mistakes_dmp2_woproto_ic = mistakes_dmp2_woproto[~dp_consistent_woproto]
+
+            dks_dmp2_wproto_c = dks_dmp2_wproto[dp_consistent_wproto]
+            dks_dmp2_wproto_ic = dks_dmp2_wproto[~dp_consistent_wproto]
+            dks_dmp2_woproto_c = dks_dmp2_woproto[dp_consistent_woproto]
+            dks_dmp2_woproto_ic = dks_dmp2_woproto[~dp_consistent_woproto]
+
+            inpt_wproto = inpt_dmp2[:, is_def_tp]
+            inpt_woproto = inpt_dmp2[:, ~is_def_tp]
+
+            inpt_wproto_c = inpt_wproto[dp_consistent_wproto]
+            inpt_wproto_ic = inpt_wproto[~dp_consistent_wproto]
+            inpt_woproto_c = inpt_woproto[dp_consistent_woproto]
+            inpt_woproto_ic = inpt_woproto[~dp_consistent_woproto]
+
+            inpt_wproto_c_g[i_s] = inpt_wproto_c
+            inpt_wproto_ic_g[i_s] = inpt_wproto_ic
+            inpt_woproto_c_g[i_s] = inpt_woproto_c
+            inpt_woproto_ic_g[i_s] = inpt_woproto_ic
+            corrects_dmp2_wproto_c_g[i_s] = corrects_dmp2_wproto_c
+            corrects_dmp2_wproto_ic_g[i_s] = corrects_dmp2_wproto_ic
+            corrects_dmp2_woproto_c_g[i_s] = corrects_dmp2_woproto_c
+            corrects_dmp2_woproto_ic_g[i_s] = corrects_dmp2_woproto_ic
+
+            dk_wproto_cic = [np.mean(dks_dmp2_wproto_c),
+                             np.mean(dks_dmp2_wproto_ic)]
+            dk_woproto_cic = [
+                np.mean(dks_dmp2_woproto_c), np.mean(dks_dmp2_woproto_ic)]
+
+            inpt_wproto_cic = [
+                np.mean(inpt_wproto_c), np.mean(inpt_wproto_ic)]
+            inpt_woproto_cic = [np.mean(inpt_woproto_c),
+                                np.mean(inpt_woproto_ic)]
+            xticklabels = ['consistent', 'violated']
+            xticks = range(len(xticklabels))
+
             # f, axes = plt.subplots(1, 2, figsize=(12, 5))
             #
             # axes[0].bar(
@@ -538,8 +548,8 @@ for penalty_train in penaltys_train:
             # fig_path = os.path.join(fig_dir, f'schema-input.png')
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
             #
-            # xticks = range(len(heights))
             # xticklabels = ['consistent', 'violated']
+            # xticks = range(len(xticklabels))
             # f, axes = plt.subplots(1, 2, figsize=(12, 5))
             # corrects_dmp2_wproto_cic = [np.mean(corrects_dmp2_wproto_c),
             #                             np.mean(corrects_dmp2_wproto_ic)]
@@ -580,7 +590,7 @@ for penalty_train in penaltys_train:
             # sns.despine()
             # fig_path = os.path.join(fig_dir, f'schema-input-behav.png')
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-            #
+
             # corrects_dmp2_wwoproto_cic_g[i_s] = np.array([
             #     corrects_dmp2_wproto_cic,
             #     corrects_dmp2_woproto_cic
@@ -612,20 +622,25 @@ for penalty_train in penaltys_train:
 
             '''
             '''
-            # dk_norms = np.linalg.norm(DA_p2[dks_p2], axis=1)
-            # ndk_norms = np.linalg.norm(DA_p2[~dks_p2], axis=1)
+            # np.shape(DA_p2)
+            # data_ = DA_p2
+            # data_name = 'DA_p2'
+            #
+            # dk_norms = np.linalg.norm(data_[dks_p2], axis=1)
+            # ndk_norms = np.linalg.norm(data_[~dks_p2], axis=1)
             # dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
             # ndk_norm_mu, ndk_norm_se = compute_stats(ndk_norms)
             #
-            # f, ax = plt.subplots(1, 1, figsize=(5, 5))
-            # xticks = range(2)
-            # ax.bar(x=xticks, height=[dk_norm_mu, ndk_norm_mu],
-            #        yerr=np.array([dk_norm_se, ndk_norm_se]) * 3)
-            # ax.set_xticks(xticks)
-            # ax.set_xticklabels(['uncertain', 'certain'])
-            # ax.set_ylabel('Activity norm')
-            # f.tight_layout()
-            # sns.despine()
+            # # f, ax = plt.subplots(1, 1, figsize=(5, 5))
+            # # xticklabels = ['uncertain', 'certain']
+            # # xticks = range(len(xticklabels))
+            # # ax.bar(x=xticks, height=[dk_norm_mu, ndk_norm_mu],
+            # #        yerr=np.array([dk_norm_se, ndk_norm_se]) * 3)
+            # # ax.set_xticks(xticks)
+            # # ax.set_xticklabels(xticklabels)
+            # # ax.set_ylabel('Activity norm')
+            # # f.tight_layout()
+            # # sns.despine()
             #
             # proto_response_p2 = np.tile(
             #     proto_response, (np.shape(actions)[0], 1))
@@ -634,16 +649,132 @@ for penalty_train in penaltys_train:
             # schema_inconsistent_responses_p2 = np.logical_and(
             #     ~dks_p2, ~schema_consistent_responses_p2)
             #
-            # dk_norms = np.linalg.norm(DA_p2[dks_p2], axis=1)
+            # dk_norms = np.linalg.norm(data_[dks_p2], axis=1)
             # sc_norms = np.linalg.norm(
-            #     DA_p2[schema_consistent_responses_p2], axis=1)
+            #     data_[schema_consistent_responses_p2], axis=1)
             # sic_norms = np.linalg.norm(
-            #     DA_p2[schema_inconsistent_responses_p2], axis=1)
+            #     data_[schema_inconsistent_responses_p2], axis=1)
             #
             # dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
             # sc_norm_mu, sc_norm_se = compute_stats(sc_norms)
             # sic_norm_mu, sic_norm_se = compute_stats(sic_norms)
             #
+            # # f, ax = plt.subplots(1, 1, figsize=(7, 5))
+            # # xticks = range(3)
+            # # ax.bar(x=xticks, height=[dk_norm_mu, sc_norm_mu, sic_norm_mu],
+            # #        yerr=np.array([dk_norm_se, sc_norm_se, sic_norm_se]) * 3)
+            # # ax.set_xticks(xticks)
+            # # ax.set_xticklabels(
+            # #     ['uncertain', 'schema\nconsistent', 'schema\ninconsistent'])
+            # # ax.set_ylabel('Activity norm')
+            # # f.tight_layout()
+            # # sns.despine()
+            #
+            # norm_data_g[i_s] = np.array(
+            #     [sc_norm_mu, sic_norm_mu, dk_norm_mu])
+            #
+            # '''distance matrix - dk vs. sc vs. sic states'''
+            #
+            # n_trials_, _, n_units_ = np.shape(data_)
+            # all_schema_conds = ['No schema',
+            #                     'Schema consistent', 'Schema violated']
+            # # state_locs = {c: None for c in all_schema_conds}
+            # # t = 1
+            # temp_keys = {'sc', 'sic', 'dk'}
+            # pattern_mu = []
+            # for t in range(T_part):
+            #     if is_def_tp[t]:
+            #         # print(f'no schema - {t}')
+            #         # empty = 0
+            #         # else:
+            #         patterns = {k: [] for k in temp_keys}
+            #         for i in range(n_trials_):
+            #             if actions_p2[i, t] == 0:
+            #                 patterns['dk'].append(data_[i, t])
+            #             elif targets_p2[i, t] == (1 + def_path_int[t]) and actions_p2[i, t] == (1 + def_path_int[t]):
+            #                 patterns['sc'].append(data_[i, t])
+            #             elif targets_p2[i, t] == (1 + def_path_int[t]) and actions_p2[i, t] != (1 + def_path_int[t]):
+            #                 patterns['sic'].append(data_[i, t])
+            #             else:
+            #                 empty = 0
+            #
+            #     if np.any([len(p) == 0 for p in patterns.values()]):
+            #         continue
+            #     else:
+            #         # print('all 3 pattern exist')
+            #         mus = {k: np.mean(np.array(patterns[k]), axis=0)
+            #                for k in temp_keys}
+            #         pattern_mu.append(mus)
+            #
+            # # compute average distance over time
+            # d_sum = np.zeros((3, ))
+            # for t in range(len(pattern_mu)):
+            #     d_sum[0] += np.linalg.norm(pattern_mu[t]
+            #                                ['dk'] - pattern_mu[t]['sc'])
+            #     d_sum[1] += np.linalg.norm(pattern_mu[t]
+            #                                ['dk'] - pattern_mu[t]['sic'])
+            #     d_sum[2] += np.linalg.norm(pattern_mu[t]
+            #                                ['sc'] - pattern_mu[t]['sic'])
+            # d_norm_g[i_s] = d_sum / len(pattern_mu)
+            #
+            # '''compute change vector once a sc feature is observed'''
+            # pat_delta = {'sc': [], 'sic': []}
+            # for i in range(n_trials_):
+            #     # np.arange(T_part)
+            #     for t in np.arange(1, T_part):
+            #         if is_def_tp[t]:
+            #             pat_delta_it = data_[i, t] - data_[i, t - 1]
+            #             if targets_p2[i, int(o_keys_p2[i, t])] == def_path_int[t] + 1:
+            #                 pat_delta['sc'].append(
+            #                     np.linalg.norm(pat_delta_it))
+            #             else:
+            #                 pat_delta['sic'].append(
+            #                     np.linalg.norm(pat_delta_it))
+            #         # else:
+            #         #     print('no schema')
+            # delta_sc = np.mean(np.array(pat_delta['sc']))
+            # delta_sic = np.mean(np.array(pat_delta['sic']))
+            # delta_norm_g[i_s] = np.array([delta_sc, delta_sic])
+
+            ''''''
+            # data_ = DA_p1
+            # data_name = 'DA_p1'
+            data_ = CM_p1
+            data_name = 'CM_p1'
+
+            dk_norms = np.linalg.norm(data_[dks_p1], axis=1)
+            ndk_norms = np.linalg.norm(data_[~dks_p1], axis=1)
+            dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
+            ndk_norm_mu, ndk_norm_se = compute_stats(ndk_norms)
+
+            # f, ax = plt.subplots(1, 1, figsize=(5, 5))
+            # xticklabels = ['uncertain', 'certain']
+            # xticks = range(len(xticklabels))
+            # ax.bar(x=xticks, height=[dk_norm_mu, ndk_norm_mu],
+            #        yerr=np.array([dk_norm_se, ndk_norm_se]) * 3)
+            # ax.set_xticks(xticks)
+            # ax.set_xticklabels(xticklabels)
+            # ax.set_ylabel('Activity norm')
+            # f.tight_layout()
+            # sns.despine()
+
+            proto_response_p1 = np.tile(
+                proto_response, (np.shape(actions)[0], 1))
+            schema_consistent_responses_p1 = actions[:,
+                                                     :T_part] == proto_response_p1
+            schema_inconsistent_responses_p1 = np.logical_and(
+                ~dks_p1, ~schema_consistent_responses_p1)
+
+            dk_norms = np.linalg.norm(data_[dks_p1], axis=1)
+            sc_norms = np.linalg.norm(
+                data_[schema_consistent_responses_p1], axis=1)
+            sic_norms = np.linalg.norm(
+                data_[schema_inconsistent_responses_p1], axis=1)
+
+            dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
+            sc_norm_mu, sc_norm_se = compute_stats(sc_norms)
+            sic_norm_mu, sic_norm_se = compute_stats(sic_norms)
+
             # f, ax = plt.subplots(1, 1, figsize=(7, 5))
             # xticks = range(3)
             # ax.bar(x=xticks, height=[dk_norm_mu, sc_norm_mu, sic_norm_mu],
@@ -655,485 +786,566 @@ for penalty_train in penaltys_train:
             # f.tight_layout()
             # sns.despine()
 
-            '''decoding data-prep
-            '''
-            # from sklearn.datasets import load_breast_cancer
-            from sklearn.linear_model import RidgeClassifier, LogisticRegression
-            from sklearn.model_selection import PredefinedSplit
-            from sklearn.svm import SVC
-            # from sklearn.svm import LinearSVC
+            norm_data_g[i_s] = np.array(
+                [sc_norm_mu, sic_norm_mu, dk_norm_mu])
 
-            def build_yob(o_keys_p, o_vals_p, def_yob_val=-1):
-                Yob_p = np.full((n_trials, T_part, T_part), def_yob_val)
-                for i in range(n_trials):
-                    # construct Y for the t-th classifier
-                    for t in range(T_part):
-                        time_observed = np.argmax(o_keys_p[i] == t)
-                        # the y for the i-th trial for the t-th feature
-                        y_it = np.full((T_part), def_yob_val)
-                        y_it[time_observed:] = o_vals_p[i][time_observed]
-                        Yob_p[i, :, t] = y_it
-                return Yob_p
+            '''distance matrix - dk vs. sc vs. sic states'''
 
-            # reformat X
-            CM_p1rs = np.reshape(CM_p1, (n_trials * T_part, -1))
-            DA_p1rs = np.reshape(DA_p1, (n_trials * T_part, -1))
-            CM_p2rs = np.reshape(CM_p2, (n_trials * T_part, -1))
-            DA_p2rs = np.reshape(DA_p2, (n_trials * T_part, -1))
+            n_trials_, _, n_units_ = np.shape(data_)
+            all_schema_conds = ['No schema',
+                                'Schema consistent', 'Schema violated']
+            # state_locs = {c: None for c in all_schema_conds}
+            # t = 1
+            temp_keys = {'sc', 'sic', 'dk'}
+            pattern_mu = []
+            for t in range(T_part):
+                if is_def_tp[t]:
+                    # print(f'no schema - {t}')
+                    # else:
+                    patterns = {k: [] for k in temp_keys}
+                    for i in range(n_trials_):
+                        if actions_p1[i, t] == 0:
+                            patterns['dk'].append(data_[i, t])
+                        elif targets_p1[i, t] == (1 + def_path_int[t]) and actions_p1[i, t] == (1 + def_path_int[t]):
+                            patterns['sc'].append(data_[i, t])
+                            # print(f'sc')
+                        elif targets_p1[i, t] == (1 + def_path_int[t]) and actions_p1[i, t] != (1 + def_path_int[t]):
+                            patterns['sic'].append(data_[i, t])
+                            # print(f'sic')
+                        else:
+                            empty = 0
 
-            # build y
-            Yob_p1 = build_yob(o_keys_p1, o_vals_p1)
-            Yob_p2 = build_yob(o_keys_p2, o_vals_p2)
+                if is_def_tp[t]:
+                    if np.any([len(p) == 0 for p in patterns.values()]):
+                        # print('NOT all 3 pattern exist')
+                        # print([len(p) for p in patterns.values()])
+                        continue
 
-            # precompute mistakes-related variables
-            n_mistakes_per_trial = np.sum(mistakes_dmp2, axis=1)
-            has_mistake = n_mistakes_per_trial > 0
+                    else:
+                        # print('all 3 pattern exist')
+                        mus = {k: np.mean(np.array(patterns[k]), axis=0)
+                               for k in temp_keys}
+                        pattern_mu.append(mus)
 
-            # split trials w/ vs. w/o mistakes
-            actions_dmp1hm = actions_dmp1[has_mistake, :]
-            targets_dmp1hm = targets_dmp1[has_mistake, :]
-            actions_dmp2hm = actions_dmp2[has_mistake, :]
-            targets_dmp2hm = targets_dmp2[has_mistake, :]
-            corrects_dmp2hm = corrects_dmp2[has_mistake, :]
-            mistakes_dmp2hm = mistakes_dmp2[has_mistake, :]
-            dks_dmp2hm = dks_dmp2[has_mistake, :]
-            CM_dmp2hm = CM_dmp2[has_mistake, :, :]
-            DA_dmp2hm = DA_dmp2[has_mistake, :, :]
-            o_keys_dmp1hm = o_keys_dmp1[has_mistake, :]
-            o_keys_dmp2hm = o_keys_dmp2[has_mistake, :]
-            o_vals_dmp1hm = o_vals_dmp1[has_mistake, :]
-            o_vals_dmp2hm = o_vals_dmp2[has_mistake, :]
+            # compute average distance over time
+            d_sum = np.zeros((3, ))
+            for t in range(len(pattern_mu)):
+                d_sum[0] += np.linalg.norm(pattern_mu[t]
+                                           ['dk'] - pattern_mu[t]['sc'])
+                d_sum[1] += np.linalg.norm(pattern_mu[t]
+                                           ['dk'] - pattern_mu[t]['sic'])
+                d_sum[2] += np.linalg.norm(pattern_mu[t]
+                                           ['sc'] - pattern_mu[t]['sic'])
+            d_norm_g[i_s] = d_sum / len(pattern_mu)
 
-            actions_dmp1nm = actions_dmp1[~has_mistake, :]
-            targets_dmp1nm = targets_dmp1[~has_mistake, :]
-            actions_dmp2nm = actions_dmp2[~has_mistake, :]
-            targets_dmp2nm = targets_dmp2[~has_mistake, :]
-            corrects_dmp2nm = corrects_dmp2[~has_mistake, :]
-            mistakes_dmp2nm = mistakes_dmp2[~has_mistake, :]
-            dks_dmp2nm = dks_dmp2[~has_mistake, :]
-            CM_dmp2nm = CM_dmp2[~has_mistake, :, :]
-            DA_dmp2nm = DA_dmp2[~has_mistake, :, :]
-            o_keys_dmp1nm = o_keys_dmp1[~has_mistake, :]
-            o_keys_dmp2nm = o_keys_dmp2[~has_mistake, :]
-            o_vals_dmp1nm = o_vals_dmp1[~has_mistake, :]
-            o_vals_dmp2nm = o_vals_dmp2[~has_mistake, :]
+            '''compute change vector once a sc feature is observed'''
+            pat_delta = {'sc': [], 'sic': []}
+            for i in range(n_trials_):
+                # np.arange(T_part)
+                for t in np.arange(1, T_part):
+                    if is_def_tp[t]:
+                        pat_delta_it = data_[i, t] - data_[i, t - 1]
+                        if targets_p1[i, int(o_keys_p1[i, t])] == def_path_int[t] + 1:
+                            pat_delta['sc'].append(
+                                np.linalg.norm(pat_delta_it))
+                        else:
+                            pat_delta['sic'].append(
+                                np.linalg.norm(pat_delta_it))
+                    # else:
+                    #     print('no schema')
+            delta_sc = np.mean(np.array(pat_delta['sc']))
+            delta_sic = np.mean(np.array(pat_delta['sic']))
+            delta_norm_g[i_s] = np.array([delta_sc, delta_sic])
 
-            o_keys_dmhm = np.hstack([o_keys_dmp1hm, o_keys_dmp2hm])
-            o_vals_dmhm = np.hstack([o_vals_dmp1hm, o_vals_dmp2hm])
-            actions_dmhm = np.hstack([actions_dmp1hm, actions_dmp2hm])
-            targets_dmhm = np.hstack([targets_dmp1hm, targets_dmp2hm])
+        input_dict = {
+            'norm_data_g': norm_data_g,
+            'd_norm_g': d_norm_g,
+            'delta_norm_g': delta_norm_g
+        }
+        def_prob_text = 'None' if def_prob is None else '%.2f' % def_prob
+        input_dict_fname = f'temp/dist-%s-%s.pkl' % (data_name, def_prob)
+        print(input_dict_fname)
+        pickle_save_dict(input_dict, input_dict_fname)
 
-            o_keys_dmnm = np.hstack([o_keys_dmp1nm, o_keys_dmp2nm])
-            o_vals_dmnm = np.hstack([o_vals_dmp1nm, o_vals_dmp2nm])
-            actions_dmnm = np.hstack([actions_dmp1nm, actions_dmp2nm])
-            targets_dmnm = np.hstack([targets_dmp1nm, targets_dmp2nm])
+        # '''decoding data-prep
+        # '''
+        # # from sklearn.datasets import load_breast_cancer
+        # from sklearn.linear_model import RidgeClassifier, LogisticRegression
+        # from sklearn.model_selection import PredefinedSplit
+        # from sklearn.svm import SVC
+        # # from sklearn.svm import LinearSVC
+        #
+        # def build_yob(o_keys_p, o_vals_p, def_yob_val=-1):
+        #     Yob_p = np.full((n_trials, T_part, T_part), def_yob_val)
+        #     for i in range(n_trials):
+        #         # construct Y for the t-th classifier
+        #         for t in range(T_part):
+        #             time_observed = np.argmax(o_keys_p[i] == t)
+        #             # the y for the i-th trial for the t-th feature
+        #             y_it = np.full((T_part), def_yob_val)
+        #             y_it[time_observed:] = o_vals_p[i][time_observed]
+        #             Yob_p[i, :, t] = y_it
+        #     return Yob_p
+        #
+        # # reformat X
+        # CM_p1rs = np.reshape(CM_p1, (n_trials * T_part, -1))
+        # DA_p1rs = np.reshape(DA_p1, (n_trials * T_part, -1))
+        # CM_p2rs = np.reshape(CM_p2, (n_trials * T_part, -1))
+        # DA_p2rs = np.reshape(DA_p2, (n_trials * T_part, -1))
+        #
+        # # build y
+        # Yob_p1 = build_yob(o_keys_p1, o_vals_p1)
+        # Yob_p2 = build_yob(o_keys_p2, o_vals_p2)
+        #
+        # # precompute mistakes-related variables
+        # n_mistakes_per_trial = np.sum(mistakes_dmp2, axis=1)
+        # has_mistake = n_mistakes_per_trial > 0
+        #
+        # # split trials w/ vs. w/o mistakes
+        # actions_dmp1hm = actions_dmp1[has_mistake, :]
+        # targets_dmp1hm = targets_dmp1[has_mistake, :]
+        # actions_dmp2hm = actions_dmp2[has_mistake, :]
+        # targets_dmp2hm = targets_dmp2[has_mistake, :]
+        # corrects_dmp2hm = corrects_dmp2[has_mistake, :]
+        # mistakes_dmp2hm = mistakes_dmp2[has_mistake, :]
+        # dks_dmp2hm = dks_dmp2[has_mistake, :]
+        # CM_dmp2hm = CM_dmp2[has_mistake, :, :]
+        # DA_dmp2hm = DA_dmp2[has_mistake, :, :]
+        # o_keys_dmp1hm = o_keys_dmp1[has_mistake, :]
+        # o_keys_dmp2hm = o_keys_dmp2[has_mistake, :]
+        # o_vals_dmp1hm = o_vals_dmp1[has_mistake, :]
+        # o_vals_dmp2hm = o_vals_dmp2[has_mistake, :]
+        #
+        # actions_dmp1nm = actions_dmp1[~has_mistake, :]
+        # targets_dmp1nm = targets_dmp1[~has_mistake, :]
+        # actions_dmp2nm = actions_dmp2[~has_mistake, :]
+        # targets_dmp2nm = targets_dmp2[~has_mistake, :]
+        # corrects_dmp2nm = corrects_dmp2[~has_mistake, :]
+        # mistakes_dmp2nm = mistakes_dmp2[~has_mistake, :]
+        # dks_dmp2nm = dks_dmp2[~has_mistake, :]
+        # CM_dmp2nm = CM_dmp2[~has_mistake, :, :]
+        # DA_dmp2nm = DA_dmp2[~has_mistake, :, :]
+        # o_keys_dmp1nm = o_keys_dmp1[~has_mistake, :]
+        # o_keys_dmp2nm = o_keys_dmp2[~has_mistake, :]
+        # o_vals_dmp1nm = o_vals_dmp1[~has_mistake, :]
+        # o_vals_dmp2nm = o_vals_dmp2[~has_mistake, :]
+        #
+        # o_keys_dmhm = np.hstack([o_keys_dmp1hm, o_keys_dmp2hm])
+        # o_vals_dmhm = np.hstack([o_vals_dmp1hm, o_vals_dmp2hm])
+        # actions_dmhm = np.hstack([actions_dmp1hm, actions_dmp2hm])
+        # targets_dmhm = np.hstack([targets_dmp1hm, targets_dmp2hm])
+        #
+        # o_keys_dmnm = np.hstack([o_keys_dmp1nm, o_keys_dmp2nm])
+        # o_vals_dmnm = np.hstack([o_vals_dmp1nm, o_vals_dmp2nm])
+        # actions_dmnm = np.hstack([actions_dmp1nm, actions_dmp2nm])
+        # targets_dmnm = np.hstack([targets_dmp1nm, targets_dmp2nm])
+        #
+        # actions_dmnm[actions_dmnm == n_branch] = -1
+        # actions_dmhm[actions_dmhm == n_branch] = -1
+        #
+        # actions_dmhm += 1
+        # actions_dmnm += 1
+        # targets_dmhm += 1
+        # targets_dmnm += 1
 
-            actions_dmnm[actions_dmnm == n_branch] = -1
-            actions_dmhm[actions_dmhm == n_branch] = -1
+        '''decoding - train on ground truth feature presence during part 1'''
 
-            actions_dmhm += 1
-            actions_dmnm += 1
-            targets_dmhm += 1
-            targets_dmnm += 1
+        # # build trial id matrix
+        # trial_id_mat = np.tile(trial_id, (T_part, 1)).T
+        # trial_id_unroll = np.reshape(trial_id_mat, (n_trials * T_part, ))
+        #
+        # rc_alpha = 1
+        # cm_rc = [LogisticRegression(penalty='l2', C=rc_alpha)
+        #          for _ in range(T_part)]
+        #
+        # cm_scores = np.zeros((n_trials, T_part))
+        # Yobrs_p1_hat = np.zeros((n_trials, T_part, T_part))
+        # Yobrs_p1_proba = np.zeros((n_trials, T_part, T_part, n_branch + 1))
+        # for t in range(T_part):
+        #     Yobrs_t = np.reshape(Yob_p1[:, :, t], (n_trials * T_part, -1))
+        #
+        #     for i in trial_id:
+        #         mask = trial_id_unroll == i
+        #
+        #         Yobrs_t_tr = Yobrs_t[~mask]
+        #         Yobrs_t_te = Yobrs_t[mask]
+        #         CM_p1rs_tr = CM_p1rs[~mask, :]
+        #         CM_p1rs_te = CM_p1rs[mask, :]
+        #
+        #         cm_rc[t].fit(CM_p1rs_tr, Yobrs_t_tr)
+        #         cm_scores[i, t] = cm_rc[t].score(CM_p1rs_te, Yobrs_t_te)
+        #         Yobrs_p1_hat[i, t, :] = cm_rc[t].predict(CM_p1rs_te)
+        #         Yobrs_p1_proba[i, t, :] = cm_rc[t].predict_proba(
+        #             CM_p1rs_te)
+        #
+        # print(cm_scores.mean())
+        #
+        # f, ax = plt.subplots(1, 1, figsize=(7, 4))
+        # cm_scores_mu = np.mean(cm_scores, axis=0)
+        # ax.plot(cm_scores_mu)
+        # ax.set_xlabel('Time')
+        # ax.set_ylabel('Decoding accuracy')
+        # sns.despine()
+        # f.tight_layout()
+        #
+        # Yobrs_p2_hat_sr = np.zeros((n_trials * T_part, T_part))
+        # Yobrs_p2_proba_sr = np.zeros(
+        #     (n_trials * T_part, T_part, n_branch + 1))
+        # for t in range(T_part):
+        #     Yobrs_t = np.reshape(Yob_p1[:, :, t], (n_trials * T_part, -1))
+        #     cm_rc[t].fit(CM_p1rs, Yobrs_t)
+        #     Yobrs_p2_hat_sr[:,  t] = cm_rc[t].predict(CM_p2rs)
+        #     Yobrs_p2_proba_sr[:, t] = cm_rc[t].predict_proba(CM_p2rs)
+        #     # da_rc[t].fit(DA_p1rs, Yobrs_t)
+        #     # Yobrs_p2_hat_sr[:,  t] = da_rc[t].predict(DA_p2rs)
+        # Yobrs_p2_hat = Yobrs_p2_hat_sr.reshape((n_trials, T_part, T_part))
+        # Yobrs_p2_proba = Yobrs_p2_proba_sr.reshape(
+        #     (n_trials, T_part, T_part, n_branch + 1))
+        # # np.shape(Yobrs_p2_proba)
+        #
+        # def round_predictions(predictions):
+        #     predictions_round = np.round(predictions)
+        #     predictions_round[predictions_round >= 0] = 1
+        #     predictions_round[predictions_round < 0] = 0
+        #     return predictions_round
+        #
+        # Yobrs_p2_hat_round = round_predictions(Yobrs_p2_hat)
+        # Yobrs_p2_hat_rm = Yobrs_p2_hat[cond_ids['RM']]
+        # Yobrs_p2_hat_dm = Yobrs_p2_hat[cond_ids['DM']]
+        # Yobrs_p2_hat_nm = Yobrs_p2_hat[cond_ids['NM']]
+        #
+        # plt.imshow(Yobrs_p2_hat[cond_ids['DM']][1, :, :])
+        #
+        # Yobrs_p2_hat_round[cond_ids['DM']]
+        # Yp2hatrdm = np.transpose(
+        #     Yobrs_p2_hat_round[cond_ids['DM']], (0, 2, 1))
+        # Yp2hatrdm_wp = Yp2hatrdm[:, is_def_tp, :]
+        # Yp2hatrdm_wop = Yp2hatrdm[:, ~is_def_tp, :]
+        #
+        # Yobrs_dmp1_proba = Yobrs_p1_proba[cond_ids['DM']]
+        # Yobrs_dmp2_proba = Yobrs_p2_proba[cond_ids['DM']]
+        #
+        # np.shape(Yobrs_p2_hat_rm)
+        # plt.imshow(Yobrs_p2_hat_rm[10, :, :], aspect='auto')
+        # plt.imshow(np.mean(Yobrs_p2_hat_rm, axis=0), aspect='auto')
+        # plt.imshow(np.mean(Yobrs_p2_hat_round, axis=0), aspect='auto')
+        #
+        # plt.imshow(Yobrs_p2_hat_dm[0, :, :], aspect='auto')
+        # plt.imshow(np.mean(Yobrs_p2_hat_dm, axis=0), aspect='auto')
+        #
+        # plt.imshow(Yobrs_p2_hat_nm[0, :, :], aspect='auto')
+        # plt.imshow(np.mean(Yobrs_p2_hat_nm, axis=0), aspect='auto')
+        #
+        # # plt.imshow(np.argmax(Y[0], axis=1))
+        # ydec_rm_mu, ydec_rm_se = compute_stats(
+        #     np.sum(Yobrs_p2_hat_round[cond_ids['RM']], axis=2))
+        # ydec_dm_mu, ydec_dm_se = compute_stats(
+        #     np.sum(Yobrs_p2_hat_round[cond_ids['DM']], axis=2))
+        # ydec_nm_mu, ydec_nm_se = compute_stats(
+        #     np.sum(Yobrs_p2_hat_round[cond_ids['NM']], axis=2))
+        #
+        # # # plot part 1 decoding results
+        # # Yobrs_p1_hat_t = np.transpose(Yobrs_p1_hat, (0, 2, 1))
+        # # Yobrs_p1_hat_round = round_predictions(Yobrs_p1_hat_t)
+        # # ydec_rm_mu, ydec_rm_se = compute_stats(
+        # #     np.sum(Yobrs_p1_hat_round[cond_ids['RM']], axis=2))
+        # # ydec_dm_mu, ydec_dm_se = compute_stats(
+        # #     np.sum(Yobrs_p1_hat_round[cond_ids['DM']], axis=2))
+        # # ydec_nm_mu, ydec_nm_se = compute_stats(
+        # #     np.sum(Yobrs_p1_hat_round[cond_ids['NM']], axis=2))
+        #
+        # # plot #decodable features
+        # f, ax = plt.subplots(1, 1, figsize=(7, 5))
+        # ax.errorbar(range(T_part), y=ydec_rm_mu, yerr=ydec_rm_se)
+        # ax.errorbar(range(T_part), y=ydec_dm_mu, yerr=ydec_dm_se)
+        # ax.errorbar(range(T_part), y=ydec_nm_mu, yerr=ydec_nm_se)
+        #
+        # ax.legend(['RM', 'DM', 'NM'])
+        # ax.set_xlabel('Time, part 2')
+        # ax.set_ylabel('# decodable features')
+        # f.tight_layout()
+        # sns.despine()
+        # fig_path = os.path.join(fig_dir, f'mvpa-n-features.png')
+        # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-            '''decoding - train on ground truth feature presence during part 1'''
-
-            # # build trial id matrix
-            # trial_id_mat = np.tile(trial_id, (T_part, 1)).T
-            # trial_id_unroll = np.reshape(trial_id_mat, (n_trials * T_part, ))
-            #
-            # rc_alpha = 1
-            # cm_rc = [LogisticRegression(penalty='l2', C=rc_alpha)
-            #          for _ in range(T_part)]
-            #
-            # cm_scores = np.zeros((n_trials, T_part))
-            # Yobrs_p1_hat = np.zeros((n_trials, T_part, T_part))
-            # Yobrs_p1_proba = np.zeros((n_trials, T_part, T_part, n_branch + 1))
-            # for t in range(T_part):
-            #     Yobrs_t = np.reshape(Yob_p1[:, :, t], (n_trials * T_part, -1))
-            #
-            #     for i in trial_id:
-            #         mask = trial_id_unroll == i
-            #
-            #         Yobrs_t_tr = Yobrs_t[~mask]
-            #         Yobrs_t_te = Yobrs_t[mask]
-            #         CM_p1rs_tr = CM_p1rs[~mask, :]
-            #         CM_p1rs_te = CM_p1rs[mask, :]
-            #
-            #         cm_rc[t].fit(CM_p1rs_tr, Yobrs_t_tr)
-            #         cm_scores[i, t] = cm_rc[t].score(CM_p1rs_te, Yobrs_t_te)
-            #         Yobrs_p1_hat[i, t, :] = cm_rc[t].predict(CM_p1rs_te)
-            #         Yobrs_p1_proba[i, t, :] = cm_rc[t].predict_proba(
-            #             CM_p1rs_te)
-            #
-            # print(cm_scores.mean())
-            #
-            # f, ax = plt.subplots(1, 1, figsize=(7, 4))
-            # cm_scores_mu = np.mean(cm_scores, axis=0)
-            # ax.plot(cm_scores_mu)
-            # ax.set_xlabel('Time')
-            # ax.set_ylabel('Decoding accuracy')
-            # sns.despine()
-            # f.tight_layout()
-            #
-            # Yobrs_p2_hat_sr = np.zeros((n_trials * T_part, T_part))
-            # Yobrs_p2_proba_sr = np.zeros(
-            #     (n_trials * T_part, T_part, n_branch + 1))
-            # for t in range(T_part):
-            #     Yobrs_t = np.reshape(Yob_p1[:, :, t], (n_trials * T_part, -1))
-            #     cm_rc[t].fit(CM_p1rs, Yobrs_t)
-            #     Yobrs_p2_hat_sr[:,  t] = cm_rc[t].predict(CM_p2rs)
-            #     Yobrs_p2_proba_sr[:, t] = cm_rc[t].predict_proba(CM_p2rs)
-            #     # da_rc[t].fit(DA_p1rs, Yobrs_t)
-            #     # Yobrs_p2_hat_sr[:,  t] = da_rc[t].predict(DA_p2rs)
-            # Yobrs_p2_hat = Yobrs_p2_hat_sr.reshape((n_trials, T_part, T_part))
-            # Yobrs_p2_proba = Yobrs_p2_proba_sr.reshape(
-            #     (n_trials, T_part, T_part, n_branch + 1))
-            # # np.shape(Yobrs_p2_proba)
-            #
-            # def round_predictions(predictions):
-            #     predictions_round = np.round(predictions)
-            #     predictions_round[predictions_round >= 0] = 1
-            #     predictions_round[predictions_round < 0] = 0
-            #     return predictions_round
-            #
-            # Yobrs_p2_hat_round = round_predictions(Yobrs_p2_hat)
-            # Yobrs_p2_hat_rm = Yobrs_p2_hat[cond_ids['RM']]
-            # Yobrs_p2_hat_dm = Yobrs_p2_hat[cond_ids['DM']]
-            # Yobrs_p2_hat_nm = Yobrs_p2_hat[cond_ids['NM']]
-            #
-            # plt.imshow(Yobrs_p2_hat[cond_ids['DM']][1, :, :])
-            #
-            # Yobrs_p2_hat_round[cond_ids['DM']]
-            # Yp2hatrdm = np.transpose(
-            #     Yobrs_p2_hat_round[cond_ids['DM']], (0, 2, 1))
-            # Yp2hatrdm_wp = Yp2hatrdm[:, time_hasproto, :]
-            # Yp2hatrdm_wop = Yp2hatrdm[:, ~time_hasproto, :]
-            #
-            # Yobrs_dmp1_proba = Yobrs_p1_proba[cond_ids['DM']]
-            # Yobrs_dmp2_proba = Yobrs_p2_proba[cond_ids['DM']]
-            #
-            # np.shape(Yobrs_p2_hat_rm)
-            # plt.imshow(Yobrs_p2_hat_rm[10, :, :], aspect='auto')
-            # plt.imshow(np.mean(Yobrs_p2_hat_rm, axis=0), aspect='auto')
-            # plt.imshow(np.mean(Yobrs_p2_hat_round, axis=0), aspect='auto')
-            #
-            # plt.imshow(Yobrs_p2_hat_dm[0, :, :], aspect='auto')
-            # plt.imshow(np.mean(Yobrs_p2_hat_dm, axis=0), aspect='auto')
-            #
-            # plt.imshow(Yobrs_p2_hat_nm[0, :, :], aspect='auto')
-            # plt.imshow(np.mean(Yobrs_p2_hat_nm, axis=0), aspect='auto')
-            #
-            # # plt.imshow(np.argmax(Y[0], axis=1))
-            # ydec_rm_mu, ydec_rm_se = compute_stats(
-            #     np.sum(Yobrs_p2_hat_round[cond_ids['RM']], axis=2))
-            # ydec_dm_mu, ydec_dm_se = compute_stats(
-            #     np.sum(Yobrs_p2_hat_round[cond_ids['DM']], axis=2))
-            # ydec_nm_mu, ydec_nm_se = compute_stats(
-            #     np.sum(Yobrs_p2_hat_round[cond_ids['NM']], axis=2))
-            #
-            # # # plot part 1 decoding results
-            # # Yobrs_p1_hat_t = np.transpose(Yobrs_p1_hat, (0, 2, 1))
-            # # Yobrs_p1_hat_round = round_predictions(Yobrs_p1_hat_t)
-            # # ydec_rm_mu, ydec_rm_se = compute_stats(
-            # #     np.sum(Yobrs_p1_hat_round[cond_ids['RM']], axis=2))
-            # # ydec_dm_mu, ydec_dm_se = compute_stats(
-            # #     np.sum(Yobrs_p1_hat_round[cond_ids['DM']], axis=2))
-            # # ydec_nm_mu, ydec_nm_se = compute_stats(
-            # #     np.sum(Yobrs_p1_hat_round[cond_ids['NM']], axis=2))
-            #
-            # # plot #decodable features
-            # f, ax = plt.subplots(1, 1, figsize=(7, 5))
-            # ax.errorbar(range(T_part), y=ydec_rm_mu, yerr=ydec_rm_se)
-            # ax.errorbar(range(T_part), y=ydec_dm_mu, yerr=ydec_dm_se)
-            # ax.errorbar(range(T_part), y=ydec_nm_mu, yerr=ydec_nm_se)
-            #
-            # ax.legend(['RM', 'DM', 'NM'])
-            # ax.set_xlabel('Time, part 2')
-            # ax.set_ylabel('# decodable features')
-            # f.tight_layout()
-            # sns.despine()
-            # fig_path = os.path.join(fig_dir, f'mvpa-n-features.png')
-            # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''single trial analysis
+        '''single trial analysis
             for each dm trial, for every time point during part two
             '''
-            # def feat_vec2mat(decoded_feat_vec):
-            #     decoded_feat_mat = np.zeros((n_branch, T_total))
-            #     for v in range(n_branch):
-            #         decoded_feat_mat[v, :] = np.array(
-            #             decoded_feat_vec == v).astype(int)
-            #     return decoded_feat_mat
-            #
-            # mistakes_dmp2
-            # Yobrs_p2_hat = np.transpose(Yobrs_p2_hat, (0, 2, 1))
-            # Yobrs_hat = np.concatenate([Yobrs_p1_hat, Yobrs_p2_hat], axis=2)
-            # Yobrs_hat_dm = Yobrs_hat[cond_ids['DM'], :, :]
-            # np.shape(Yobrs_hat)
-            #
-            # plt.imshow(Yobrs_hat_dm[3])
-            #
-            # # for each trial
-            # for i in len(Yobrs_hat_dm):
-            #     for t in range(T_total):
-            #         decoded_feat_mat_it = feat_vec2mat(Yobrs_hat_dm[i, t])
-            #         Yobrs_hat_dm[i, t] == 1
+        # def feat_vec2mat(decoded_feat_vec):
+        #     decoded_feat_mat = np.zeros((n_branch, T_total))
+        #     for v in range(n_branch):
+        #         decoded_feat_mat[v, :] = np.array(
+        #             decoded_feat_vec == v).astype(int)
+        #     return decoded_feat_mat
+        #
+        # mistakes_dmp2
+        # Yobrs_p2_hat = np.transpose(Yobrs_p2_hat, (0, 2, 1))
+        # Yobrs_hat = np.concatenate([Yobrs_p1_hat, Yobrs_p2_hat], axis=2)
+        # Yobrs_hat_dm = Yobrs_hat[cond_ids['DM'], :, :]
+        # np.shape(Yobrs_hat)
+        #
+        # plt.imshow(Yobrs_hat_dm[3])
+        #
+        # # for each trial
+        # for i in len(Yobrs_hat_dm):
+        #     for t in range(T_total):
+        #         decoded_feat_mat_it = feat_vec2mat(Yobrs_hat_dm[i, t])
+        #         Yobrs_hat_dm[i, t] == 1
 
-            '''decoding - train on ground truth feature presence during part 1,
+        '''decoding - train on ground truth feature presence during part 1,
             NM/RM during part 2, and inferred feature presence during DM part 2
             '''
-            # data prep
-            CM = np.hstack([CM_p1, CM_p2])
-            Yob = np.hstack([Yob_p1, Yob_p2])
-            CM_rs = np.reshape(CM, (n_trials * T_total, n_hidden))
-            Yob_rs = np.reshape(Yob, (n_trials * T_total, T_part))
+        # # data prep
+        # CM = np.hstack([CM_p1, CM_p2])
+        # Yob = np.hstack([Yob_p1, Yob_p2])
+        # CM_rs = np.reshape(CM, (n_trials * T_total, n_hidden))
+        # Yob_rs = np.reshape(Yob, (n_trials * T_total, T_part))
+        #
+        # # for the RM condition
+        # # assert no feature is unobserved by the end of part 1
+        # assert np.sum(Yob[cond_ids['RM']][:, T_part - 1, :] == -1) == 0
+        # # fill the part 2 to be observed
+        # for t in np.arange(T_part, T_total):
+        #     Yob[cond_ids['RM'], t, :] = Yob[cond_ids['RM'], T_part - 1, :]
+        # # for the DM condition
+        # # estimated recall time
+        # rt_est = np.argmax(inpt_p2, axis=1)
+        # dm_ids = np.where(cond_ids['DM'])[0]
+        # # for the ith DM trial
+        # for i in range(np.sum(cond_ids['DM'])):
+        #     rti = rt_est[i]
+        #     ii = dm_ids[i]
+        #     # fill the part 2, after recall, to be observed
+        #     for t in np.arange(T_part + rti, T_total):
+        #         Yob[ii, t, :] = Yob[ii, T_part - 1, :]
+        #
+        # # build trial id matrix
+        # trial_id_mat = np.tile(trial_id, (T_total, 1)).T
+        # trial_id_unroll = np.reshape(trial_id_mat, (n_trials * T_total, ))
+        #
+        # # cv split
+        # n_folds = 10
+        # # print(f'n_perfect_trials = {n_perfect_trials}')
+        # cvsplits = chunk(list(range(n_trials)), n_folds)
+        #
+        # # # set up holdout set params
+        # # n_trials_factors = find_factors(n_trials)
+        # # if len(n_trials_factors) == 2:
+        # #     n_test_trial = n_trials_factors[0]
+        # # else:
+        # #     m_ = np.max(np.where(np.array(n_trials_factors) < 10)[0])
+        # #     n_test_trial = n_trials_factors[m_]
+        #
+        # # n_test_trial = n_trials_factors[2]
+        # #
+        # # n_test_tps = n_test_trial * T_total
+        # # testset_ids = np.reshape(trial_id, (-1, n_test_trial))
+        # # n_folds = np.shape(testset_ids)[0]
+        #
+        # # start decoding
+        # rc_alpha = 10
+        # cm_rc = [LogisticRegression(penalty='l2', C=rc_alpha)
+        #          for _ in range(T_part)]
+        # # cm_rc = [SVC(C=rc_alpha, kernel='rbf', probability=True)
+        # #          for _ in range(T_part)]
+        # # Yob_hat_ = np.zeros((n_folds, n_test_tps, T_part))
+        # Yob_proba_ = np.zeros((n_trials, T_part, T_total, n_branch + 1))
+        #
+        # for fid, testset_ids_i in enumerate(cvsplits):
+        #     temask = np.logical_and(
+        #         trial_id_unroll >= testset_ids_i[0],
+        #         trial_id_unroll <= testset_ids_i[-1])
+        #     # for the n/t-th classifier
+        #     for n in range(T_part):
+        #         # print(n)
+        #         cm_rc[n].fit(CM_rs[~temask], Yob_rs[~temask, n])
+        #         # Yob_hat_[fid, :, n] = cm_rc[n].predict(CM_rs[temask])
+        #         # probabilistic estimates for the i-th
+        #         for ii in testset_ids_i:
+        #             Yob_proba_[ii, n] = cm_rc[n].predict_proba(CM[ii])
+        #
+        # # Yob_hat_rs = np.reshape(Yob_hat_, np.shape(Yob_rs))
+        # # Yob_hat = np.reshape(Yob_hat_rs, np.shape(Yob))
+        # # acc = np.sum(Yob_hat == Yob) / Yob.size
+        # # print(acc)
+        #
+        # # np.shape(Yob_proba_)
+        # def compute_matches(proba_, target_):
+        #     proba_ag = np.argmax(proba_, axis=3)
+        #     proba_ag_tp = np.transpose(proba_ag, (0, 2, 1))
+        #     assert np.shape(proba_ag_tp) == np.shape(target_),\
+        #         f'{np.shape(proba_ag_tp)}!={np.shape(target_)}'
+        #     matches = target_ == proba_ag_tp - 1
+        #     # matches_p2 = matches[:, T_part:, ]
+        #     match_rate = np.sum(matches) / matches.size
+        #     print(match_rate)
+        #     return matches, match_rate
+        #
+        # matches, match_rate = compute_matches(Yob_proba_, Yob)
+        # print(match_rate)
+        # np.shape(Yob_proba_)
+        #
+        # Yob_dm = Yob[cond_ids['DM']]
+        # matches, match_rate = compute_matches(
+        #     Yob_proba_hm[:, :, T_part:, :], Yob_dm[has_mistake, T_part:, :]
+        # )
+        # print(match_rate)
+        # matches, match_rate = compute_matches(
+        #     Yob_proba_nm[:, :, T_part:,
+        #                  :], Yob_dm[~has_mistake, T_part:, :]
+        # )
+        # print(match_rate)
+        #
+        # # Yob_hat_p2 = Yob_hat[:, T_part:, :]
+        # # Yob_hat_p2_v = np.vstack([Yob_hat_p2[:, t, t]
+        # #                           for t in range(T_part)]).T
+        # # plt.imshow(Yob_hat_p2_v)
+        # # np.shape(np.vstack([Yob_hat_p2[:, t, t] for t in range(T_part)]).T)
+        #
+        # # np.shape(actions_p2)
+        # # yconsistency = np.sum(Yob_hat_p2_v == actions_p2) / actions_p2.size
+        # # print(yconsistency, acc)
+        #
+        # '''plot'''
+        # Yob_proba_dm = Yob_proba_[cond_ids['DM']]
+        # Yob_proba_hm = Yob_proba_dm[has_mistake, :]
+        # Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
+        # # Yobrs_dmp1hm_proba = Yobrs_dmp1_proba[has_mistake, :]
+        # # Yobrs_dmp2hm_proba = Yobrs_dmp2_proba[has_mistake, :]
+        # # Yobrs_dmp1nm_proba = Yobrs_dmp1_proba[~has_mistake, :]
+        # # Yobrs_dmp2nm_proba = Yobrs_dmp2_proba[~has_mistake, :]
+        #
+        # # for the i-th mistakes trial, plot the j-th mistake
+        # i = 0
+        # j = 0
+        # for i in range(np.shape(mistakes_dmp2hm)[0]):
+        #     # when/what feature were mistaken
+        #     mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
+        #     for j in range(len(mistake_feature_i)):
+        #
+        #         decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
+        #         # decoded_feat_mat=np.vstack([
+        #         #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :],
+        #         #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :]
+        #         # ])
+        #
+        #         feat_otimes = np.where(
+        #             o_keys_dmhm[i] == mistake_feature_i[j])[0]
+        #         feat_ovals = o_vals_dmhm[i][feat_otimes]
+        #
+        #         feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
+        #
+        #         f, ax = plt.subplots(1, 1, figsize=(9, 4))
+        #         # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
+        #         ax.imshow(
+        #             decoded_feat_mat.T, aspect='auto', cmap='bone')
+        #         ax.axvline(T_part - .5, linestyle='--', color='grey')
+        #         # ax.axvline(feat_qtimes[0], linestyle='--', color='orange')
+        #         # ax.axvline(feat_qtimes[1], linestyle='--', color='orange')
+        #
+        #         for fot, fqt in zip(feat_otimes, feat_qtimes):
+        #             rect = patches.Rectangle(
+        #                 (fot - .5, targets_dmhm[i, :][fqt] - .5), 1, 1,
+        #                 edgecolor='green', facecolor='none', linewidth=3
+        #             )
+        #
+        #             ax.add_patch(rect)
+        #         for fqt in feat_qtimes:
+        #             rect = patches.Rectangle(
+        #                 (fqt - .5, actions_dmhm[i, :][fqt] - .5), 1, 1,
+        #                 edgecolor='orange', facecolor='none', linewidth=3
+        #             )
+        #             ax.add_patch(rect)
+        #         if is_def_tp[feat_qtimes[0]]:
+        #             ax.scatter(
+        #                 feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
+        #
+        #         ax.set_xlabel('Part 1                    Part 2')
+        #         ax.set_ylabel('Choice')
+        #         ax.set_xticks([0, T_part - 1, T_total - 1])
+        #         ax.set_xticklabels([0, T_part - 1, T_total - 1])
+        #         ax.set_yticks(np.arange(n_branch + 1))
+        #         ax.set_yticklabels(np.arange(n_branch + 1))
+        #         f.tight_layout()
+        #
+        #         td_dir_path = os.path.join(fig_dir, 'trial_data')
+        #         if not os.path.exists(td_dir_path):
+        #             os.makedirs(td_dir_path)
+        #
+        #         fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
+        #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+        #
+        # '''corrects'''
+        # # corrects_dmp2nm
+        # i, j = 0, 0
+        # for i in range(np.shape(corrects_dmp2nm)[0]):
+        #     # when/what feature were mistaken
+        #     correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
+        #     for j in range(len(correct_feature_i)):
+        #         decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
+        #         # decoded_feat_mat = np.vstack([
+        #         #     Yobrs_dmp1nm_proba[i, correct_feature_i[j], :, :],
+        #         #     Yobrs_dmp2nm_proba[i, correct_feature_i[j], :, :]
+        #         # ])
+        #
+        #         feat_otimes = np.where(
+        #             o_keys_dmnm[i] == correct_feature_i[j])[0]
+        #         feat_ovals = o_vals_dmnm[i][feat_otimes]
+        #
+        #         feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
+        #
+        #         f, ax = plt.subplots(1, 1, figsize=(9, 4))
+        #         # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
+        #         ax.imshow(
+        #             decoded_feat_mat.T, aspect='auto', cmap='bone')
+        #         ax.axvline(T_part - .5, linestyle='--', color='grey')
+        #         # ax.axvline(feat_qtimes[0], linestyle='--', color='orange')
+        #         # ax.axvline(feat_qtimes[1], linestyle='--', color='orange')
+        #
+        #         for fot, fqt in zip(feat_otimes, feat_qtimes):
+        #             rect = patches.Rectangle(
+        #                 (fot - .5, targets_dmnm[i, :][fqt] - .5), 1, 1,
+        #                 edgecolor='green', facecolor='none', linewidth=3
+        #             )
+        #             ax.add_patch(rect)
+        #         for fqt in feat_qtimes:
+        #             rect = patches.Rectangle(
+        #                 (fqt - .5, actions_dmnm[i, :][fqt] - .5), 1, 1,
+        #                 edgecolor='orange', facecolor='none', linewidth=3
+        #             )
+        #             ax.add_patch(rect)
+        #         if is_def_tp[feat_qtimes[0]]:
+        #             ax.scatter(
+        #                 feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
+        #
+        #         ax.set_xlabel('Part 1                    Part 2')
+        #         ax.set_ylabel('Choice')
+        #         ax.set_xticks([0, T_part - 1, T_total - 1])
+        #         ax.set_xticklabels([0, T_part - 1, T_total - 1])
+        #         ax.set_yticks(np.arange(n_branch + 1))
+        #         ax.set_yticklabels(np.arange(n_branch + 1))
+        #         f.tight_layout()
+        #
+        #         td_dir_path = os.path.join(fig_dir, 'trial_data')
+        #         if not os.path.exists(td_dir_path):
+        #             os.makedirs(td_dir_path)
+        #
+        #         fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
+        #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
-            # for the RM condition
-            # assert no feature is unobserved by the end of part 1
-            assert np.sum(Yob[cond_ids['RM']][:, T_part - 1, :] == -1) == 0
-            # fill the part 2 to be observed
-            for t in np.arange(T_part, T_total):
-                Yob[cond_ids['RM'], t, :] = Yob[cond_ids['RM'], T_part - 1, :]
-            # for the DM condition
-            # estimated recall time
-            rt_est = np.argmax(inpt_p2, axis=1)
-            dm_ids = np.where(cond_ids['DM'])[0]
-            # for the ith DM trial
-            for i in range(np.sum(cond_ids['DM'])):
-                rti = rt_est[i]
-                ii = dm_ids[i]
-                # fill the part 2, after recall, to be observed
-                for t in np.arange(T_part + rti, T_total):
-                    Yob[ii, t, :] = Yob[ii, T_part - 1, :]
-
-            # build trial id matrix
-            trial_id_mat = np.tile(trial_id, (T_total, 1)).T
-            trial_id_unroll = np.reshape(trial_id_mat, (n_trials * T_total, ))
-
-            # cv split
-            n_folds = 10
-            # print(f'n_perfect_trials = {n_perfect_trials}')
-            cvsplits = chunk(list(range(n_trials)), n_folds)
-
-            # # set up holdout set params
-            # n_trials_factors = find_factors(n_trials)
-            # if len(n_trials_factors) == 2:
-            #     n_test_trial = n_trials_factors[0]
-            # else:
-            #     m_ = np.max(np.where(np.array(n_trials_factors) < 10)[0])
-            #     n_test_trial = n_trials_factors[m_]
-
-            # n_test_trial = n_trials_factors[2]
-            #
-            # n_test_tps = n_test_trial * T_total
-            # testset_ids = np.reshape(trial_id, (-1, n_test_trial))
-            # n_folds = np.shape(testset_ids)[0]
-
-            # start decoding
-            rc_alpha = 10
-            cm_rc = [LogisticRegression(penalty='l2', C=rc_alpha)
-                     for _ in range(T_part)]
-            # cm_rc = [SVC(C=rc_alpha, kernel='rbf', probability=True)
-            #          for _ in range(T_part)]
-            # Yob_hat_ = np.zeros((n_folds, n_test_tps, T_part))
-            Yob_proba_ = np.zeros((n_trials, T_part, T_total, n_branch + 1))
-
-            for fid, testset_ids_i in enumerate(cvsplits):
-                temask = np.logical_and(
-                    trial_id_unroll >= testset_ids_i[0],
-                    trial_id_unroll <= testset_ids_i[-1])
-                # for the n/t-th classifier
-                for n in range(T_part):
-                    # print(n)
-                    cm_rc[n].fit(CM_rs[~temask], Yob_rs[~temask, n])
-                    # Yob_hat_[fid, :, n] = cm_rc[n].predict(CM_rs[temask])
-                    # probabilistic estimates for the i-th
-                    for ii in testset_ids_i:
-                        Yob_proba_[ii, n] = cm_rc[n].predict_proba(CM[ii])
-
-            # Yob_hat_rs = np.reshape(Yob_hat_, np.shape(Yob_rs))
-            # Yob_hat = np.reshape(Yob_hat_rs, np.shape(Yob))
-            # acc = np.sum(Yob_hat == Yob) / Yob.size
-            # print(acc)
-
-            # np.shape(Yob_proba_)
-            def compute_matches(proba_, target_):
-                proba_ag = np.argmax(proba_, axis=3)
-                proba_ag_tp = np.transpose(proba_ag, (0, 2, 1))
-                assert np.shape(proba_ag_tp) == np.shape(target_),\
-                    f'{np.shape(proba_ag_tp)}!={np.shape(target_)}'
-                matches = target_ == proba_ag_tp - 1
-                # matches_p2 = matches[:, T_part:, ]
-                match_rate = np.sum(matches) / matches.size
-                print(match_rate)
-                return matches, match_rate
-
-            matches, match_rate = compute_matches(Yob_proba_, Yob)
-            print(match_rate)
-            np.shape(Yob_proba_)
-
-            Yob_dm = Yob[cond_ids['DM']]
-            matches, match_rate = compute_matches(
-                Yob_proba_hm[:, :, T_part:, :], Yob_dm[has_mistake, T_part:, :]
-            )
-            print(match_rate)
-            matches, match_rate = compute_matches(
-                Yob_proba_nm[:, :, T_part:,
-                             :], Yob_dm[~has_mistake, T_part:, :]
-            )
-            print(match_rate)
-
-            # Yob_hat_p2 = Yob_hat[:, T_part:, :]
-            # Yob_hat_p2_v = np.vstack([Yob_hat_p2[:, t, t]
-            #                           for t in range(T_part)]).T
-            # plt.imshow(Yob_hat_p2_v)
-            # np.shape(np.vstack([Yob_hat_p2[:, t, t] for t in range(T_part)]).T)
-
-            # np.shape(actions_p2)
-            # yconsistency = np.sum(Yob_hat_p2_v == actions_p2) / actions_p2.size
-            # print(yconsistency, acc)
-
-            '''plot'''
-            Yob_proba_dm = Yob_proba_[cond_ids['DM']]
-            Yob_proba_hm = Yob_proba_dm[has_mistake, :]
-            Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
-            # Yobrs_dmp1hm_proba = Yobrs_dmp1_proba[has_mistake, :]
-            # Yobrs_dmp2hm_proba = Yobrs_dmp2_proba[has_mistake, :]
-            # Yobrs_dmp1nm_proba = Yobrs_dmp1_proba[~has_mistake, :]
-            # Yobrs_dmp2nm_proba = Yobrs_dmp2_proba[~has_mistake, :]
-
-            # for the i-th mistakes trial, plot the j-th mistake
-            i = 0
-            j = 0
-            for i in range(np.shape(mistakes_dmp2hm)[0]):
-                # when/what feature were mistaken
-                mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
-                for j in range(len(mistake_feature_i)):
-
-                    decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
-                    # decoded_feat_mat=np.vstack([
-                    #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :],
-                    #     Yobrs_dmp1hm_proba[i, mistake_feature_i[j], :, :]
-                    # ])
-
-                    feat_otimes = np.where(
-                        o_keys_dmhm[i] == mistake_feature_i[j])[0]
-                    feat_ovals = o_vals_dmhm[i][feat_otimes]
-
-                    feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
-
-                    f, ax = plt.subplots(1, 1, figsize=(9, 4))
-                    # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-                    ax.imshow(
-                        decoded_feat_mat.T, aspect='auto', cmap='bone')
-                    ax.axvline(T_part - .5, linestyle='--', color='grey')
-                    # ax.axvline(feat_qtimes[0], linestyle='--', color='orange')
-                    # ax.axvline(feat_qtimes[1], linestyle='--', color='orange')
-
-                    for fot, fqt in zip(feat_otimes, feat_qtimes):
-                        rect = patches.Rectangle(
-                            (fot - .5, targets_dmhm[i, :][fqt] - .5), 1, 1,
-                            edgecolor='green', facecolor='none', linewidth=3
-                        )
-
-                        ax.add_patch(rect)
-                    for fqt in feat_qtimes:
-                        rect = patches.Rectangle(
-                            (fqt - .5, actions_dmhm[i, :][fqt] - .5), 1, 1,
-                            edgecolor='orange', facecolor='none', linewidth=3
-                        )
-                        ax.add_patch(rect)
-                    if time_hasproto[feat_qtimes[0]]:
-                        ax.scatter(
-                            feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
-
-                    ax.set_xlabel('Part 1                    Part 2')
-                    ax.set_ylabel('Choice')
-                    ax.set_xticks([0, T_part - 1, T_total - 1])
-                    ax.set_xticklabels([0, T_part - 1, T_total - 1])
-                    ax.set_yticks(np.arange(n_branch + 1))
-                    ax.set_yticklabels(np.arange(n_branch + 1))
-                    f.tight_layout()
-
-                    td_dir_path = os.path.join(fig_dir, 'trial_data')
-                    if not os.path.exists(td_dir_path):
-                        os.makedirs(td_dir_path)
-
-                    fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
-                    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''corrects'''
-            # corrects_dmp2nm
-            i, j = 0, 0
-            for i in range(np.shape(corrects_dmp2nm)[0]):
-                # when/what feature were mistaken
-                correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
-                for j in range(len(correct_feature_i)):
-                    decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
-                    # decoded_feat_mat = np.vstack([
-                    #     Yobrs_dmp1nm_proba[i, correct_feature_i[j], :, :],
-                    #     Yobrs_dmp2nm_proba[i, correct_feature_i[j], :, :]
-                    # ])
-
-                    feat_otimes = np.where(
-                        o_keys_dmnm[i] == correct_feature_i[j])[0]
-                    feat_ovals = o_vals_dmnm[i][feat_otimes]
-
-                    feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
-
-                    f, ax = plt.subplots(1, 1, figsize=(9, 4))
-                    # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-                    ax.imshow(
-                        decoded_feat_mat.T, aspect='auto', cmap='bone')
-                    ax.axvline(T_part - .5, linestyle='--', color='grey')
-                    # ax.axvline(feat_qtimes[0], linestyle='--', color='orange')
-                    # ax.axvline(feat_qtimes[1], linestyle='--', color='orange')
-
-                    for fot, fqt in zip(feat_otimes, feat_qtimes):
-                        rect = patches.Rectangle(
-                            (fot - .5, targets_dmnm[i, :][fqt] - .5), 1, 1,
-                            edgecolor='green', facecolor='none', linewidth=3
-                        )
-                        ax.add_patch(rect)
-                    for fqt in feat_qtimes:
-                        rect = patches.Rectangle(
-                            (fqt - .5, actions_dmnm[i, :][fqt] - .5), 1, 1,
-                            edgecolor='orange', facecolor='none', linewidth=3
-                        )
-                        ax.add_patch(rect)
-                    if time_hasproto[feat_qtimes[0]]:
-                        ax.scatter(
-                            feat_qtimes, 1 + np.array([def_path_int[feat_qtimes[0]]] * 2), s=50, color='red')
-
-                    ax.set_xlabel('Part 1                    Part 2')
-                    ax.set_ylabel('Choice')
-                    ax.set_xticks([0, T_part - 1, T_total - 1])
-                    ax.set_xticklabels([0, T_part - 1, T_total - 1])
-                    ax.set_yticks(np.arange(n_branch + 1))
-                    ax.set_yticklabels(np.arange(n_branch + 1))
-                    f.tight_layout()
-
-                    td_dir_path = os.path.join(fig_dir, 'trial_data')
-                    if not os.path.exists(td_dir_path):
-                        os.makedirs(td_dir_path)
-
-                    fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
-                    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
-            '''recency at encoding -> error rate'''
+        '''recency at encoding -> error rate'''
         #     # xticks = np.arange(T_part)
         #     # error_counts_over_time = np.zeros(T_part)
         #     # for i in range(len(mistakes_dmp2hm)):
         #     #     tob = o_keys_dmp1hm[i][np.where(mistakes_dmp2hm[i])[0]]
         #     #     error_counts_over_time[tob.astype(int)] += 1
         #     # f, ax = plt.subplots(1, 1, figsize=(7, 5))
-        #     # # time_hasproto
+        #     # # is_def_tp
         #     # ax.bar(x=xticks, height=error_counts_over_time)
-        #     # # ax.bar(x=xticks[time_hasproto],
-        #     # #        height=error_counts_over_time[time_hasproto])
-        #     # # ax.bar(x=xticks[~time_hasproto],
-        #     # #        height=error_counts_over_time[~time_hasproto])
+        #     # # ax.bar(x=xticks[is_def_tp],
+        #     # #        height=error_counts_over_time[is_def_tp])
+        #     # # ax.bar(x=xticks[~is_def_tp],
+        #     # #        height=error_counts_over_time[~is_def_tp])
         #     # ax.set_xlabel('Time observed during part 1')
         #     # ax.set_ylabel('#errors during part 2')
         #     # ax.set_title('DM')
