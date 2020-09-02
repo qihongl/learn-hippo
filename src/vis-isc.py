@@ -31,8 +31,6 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-# exp_name = 'penalty-fixed-discrete-simple_'
-# exp_name = 'penalty-random-discrete'
 exp_name = '0226-v1-widesim-comp.8'
 
 subj_ids = np.arange(10)

@@ -56,17 +56,17 @@ def plot_pred_acc_full(
     ax.fill_between(x_, pa_or_dk_mu, ones, alpha=alpha, color=c_pal[3])
     # plot event boundaries
     for eb in event_bounds:
-        ax.axvline(eb-1, ls='--', color=c_pal[3], alpha=1)
+        ax.axvline(eb - 1, ls='--', color=c_pal[3], alpha=1)
     # plot observation baseline
     # ax.plot(baseline, color='grey', ls='--')
     # add labels
     ax.set_title(title)
-    ax.set_xlabel('Time')
+    ax.set_xlabel('Time (part 2)')
     if show_ylabel:
         ax.set_ylabel('Probability')
     # xyticks
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
+    ax.set_xticks(np.arange(0, total_event_len, p.env.n_param - 1))
     # add legend
     if add_legend:
         f.legend(legend_lab, frameon=False, bbox_to_anchor=legend_loc)
@@ -107,7 +107,7 @@ def plot_pred_acc_rcl(
         ax.set_ylabel('Probability')
     # xyticks
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    ax.set_xticks(np.arange(0, total_event_len, p.env.n_param-1))
+    ax.set_xticks(np.arange(0, total_event_len, p.env.n_param - 1))
     # add legend
     if add_legend:
         f.legend(legend_lab, frameon=True, bbox_to_anchor=legend_loc)

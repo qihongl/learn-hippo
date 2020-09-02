@@ -135,6 +135,8 @@ def compute_reward(ptest_):
     mis_mu_p2 = np.array(mis[ptest_][cond]['mu'])[:, T:]
     reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
         np.sum(mis_mu_p2, axis=1) * ptest_
+    # reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
+    #     np.sum(mis_mu_p2, axis=1) * 2
     return reward_ptest_
 
 
@@ -205,4 +207,4 @@ df.head()
 dabest_data = dabest.load(
     data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
 )
-dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(8, 5))
+dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(10, 6))
