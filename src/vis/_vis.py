@@ -102,7 +102,7 @@ def plot_pred_acc_rcl(
 
     # add labels
     ax.set_title(title)
-    ax.set_xlabel('Time')
+    ax.set_xlabel('Time (part 2)')
     if show_ylabel:
         ax.set_ylabel('Probability')
     # xyticks
