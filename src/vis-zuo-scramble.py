@@ -6,8 +6,6 @@ import pandas as pd
 import dabest
 
 from collections import defaultdict
-# from itertools import product
-# from scipy.stats import pearsonr
 from task import SequenceLearning
 from task.utils import scramble_array
 from utils.params import P
@@ -21,22 +19,14 @@ from analysis import compute_acc, compute_dk, compute_stats, \
     compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
     get_qsource, trim_data, make_df
 
-# from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
-#     plot_time_course_for_all_conds
 from matplotlib.ticker import FormatStrFormatter
-# from sklearn.decomposition.pca import PCA
 from itertools import combinations, product
 from scipy.special import comb
 from brainiak.funcalign.srm import SRM
-# plt.switch_backend('agg')
+sns.set(style='white', palette='colorblind', context='poster')
 
-sns.set(style='white', palette='colorblind', context='talk')
 
 log_root = '../log/'
-# exp_name = 'penalty-random-continuous'
-# subj_ids = np.arange(6)
-# exp_name = 'penalty-fixed-discrete-simple_'
-# exp_name = 'penalty-random-discrete'
 exp_name = '0220-v1-widesim-comp.8'
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
@@ -44,10 +34,6 @@ n_subjs = len(subj_ids)
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
-
-# supervised_epoch = 300
-# epoch_load = 600
-# learning_rate = 1e-3
 
 n_branch = 4
 n_param = 16
@@ -167,7 +153,6 @@ for scb_cond, scramble in scb_dict.items():
             DA[scb_cond, g_name].append(DA_)
 
 '''analysis'''
-# from sklearn.preprocessing import StandardScaler
 dim_srm = 64
 test_prop = .5
 n_examples_tr = int(n_examples * (1 - test_prop))
@@ -181,8 +166,6 @@ _, _, nTR, nH = np.shape(data[scb_cond, g_name])
 X_train = []
 X_test = []
 X_intercepts = []
-# np.shape(data[scb_cond, g_name])
-# np.shape(data[scb_cond, g_name][subj_id][:n_examples_tr])
 for scb_cond, g_name in product(scb_conds, group_names):
     print(f'\n{scb_cond}-{g_name}: {np.shape(data[scb_cond,g_name])}', end='')
     for subj_id in subj_ids:
@@ -248,15 +231,6 @@ for g_name in group_names:
 
 
 '''compute stats'''
-sisc_ddict = defaultdict(list)
-tisc_ddict = defaultdict(list)
-
-for j, scb_cond in enumerate(scb_conds):
-    for i, g_name in enumerate(group_names):
-        msg = f'intact-{scb_cond}, {g_name}-{g_name}: {np.shape(sisc[g_name,scb_cond])}'
-        print(msg)
-        sisc_ddict[g_name, scb_cond] = np.ravel(sisc[g_name, scb_cond])
-        tisc_ddict[g_name, scb_cond] = np.ravel(tisc[g_name, scb_cond])
 
 
 def compute_isc_stats(iscs, average_over_subjs=False):
@@ -272,8 +246,6 @@ def compute_isc_stats(iscs, average_over_subjs=False):
             mu_, se_ = compute_stats(isc_)
             key_name = f'control-{g_name}'
             key_name += f'\nintact-{scb_cond}'
-            # if scb_cond == 'scramble':
-            #     key_name += ' '
             mu[key_name] = mu_
             se[key_name] = se_
             # mu[f'{g_name}-{scb_cond}'] = mu_
@@ -291,22 +263,7 @@ def chunks(lst, chunk_size):
 
 
 '''Temporal ISC'''
-n_se = 1
 mu_tisc, se_tisc = compute_isc_stats(sisc)
-
-sort_ids = np.argsort(np.mean(mu_tisc[list(mu_tisc.keys())[0]], axis=0))[::-1]
-
-f, ax = plt.subplots(1, 1, figsize=(7, 4))
-for i, key in enumerate(mu_tisc.keys()):
-    mu_, se_ = compute_stats(mu_tisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids] * n_se,
-                label=f'{key}')
-ax.legend()
-ax.set_xlabel('Components (ordered by ISC value)')
-ax.set_ylabel('Temporal ISC')
-sns.despine()
-
-
 mu_sub_ij_tisc = {k: np.mean(mu_tisc[k], axis=1) for k in mu_tisc.keys()}
 df = pd.DataFrame(mu_sub_ij_tisc)
 df['ids'] = np.arange(n_subj_pairs)
@@ -315,29 +272,13 @@ dabest_data = dabest.load(
     paired=True, id_col='ids',
 )
 dabest_data.mean_diff.plot(
-    swarm_label='Temporal ISC', fig_size=(8, 8),
-    dpi=150,
-    # raw_marker_size=5,
-    # swarm_ylim=[.55, 1],
-    # contrast_ylim=[-.28, .01]
+    swarm_label='Temporal ISC', fig_size=(8, 8), dpi=100,
 )
-# dabest_data.mean_diff.statistical_tests
+dabest_data.mean_diff.statistical_tests
 
 
 '''Spatial ISC'''
 mu_sisc, se_sisc = compute_isc_stats(tisc)
-
-f, ax = plt.subplots(1, 1, figsize=(7, 4))
-for i, key in enumerate(mu_sisc.keys()):
-    print(key)
-    np.shape(mu_sisc[key])
-    mu_, se_ = compute_stats(mu_sisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_ * n_se, label=f'{key}')
-ax.legend()
-ax.set_xlabel('Time')
-ax.set_ylabel('Spatial ISC')
-sns.despine()
-
 mu_sub_ij_sisc = {k: np.mean(mu_sisc[k], axis=1) for k in mu_sisc.keys()}
 
 df = pd.DataFrame(mu_sub_ij_sisc)
@@ -347,11 +288,50 @@ dabest_data = dabest.load(
     paired=True, id_col='ids',
 )
 dabest_data.mean_diff.plot(
-    swarm_label='Spatial ISC', fig_size=(8, 8),
-    dpi=150,
-    # group_summaries='mean_sd',
-    # raw_marker_size=5,
-    # swarm_ylim=[.3, 1],
-    # contrast_ylim=[-.25, .01]
+    swarm_label='Spatial ISC', fig_size=(8, 8), dpi=100,
 )
-# dabest_data.mean_diff.statistical_tests
+dabest_data.mean_diff.statistical_tests
+
+'''only show the difference of sisc'''
+ccii_mu_sisc = np.mean(mu_sisc['control-control\nintact-intact'], axis=1)
+ccis_mu_sisc = np.mean(mu_sisc['control-control\nintact-scramble'], axis=1)
+cpii_mu_sisc = np.mean(mu_sisc['control-patient\nintact-intact'], axis=1)
+cpis_mu_sisc = np.mean(mu_sisc['control-patient\nintact-scramble'], axis=1)
+
+scrambling_sensitivity_cc = ccii_mu_sisc - ccis_mu_sisc
+scrambling_sensitivity_cp = cpii_mu_sisc - cpis_mu_sisc
+
+scrambling_sensitivity = {}
+scrambling_sensitivity['Control'] = scrambling_sensitivity_cc
+scrambling_sensitivity['Patient'] = scrambling_sensitivity_cp
+
+scrambling_sensitivity_df = pd.DataFrame(columns=['values', 'condition'])
+scrambling_sensitivity_df['values'] = np.hstack(
+    [scrambling_sensitivity_cc, scrambling_sensitivity_cp])
+scrambling_sensitivity_df['condition'] = np.hstack(
+    [['control'] * 45, ['patient'] * 45])
+
+f, ax = plt.subplots(1, 1, figsize=(6, 5))
+sns.violinplot(x='condition', y='values', ax=ax,
+               data=scrambling_sensitivity_df)
+ax.set_ylim([0, None])
+ax.set_xlabel('Condition')
+ax.set_ylabel('Scrambling sensitivity\n based on spatial ISC')
+sns.despine()
+f.tight_layout()
+img_name = 'simulated-isc-zuo-etal-2020.png'
+f.savefig(os.path.join('../figs', img_name))
+
+
+df = pd.DataFrame(scrambling_sensitivity)
+df['ids'] = np.arange(n_subj_pairs)
+dabest_data = dabest.load(
+    data=df, idx=chunks(list(scrambling_sensitivity.keys()), 2),
+    id_col='ids',
+)
+dabest_data.mean_diff.plot(
+    swarm_label='Spatial ISC', fig_size=(6, 5),
+    swarm_ylim=[0, .7],
+    dpi=100,
+)
+dabest_data.mean_diff.statistical_tests
