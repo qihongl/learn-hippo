@@ -32,9 +32,9 @@ all_conds = TZ_COND_DICT.values()
 log_root = '../log/'
 
 exp_name = '0717-dp'
-def_prob_range = np.arange(.25, 1, .1)
-def_prob_range = np.arange(.55, 1, .1)
-# def_prob_range = [.25]
+# def_prob_range = np.arange(.25, 1, .1)
+# def_prob_range = np.arange(.55, 1, .1)
+def_prob_range = [.25]
 
 for def_prob in def_prob_range:
 

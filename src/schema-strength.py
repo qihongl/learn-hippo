@@ -18,6 +18,8 @@ def remove_all_zero_sub(d):
 
 
 schema_levels = np.arange(.3, 1, .1)
+# schema_levels = np.arange(.25, .65, .1)
+# schema_levels = np.arange(.75, 1, .1)
 n_schema_levels = len(schema_levels)
 data = [None] * n_schema_levels
 
@@ -126,41 +128,41 @@ sns.despine()
 fname = f'../figs/schema-regularity-correctr.png'
 f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-# # input gate
-# colors2 = sns.color_palette('colorblind')[:2]
-# x_ticks = np.arange(n_schema_levels)
-# n_se = 1
-#
-# f, ax = plt.subplots(1, 1, figsize=(9, 6))
-# ax.errorbar(
-#     x=x_ticks, y=inpt_wwoproto_cic_g_mu[:, 0, 0],
-#     yerr=inpt_wwoproto_cic_g_se[:, 0, 0] * n_se,
-#     color=colors2[0]
-# )
-# ax.errorbar(
-#     x=x_ticks, y=inpt_wwoproto_cic_g_mu[:, 0, 1],
-#     yerr=inpt_wwoproto_cic_g_se[:, 0, 1] * n_se,
-#     color=colors2[1]
-# )
-#
-# ax.errorbar(
-#     x=x_ticks, y=np.mean(inpt_wwoproto_cic_g_mu[:, 1, :], axis=1),
-#     yerr=np.mean(inpt_wwoproto_cic_g_se[:, 1, :], axis=1) * n_se,
-#     color='k', linestyle='--',
-# )
-# # ax.axhline(.25, linestyle='--', color='black', alpha=.5)
-#
-# ax.legend(['prototypical event happened',
-#            'prototypical event violated', 'no prototypical event'])
-#
-# ax.set_ylabel('Input gate')
-# ax.set_xlabel('Regularity strength')
-# ax.set_xticks(x_ticks)
-# ax.set_xticklabels(schema_levels_txt)
-# f.tight_layout()
-# sns.despine()
-# fname = f'../figs/schema-regularity-inpt.png'
-# f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+# input gate
+colors2 = sns.color_palette('colorblind')[:2]
+x_ticks = np.arange(n_schema_levels)
+n_se = 1
+
+f, ax = plt.subplots(1, 1, figsize=(9, 6))
+ax.errorbar(
+    x=x_ticks, y=inpt_wwoproto_cic_g_mu[:, 0, 0],
+    yerr=inpt_wwoproto_cic_g_se[:, 0, 0] * n_se,
+    color=colors2[0]
+)
+ax.errorbar(
+    x=x_ticks, y=inpt_wwoproto_cic_g_mu[:, 0, 1],
+    yerr=inpt_wwoproto_cic_g_se[:, 0, 1] * n_se,
+    color=colors2[1]
+)
+
+ax.errorbar(
+    x=x_ticks, y=np.mean(inpt_wwoproto_cic_g_mu[:, 1, :], axis=1),
+    yerr=np.mean(inpt_wwoproto_cic_g_se[:, 1, :], axis=1) * n_se,
+    color='k', linestyle='--',
+)
+# ax.axhline(.25, linestyle='--', color='black', alpha=.5)
+
+ax.legend(['prototypical event happened',
+           'prototypical event violated', 'no prototypical event'])
+
+ax.set_ylabel('Input gate')
+ax.set_xlabel('Regularity strength')
+ax.set_xticks(x_ticks)
+ax.set_xticklabels(schema_levels_txt)
+f.tight_layout()
+sns.despine()
+fname = f'../figs/schema-regularity-inpt.png'
+f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
 
 # dk
