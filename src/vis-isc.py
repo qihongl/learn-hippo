@@ -31,7 +31,7 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-exp_name = '0226-v1-widesim-comp.8'
+exp_name = '0220-v1-widesim-comp.8'
 
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
@@ -40,9 +40,6 @@ all_conds = ['RM', 'DM', 'NM']
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
-# supervised_epoch = 300
-# epoch_load = 600
-# learning_rate = 1e-3
 
 n_param = 16
 n_branch = 4
@@ -83,18 +80,9 @@ def prealloc():
 
 CMs_dlist = {cond: [] for cond in all_conds}
 DAs_dlist = {cond: [] for cond in all_conds}
-
-# C_dlist = {cond: None for cond in all_conds}
-# V_dlist = {cond: None for cond in all_conds}
-# inpt_dlist = {cond: None for cond in all_conds}
-# leak_dlist = {cond: None for cond in all_conds}
-# comp_dlist = {cond: None for cond in all_conds}
-
-# cond_ids_dlist = {cond: None for cond in all_conds}
-# cond_ids_combined = {cond: [] for cond in all_conds}
-
-has_memory_conds = ['RM', 'DM']
 ma_dlist = {cond: [] for cond in has_memory_conds}
+has_memory_conds = ['RM', 'DM']
+
 
 # fix_cond = 'RM'
 
@@ -485,50 +473,14 @@ f.tight_layout()
 f.savefig('temp/tisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 
 
-'''prediction isc change'''
-
-# rm_dm_sisc_p2 = np.array(bs_bc_sisc['RM']['DM'])[:, T_part:].T
-# mu_sisc, se_sisc = compute_stats(rm_dm_sisc_p2.T)
-# rm_dm_tisc_p2 = np.array(bs_bc_sw_tisc['RM']['DM']).T
-# mu_tisc, se_tisc = compute_stats(rm_dm_tisc_p2.T)
-
-#
-# f, axes = plt.subplots(2, 1, figsize=(7, 8))
-# axes[0].plot(rm_dm_sisc_p2, color=c_pal[0], alpha=.05)
-# axes[0].errorbar(
-#     x=range(len(mu_sisc)), y=mu_sisc, yerr=se_sisc * n_se,
-#     color='k'
-# )
-# axes[0].set_title('Spatial ISC')
-# axes[0].set_xlabel(f'Time')
-#
-# axes[1].plot(rm_dm_tisc_p2, color=c_pal[2], alpha=.1)
-# axes[1].errorbar(
-#     x=range(len(mu_tisc)), y=mu_tisc, yerr=se_tisc * n_se,
-#     color='k'
-# )
-# axes[1].set_title('Temporal ISC')
-# axes[1].set_xlabel(f'Time (sliding window size = {win_size})')
-# for ax in axes:
-#     ax.set_ylabel('Linear Corr.')
-#     ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-#     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-# f.tight_layout()
-# sns.despine()
-
-
 '''analyze isc change'''
 n_tps = 9
 n_subj_pairs = int(comb(n_subjs, 2))
 
-# compute recall scores
 tma_dm_p2_test = tma['DM'][:, T_part:, n_examples_tr:]
 recall = np.mean(tma_dm_p2_test, axis=0)
-# np.shape(tma_dm_p2_test)
-# np.shape(recall)
 
 # cond = 'RM'
-
 r_val_sisc = {cond: np.zeros((n_subj_pairs, n_tps))
               for cond in has_memory_conds}
 p_val_sisc = {cond: np.zeros((n_subj_pairs, n_tps))
@@ -583,11 +535,9 @@ for cond in has_memory_conds:
             r_val_tisc[cond][i_comb, t], p_val_tisc[cond][i_comb, t] = pearsonr(
                 recall_win_t[i_comb], tisc_change_t[i_comb])
 
-        #
     r_mu_sisc[cond], r_se_sisc[cond] = compute_stats(r_val_sisc[cond])
     r_mu_tisc[cond], r_se_tisc[cond] = compute_stats(r_val_tisc[cond])
 
-# np.shape(r_val_sisc[cond])
 
 '''plot s-isc'''
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
@@ -606,22 +556,18 @@ sns.despine()
 f.tight_layout()
 
 #
-# xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
-# f, ax = plt.subplots(1, 1, figsize=(6, 4))
-# # sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# sns.violinplot(data=[np.ravel(r_val_sisc[cond]) for cond in has_memory_conds])
-# # np.ravel(r_val_sisc[cond])
-# # sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# ax.axhline(0, color='grey', linestyle='--')
-# ax.set_xticks(range(len(xticklabels)))
-# ax.set_xticklabels(xticklabels)
-# ax.set_xlabel('Condition')
-# ax.set_ylabel('Linear Correlation')
-# ax.set_title('Correlation: recall vs. spatial ISC change')
-# sns.despine()
-# f.tight_layout()
+xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
+f, ax = plt.subplots(1, 1, figsize=(6, 4))
+sns.violinplot(data=[np.ravel(r_val_sisc[cond]) for cond in has_memory_conds])
+ax.axhline(0, color='grey', linestyle='--')
+ax.set_xticks(range(len(xticklabels)))
+ax.set_xticklabels(xticklabels)
+ax.set_xlabel('Condition')
+ax.set_ylabel('Linear Correlation')
+ax.set_title('Correlation: recall vs. spatial ISC change')
+sns.despine()
+f.tight_layout()
 
-# data_dict = r_mu_sisc
 data_dict = {}
 for cond in list(r_mu_sisc.keys()):
     data_dict[f'RM-{cond}'] = np.mean(r_val_sisc[cond], axis=-1)
@@ -634,34 +580,21 @@ iris_dabest.mean_diff.plot(
     swarm_label='Linear correlation', fig_size=(7, 5)
 )
 
-# i_comb = 3
-# t = 1
-# rval_, pval_ = pearsonr(recall[i_comb, :, t], sisc_change_t[i_comb])
-# print(rval_, pval_)
-# f, ax = plt.subplots(1, 1, figsize=(5, 4))
-# sns.regplot(recall[i_comb, :, t], sisc_change_t[i_comb],
-#             marker='.', color=sns.color_palette('colorblind')[1], ax=ax)
-# ax.set_xlabel('Target memory activation')
-# ax.set_ylabel('ISC')
-# ax.set_title('r = %.2f' % (rval_))
-# sns.despine()
-# f.tight_layout()
-#
-#
-# f, ax = plt.subplots(1, 1, figsize=(5, 3))
-# # sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# sns.swarmplot(data=np.mean(
-#     r_val_sisc['DM'], axis=-1), color=sns.color_palette('colorblind')[1])
-# # np.ravel(r_val_sisc[cond])
-# # sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
-# ax.axhline(0, color='grey', linestyle='--')
-# ax.set_xticks(range(1))
-# ax.set_xticklabels(['RM-DM'])
-# # ax.set_xlabel('Condition')
-# ax.set_ylabel('Linear Correlation')
-# ax.set_title('Correlation: recall vs. spatial ISC change')
-# sns.despine()
-# f.tight_layout()
+
+f, ax = plt.subplots(1, 1, figsize=(5, 3))
+# sns.violinplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+sns.swarmplot(data=np.mean(
+    r_val_sisc['DM'], axis=-1), color=sns.color_palette('colorblind')[1])
+# np.ravel(r_val_sisc[cond])
+# sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
+ax.axhline(0, color='grey', linestyle='--')
+ax.set_xticks(range(1))
+ax.set_xticklabels(['RM-DM'])
+# ax.set_xlabel('Condition')
+ax.set_ylabel('Linear Correlation')
+ax.set_title('Correlation: recall vs. spatial ISC change')
+sns.despine()
+f.tight_layout()
 
 
 '''plot t-isc'''
