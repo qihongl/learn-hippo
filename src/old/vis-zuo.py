@@ -20,8 +20,6 @@ from analysis import compute_acc, compute_dk, compute_stats, \
     compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
     get_qsource, trim_data, make_df
 
-# from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
-#     plot_time_course_for_all_conds
 from matplotlib.ticker import FormatStrFormatter
 # from sklearn.decomposition.pca import PCA
 from itertools import combinations
@@ -34,7 +32,7 @@ sns.set(style='white', palette='colorblind', context='talk')
 log_root = '../log/'
 # exp_name = 'penalty-random-continuous'
 # subj_ids = np.arange(6)
-exp_name = 'penalty-fixed-discrete-simple_'
+exp_name = '0220-v1-widesim-comp.8'
 subj_ids = np.arange(10)
 n_subjs = len(subj_ids)
 
@@ -42,7 +40,7 @@ supervised_epoch = 300
 epoch_load = 600
 learning_rate = 1e-3
 
-n_branch = 3
+n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
@@ -52,7 +50,7 @@ n_hidden = 194
 n_hidden_dec = 128
 eta = .1
 
-penalty_random = 0
+penalty_random = 1
 # testing param, ortho to the training directory
 penalty_discrete = 1
 penalty_onehot = 0
@@ -156,8 +154,8 @@ for g_name, srt in srt_dict.items():
 # from sklearn.preprocessing import StandardScaler
 dim_srm = 64
 test_prop = .5
-n_examples_tr = int(n_examples * (1-test_prop))
-n_examples_te = n_examples-n_examples_tr
+n_examples_tr = int(n_examples * (1 - test_prop))
+n_examples_te = n_examples - n_examples_tr
 
 # data = CM
 data = DA
@@ -288,7 +286,7 @@ sort_ids = np.argsort(np.mean(mu_tisc['control-control'], axis=0))[::-1]
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
 for i, key in enumerate(mu_tisc.keys()):
     mu_, se_ = compute_stats(mu_tisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids]*n_se,
+    ax.errorbar(x=range(len(mu_)), y=mu_[sort_ids], yerr=se_[sort_ids] * n_se,
                 label=f'{key}')
 ax.legend()
 ax.set_xlabel('Components (ordered by ISC value)')
@@ -318,7 +316,7 @@ for i, key in enumerate(mu_sisc.keys()):
     print(key)
     np.shape(mu_sisc[key])
     mu_, se_ = compute_stats(mu_sisc[key])
-    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_*n_se, label=f'{key}')
+    ax.errorbar(x=range(len(mu_)), y=mu_, yerr=se_ * n_se, label=f'{key}')
 ax.legend()
 ax.set_xlabel('Time')
 ax.set_ylabel('Spatial ISC')
