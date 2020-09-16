@@ -287,15 +287,15 @@ for ci, condition in enumerate(all_conditions):
                  error_kw=error_kw)
     axes[ci].bar(xticks, dk_mu_bars, width,
                  yerr=dk_se_bars, bottom=correct_mu_bars,
-                 label='dk', color=color_b, error_kw=error_kw)
+                 label='don\'t know', color=color_b, error_kw=error_kw)
     axes[ci].bar(xticks, mistake_mu_bars, width, yerr=mistake_se_bars,
                  bottom=correct_mu_bars + dk_mu_bars,
-                 label='mistake-NS', color=color_r, error_kw=error_kw)
+                 label='mistake-non-schematic', color=color_r, error_kw=error_kw)
     axes[ci].bar(xticks, mistake_sc_mu_bars, width, yerr=mistake_sc_se_bars,
                  bottom=correct_mu_bars + dk_mu_bars + mistake_mu_bars,
-                 label='mistake-S', color=color_y, error_kw=error_kw)
+                 label='mistake-schematic', color=color_y, error_kw=error_kw)
     if ci == 0:
-        axes[ci].set_title('Proportion of outcomes \n\n%s' % condition)
+        axes[ci].set_title('Prediction outcome, part 2\n\n%s' % condition)
     else:
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
@@ -306,8 +306,8 @@ for ci, condition in enumerate(all_conditions):
     axes[ci].set_xlim([-.5, 7.5])
     axes[ci].set_yticklabels([0, .5, 1])
 # axes[-1].legend()
-axes[0].legend(bbox_to_anchor=(0, 1.52, 1, 0.2), loc="lower left",
-               mode="expand", borderaxespad=0, ncol=2)
+axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
+               mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
@@ -315,7 +315,7 @@ img_name = 'mvpa-outcome.png'
 f.savefig(os.path.join('../figs', img_name))
 
 '''2. by condition, decoded response counts'''
-f, axes = plt.subplots(3, 1, figsize=(9, 13))
+f, axes = plt.subplots(3, 1, figsize=(8, 13))
 for ci, condition in enumerate(all_conditions):
     stud_mu_bars = np.array(dr_mu_byss[condition])[:, 0]
     dk_mu_bars = np.array(dr_mu_byss[condition])[:, 1]
@@ -331,16 +331,16 @@ for ci, condition in enumerate(all_conditions):
                  error_kw=error_kw)
     axes[ci].bar(xticks, dk_mu_bars, width,
                  yerr=dk_se_bars, bottom=stud_mu_bars,
-                 label='dk', color=color_b, error_kw=error_kw)
+                 label='don\'t know', color=color_b, error_kw=error_kw)
     axes[ci].bar(xticks, other_mu_bars, width, yerr=other_se_bars,
                  bottom=stud_mu_bars + dk_mu_bars,
-                 label='other-NS', color=color_r, error_kw=error_kw)
+                 label='other-non-schematic', color=color_r, error_kw=error_kw)
     axes[ci].bar(xticks, other_sc_mu_bars, width, yerr=other_sc_se_bars,
                  bottom=stud_mu_bars + dk_mu_bars,
-                 label='other-S', color=color_y, error_kw=error_kw)
+                 label='other-schematic', color=color_y, error_kw=error_kw)
     if ci == 0:
         axes[ci].set_title(
-            'Proportion of decoded internal states\n(conditioned on correct encoding)\n%s' % condition)
+            'Decoded internal states, part 2\n(conditioned on correct encoding)\n%s' % condition)
     else:
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
@@ -352,109 +352,109 @@ for ci, condition in enumerate(all_conditions):
     axes[ci].set_yticklabels([0, .5, 1])
 # axes[-1].legend(loc=3)
 # axes[1].legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-axes[0].legend(bbox_to_anchor=(0, 1.52, 1, 0.2), loc="lower left",
-               mode="expand", borderaxespad=0, ncol=2)
+axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
+               mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
 img_name = 'mvpa-dr.png'
 f.savefig(os.path.join('../figs', img_name))
-
-'''3. by condition, then by outcome, decoded response counts'''
-for condition in all_conditions:
-    f, axes = plt.subplots(4, 1, figsize=(9, 16))
-    for i, outcome in enumerate(all_outcome):
-        np.any(np.isnan(prop_dict_co_mu[condition][outcome]), axis=1)
-
-        # max_response_type
-        mrt_stud = prop_dict_co_mu[condition][outcome][:, 0]
-        mrt_dk = prop_dict_co_mu[condition][outcome][:, 1]
-        mrt_other = prop_dict_co_mu[condition][outcome][:, 2]
-        mrt_other_sc = prop_dict_co_mu[condition][outcome][:, 3]
-        mrt_stud_se = prop_dict_co_se[condition][outcome][:, 0]
-        mrt_dk_se = prop_dict_co_se[condition][outcome][:, 1]
-        mrt_other_se = prop_dict_co_se[condition][outcome][:, 2]
-        mrt_other_sc_se = prop_dict_co_se[condition][outcome][:, 3]
-
-        axes[i].bar(xticks, mrt_stud, width, yerr=mrt_stud_se,
-                    label='studied', color=color_g, error_kw=error_kw)
-        axes[i].bar(xticks, mrt_dk, width, yerr=mrt_dk_se,
-                    bottom=mrt_stud, label='dk', color=color_b, error_kw=error_kw)
-        axes[i].bar(xticks, mrt_other, width, yerr=mrt_other_se,
-                    bottom=mrt_stud + mrt_dk, label='other-NS', color=color_r,
-                    error_kw=error_kw)
-        axes[i].bar(xticks, mrt_other_sc, width, yerr=mrt_other_sc_se,
-                    bottom=mrt_stud + mrt_dk + mrt_other, label='other-S',
-                    color=color_y, error_kw=error_kw)
-
-        if i == 0:
-            axes[i].set_title(f'Condition = {condition}\noutcome = {outcome}')
-        else:
-            axes[i].set_title(f'outcome = {outcome}')
-        axes[i].set_ylabel('%')
-        axes[i].set_xticks(xticks)
-        axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
-        axes[i].set_yticks([0, .5, 1])
-        axes[i].set_ylim([-.025, 1.025])
-        axes[i].set_xlim([-.5, 7.5])
-        axes[i].set_yticklabels([0, .5, 1])
-    axes[-1].legend()
-    axes[-1].set_xlabel('Schema strength')
-    sns.despine()
-    f.tight_layout()
-
-    img_name = 'mvpa-dr-counts-%s.png' % (condition)
-    f.savefig(os.path.join('../figs', img_name))
-
-
-'''4. by condition, then by mrt, outcome counts'''
-for condition in all_conditions:
-    f, axes = plt.subplots(4, 1, figsize=(9, 16))
-    for i, mrt in enumerate(max_response_type):
-        # max_response_type
-        o_correct = prop_dict_cm_mu[condition][mrt][:, 0]
-        o_dk = prop_dict_cm_mu[condition][mrt][:, 1]
-        o_mistake = prop_dict_cm_mu[condition][mrt][:, 2]
-        o_mistake_sc = prop_dict_cm_mu[condition][mrt][:, 3]
-
-        o_correct_se = prop_dict_cm_se[condition][mrt][:, 0]
-        o_dk_se = prop_dict_cm_se[condition][mrt][:, 1]
-        o_mistake_se = prop_dict_cm_se[condition][mrt][:, 2]
-        o_mistake_sc_se = prop_dict_cm_se[condition][mrt][:, 3]
-
-        axes[i].bar(xticks, o_correct, width, yerr=o_correct_se,
-                    label='correct', color=color_g, error_kw=error_kw)
-        axes[i].bar(xticks, o_dk, width, yerr=o_dk_se,
-                    bottom=o_correct, label='dk', color=color_b, error_kw=error_kw)
-        axes[i].bar(xticks, o_mistake, width, yerr=o_mistake_se,
-                    bottom=o_correct + o_dk, label='mistake-NS', color=color_r,
-                    error_kw=error_kw)
-        axes[i].bar(xticks, o_mistake_sc, width, yerr=o_mistake_sc_se,
-                    bottom=o_correct + o_dk + o_mistake, label='mistake-S',
-                    color=color_y, error_kw=error_kw)
-
-        if i == 0:
-            axes[i].set_title(f'Condition = {condition}\ndecoded = {mrt}')
-        else:
-            axes[i].set_title(f'decoded = {mrt}')
-        axes[i].set_ylabel('%')
-        axes[i].set_xticks(xticks)
-        axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
-        axes[i].set_yticks([0, .5, 1])
-        axes[i].set_ylim([-.025, 1.025])
-        axes[i].set_xlim([-.5, 7.5])
-        axes[i].set_yticklabels([0, .5, 1])
-    axes[-1].legend()
-    axes[-1].set_xlabel('Schema strength')
-    sns.despine()
-    f.tight_layout()
-
-    img_name = 'mvpa-outcome-counts-%s.png' % (condition)
-    f.savefig(os.path.join('../figs', img_name))
+#
+# '''3. by condition, then by outcome, decoded response counts'''
+# for condition in all_conditions:
+#     f, axes = plt.subplots(4, 1, figsize=(9, 16))
+#     for i, outcome in enumerate(all_outcome):
+#         np.any(np.isnan(prop_dict_co_mu[condition][outcome]), axis=1)
+#
+#         # max_response_type
+#         mrt_stud = prop_dict_co_mu[condition][outcome][:, 0]
+#         mrt_dk = prop_dict_co_mu[condition][outcome][:, 1]
+#         mrt_other = prop_dict_co_mu[condition][outcome][:, 2]
+#         mrt_other_sc = prop_dict_co_mu[condition][outcome][:, 3]
+#         mrt_stud_se = prop_dict_co_se[condition][outcome][:, 0]
+#         mrt_dk_se = prop_dict_co_se[condition][outcome][:, 1]
+#         mrt_other_se = prop_dict_co_se[condition][outcome][:, 2]
+#         mrt_other_sc_se = prop_dict_co_se[condition][outcome][:, 3]
+#
+#         axes[i].bar(xticks, mrt_stud, width, yerr=mrt_stud_se,
+#                     label='studied', color=color_g, error_kw=error_kw)
+#         axes[i].bar(xticks, mrt_dk, width, yerr=mrt_dk_se,
+#                     bottom=mrt_stud, label='don\'t know', color=color_b, error_kw=error_kw)
+#         axes[i].bar(xticks, mrt_other, width, yerr=mrt_other_se,
+#                     bottom=mrt_stud + mrt_dk, label='other-non-schematic', color=color_r,
+#                     error_kw=error_kw)
+#         axes[i].bar(xticks, mrt_other_sc, width, yerr=mrt_other_sc_se,
+#                     bottom=mrt_stud + mrt_dk + mrt_other, label='other-schematic',
+#                     color=color_y, error_kw=error_kw)
+#
+#         if i == 0:
+#             axes[i].set_title(f'Condition = {condition}\noutcome = {outcome}')
+#         else:
+#             axes[i].set_title(f'outcome = {outcome}')
+#         axes[i].set_ylabel('%')
+#         axes[i].set_xticks(xticks)
+#         axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+#         axes[i].set_yticks([0, .5, 1])
+#         axes[i].set_ylim([-.025, 1.025])
+#         axes[i].set_xlim([-.5, 7.5])
+#         axes[i].set_yticklabels([0, .5, 1])
+#     axes[-1].legend()
+#     axes[-1].set_xlabel('Schema strength')
+#     sns.despine()
+#     f.tight_layout()
+#
+#     img_name = 'mvpa-dr-counts-%s.png' % (condition)
+#     f.savefig(os.path.join('../figs', img_name))
+#
+#
+# '''4. by condition, then by mrt, outcome counts'''
+# for condition in all_conditions:
+#     f, axes = plt.subplots(4, 1, figsize=(9, 16))
+#     for i, mrt in enumerate(max_response_type):
+#         # max_response_type
+#         o_correct = prop_dict_cm_mu[condition][mrt][:, 0]
+#         o_dk = prop_dict_cm_mu[condition][mrt][:, 1]
+#         o_mistake = prop_dict_cm_mu[condition][mrt][:, 2]
+#         o_mistake_sc = prop_dict_cm_mu[condition][mrt][:, 3]
+#
+#         o_correct_se = prop_dict_cm_se[condition][mrt][:, 0]
+#         o_dk_se = prop_dict_cm_se[condition][mrt][:, 1]
+#         o_mistake_se = prop_dict_cm_se[condition][mrt][:, 2]
+#         o_mistake_sc_se = prop_dict_cm_se[condition][mrt][:, 3]
+#
+#         axes[i].bar(xticks, o_correct, width, yerr=o_correct_se,
+#                     label='correct', color=color_g, error_kw=error_kw)
+#         axes[i].bar(xticks, o_dk, width, yerr=o_dk_se,
+#                     bottom=o_correct, label='don\'t know', color=color_b, error_kw=error_kw)
+#         axes[i].bar(xticks, o_mistake, width, yerr=o_mistake_se,
+#                     bottom=o_correct + o_dk, label='mistake-non-schematic', color=color_r,
+#                     error_kw=error_kw)
+#         axes[i].bar(xticks, o_mistake_sc, width, yerr=o_mistake_sc_se,
+#                     bottom=o_correct + o_dk + o_mistake, label='mistake-schematic',
+#                     color=color_y, error_kw=error_kw)
+#
+#         if i == 0:
+#             axes[i].set_title(f'Condition = {condition}\ndecoded = {mrt}')
+#         else:
+#             axes[i].set_title(f'decoded = {mrt}')
+#         axes[i].set_ylabel('%')
+#         axes[i].set_xticks(xticks)
+#         axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+#         axes[i].set_yticks([0, .5, 1])
+#         axes[i].set_ylim([-.025, 1.025])
+#         axes[i].set_xlim([-.5, 7.5])
+#         axes[i].set_yticklabels([0, .5, 1])
+#     axes[-1].legend()
+#     axes[-1].set_xlabel('Schema strength')
+#     sns.despine()
+#     f.tight_layout()
+#
+#     img_name = 'mvpa-outcome-counts-%s.png' % (condition)
+#     f.savefig(os.path.join('../figs', img_name))
 
 '''sub-figure in paper'''
 
-f, axes = plt.subplots(2, 2, figsize=(15, 9))
+f, axes = plt.subplots(2, 2, figsize=(15, 10))
 for j, condition in enumerate(['schema consistent', 'schema violated']):
     for i, mrt in enumerate(['studied', 'dk']):
         # max_response_type
@@ -470,19 +470,20 @@ for j, condition in enumerate(['schema consistent', 'schema violated']):
         axes[i, j].bar(xticks, o_correct, width, yerr=o_correct_se,
                        label='correct', color=color_g, error_kw=error_kw)
         axes[i, j].bar(xticks, o_dk, width, yerr=o_dk_se,
-                       bottom=o_correct, label='dk', color=color_b, error_kw=error_kw)
+                       bottom=o_correct, label='don\'t know', color=color_b, error_kw=error_kw)
         axes[i, j].bar(xticks, o_mistake, width, yerr=o_mistake_se,
-                       bottom=o_correct + o_dk, label='mistake-NS', color=color_r,
+                       bottom=o_correct + o_dk, label='mistake-non-schematic', color=color_r,
                        error_kw=error_kw)
         axes[i, j].bar(xticks, o_mistake_sc, width, yerr=o_mistake_sc_se,
-                       bottom=o_correct + o_dk + o_mistake, label='mistake-S',
+                       bottom=o_correct + o_dk + o_mistake, label='mistake-schematic',
                        color=color_y, error_kw=error_kw)
 
         if i == 0:
             axes[i, j].set_title(
                 f'{condition}\n(conditioned on correct encoding)\ndecoded = {mrt}')
         else:
-            axes[i, j].set_title(f'decoded = {mrt}')
+            mrt_txt = 'don\'t know' if mrt == 'dk' else mrt
+            axes[i, j].set_title(f'decoded = {mrt_txt}')
         axes[i, j].set_ylabel('%')
         axes[i, j].set_xticks(xticks)
         axes[i, j].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
@@ -491,15 +492,15 @@ for j, condition in enumerate(['schema consistent', 'schema violated']):
         axes[i, j].set_xlim([-.5, 7.5])
         axes[i, j].set_yticklabels([0, .5, 1])
     # axes[-1, 0].legend()
-    axes[0, 0].legend(bbox_to_anchor=(.6, 1.52, 1, 0.2), loc="lower left",
-                      mode="expand", borderaxespad=0, ncol=2)
+    axes[0, 0].legend(bbox_to_anchor=(.6, 1.9, 1, 0.2), loc="lower left",
+                      mode="expand", borderaxespad=-2, ncol=2)
     axes[-1, 0].set_xlabel('Schema strength')
     axes[-1, 1].set_xlabel('Schema strength')
     sns.despine()
     f.tight_layout()
 
     img_name = 'mvpa-outcome-counts-bydr.png'
-    f.savefig(os.path.join('../figs', img_name))
+    f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')
 
 
 '''encoding performance - bar plots by condition'''
@@ -516,7 +517,7 @@ for condi, cond in enumerate(all_conditions):
         prop_enc_perf_mu[cond][dpi, :], prop_enc_perf_se[cond][dpi, :] = compute_stats(
             prop_enc_perf)
 
-f, axes = plt.subplots(3, 1, figsize=(9, 14))
+f, axes = plt.subplots(3, 1, figsize=(8, 13))
 for ci, condition in enumerate(all_conditions):
     stud_mu_bars = np.array(prop_enc_perf_mu[condition])[:, 0]
     dk_mu_bars = np.array(prop_enc_perf_mu[condition])[:, 1]
@@ -532,16 +533,16 @@ for ci, condition in enumerate(all_conditions):
                  error_kw=error_kw)
     axes[ci].bar(xticks, dk_mu_bars, width,
                  yerr=dk_se_bars, bottom=stud_mu_bars,
-                 label='dk', color=color_b, error_kw=error_kw)
+                 label='don\'t know', color=color_b, error_kw=error_kw)
     axes[ci].bar(xticks, other_mu_bars, width, yerr=other_se_bars,
                  bottom=stud_mu_bars + dk_mu_bars,
-                 label='other-NS', color=color_r, error_kw=error_kw)
+                 label='other-non-schematic', color=color_r, error_kw=error_kw)
     axes[ci].bar(xticks, other_sc_mu_bars, width, yerr=other_sc_se_bars,
                  bottom=stud_mu_bars + dk_mu_bars + other_mu_bars,
-                 label='other-S', color=color_y, error_kw=error_kw)
+                 label='other-schematic', color=color_y, error_kw=error_kw)
     if ci == 0:
         axes[ci].set_title(
-            'Proportion of decoded internal states at encoding \n\n%s' % condition)
+            'Decoded internal states at encoding \n\n%s' % condition)
     else:
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
@@ -554,8 +555,8 @@ for ci, condition in enumerate(all_conditions):
 
 # axes[-1].legend(loc=3)
 # axes[1].legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
-axes[0].legend(bbox_to_anchor=(0, 1.52, 1, 0.2), loc="lower left",
-               mode="expand", borderaxespad=0, ncol=2)
+axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
+               mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
