@@ -37,16 +37,14 @@ all_conds = TZ_COND_DICT.values()
 
 
 # exp_name = '0717-dp'
-# def_prob_range = np.arange(.25, 1, .1)
-#
+# def_prob_range = np.arange(.75, 1, .1)
+# #
 # for def_prob in def_prob_range:
-# exp_name = '0425-schema.%d-comp.8' % (def_prob10)
-# def_prob = def_prob10 / 10
-# print(exp_name)
+#     print(exp_name)
 
 # exp_name = '0429-widesim-attachcond'
-exp_name = '0220-v1-highsim-comp.8'
-# exp_name = '0220-v1-widesim-comp.8'
+# exp_name = '0220-v1-highsim-comp.8'
+exp_name = '0914-lowsim-prandom'
 # exp_name = '0425-schema.9-comp.8'
 # exp_name = '0220-v1-widesim-highdp-comp.8'
 
@@ -69,8 +67,6 @@ leak_val = 0
 
 n_hidden = 194
 n_hidden_dec = 128
-# n_hidden = 256
-# n_hidden_dec = 194
 eta = .1
 
 # testing param, ortho to the training directory
@@ -94,20 +90,17 @@ p_rm_ob_rcl_test = p_test
 slience_recall_time = None
 # slience_recall_time = range(n_param)
 
-# similarity_max_test = .9
-# similarity_min_test = .35
-similarity_max_test = .9
+similarity_max_test = .95
 similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(9)
+subj_ids = np.arange(19)
 
-penaltys_train = [0, 4]
+penaltys_train = [4]
 penaltys_test = np.array([0, 2, 4])
-# penaltys_test = np.array([2])
+# penaltys_test = np.array([8])
 # penaltys_train = [4]
-# penaltys_test = np.array([0, 2, 4])
 
 n_subjs = len(subj_ids)
 DM_qsources = ['EM only', 'both']
@@ -124,9 +117,7 @@ def prealloc_stats():
 
 for penalty_train in penaltys_train:
     penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
-    # print(penalty_train, penaltys_test_)
     for penalty_test in penaltys_test_:
-        # penalty_train, penalty_test = 0, 0
         print(
             f'penalty_train={penalty_train}, penalty_test={penalty_test}')
 
@@ -248,7 +239,8 @@ for penalty_train in penaltys_train:
 
             # process the data
             cond_ids = get_trial_cond_ids(log_cond)
-            [C, H, M, CM, DA, V], [inpt] = process_cache(log_cache, T_total, p)
+            [C, H, M, CM, DA, V], [inpt] = process_cache(
+                log_cache, T_total, p)
             # compute ground truth / objective uncertainty (delay phase removed)
             true_dk_wm, true_dk_em = batch_compute_true_dk(X_raw, task)
             q_source = get_qsource(true_dk_em, true_dk_wm, cond_ids, p)
@@ -273,8 +265,10 @@ for penalty_train in penaltys_train:
             mistakes_p2 = mistakes[:, T_part:]
             dks_p1, dks_p2 = dks[:, :T_part], dks[:, T_part:]
             inpt_p2 = inpt[:, T_part:]
-            targets_p1, targets_p2 = targets[:, :T_part], targets[:, T_part:]
-            actions_p1, actions_p2 = actions[:, :T_part], actions[:, T_part:]
+            targets_p1, targets_p2 = targets[:,
+                                             :T_part], targets[:, T_part:]
+            actions_p1, actions_p2 = actions[:,
+                                             :T_part], actions[:, T_part:]
 
             # pre-extract p2 data for the DM condition
             corrects_dmp2 = corrects_p2[cond_ids['DM']]
@@ -314,7 +308,8 @@ for penalty_train in penaltys_train:
                 # compute performance for this condition
                 acc_mu, acc_er = compute_acc(Y_, dist_a_, return_er=True)
                 dk_mu = compute_dk(dist_a_)
-                mis_mu, mis_er = compute_mistake(Y_, dist_a_, return_er=True)
+                mis_mu, mis_er = compute_mistake(
+                    Y_, dist_a_, return_er=True)
 
                 # cache data for all cond-subj
                 acc_dict[cn]['mu'][i_s] = acc_mu
@@ -356,7 +351,7 @@ for penalty_train in penaltys_train:
 
             '''schema effect analysis
             '''
-
+            #
             # proto_response_dmp2 = np.tile(
             #     def_path_int, (np.sum(cond_ids['DM']), 1))
             #
@@ -431,7 +426,7 @@ for penalty_train in penaltys_train:
             #                     np.mean(inpt_woproto_ic)]
             # xticklabels = ['consistent', 'violated']
             # xticks = range(len(xticklabels))
-
+            #
             # #
             # f, axes = plt.subplots(1, 2, figsize=(12, 5))
             #
@@ -453,7 +448,7 @@ for penalty_train in penaltys_train:
             # sns.despine()
             # fig_path = os.path.join(fig_dir, f'schema-input.png')
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
+            #
             # xticklabels = ['consistent', 'violated']
             # xticks = range(len(xticklabels))
             # f, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -496,7 +491,7 @@ for penalty_train in penaltys_train:
             # sns.despine()
             # fig_path = os.path.join(fig_dir, f'schema-input-behav.png')
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-
+            #
             # corrects_dmp2_wwoproto_cic_g[i_s] = np.array([
             #     corrects_dmp2_wproto_cic,
             #     corrects_dmp2_woproto_cic
@@ -524,7 +519,8 @@ for penalty_train in penaltys_train:
             #     'n_dks': n_dks_g,
             #     'n_corrects': n_corrects_g
             # }
-            # pickle_save_dict(schema_grid_data, 'temp/schema-%.2f' % def_prob)
+            # pickle_save_dict(schema_grid_data,
+            #                  'temp/schema-%.2f' % def_prob)
 
             '''
             '''
@@ -653,7 +649,8 @@ for penalty_train in penaltys_train:
                     ax.axvline(pad_len_test, color='grey', linestyle='--')
             f.tight_layout()
             sns.despine()
-            fig_path = os.path.join(fig_dir, f'tz-memact-{ker_name}-hori.png')
+            fig_path = os.path.join(
+                fig_dir, f'tz-memact-{ker_name}-hori.png')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''use CURRENT uncertainty to predict memory activation'''
@@ -671,7 +668,8 @@ for penalty_train in penaltys_train:
             f, ax = plt.subplots(1, 1, figsize=(6, 4))
             for key, [mu_, er_] in targ_act_cond_p2_stats.items():
                 if not np.all(np.isnan(mu_)):
-                    ax.errorbar(x=range(n_param), y=mu_, yerr=er_, label=key)
+                    ax.errorbar(x=range(n_param), y=mu_,
+                                yerr=er_, label=key)
             ax.set_ylabel(f'input gate')
             # ax.legend(fancybox=True)
             ax.set_title(f'Target memory activation, {cond_name}')
@@ -685,7 +683,8 @@ for penalty_train in penaltys_train:
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
             f.tight_layout()
             sns.despine()
-            fig_path = os.path.join(fig_dir, f'tma-{cond_name}-by-qsource.png')
+            fig_path = os.path.join(
+                fig_dir, f'tma-{cond_name}-by-qsource.png')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''compare the over time'''
@@ -716,8 +715,10 @@ for penalty_train in penaltys_train:
             fpr_list[i_s] = fpr
             auc_list[i_s] = auc
 
-            [dist_l_edges, dist_l_normed, dist_l_edges_mids, bin_width_l] = hist_info_l
-            [dist_r_edges, dist_r_normed, dist_r_edges_mids, bin_width_r] = hist_info_r
+            [dist_l_edges, dist_l_normed, dist_l_edges_mids,
+                bin_width_l] = hist_info_l
+            [dist_r_edges, dist_r_normed, dist_r_edges_mids,
+                bin_width_r] = hist_info_r
 
             leg_ = ['NM', 'DM']
             f, axes = plt.subplots(
@@ -970,7 +971,8 @@ for penalty_train in penaltys_train:
                 ax.legend()
                 ax.set_xlabel('Time (part 2)')
                 ax.set_ylim([np.max([-.05, ylim_l]), ylim_r])
-                ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
+                ax.set_xticks(
+                    np.arange(0, p.env.n_param, p.env.n_param - 1))
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 if metric_name == 'lca':
@@ -1237,7 +1239,8 @@ for penalty_train in penaltys_train:
             fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig-schema-effect.png'
             f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        # plt.plot(np.mean(ig, axis=1), np.mean(mis_dict_mu[cn], axis=1), 'x')
+        # plt.plot(np.mean(ig, axis=1), np.mean(
+        #     mis_dict_mu[cn], axis=1), 'x')
         # cn = 'DM'
         # mis_gsc, mis_gsic = [], []
         # for i_s in range(len(mis_dict_mu[cn])):
@@ -1247,7 +1250,7 @@ for penalty_train in penaltys_train:
         #     np.mean(mis_gsc, axis=1))
         # mis_gsic_mu, mis_gsic_se = compute_stats(
         #     np.mean(mis_gsic, axis=1))
-        #
+
         # d_gsc, d_gsic = raw_data[cn]
         # f, axes = plt.subplots(1, 2, figsize=(9, 5), sharey=True)
         # r_hp, p_hp = pearsonr(np.mean(d_gsc, axis=1), np.mean(mis_gsc, axis=1))
