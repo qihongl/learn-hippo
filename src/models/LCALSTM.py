@@ -1,7 +1,3 @@
-"""
-a fork from LCALSTM 07/03
-goal: send the entropy back to influence recall parameter
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,21 +28,22 @@ class LCALSTM(nn.Module):
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
             init_state_trainable=False,
-            noisy_encoding=0,
+            noisy_encoding=0, cmpt=.8
     ):
         super(LCALSTM, self).__init__()
-        self.input_dim = input_dim
+        self.cmpt = cmpt
+        self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
-        self.i2h = nn.Linear(input_dim, self.n_hidden_total)
+        self.i2h = nn.Linear(self.input_dim, self.n_hidden_total)
         self.h2h = nn.Linear(rnn_hidden_dim, self.n_hidden_total)
         # deicion module
         self.ih = nn.Linear(rnn_hidden_dim, dec_hidden_dim)
-        self.actor = nn.Linear(dec_hidden_dim + 1, output_dim)
-        self.critic = nn.Linear(dec_hidden_dim + 1, 1)
+        self.actor = nn.Linear(dec_hidden_dim, output_dim)
+        self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
-        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim + 1, N_SSIG)
+        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
@@ -94,7 +91,7 @@ class LCALSTM(nn.Module):
         c_prev = c_prev.view(c_prev.size(1), -1)
         x_t = x_t.view(x_t.size(1), -1)
         # pdb.set_trace()
-        x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
+        # x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
         # penalty_t = x_t[:, -1].view(1, -1)
         # transform the input info
         preact = self.i2h(x_t) + self.h2h(h_prev)
@@ -109,20 +106,23 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        # dec_act_t = F.relu(self.ih(h_t))
-        dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
+        # hp_t = torch.cat([h_t, penalty_t], dim=1)
+        dec_act_t = F.relu(self.ih(h_t))
+        # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
         # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
         [inps_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, comp_t, inps_t)
+        m_t = self.recall(c_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
         '''final decision attempt'''
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
-        dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
+        # hp_t = torch.cat([h_t, penalty_t], dim=1)
+        dec_act_t = F.relu(self.ih(h_t))
+        # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
         # dec_act_t = F.relu(self.ih(h_t))
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
@@ -136,7 +136,7 @@ class LCALSTM(nn.Module):
         cache = [vector_signal, scalar_signal, misc]
         return pi_a_t, value_t, (h_t, cm_t), cache
 
-    def recall(self, c_t, comp_t, inps_t):
+    def recall(self, c_t, inps_t, comp_t=None):
         """run the "pattern completion" procedure
 
         Parameters
@@ -156,6 +156,9 @@ class LCALSTM(nn.Module):
             updated cell state, recalled item
 
         """
+        if comp_t is None:
+            comp_t = self.cmpt
+
         if self.em.retrieval_off:
             m_t = torch.zeros_like(c_t)
         else:

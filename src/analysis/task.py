@@ -24,7 +24,7 @@ def get_oq_keys(X_i, task, to_int=True):
     # get the observation / query keys
     o_key = X_i[:, :task.k_dim]
     q_key = X_i[:, -task.k_dim:]
-    o_val = X_i[:, task.k_dim:task.k_dim+task.v_dim]
+    o_val = X_i[:, task.k_dim:task.k_dim + task.v_dim]
     # convert to integer representation
     if to_int:
         o_key = [one_hot_to_int(o_key[t]) for t in range(len(o_key))]

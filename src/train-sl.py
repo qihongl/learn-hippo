@@ -5,8 +5,8 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pdb
-from models.LCALSTM_v3 import LCALSTM as Agent
+
+from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -19,28 +19,21 @@ from utils.io import build_log_path, save_ckpt, save_all_params,  \
 plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
-'''learning to tz with a2c. e.g. cmd:
-python -u train-tz.py --exp_name testing --subj_id 0 \
---penalty 4 --n_param 6 --n_hidden 64 --eta .1\
---n_epoch 300 --sup_epoch 50 --train_init_state 0 \
---log_root ../log/
-'''
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', default='test', type=str)
 parser.add_argument('--subj_id', default=99, type=int)
 parser.add_argument('--n_param', default=6, type=int)
 parser.add_argument('--n_branch', default=3, type=int)
-parser.add_argument('--pad_len', default=0, type=int)
+parser.add_argument('--pad_len', default=-1, type=int)
 parser.add_argument('--def_prob', default=None, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=None, type=int)
-parser.add_argument('--cmpt', default=.9, type=float)
-parser.add_argument('--penalty', default=2, type=int)
+parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=1, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
-parser.add_argument('--normalize_return', default=0, type=int)
+parser.add_argument('--normalize_return', default=1, type=int)
+parser.add_argument('--attach_cond', default=0, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=None, type=float)
@@ -49,37 +42,65 @@ parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--n_hidden_dec', default=32, type=int)
 parser.add_argument('--lr', default=5e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--n_event_remember', default=2, type=int)
+parser.add_argument('--cmpt', default=0.8, type=float)
+parser.add_argument('--n_event_remember', default=4, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
+parser.add_argument('--noisy_encoding', default=0, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
 
 # process args
+exp_name = args.exp_name
+subj_id = args.subj_id
+n_param = args.n_param
+n_branch = args.n_branch
+pad_len = args.pad_len
+def_prob = args.def_prob
+n_def_tps = args.n_def_tps
+enc_size = args.enc_size
+penalty = args.penalty
+penalty_random = args.penalty_random
+penalty_discrete = args.penalty_discrete
+penalty_onehot = args.penalty_onehot
+normalize_return = args.normalize_return
+attach_cond = args.attach_cond
+p_rm_ob_enc = args.p_rm_ob_enc
+p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
+n_hidden = args.n_hidden
+n_hidden_dec = args.n_hidden_dec
+learning_rate = args.lr
+cmpt = args.cmpt
+eta = args.eta
+n_event_remember = args.n_event_remember
 n_examples = args.n_examples
 n_epoch = args.n_epoch
-penalty_test_all = np.array([0, 1, 2, 4])
+supervised_epoch = args.sup_epoch
+noisy_encoding = args.noisy_encoding
+log_root = args.log_root
+
 
 '''init'''
-seed_val = args.subj_id
+seed_val = subj_id
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
 p = P(
-    exp_name=args.exp_name, sup_epoch=args.sup_epoch,
-    n_param=args.n_param, n_branch=args.n_branch, pad_len=args.pad_len,
-    def_prob=args.def_prob, n_def_tps=args.n_def_tps,
-    enc_size=args.enc_size, n_event_remember=args.n_event_remember,
-    penalty=args.penalty, penalty_random=args.penalty_random,
-    penalty_discrete=args.penalty_discrete, penalty_onehot=args.penalty_onehot,
-    normalize_return=args.normalize_return,
-    p_rm_ob_enc=args.p_rm_ob_enc, p_rm_ob_rcl=args.p_rm_ob_rcl,
-    n_hidden=args.n_hidden, n_hidden_dec=args.n_hidden_dec,
-    lr=args.lr, eta=args.eta, cmpt=args.cmpt
+    exp_name=exp_name,
+    sup_epoch=supervised_epoch,
+    n_param=n_param, n_branch=n_branch, pad_len=pad_len,
+    def_prob=def_prob, n_def_tps=n_def_tps,
+    enc_size=enc_size, n_event_remember=n_event_remember,
+    penalty=penalty, penalty_random=penalty_random,
+    penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
+    normalize_return=normalize_return, attach_cond=attach_cond,
+    p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+    n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
+    lr=learning_rate, eta=eta, cmpt=cmpt
 )
 # init env
 task = SequenceLearning(
@@ -89,11 +110,14 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
+x_dim = task.x_dim
+if attach_cond != 0:
+    x_dim += 1
 # init agent
 agent = Agent(
-    input_dim=task.x_dim + p.extra_x_dim, output_dim=p.a_dim,
+    input_dim=x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-    dict_len=p.net.dict_len, comp_t=p.net.cmpt,
+    dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
 
 optimizer_sup = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
@@ -108,7 +132,7 @@ scheduler_rl = torch.optim.lr_scheduler.ReduceLROnPlateau(
 
 
 # create logging dirs
-log_path, log_subpath = build_log_path(args.subj_id, p, log_root=args.log_root)
+log_path, log_subpath = build_log_path(subj_id, p, log_root=log_root)
 # save experiment params initial weights
 save_all_params(log_subpath['data'], p)
 save_ckpt(0, log_subpath['ckpts'], agent, optimizer_sup)
@@ -126,21 +150,15 @@ Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples))
 
-# epoch_id, i, t = 0, 0, 0
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
     time0 = time.time()
     # training objective
-    supervised = epoch_id < args.sup_epoch
+    supervised = epoch_id < supervised_epoch
     if supervised:
         optimizer = optimizer_sup
     else:
         optimizer = optimizer_rl
-        # pdb.set_trace()
-        agent.i2h.weight.requires_grad = False
-        agent.i2h.bias.requires_grad = False
-        agent.h2h.weight.requires_grad = False
-        agent.h2h.bias.requires_grad = False
 
     [results, metrics] = run_tz(
         agent, optimizer, task, p, n_examples,
@@ -210,7 +228,7 @@ axes[2, -1].legend()
 axes[2, 0].set_ylabel('% behavior')
 
 for i, ax in enumerate(f.axes):
-    ax.axvline(args.sup_epoch, color='grey', linestyle='--')
+    ax.axvline(supervised_epoch, color='grey', linestyle='--')
 
 axes[-1, 0].set_xlabel('Epoch')
 axes[-1, 1].set_xlabel('Epoch')
@@ -234,7 +252,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
     f, ax = plt.subplots(1, 1, figsize=(7, 4))
     plot_pred_acc_full(
         acc_mu, acc_er, acc_mu + dk_mu,
-        [p.env.n_param], p,
+        [n_param], p,
         f, ax,
         title=f'Performance on the TZ task: {cond_name_}',
     )
@@ -261,9 +279,7 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
 )
 
-penalty_test = penalty_test_all[penalty_test_all <= args.penalty]
-for fix_penalty in penalty_test:
-    # print(fix_penalty)
+for fix_penalty in np.arange(0, penalty + 1, 2):
     [results, metrics, XY] = run_tz(
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,

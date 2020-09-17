@@ -30,7 +30,7 @@ class StimSampler():
         self.n_branch = n_branch
         self.pad_len = pad_len
         if max_pad_len is None:
-            self.max_pad_len = np.max([n_param // 3 - 1, 0])
+            self.max_pad_len = np.max([n_param//3 - 1, 0])
         #
         self.def_path = def_path
         self.def_prob = def_prob
@@ -186,7 +186,7 @@ class StimSampler():
         n_parts = len(o_keys_vec)
         # get a list of p_rm, only the 1st phase is the encoding phase
         # the rest of phases are considered as recall phases
-        p_rms = [p_rm_ob_enc] * (n_parts - 1) + [p_rm_ob_rcl]
+        p_rms = [p_rm_ob_enc] * (n_parts-1) + [p_rm_ob_rcl]
         # zero out random rows (time steps)
         for ip in range(n_parts):
             # zero out both key and values
@@ -226,7 +226,7 @@ class StimSampler():
         # uniformly sample a padding length
         if self.pad_len == 'random':
             # high is exclusive so need to add 1
-            pad_len = np.random.randint(low=0, high=self.max_pad_len + 1)
+            pad_len = np.random.randint(low=0, high=self.max_pad_len+1)
         # fixed padding length
         elif self.pad_len > 0:
             pad_len = self.pad_len
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     # plot
     cmap = 'bone'
     n_timesteps = n_param
-    width_ratios = [sampler.k_dim, sampler.v_dim] * 2 + [sampler.c_dim]
+    width_ratios = [sampler.k_dim, sampler.v_dim]*2 + [sampler.c_dim]
     f, axes = plt.subplots(
         n_parts, 5, figsize=(8, 5), sharey=True,
         gridspec_kw={'width_ratios': width_ratios}

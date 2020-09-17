@@ -85,8 +85,7 @@ class Schema():
             # key = np.random.permutation(T)
             key = np.arange(T)
         else:
-            raise ValueError(
-                f'unrecog representation type {self.key_rep_type}')
+            raise ValueError(f'unrecog representation type {self.key_rep_type}')
         # sample values
         val = np.array([
             np.random.choice(range(self.n_branch), p=self.transition[t, :])
@@ -136,7 +135,7 @@ class Schema():
     def _set_def_values(self):
         # if the input graph params are un-specified, use uniform random graph
         if self.def_prob is None:
-            self.def_prob = 1 / self.n_branch
+            self.def_prob = 1/self.n_branch
         if self.def_path is None:
             self.def_path = sample_rand_path(self.n_branch, self.n_param)
         if self.def_tps is None:
@@ -154,7 +153,7 @@ class Schema():
 
         """
         # input validation
-        assert 1 / self.n_branch <= self.def_prob <= 1
+        assert 1/self.n_branch <= self.def_prob <= 1
         assert len(self.def_path) == self.n_param
         assert np.all(self.def_path < self.n_branch)
         self.def_path = self.def_path.astype(np.int16)
@@ -162,7 +161,7 @@ class Schema():
         # form the transition matrix
         self.transition = np.zeros((self.n_param, self.n_branch))
         # assign (1-p)/(B-1) to the rest
-        non_def_prob = (1 - self.def_prob) / (self.n_branch - 1)
+        non_def_prob = (1-self.def_prob) / (self.n_branch - 1)
         # compute the int (branch id) representation of the default path
         def_path_int = np.argmax(self.def_path, axis=1)
         for t in range(self.n_param):

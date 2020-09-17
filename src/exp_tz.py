@@ -1,4 +1,3 @@
-from task.utils import sample_def_tps
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -32,6 +31,8 @@ def run_tz(
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
+
+        # pdb.set_trace()
         if scramble:
             X_i, Y_i = time_scramble(X_i, Y_i, task)
 
@@ -40,30 +41,38 @@ def run_tz(
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
         enc_times = get_enc_times(p.net.enc_size, task.n_param, pad_len)
 
+        # attach cond flag
+        cond_flag = torch.zeros(T_total, 1)
+        cond_indicator = -1 if cond_i == 'NM' else 1
+        # if attach_cond == 1 then normal, if -1 then reversed
+        cond_flag[-T_part:] = cond_indicator * p.env.attach_cond
+        if p.env.attach_cond != 0:
+            X_i = torch.cat((X_i, cond_flag), 1)
+
         # prealloc
         loss_sup = 0
         probs, rewards, values, ents = [], [], [], []
         log_cache_i = [None] * T_total
 
         # init model wm and em
+        # penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
+        penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
+        penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
+        # print()
+
         hc_t = agent.get_init_states()
         agent.retrieval_off()
         agent.encoding_off()
-        #
-        penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
-        penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
-        # penalty_val_p1, penalty_rep_p1 = penalty_val_p2, penalty_rep_p2
-        # print(penalty_val_p1, penalty_val_p2)
-        # print()
+
         for t in range(T_total):
             t_relative = t % T_part
             in_2nd_part = t >= T_part
-            # get the penalty
+
             if not in_2nd_part:
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
                 penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
-            # print(in_2nd_part, penalty_val, penalty_rep)
+
             # testing condition
             if slience_recall_time is not None:
                 slience_recall(t_relative, in_2nd_part,
@@ -258,8 +267,3 @@ def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
         # option 2: scramble observations + queries
         [X_i, Y_i] = scramble_array_list([X_i, Y_i])
     return X_i, Y_i
-
-
-# '''tests'''
-# if __name__ == "__main__":
-#     # import matplotlib.pyplot as plt

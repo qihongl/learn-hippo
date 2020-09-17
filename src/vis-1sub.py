@@ -44,7 +44,8 @@ all_conds = TZ_COND_DICT.values()
 
 # exp_name = '0429-widesim-attachcond'
 # exp_name = '0220-v1-highsim-comp.8'
-exp_name = '0914-lowsim-prandom'
+# exp_name = '0914-lowsim-prandom'
+exp_name = '0914-widesim-prandom'
 # exp_name = '0425-schema.9-comp.8'
 # exp_name = '0220-v1-widesim-highdp-comp.8'
 
@@ -95,7 +96,7 @@ similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(19)
+subj_ids = np.arange(9)
 
 penaltys_train = [4]
 penaltys_test = np.array([0, 2, 4])

@@ -19,6 +19,7 @@ class P():
         penalty_discrete=1,
         penalty_onehot=0,
         normalize_return=1,
+        attach_cond=0,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -28,6 +29,7 @@ class P():
         n_mvs_rnr=3,
         enc_size=None,
         enc_mode='cum',
+        noisy_encoding=0,
         n_event_remember=4,
         recall_func='LCA',
         kernel='cosine',
@@ -36,7 +38,7 @@ class P():
         lr=1e-3,
         gamma=0,
         eta=.1,
-        cmpt=.9,
+        cmpt=.8,
         sup_epoch=None,
         n_epoch=None,
         n_example=None,
@@ -67,7 +69,7 @@ class P():
             exp_name, n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return,
+            normalize_return, attach_cond,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -75,7 +77,7 @@ class P():
             n_mvs_rnr
         )
         self.net = net(
-            recall_func, kernel, enc_mode, enc_size, dict_len,
+            recall_func, kernel, enc_mode, enc_size, noisy_encoding, dict_len,
             n_hidden, n_hidden_dec, lr, gamma, eta, cmpt,
             n_param, n_branch
         )
@@ -113,7 +115,7 @@ class env():
             n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return,
+            normalize_return, attach_cond,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -139,6 +141,8 @@ class env():
         # self.penalty_range = [i for i in range(penalty+1) if i % 2 == 0]
         self.penalty_range = [i for i in range(penalty + 1)]
         self.normalize_return = _zero_one_to_true_false(normalize_return)
+        # self.attach_cond = True if attach_cond == 1 else False
+        self.attach_cond = attach_cond
         #
         self.chance = 1 / n_branch
 
@@ -164,7 +168,7 @@ class net():
     def __init__(
         self,
         recall_func, kernel,
-        enc_mode, enc_size, dict_len,
+        enc_mode, enc_size, noisy_encoding, dict_len,
         n_hidden, n_hidden_dec, lr, gamma, eta, cmpt,
         n_param, n_branch
     ):
@@ -172,6 +176,7 @@ class net():
         self.kernel = kernel
         self.enc_mode = enc_mode
         self.enc_size = enc_size
+        self.noisy_encoding = noisy_encoding
         self.n_hidden = n_hidden
         self.n_hidden_dec = n_hidden_dec
         self.lr = lr
@@ -179,6 +184,8 @@ class net():
         self.eta = eta
         self.cmpt = cmpt
         self.dict_len = dict_len
+        if noisy_encoding == 1:
+            self.dict_len *= 2
         # inferred params
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(
             n_param, n_branch)

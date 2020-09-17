@@ -1,8 +1,7 @@
 import numpy as np
 import seaborn as sns
 
-# from scipy.stats import sem
-from analysis import get_baseline, compute_stats
+from analysis import compute_stats
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT
 from matplotlib.ticker import FormatStrFormatter

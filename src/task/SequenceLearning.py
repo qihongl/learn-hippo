@@ -72,7 +72,7 @@ class SequenceLearning():
         # expected inter event similarity under uniform assumption
         self.similarity_cap_lag = similarity_cap_lag
         if similarity_max is None:
-            self.similarity_max = (n_branch - 1) / n_branch
+            self.similarity_max = (n_branch-1) / n_branch
         else:
             self.similarity_max = similarity_max
         if similarity_min is None:
@@ -144,7 +144,7 @@ class SequenceLearning():
         T_part = T_total // self.n_parts
         pad_len = T_part - self.n_param
         event_ends = get_event_ends(T_part, self.n_parts)
-        event_bonds = [event_ends[i] + 1 for i in range(len(event_ends) - 1)]
+        event_bonds = [event_ends[i]+1 for i in range(len(event_ends)-1)]
         return T_part, pad_len, event_ends, event_bonds
 
     def get_pred_time_mask(self, T_total, T_part, pad_len, dtype=bool):
@@ -204,7 +204,7 @@ def interleave_stories(X, Y, n_parts):
     # loop over all 2-samples pairs
     for i in np.arange(0, n_stories, 2):
         # get story a and story b
-        a, b = i, i + 1
+        a, b = i, i+1
         # get sub-sequences for a and b
         X_a_split, Y_a_split = _split_xy(X[a], Y[a], n_parts)
         X_b_split, Y_b_split = _split_xy(X[b], Y[b], n_parts)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     p_rm_ob_enc = 0.5
     p_rm_ob_rcl = 0.5
     similarity_max = .5
-    similarity_min = 1 / n_branch
+    similarity_min = 1/n_branch
     # pad_len = 'random'
     pad_len = 0
     task = SequenceLearning(
@@ -266,9 +266,9 @@ if __name__ == "__main__":
 
     for ax in axes:
         for event_bond in event_bonds:
-            ax.axhline(event_bond - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
+            ax.axhline(event_bond-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
 
     '''interleaved story'''
     X, Y, misc = task.sample(
@@ -291,14 +291,13 @@ if __name__ == "__main__":
     T_total = np.shape(Y_ab)[0]
     for eb in np.arange(0, T_total, n_param)[1:]:
         for ax in axes:
-            ax.axhline(eb - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
+            ax.axhline(eb-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim-.5, color='red', linestyle='--')
+    axes[0].axvline(task.k_dim+task.v_dim-.5, color='red', linestyle='--')
     axes[0].set_xlabel('o-key | o-val | q-key')
     axes[1].set_xlabel('q-val')
 
-    yticks = [eb - n_param //
-              2 for eb in np.arange(0, T_total + 1, n_param)[1:]]
+    yticks = [eb-n_param//2 for eb in np.arange(0, T_total+1, n_param)[1:]]
     yticklabels = ['A', 'B'] * n_parts
     axes[0].set_yticks(yticks)
     axes[0].set_yticklabels(yticklabels)
