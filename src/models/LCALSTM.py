@@ -90,9 +90,6 @@ class LCALSTM(nn.Module):
         h_prev = h_prev.view(h_prev.size(1), -1)
         c_prev = c_prev.view(c_prev.size(1), -1)
         x_t = x_t.view(x_t.size(1), -1)
-        # pdb.set_trace()
-        # x_t, penalty_t = torch.split(x_t, [self.input_dim, 1], dim=1)
-        # penalty_t = x_t[:, -1].view(1, -1)
         # transform the input info
         preact = self.i2h(x_t) + self.h2h(h_prev)
         # get all gate values
@@ -106,10 +103,7 @@ class LCALSTM(nn.Module):
         c_t = torch.mul(c_prev, f_t) + torch.mul(i_t, c_t_new)
         # make 1st decision attempt
         h_t = torch.mul(o_t, c_t.tanh())
-        # hp_t = torch.cat([h_t, penalty_t], dim=1)
         dec_act_t = F.relu(self.ih(h_t))
-        # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
-        # pdb.set_trace()
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         phi_t = sigmoid(self.hpc(hpc_input_t))
@@ -120,10 +114,7 @@ class LCALSTM(nn.Module):
         '''final decision attempt'''
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
-        # hp_t = torch.cat([h_t, penalty_t], dim=1)
         dec_act_t = F.relu(self.ih(h_t))
-        # dec_act_t = torch.cat([F.relu(self.ih(h_t)), penalty_t], dim=1)
-        # dec_act_t = F.relu(self.ih(h_t))
         pi_a_t = _softmax(self.actor(dec_act_t), beta)
         value_t = self.critic(dec_act_t)
         # reshape data
