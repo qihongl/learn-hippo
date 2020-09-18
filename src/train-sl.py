@@ -40,14 +40,13 @@ parser.add_argument('--similarity_max', default=None, type=float)
 parser.add_argument('--similarity_min', default=None, type=float)
 parser.add_argument('--n_hidden', default=64, type=int)
 parser.add_argument('--n_hidden_dec', default=32, type=int)
-parser.add_argument('--lr', default=5e-4, type=float)
+parser.add_argument('--lr', default=7e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--cmpt', default=0.8, type=float)
-parser.add_argument('--n_event_remember', default=4, type=int)
+parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
-parser.add_argument('--noisy_encoding', default=0, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -80,9 +79,7 @@ n_event_remember = args.n_event_remember
 n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
-noisy_encoding = args.noisy_encoding
 log_root = args.log_root
-
 
 '''init'''
 seed_val = subj_id
@@ -139,7 +136,7 @@ save_ckpt(0, log_subpath['ckpts'], agent, optimizer_sup)
 
 
 '''task definition'''
-log_freq = 20
+log_freq = 100
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_sup = np.zeros(n_epoch,)
