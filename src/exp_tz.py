@@ -124,7 +124,7 @@ def run_tz(
                 loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(agent.parameters(), .25)
             optimizer.step()
 
         # after every event sequence, log stuff
