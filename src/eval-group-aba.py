@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 # from itertools import product
-from models.LCALSTM_v9 import LCALSTM as Agent
+from models import LCALSTM as Agent
 from task import SequenceLearning
 from exp_aba import run_aba
 from utils.params import P
@@ -11,7 +11,7 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
 
 log_root = '../log/'
 # exp_name = 'penalty-random-discrete'
-exp_name = 'penalty2pol-cmpt.9-lowsim'
+exp_name = '0916-widesim-prandom'
 
 seed = 0
 supervised_epoch = 600
