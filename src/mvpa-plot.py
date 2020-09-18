@@ -312,7 +312,7 @@ axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
 img_name = 'mvpa-outcome.png'
-f.savefig(os.path.join('../figs', img_name))
+f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')
 
 '''2. by condition, decoded response counts'''
 f, axes = plt.subplots(3, 1, figsize=(8, 13))
@@ -358,7 +358,7 @@ axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
 img_name = 'mvpa-dr.png'
-f.savefig(os.path.join('../figs', img_name))
+f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')
 #
 # '''3. by condition, then by outcome, decoded response counts'''
 # for condition in all_conditions:
@@ -454,7 +454,7 @@ f.savefig(os.path.join('../figs', img_name))
 
 '''sub-figure in paper'''
 
-f, axes = plt.subplots(2, 2, figsize=(15, 10))
+f, axes = plt.subplots(2, 2, figsize=(15, 9))
 for j, condition in enumerate(['schema consistent', 'schema violated']):
     for i, mrt in enumerate(['studied', 'dk']):
         # max_response_type
@@ -561,4 +561,4 @@ axes[-1].set_xlabel('Schema strength')
 sns.despine()
 f.tight_layout()
 img_name = 'mvpa-enc-perf-bycond.png'
-f.savefig(os.path.join('../figs', img_name))
+f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')
