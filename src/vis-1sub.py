@@ -45,7 +45,8 @@ all_conds = TZ_COND_DICT.values()
 # exp_name = '0429-widesim-attachcond'
 # exp_name = '0220-v1-highsim-comp.8'
 # exp_name = '0914-lowsim-prandom'
-exp_name = '0914-widesim-prandom'
+# exp_name = '0914-widesim-prandom'
+exp_name = '0916-widesim-prandom'
 # exp_name = '0425-schema.9-comp.8'
 # exp_name = '0220-v1-widesim-highdp-comp.8'
 
@@ -80,7 +81,7 @@ normalize_return = 1
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
-
+# attach_cond = 1
 # testing params
 enc_size_test = 16
 
@@ -91,12 +92,12 @@ p_rm_ob_rcl_test = p_test
 slience_recall_time = None
 # slience_recall_time = range(n_param)
 
-similarity_max_test = .95
+similarity_max_test = .9
 similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(9)
+subj_ids = np.arange(15)
 
 penaltys_train = [4]
 penaltys_test = np.array([0, 2, 4])
@@ -118,6 +119,7 @@ def prealloc_stats():
 
 for penalty_train in penaltys_train:
     penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
+    # penaltys_test_ = penaltys_test
     for penalty_test in penaltys_test_:
         print(
             f'penalty_train={penalty_train}, penalty_test={penalty_test}')
@@ -844,18 +846,18 @@ for penalty_train in penaltys_train:
 
         # '''end of loop over subject'''
 
-        gdata_dict = {
-            'lca_param_dicts': lca_param_dicts,
-            'auc_list': auc_list,
-            'acc_dict': acc_dict,
-            'dk_dict': dk_dict,
-            'mis_dict': mis_dict,
-            'lca_ma_list': ma_list,
-            'cosine_ma_list': ma_cos_list,
-        }
-        fname = f'p{penalty_train}-{penalty_test}-data.pkl'
-        gdata_outdir = 'temp/'
-        pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
+        # gdata_dict = {
+        #     'lca_param_dicts': lca_param_dicts,
+        #     'auc_list': auc_list,
+        #     'acc_dict': acc_dict,
+        #     'dk_dict': dk_dict,
+        #     'mis_dict': mis_dict,
+        #     'lca_ma_list': ma_list,
+        #     'cosine_ma_list': ma_cos_list,
+        # }
+        # fname = f'p{penalty_train}-{penalty_test}-data.pkl'
+        # gdata_outdir = 'temp/'
+        # pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
 
         '''group level performance'''
         n_se = 1
