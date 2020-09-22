@@ -101,7 +101,7 @@ p = P(
 
 n_parts = 3
 pad_len = 0
-p_rm_ob = 0.5
+p_rm_ob = 0.4
 # similarity_cap = .3
 # n_event_remember = 4
 n_event_remember = args.n_event_remember_aba
@@ -153,7 +153,7 @@ Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples // 2))
 
 # epoch_id, i, t = 0, 0, 0
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 fix_cond = 'DM'
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
