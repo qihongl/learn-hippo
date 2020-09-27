@@ -27,8 +27,9 @@ sns.set(style='white', palette='colorblind', context='poster')
 
 
 log_root = '../log/'
-exp_name = '0220-v1-widesim-comp.8'
-subj_ids = np.arange(10)
+# exp_name = '0220-v1-widesim-comp.8'
+exp_name = '0916-widesim-prandom'
+subj_ids = np.arange(15)
 n_subjs = len(subj_ids)
 
 supervised_epoch = 600
@@ -61,7 +62,7 @@ p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 pad_len_test = 0
-penalty_test = 4
+penalty_test = 2
 
 n_examples_test = 256
 fix_cond = 'RM'
@@ -308,13 +309,15 @@ scrambling_sensitivity['Patient'] = scrambling_sensitivity_cp
 scrambling_sensitivity_df = pd.DataFrame(columns=['values', 'condition'])
 scrambling_sensitivity_df['values'] = np.hstack(
     [scrambling_sensitivity_cc, scrambling_sensitivity_cp])
+
 scrambling_sensitivity_df['condition'] = np.hstack(
-    [['control'] * 45, ['patient'] * 45])
+    [['control'] * n_subj_pairs, ['patient'] * n_subj_pairs])
 
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
 sns.violinplot(x='condition', y='values', ax=ax,
                data=scrambling_sensitivity_df)
-ax.set_ylim([0, None])
+ax.axhline(0, color='grey', linestyle='--')
+ax.set_ylim([-.05, None])
 ax.set_xlabel('Condition')
 ax.set_ylabel('Scrambling sensitivity\n based on spatial ISC')
 sns.despine()
@@ -330,7 +333,7 @@ dabest_data = dabest.load(
     id_col='ids',
 )
 dabest_data.mean_diff.plot(
-    swarm_label='Spatial ISC', fig_size=(6, 5),
+    swarm_label='Scrambling sensitivity\n based on spatial ISC', fig_size=(7, 6),
     swarm_ylim=[0, .7],
     dpi=100,
 )

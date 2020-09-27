@@ -38,6 +38,8 @@ learning_rate = 7e-4
 n_branch = 4
 n_param = 16
 enc_size = 16
+# enc_size_test = 8
+enc_size_test = enc_size
 n_event_remember = 2
 
 n_hidden = 194
@@ -64,15 +66,13 @@ n_examples_test = 256
 
 similarity_max_test = .9
 similarity_min_test = 0
-# similarity_max_test = .9
-# similarity_min_test = .35
 
 '''loop over conditions for testing'''
 slience_recall_times = [range(n_param), None]
 # slience_recall_times = [range(n_param)]
 # slience_recall_times = [None]
 
-subj_ids = np.arange(15)
+subj_ids = np.arange(16)
 
 penaltys_train = [4]
 penaltys_test = np.array([2])
@@ -81,8 +81,9 @@ penaltys_test = np.array([2])
 # penaltys_train = [0, 1, 2, 4, 8]
 # penaltys_test = np.array([0, 1, 2, 4, 8])
 
-all_conds = ['RM', 'DM', 'NM']
-# all_conds = [None]
+# all_conds = ['RM', 'DM', 'NM']
+# all_conds = ['RM']
+all_conds = [None]
 scramble = False
 
 for slience_recall_time in slience_recall_times:
@@ -120,7 +121,7 @@ for slience_recall_time in slience_recall_times:
             p.env.def_path = def_path
             # p.env.def_prob = def_prob
             # def_prob_ = .25
-            # p.update_enc_size(8)
+            p.update_enc_size(enc_size_test)
 
             task = SequenceLearning(
                 n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
@@ -165,5 +166,13 @@ for slience_recall_time in slience_recall_times:
                 n_examples_test, fix_cond, scramble)
             test_data_dict = {'results': results,
                               'metrics': metrics, 'XY': XY}
+            if enc_size_test != enc_size:
+                test_data_dir = os.path.join(
+                    test_data_dir, f'enc_size_test-{enc_size_test}')
+                if not os.path.exists(test_data_dir):
+                    os.makedirs(test_data_dir)
+                # fpath = os.path.join(f'enc_size_test-{enc_size_test}')
+                #     test_data_dir, f'enc_size_test-{enc_size_test}', test_data_fname)
+            # else:
             fpath = os.path.join(test_data_dir, test_data_fname)
             pickle_save_dict(test_data_dict, fpath)

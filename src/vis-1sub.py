@@ -81,9 +81,11 @@ normalize_return = 1
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
-# attach_cond = 1
+attach_cond = 1
+
 # testing params
 enc_size_test = 16
+# enc_size_test = 8
 
 pad_len_test = 0
 p_test = 0
@@ -97,10 +99,12 @@ similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(15)
+subj_ids = np.arange(16)
 
-penaltys_train = [4]
-penaltys_test = np.array([0, 2, 4])
+penaltys_train = [0, 4]
+# penaltys_test = np.array([0, 2, 4])
+penaltys_test = np.array([2])
+# penaltys_test = np.array([2])
 # penaltys_test = np.array([8])
 # penaltys_train = [4]
 
@@ -119,7 +123,10 @@ def prealloc_stats():
 
 for penalty_train in penaltys_train:
     penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
-    # penaltys_test_ = penaltys_test
+    if penalty_random == 1:
+        penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
+    else:
+        penaltys_test_ = [penalty_train]
     for penalty_test in penaltys_test_:
         print(
             f'penalty_train={penalty_train}, penalty_test={penalty_test}')
@@ -204,11 +211,17 @@ for penalty_train in penaltys_train:
             test_data_dir, test_data_subdir = get_test_data_dir(
                 log_subpath, epoch_load, test_params)
             test_data_fname = get_test_data_fname(n_examples_test)
+            if enc_size_test != enc_size:
+                test_data_dir = os.path.join(
+                    test_data_dir, f'enc_size_test-{enc_size_test}')
+                test_data_subdir = os.path.join(
+                    test_data_subdir, f'enc_size_test-{enc_size_test}')
             fpath = os.path.join(test_data_dir, test_data_fname)
             # skip if no data
             if not os.path.exists(fpath):
                 print('DNE')
                 continue
+
             # make fig dir
             fig_dir = os.path.join(log_subpath['figs'], test_data_subdir)
             if not os.path.exists(fig_dir):
@@ -535,8 +548,8 @@ for penalty_train in penaltys_train:
             dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
             ndk_norm_mu, ndk_norm_se = compute_stats(ndk_norms)
 
-            f, ax = plt.subplots(1, 1, figsize=(5, 5))
-            xticklabels = ['uncertain', 'certain']
+            f, ax = plt.subplots(1, 1, figsize=(4.5, 4))
+            xticklabels = ['Uncertain', 'Certain']
             xticks = range(len(xticklabels))
             ax.bar(x=xticks, height=[dk_norm_mu, ndk_norm_mu],
                    yerr=np.array([dk_norm_se, ndk_norm_se]) * 3)
@@ -545,6 +558,10 @@ for penalty_train in penaltys_train:
             ax.set_ylabel('Activity norm')
             f.tight_layout()
             sns.despine()
+            fname = fname = f'../figs/{exp_name}/state-norm-mu.png'
+            # fig_path = os.path.join(
+            #     fig_dir, f'state-norm-mu.png')
+            f.savefig(fname, dpi=100, bbox_to_anchor='tight')
 
             proto_response_p2 = np.tile(
                 def_path_int, (np.shape(actions)[0], 1))
@@ -846,18 +863,18 @@ for penalty_train in penaltys_train:
 
         # '''end of loop over subject'''
 
-        # gdata_dict = {
-        #     'lca_param_dicts': lca_param_dicts,
-        #     'auc_list': auc_list,
-        #     'acc_dict': acc_dict,
-        #     'dk_dict': dk_dict,
-        #     'mis_dict': mis_dict,
-        #     'lca_ma_list': ma_list,
-        #     'cosine_ma_list': ma_cos_list,
-        # }
-        # fname = f'p{penalty_train}-{penalty_test}-data.pkl'
-        # gdata_outdir = 'temp/'
-        # pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
+        gdata_dict = {
+            'lca_param_dicts': lca_param_dicts,
+            'auc_list': auc_list,
+            'acc_dict': acc_dict,
+            'dk_dict': dk_dict,
+            'mis_dict': mis_dict,
+            'lca_ma_list': ma_list,
+            'cosine_ma_list': ma_cos_list,
+        }
+        fname = f'{exp_name}-p{penalty_train}-{penalty_test}-data.pkl'
+        gdata_outdir = 'temp/'
+        pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
 
         '''group level performance'''
         n_se = 1
@@ -923,8 +940,8 @@ for penalty_train in penaltys_train:
             )
 
         ax.legend()
-        ax.set_ylim([-.05, .7])
-        # ax.set_ylim([-.05, .9])
+        # ax.set_ylim([-.05, .7])
+        ax.set_ylim([-.05, .9])
         ax.set_ylabel(lca_param_names[0])
         ax.set_xlabel('Time (part 2)')
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
@@ -979,10 +996,10 @@ for penalty_train in penaltys_train:
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 if metric_name == 'lca':
-                    ax.set_yticks([0, .2, .4])
-                    ax.set_ylim([-.01, .45])
-                    # ax.set_yticks([0, .2, .4, .6])
-                    # ax.set_ylim([-.01, .75])
+                    # ax.set_yticks([0, .2, .4])
+                    # ax.set_ylim([-.01, .45])
+                    ax.set_yticks([0, .3, .6])
+                    ax.set_ylim([-.01, .8])
                 else:
                     ax.set_yticks([0, .5, 1])
                     ax.set_ylim([-.05, 1.05])

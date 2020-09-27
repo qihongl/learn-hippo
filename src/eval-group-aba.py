@@ -15,7 +15,7 @@ exp_name = '0916-widesim-prandom'
 
 seed = 0
 supervised_epoch = 600
-epoch_load = 1200
+epoch_load = 1600
 learning_rate = 7e-4
 n_event_remember_train = 2
 
@@ -37,25 +37,25 @@ normalize_return = 1
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 
 # testing params
 pad_len_test = 0
 
 '''loop over conditions for testing'''
 
-subj_ids = np.arange(8)
+subj_ids = np.arange(16)
 penalty_train = 4
-fix_penalty = 4
+fix_penalty = 2
 fix_cond = 'DM'
 
 n_examples_test = 256
 # similarity_cap_test = .3
-similarity_max_test = .4
+similarity_max_test = .9
 similarity_min_test = 0
 
 n_event_remember_test = 2
-p_rm_ob = 0.5
+p_rm_ob = 0.4
 n_parts = 3
 pad_len = 0
 scramble = False
@@ -83,7 +83,7 @@ for subj_id in subj_ids:
     # init env
     task = SequenceLearning(
         n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len,
-        p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=0,
+        p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
         similarity_cap_lag=p.n_event_remember,
         similarity_max=similarity_max_test, similarity_min=similarity_min_test,
         n_parts=n_parts
@@ -91,14 +91,15 @@ for subj_id in subj_ids:
 
     # load the agent back
     agent = Agent(
-        input_dim=task.x_dim + p.extra_x_dim, output_dim=p.a_dim,
+        input_dim=task.x_dim, output_dim=p.a_dim,
         rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
         dict_len=n_event_remember_test
     )
     log_output_path = os.path.join(
         log_subpath['ckpts'], f'n_event_remember-{n_event_remember_test}',
         f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_min_test}_{similarity_max_test}')
-    agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
+    ckpt_path = os.path.join(log_subpath['ckpts'], 'aba')
+    agent, optimizer = load_ckpt(epoch_load, ckpt_path, agent)
     # if data dir does not exsits ... skip
     if agent is None:
         print('DNE')

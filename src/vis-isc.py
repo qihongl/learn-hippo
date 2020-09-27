@@ -31,9 +31,10 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-exp_name = '0220-v1-widesim-comp.8'
+# exp_name = '0220-v1-widesim-comp.8'
+exp_name = '0916-widesim-prandom'
 
-subj_ids = np.arange(10)
+subj_ids = np.arange(15)
 n_subjs = len(subj_ids)
 all_conds = ['RM', 'DM', 'NM']
 
@@ -66,7 +67,7 @@ p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 pad_len_test = 0
-penalty_test = 4
+penalty_test = 2
 
 slience_recall_time = None
 # slience_recall_time = 2
@@ -78,10 +79,10 @@ def prealloc():
     return {cond: [] for cond in all_conds}
 
 
+has_memory_conds = ['RM', 'DM']
 CMs_dlist = {cond: [] for cond in all_conds}
 DAs_dlist = {cond: [] for cond in all_conds}
 ma_dlist = {cond: [] for cond in has_memory_conds}
-has_memory_conds = ['RM', 'DM']
 
 
 # fix_cond = 'RM'
@@ -394,7 +395,7 @@ f.savefig('temp/sisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 '''plot temporal isc'''
 
 # compute stats
-n_se = 2
+n_se = 3
 mu_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 er_ = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 for ref_cond in cond_ids.keys():

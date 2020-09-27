@@ -1,3 +1,4 @@
+from sklearn.metrics.pairwise import cosine_similarity
 import os
 import torch
 import pickle
@@ -25,8 +26,7 @@ from matplotlib.lines import Line2D
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-exp_name = 'penalty-random-discrete'
-# exp_name = 'penalty-random-discrete-highdp'
+exp_name = '0916-widesim-prandom'
 
 seed = 0
 supervised_epoch = 600
@@ -37,6 +37,9 @@ n_param = 16
 enc_size = 16
 n_event_remember_train = 2
 def_prob = None
+
+comp_val = .8
+leak_val = 0
 
 n_hidden = 194
 n_hidden_dec = 128
@@ -51,7 +54,7 @@ normalize_return = 1
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
-p_rm_ob_rcl_load = .3
+p_rm_ob_rcl_load = 0
 
 # testing params
 pad_len_test = 0
@@ -64,15 +67,14 @@ n_examples_test = 256
 '''loop over conditions for testing'''
 
 # subj_ids = np.arange(5)
-epoch_load = 1200
+epoch_load = 1600
 penalty_train = 4
-penalty_test = 4
 fix_cond = 'DM'
 
 n_event_remember_test = 2
-similarity_max_test = .4
+similarity_max_test = .9
 similarity_min_test = 0
-p_rm_ob = 0.5
+p_rm_ob = 0.4
 n_examples = 256
 n_parts = 3
 scramble = False
@@ -117,9 +119,10 @@ XY = test_data_dict['XY']
 '''analysis'''
 
 T_total = np.shape(Y_)[1]
-activity, ctrl_param = process_cache(log_cache_, T_total, p)
+activity, [inpt] = process_cache(log_cache_, T_total, p)
 [C, H, M, CM, DA, V] = activity
-[inpt, leak, cmpt] = ctrl_param
+comp = np.full(np.shape(inpt), comp_val)
+leak = np.full(np.shape(inpt), leak_val)
 
 actions = np.argmax(dist_a_, axis=-1)
 targets = np.argmax(Y_, axis=-1)
@@ -136,23 +139,23 @@ dks_mu, dks_se = compute_stats(dks)
 rewards_mu, rewards_se = compute_stats(rewards)
 
 inpt_mu, inpt_se = compute_stats(inpt)
-cmpt_mu, cmpt_se = compute_stats(cmpt)
+cmpt_mu, cmpt_se = compute_stats(comp)
 
 
 n_events = 2
-corrects_mu_splits = np.array_split(corrects_mu, n_parts*n_events)
-corrects_se_splits = np.array_split(corrects_se, n_parts*n_events)
-mistakes_mu_splits = np.array_split(mistakes_mu, n_parts*n_events)
-mistakes_se_splits = np.array_split(mistakes_se, n_parts*n_events)
-dks_mu_splits = np.array_split(dks_mu, n_parts*n_events)
-dks_se_splits = np.array_split(dks_se, n_parts*n_events)
-rewards_mu_splits = np.array_split(rewards_mu, n_parts*n_events)
-rewards_se_splits = np.array_split(rewards_se, n_parts*n_events)
+corrects_mu_splits = np.array_split(corrects_mu, n_parts * n_events)
+corrects_se_splits = np.array_split(corrects_se, n_parts * n_events)
+mistakes_mu_splits = np.array_split(mistakes_mu, n_parts * n_events)
+mistakes_se_splits = np.array_split(mistakes_se, n_parts * n_events)
+dks_mu_splits = np.array_split(dks_mu, n_parts * n_events)
+dks_se_splits = np.array_split(dks_se, n_parts * n_events)
+rewards_mu_splits = np.array_split(rewards_mu, n_parts * n_events)
+rewards_se_splits = np.array_split(rewards_se, n_parts * n_events)
 
-inpt_mu_splits = np.array_split(inpt_mu, n_parts*n_events)
-inpt_se_splits = np.array_split(inpt_se, n_parts*n_events)
-cmpt_mu_splits = np.array_split(cmpt_mu, n_parts*n_events)
-cmpt_se_splits = np.array_split(cmpt_se, n_parts*n_events)
+inpt_mu_splits = np.array_split(inpt_mu, n_parts * n_events)
+inpt_se_splits = np.array_split(inpt_se, n_parts * n_events)
+cmpt_mu_splits = np.array_split(cmpt_mu, n_parts * n_events)
+cmpt_se_splits = np.array_split(cmpt_se, n_parts * n_events)
 
 corrects_mu_bp = np.zeros((n_parts, n_param))
 corrects_se_bp = np.zeros((n_parts, n_param))
@@ -169,74 +172,76 @@ cmpt_mu_bp = np.zeros((n_parts, n_param))
 cmpt_se_bp = np.zeros((n_parts, n_param))
 
 
-for ii, i in enumerate(np.arange(0, n_parts*n_events, 2)):
-    corrects_mu_bp[ii] = np.mean(corrects_mu_splits[i: i+n_events], axis=0)
-    corrects_se_bp[ii] = np.mean(corrects_se_splits[i: i+n_events], axis=0)
-    mistakes_mu_bp[ii] = np.mean(mistakes_mu_splits[i: i+n_events], axis=0)
-    mistakes_se_bp[ii] = np.mean(mistakes_se_splits[i: i+n_events], axis=0)
-    dks_mu_bp[ii] = np.mean(dks_mu_splits[i: i+n_events], axis=0)
-    dks_se_bp[ii] = np.mean(dks_se_splits[i: i+n_events], axis=0)
-    rewards_mu_bp[ii] = np.mean(rewards_mu_splits[i: i+n_events], axis=0)
-    rewards_se_bp[ii] = np.mean(rewards_se_splits[i: i+n_events], axis=0)
+for ii, i in enumerate(np.arange(0, n_parts * n_events, 2)):
+    corrects_mu_bp[ii] = np.mean(corrects_mu_splits[i: i + n_events], axis=0)
+    corrects_se_bp[ii] = np.mean(corrects_se_splits[i: i + n_events], axis=0)
+    mistakes_mu_bp[ii] = np.mean(mistakes_mu_splits[i: i + n_events], axis=0)
+    mistakes_se_bp[ii] = np.mean(mistakes_se_splits[i: i + n_events], axis=0)
+    dks_mu_bp[ii] = np.mean(dks_mu_splits[i: i + n_events], axis=0)
+    dks_se_bp[ii] = np.mean(dks_se_splits[i: i + n_events], axis=0)
+    rewards_mu_bp[ii] = np.mean(rewards_mu_splits[i: i + n_events], axis=0)
+    rewards_se_bp[ii] = np.mean(rewards_se_splits[i: i + n_events], axis=0)
 
-    inpt_mu_bp[ii] = np.mean(inpt_mu_splits[i: i+n_events], axis=0)
-    inpt_se_bp[ii] = np.mean(inpt_se_splits[i: i+n_events], axis=0)
-    cmpt_mu_bp[ii] = np.mean(cmpt_mu_splits[i: i+n_events], axis=0)
-    cmpt_se_bp[ii] = np.mean(cmpt_se_splits[i: i+n_events], axis=0)
+    inpt_mu_bp[ii] = np.mean(inpt_mu_splits[i: i + n_events], axis=0)
+    inpt_se_bp[ii] = np.mean(inpt_se_splits[i: i + n_events], axis=0)
+    cmpt_mu_bp[ii] = np.mean(cmpt_mu_splits[i: i + n_events], axis=0)
+    cmpt_se_bp[ii] = np.mean(cmpt_se_splits[i: i + n_events], axis=0)
 
 '''plot'''
 
 # return - barplot
-f, ax = plt.subplots(1, 1, figsize=(6, 5))
-xticks = range(n_parts)
-xticklabels = ['A/B %d' % i for i in range(n_parts)]
-ax.bar(
-    x=xticks,
-    height=np.mean(rewards_mu_bp, axis=1),
-    yerr=np.mean(rewards_se_bp, axis=1),
-)
-ax.set_xticks(xticks)
-# ax.set_xticklabels(xticklabels)
-ax.set_xlabel('Block ID')
-ax.set_ylabel('Average return')
-sns.despine()
-f.tight_layout()
-
-# accuracy, dks, mistakes - bar plot
-f, axes = plt.subplots(3, 1, figsize=(6, 10))
-xticks = range(n_parts)
-xticklabels = ['A/B %d' % i for i in range(n_parts)]
-axes[0].bar(
-    x=xticks,
-    height=np.mean(corrects_mu_bp, axis=1),
-    yerr=np.mean(corrects_se_bp, axis=1),
-)
-axes[1].bar(
-    x=xticks,
-    height=np.mean(dks_mu_bp, axis=1),
-    yerr=np.mean(dks_se_bp, axis=1),
-)
-axes[2].bar(
-    x=xticks,
-    height=np.mean(mistakes_mu_bp, axis=1),
-    yerr=np.mean(mistakes_se_bp, axis=1),
-)
-axes[0].set_ylabel('Accuracy')
-axes[1].set_ylabel('% dks')
-axes[2].set_ylabel('% errors')
-for ax in axes:
-    ax.set_xlabel('Block ID')
-    ax.set_xticks(xticks)
-    # ax.set_xticklabels(xticklabels)
-sns.despine()
-f.tight_layout()
-
+# f, ax = plt.subplots(1, 1, figsize=(6, 5))
+# xticks = range(n_parts)
+# xticklabels = ['A/B %d' % i for i in range(n_parts)]
+# ax.bar(
+#     x=xticks,
+#     height=np.mean(rewards_mu_bp, axis=1),
+#     yerr=np.mean(rewards_se_bp, axis=1),
+# )
+# ax.set_xticks(xticks)
+# # ax.set_xticklabels(xticklabels)
+# ax.set_xlabel('Block ID')
+# ax.set_ylabel('Average return')
+# sns.despine()
+# f.tight_layout()
+#
+# # accuracy, dks, mistakes - bar plot
+# f, axes = plt.subplots(3, 1, figsize=(6, 10))
+# xticks = range(n_parts)
+# xticklabels = ['A/B %d' % i for i in range(n_parts)]
+# axes[0].bar(
+#     x=xticks,
+#     height=np.mean(corrects_mu_bp, axis=1),
+#     yerr=np.mean(corrects_se_bp, axis=1),
+# )
+# axes[1].bar(
+#     x=xticks,
+#     height=np.mean(dks_mu_bp, axis=1),
+#     yerr=np.mean(dks_se_bp, axis=1),
+# )
+# axes[2].bar(
+#     x=xticks,
+#     height=np.mean(mistakes_mu_bp, axis=1),
+#     yerr=np.mean(mistakes_se_bp, axis=1),
+# )
+# axes[0].set_ylabel('Accuracy')
+# axes[1].set_ylabel('% dks')
+# axes[2].set_ylabel('% errors')
+# for ax in axes:
+#     ax.set_xlabel('Block ID')
+#     ax.set_xticks(xticks)
+#     # ax.set_xticklabels(xticklabels)
+# sns.despine()
+# f.tight_layout()
+grey_pal = sns.color_palette('Greys', n_colors=n_parts)
+lines = [Line2D([0], [0], color=c, linewidth=3) for c in grey_pal]
+labels = ['Block %d' % i for i in range(n_parts)]
 # accuracy, dks, mistakes - line plot
 b_pals = sns.color_palette('Blues', n_colors=n_parts)
 g_pals = sns.color_palette('Greens', n_colors=n_parts)
 r_pals = sns.color_palette('Reds', n_colors=n_parts)
-f, axes = plt.subplots(3, 1, figsize=(7, 12))
-for ii, i in enumerate(np.arange(0, n_parts*n_events, 2)):
+f, axes = plt.subplots(1, 3, figsize=(15, 7))
+for ii, i in enumerate(np.arange(0, n_parts * n_events, 2)):
     axes[0].errorbar(
         x=range(n_param), y=corrects_mu_bp[ii], yerr=corrects_se_bp[ii],
         color=b_pals[ii], label=f'{ii}'
@@ -251,55 +256,60 @@ for ii, i in enumerate(np.arange(0, n_parts*n_events, 2)):
     )
 for ax in axes:
     ax.set_xlabel('Time')
-    ax.legend(range(n_parts), title='Block ID')
     ax.set_ylim([-.05, 1.05])
-    ax.axhline(1, color='grey', linestyle='--')
-    ax.axhline(0, color='grey', linestyle='--')
+    # ax.legend(range(n_parts), title='Block ID')
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
+axes[1].legend(
+    lines, labels, ncol=1, loc='upper center', bbox_to_anchor=(0.5, 1.6)
+)
 axes[0].set_ylabel('Accuracy')
 axes[1].set_ylabel('Don\'t knows')
 axes[2].set_ylabel('Mistakes')
 sns.despine()
 f.tight_layout()
 
+fname = f'../figs/{exp_name}/simulated-behav-chang-etal-2020.png'
+f.savefig(fname, dpi=100, bbox_to_anchor='tight')
 
-# lca param - bar plot
-f, axes = plt.subplots(2, 1, figsize=(6, 9))
-xticks = range(n_parts)
-xticklabels = ['A/B %d' % i for i in range(n_parts)]
-
-axes[0].bar(
-    x=xticks,
-    height=np.mean(inpt_mu_bp, axis=1),
-    yerr=np.mean(inpt_se_bp, axis=1),
-)
-axes[0].set_xticks(xticks)
-# ax.set_xticklabels(xticklabels)
-axes[0].set_xlabel('Block ID')
-axes[0].set_ylabel('Input gate')
-axes[0].set_ylim([.06, None])
-
-axes[1].bar(
-    x=xticks,
-    height=np.mean(cmpt_mu_bp, axis=1),
-    yerr=np.mean(cmpt_se_bp, axis=1),
-    # bottom=np.mean(cmpt_mu_bp)/2
-)
-axes[1].set_xticks(xticks)
-# ax.set_xticklabels(xticklabels)
-axes[1].set_xlabel('Block ID')
-axes[1].set_ylabel('Competition')
-axes[1].set_ylim([.6, None])
-# axes[1].set_ylim([np.mean(cmpt_mu_bp)-.1, None])
-sns.despine()
-f.tight_layout()
-
-
+# # lca param - bar plot
+# f, axes = plt.subplots(2, 1, figsize=(6, 9))
+# xticks = range(n_parts)
+# xticklabels = ['A/B %d' % i for i in range(n_parts)]
+#
+# axes[0].bar(
+#     x=xticks,
+#     height=np.mean(inpt_mu_bp, axis=1),
+#     yerr=np.mean(inpt_se_bp, axis=1),
+# )
+# axes[0].set_xticks(xticks)
+# # ax.set_xticklabels(xticklabels)
+# axes[0].set_xlabel('Block ID')
+# axes[0].set_ylabel('Input gate')
+# axes[0].set_ylim([.06, None])
+#
+# axes[1].bar(
+#     x=xticks,
+#     height=np.mean(cmpt_mu_bp, axis=1),
+#     yerr=np.mean(cmpt_se_bp, axis=1),
+#     # bottom=np.mean(cmpt_mu_bp)/2
+# )
+# axes[1].set_xticks(xticks)
+# # ax.set_xticklabels(xticklabels)
+# axes[1].set_xlabel('Block ID')
+# axes[1].set_ylabel('Competition')
+# axes[1].set_ylim([.6, None])
+# # axes[1].set_ylim([np.mean(cmpt_mu_bp)-.1, None])
+# sns.despine()
+# f.tight_layout()
+#
+#
 # lca params - line plot
 b_pals = sns.color_palette('Blues', n_colors=n_parts)
 g_pals = sns.color_palette('Greens', n_colors=n_parts)
 f, axes = plt.subplots(2, 1, figsize=(7, 9))
-for ii, i in enumerate(np.arange(0, n_parts*n_events, 2)):
+for ii, i in enumerate(np.arange(0, n_parts * n_events, 2)):
     axes[0].errorbar(
         x=range(n_param), y=inpt_mu_bp[ii], yerr=inpt_se_bp[ii],
         color=b_pals[ii], label=f'{ii}'
@@ -319,21 +329,20 @@ sns.despine()
 f.tight_layout()
 
 # schema pattern similarity
-from sklearn.metrics.pairwise import cosine_similarity
 
-rs_A = np.zeros((n_examples//2, T_total))
-rs_B = np.zeros((n_examples//2, T_total))
+rs_A = np.zeros((n_examples // 2, T_total))
+rs_B = np.zeros((n_examples // 2, T_total))
 
 np.shape(C[i])
 
 i = 0
-for i in range(n_examples//2):
+for i in range(n_examples // 2):
     C_i_z = (C[i] - np.mean(C[i], axis=0)) / np.std(C[i], axis=0)
     # C_i_z = C[i]
-    C_i_splits = np.array(np.array_split(C_i_z, n_parts*n_events))
+    C_i_splits = np.array(np.array_split(C_i_z, n_parts * n_events))
 
-    C_i_A = C_i_splits[np.arange(0, n_parts*n_events, 2), :, :]
-    C_i_B = C_i_splits[np.arange(0, n_parts*n_events, 2)+1, :, :]
+    C_i_A = C_i_splits[np.arange(0, n_parts * n_events, 2), :, :]
+    C_i_B = C_i_splits[np.arange(0, n_parts * n_events, 2) + 1, :, :]
     C_i_A = np.reshape(C_i_A, newshape=(-1, n_hidden))
     C_i_B = np.reshape(C_i_B, newshape=(-1, n_hidden))
     sch_pat_i_A = np.mean(C_i_A, axis=0, keepdims=True)
@@ -368,7 +377,7 @@ rs_A_se_splits = np.array_split(rs_A_se, n_parts)
 rs_B_se_splits = np.array_split(rs_B_se, n_parts)
 
 cb_pal = sns.color_palette('colorblind')
-alphas = [1/3, 2/3, 1]
+alphas = [1 / 3, 2 / 3, 1]
 
 grey_pal = sns.color_palette('Greys', n_colors=n_parts)
 lines = [Line2D([0], [0], color=c, linewidth=3) for c in grey_pal]
@@ -376,32 +385,42 @@ labels = ['Block %d' % i for i in range(n_parts)]
 xticklabels = ['A', 'B']
 lines += [Line2D([0], [0], color=c, linewidth=3) for c in cb_pal[:2]]
 labels += ['to typical %s pattern' % ltr for ltr in xticklabels]
-lines += [Line2D([0], [0], color='red', linewidth=3, alpha=.3, linestyle='--')]
-labels += ['event boundary']
+# lines += [Line2D([0], [0], color='black', linewidth=3, linestyle='--')]
+# labels += ['event boundary']
 
-f, ax = plt.subplots(1, 1, figsize=(9, 6))
-ax.axvline(n_param-1, color='red', alpha=.3, linestyle='--')
+f, ax = plt.subplots(1, 1, figsize=(8, 9))
+ax.axvline(n_param, color='k', alpha=1, linestyle='--')
 for i in np.arange(n_parts)[::-1]:
     ax.errorbar(
-        x=range(n_param*n_events), y=rs_A_mu_splits[i], yerr=rs_A_se_splits[i],
+        x=range(n_param * n_events), y=rs_A_mu_splits[i], yerr=rs_A_se_splits[i],
         color=cb_pal[0], alpha=alphas[i]
     )
     ax.errorbar(
-        x=range(n_param*n_events), y=rs_B_mu_splits[i], yerr=rs_B_se_splits[i],
+        x=range(n_param * n_events), y=rs_B_mu_splits[i], yerr=rs_B_se_splits[i],
         color=cb_pal[1], alpha=alphas[i]
     )
-ax.legend(lines, labels, ncol=2,
-          # bbox_to_anchor=(0.15, 1.05)
-          )
-ax.axhline(0, color='grey', alpha=.3, linestyle='--')
-ax.set_xlabel('Time')
+
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+ax.legend(
+    lines, labels, ncol=2, loc='upper center', bbox_to_anchor=(0.5, 1.4)
+)
+# ax.axhline(0, color='grey', alpha=.3, linestyle='--')
+
+ax.set_xticks(np.arange(0, n_param * 2 + 1, 8))
+ax.set_xticklabels(np.arange(0, n_param * 2 + 1, 8) - n_param)
+ax.set_xlabel(
+    '   Story line B        |         Story line A\n  Time from event sequence onset')
 ax.set_ylabel('Pattern similarity')
 sns.despine()
 f.tight_layout()
+fname = f'../figs/{exp_name}/simulated-ps-chang-etal-2020.png'
+f.savefig(fname, dpi=100, bbox_to_anchor='tight')
+
 
 # recall strength - overlay blocks
 sim_cos, sim_lca = compute_cell_memory_similarity(
-    C, V, inpt, leak, cmpt)
+    C, V, inpt, leak, comp)
 
 grey_pal = sns.color_palette('Greys', n_colors=n_parts)
 lines = [Line2D([0], [0], color=c, linewidth=3) for c in grey_pal]
@@ -417,17 +436,17 @@ for i in range(np.shape(sim_lca_mu)[1]):
     sim_lca_se_splits_i = np.array_split(sim_lca_se[:, i], n_parts)
     for j in range(n_parts):
         ax.errorbar(
-            x=range(n_param*n_events), y=sim_lca_mu_splits_i[j],
+            x=range(n_param * n_events), y=sim_lca_mu_splits_i[j],
             yerr=sim_lca_se_splits_i[j],
             color=cb_pal[i], alpha=alphas[j]
         )
 ax.legend(lines, labels, ncol=2, bbox_to_anchor=(0.2, 1.05))
 ax.axhline(0, color='grey', alpha=.3, linestyle='--')
-ax.axvline(n_param-1, color='red', alpha=.3, linestyle='--')
-xticks = np.arange(n_param, n_param*n_events+1, n_param) - n_param//2
+ax.axvline(n_param - 1, color='red', alpha=.3, linestyle='--')
+xticks = np.arange(n_param, n_param * n_events + 1, n_param) - n_param // 2
 ax.set_xticks(xticks)
 ax.set_xticklabels(xticklabels)
 ax.set_xlabel('Time')
-ax.set_ylabel('Recall strength')
+ax.set_ylabel('Memory activation')
 sns.despine()
 f.tight_layout()

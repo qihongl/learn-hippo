@@ -16,6 +16,7 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 T = 16
 
+exp_name = '0916-widesim-prandom'
 gdata_outdir = 'temp/'
 penaltys_train = [4]
 penaltys_test = [0, 4]
@@ -34,7 +35,7 @@ ptrain = penaltys_train[0]
 for ptest in penaltys_test:
     print(f'ptrain={ptrain}, ptest={ptest}')
     # load data
-    fname = f'p{ptrain}-{ptest}-data.pkl'
+    fname = f'{exp_name}-p{ptrain}-{ptest}-data.pkl'
     data_load_path = os.path.join(gdata_outdir, fname)
     data = pickle_load_dict(data_load_path)
     # unpack data
@@ -208,3 +209,5 @@ dabest_data = dabest.load(
     data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
 )
 dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(10, 6))
+print(dabest_data.mean_diff)
+dabest_data.mean_diff.statistical_tests
