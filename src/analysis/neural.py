@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from sklearn import metrics
 from itertools import product
-from utils.utils import to_sqnp, to_np, to_sqpth, to_pth
+from utils.utils import to_sqnp, to_np, to_sqpth, to_pth, chunk
 from analysis import compute_stats
 from models.DND import compute_similarities, transform_similarities
 
@@ -150,8 +150,8 @@ def get_hist_info(array_l, array_r, bins=50, hist_range=(0, 1)):
 def get_hist_info_(array_1d, bins=50, hist_range=(0, 1)):
     dist_, dist_edges = np.histogram(array_1d, bins=bins, range=hist_range)
     dist_normed = dist_ / np.sum(dist_)
-    dist_edges_mids = (dist_edges[1:]+dist_edges[:-1])/2.
-    bin_width = dist_edges[1]-dist_edges[0]
+    dist_edges_mids = (dist_edges[1:] + dist_edges[:-1]) / 2.
+    bin_width = dist_edges[1] - dist_edges[0]
     return dist_, [dist_edges, dist_normed, dist_edges_mids, bin_width]
 
 
@@ -193,3 +193,28 @@ def compute_auc_over_time(
     # compute area under roc curves
     auc = [metrics.auc(fprs[t], tprs[t]) for t in range(event_len)]
     return tprs, fprs, auc
+
+
+def build_yob(o_keys_p, o_vals_p, def_yob_val=-1):
+    '''build targets for MVPA analysis
+    '''
+    n_trials, T_part = np.shape(o_keys_p)
+    Yob_p = np.full((n_trials, T_part, T_part), def_yob_val)
+    for i in range(n_trials):
+        # construct Y for the t-th classifier
+        for t in range(T_part):
+            time_observed = np.argmax(o_keys_p[i] == t)
+            # the y for the i-th trial for the t-th feature
+            y_it = np.full((T_part), def_yob_val)
+            if not np.isnan(o_vals_p[i][time_observed]):
+                y_it[time_observed:] = o_vals_p[i][time_observed]
+            Yob_p[i, :, t] = y_it
+    return Yob_p
+
+
+def build_cv_ids(n_data, n_folds):
+    cvplits = chunk(list(range(n_data)), n_folds)
+    cvids = np.zeros(n_data)
+    for ici, cvplits_i in enumerate(cvplits):
+        cvids[cvplits_i] = ici
+    return cvids
