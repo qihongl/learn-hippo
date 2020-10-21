@@ -31,7 +31,8 @@ sns.set(style='white', palette='colorblind', context='poster')
 cb_pal = sns.color_palette('colorblind')
 alphas = [1 / 3, 2 / 3, 1]
 
-log_root = '../log/'
+# log_root = '../log/'
+log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 exp_name = '0916-widesim-prandom'
 
 seed = 0
