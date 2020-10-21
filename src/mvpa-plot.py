@@ -7,7 +7,7 @@ from copy import deepcopy
 from collections import defaultdict
 from vis import print_dict
 from utils.io import pickle_load_dict
-from analysis import compute_stats
+from analysis import compute_stats, remove_none
 
 # define some constants
 sns.set(style='white', palette='colorblind', context='poster')
@@ -28,6 +28,8 @@ def split_df_wrt_schema_condition(df):
 
 
 # prealloc
+mvpa_acc_mu = {'%.2f' % dp: None for dp in def_prob_range}
+mvpa_acc_se = {'%.2f' % dp: None for dp in def_prob_range}
 all_enc_dicts = {'%.2f' % dp: None for dp in def_prob_range}
 all_scom_counts_dicts = {'%.2f' % dp: None for dp in def_prob_range}
 all_scmo_counts_dicts = {'%.2f' % dp: None for dp in def_prob_range}
@@ -49,12 +51,11 @@ enc_acc_gmu = np.zeros(len(def_prob_range))
 enc_acc_gse = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gmu = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
-# schm_v_mr_schematic = {'%.2f' % def_prob: [] for def_prob in def_prob_range}
-# schm_v_mis_schematic = {'%.2f' % def_prob: [] for def_prob in def_prob_range}
 
 # for all schema levels
 # dpi, def_prob = 6, .7
-exp_name = '0717-dp'
+# exp_name = '0717-dp'
+exp_name = '0916-widesim-pfixed'
 # def_prob_range = np.arange(.25, 1, .1)
 
 for dpi, def_prob in enumerate(def_prob_range):
@@ -69,7 +70,12 @@ for dpi, def_prob in enumerate(def_prob_range):
         mvpa_data_dict['schematic_enc_err_rate_g'])
     dfs_grcl = mvpa_data_dict['df_grcl']
     dfs_genc = mvpa_data_dict['df_genc']
+    mvpa_acc_g = mvpa_data_dict['match_rate_g']
     n_subjs = len(dfs_grcl)
+
+    '''compute mvpa accuracy'''
+    mvpa_acc_mu['%.2f' % def_prob], mvpa_acc_se['%.2f' % def_prob] = compute_stats(
+        remove_none(np.array(mvpa_acc_g)))
 
     ''' compute encoding performance'''
     none_loc = enc_acc_g == None
@@ -269,6 +275,25 @@ color_b = sns.color_palette()[0]
 width = 0.6
 error_kw = dict()
 xticks = range(len(def_prob_range))
+xticklabels = ['%.2f' % dp for dp in def_prob_range]
+
+
+'''0. mvpa acc '''
+f, ax = plt.subplots(1, 1, figsize=(7, 4))
+mvpa_acc_mus = np.array([v for k, v in mvpa_acc_mu.items()])
+mvpa_acc_ses = np.array([v for k, v in mvpa_acc_se.items()])
+for pi in range(np.shape(mvpa_acc_mus)[1]):
+    ax.errorbar(x=xticks, y=mvpa_acc_mus[:, pi],
+                # yerr=mvpa_acc_ses[:, pi]
+                )
+ax.set_ylim([0, 1])
+ax.set_xticks(xticks)
+ax.set_xticklabels(xticklabels)
+ax.set_ylabel('Accuracy')
+ax.set_xlabel('Schema strength')
+sns.despine()
+overall_mean_mvpa_acc = np.mean(mvpa_acc_mus, axis=0)
+print(f'overall_mean_mvpa_acc = {overall_mean_mvpa_acc}')
 
 '''1. by condition, outcome counts'''
 f, axes = plt.subplots(3, 1, figsize=(8, 13))
@@ -300,7 +325,7 @@ for ci, condition in enumerate(all_conditions):
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
     axes[ci].set_xticks(xticks)
-    axes[ci].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+    axes[ci].set_xticklabels(xticklabels)
     axes[ci].set_yticks([0, .5, 1])
     axes[ci].set_ylim([-.025, 1.025])
     axes[ci].set_xlim([-.5, 7.5])
@@ -345,7 +370,7 @@ for ci, condition in enumerate(all_conditions):
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
     axes[ci].set_xticks(xticks)
-    axes[ci].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+    axes[ci].set_xticklabels(xticklabels)
     axes[ci].set_yticks([0, .5, 1])
     axes[ci].set_ylim([-.025, 1.025])
     axes[ci].set_xlim([-.5, 7.5])
@@ -486,7 +511,7 @@ for j, condition in enumerate(['schema consistent', 'schema violated']):
             axes[i, j].set_title(f'decoded = {mrt_txt}')
         axes[i, j].set_ylabel('%')
         axes[i, j].set_xticks(xticks)
-        axes[i, j].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+        axes[i, j].set_xticklabels(xticklabels)
         axes[i, j].set_yticks([0, .5, 1])
         axes[i, j].set_ylim([-.025, 1.025])
         axes[i, j].set_xlim([-.5, 7.5])
@@ -547,7 +572,7 @@ for ci, condition in enumerate(all_conditions):
         axes[ci].set_title(condition)
     axes[ci].set_ylabel('%')
     axes[ci].set_xticks(xticks)
-    axes[ci].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
+    axes[ci].set_xticklabels(xticklabels)
     axes[ci].set_yticks([0, .5, 1])
     axes[ci].set_yticklabels([0, .5, 1])
     axes[ci].set_ylim([-.025, 1.025])
