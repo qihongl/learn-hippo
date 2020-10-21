@@ -9,7 +9,9 @@ from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_fname
 
-log_root = '../log/'
+# log_root = '../log/'
+log_root = '/tigress/qlu/logs/learn-hippocampus/log'
+
 # exp_name = 'penalty-random-discrete'
 exp_name = '0916-widesim-prandom'
 
