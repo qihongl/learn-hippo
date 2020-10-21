@@ -340,7 +340,7 @@ for i_s, subj_id in enumerate(range(n_subjs)):
 mvpa_data_dict = {
     'scores': scores, 'n_feats_decd_mu': n_feats_decd_mu, 'Y_hat_allp': Y_hat_allp
 }
-mvpa_data_dict_fname = f'mvpa-aba-%.2f.pkl'
+mvpa_data_dict_fname = f'mvpa-aba.pkl'
 pickle_save_dict(mvpa_data_dict, os.path.join(
     'temp', mvpa_data_dict_fname))
 
