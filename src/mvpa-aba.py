@@ -22,7 +22,7 @@ from utils.utils import chunk
 from utils.params import P
 from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, get_test_data_dir, \
-    pickle_load_dict, get_test_data_fname
+    pickle_load_dict, get_test_data_fname, pickle_save_dict
 from analysis import compute_cell_memory_similarity, compute_stats, \
     compute_n_trials_to_skip, trim_data, get_trial_cond_ids, process_cache
 
@@ -103,7 +103,7 @@ def separate_AB_data(data_split):
     return data_A, data_B
 
 
-def fill_recalled_features(Y_ob_, rt=1):
+def fill_recalled_features(Y_ob_, rt=0):
     for ti in range(n_trials):
         for pi in np.arange(1, n_parts):
             for ppi in np.arange(pi):
@@ -115,6 +115,7 @@ def fill_recalled_features(Y_ob_, rt=1):
 
 
 # prealloc
+Y_hat_allp = [None] * n_subjs
 n_feats_decd_mu = np.zeros((n_subjs, n_parts, n_param))
 scores = np.zeros((n_subjs, n_parts, n_param))
 
@@ -202,9 +203,8 @@ for i_s, subj_id in enumerate(range(n_subjs)):
     Y_ob_B = np.array(
         [build_yob(o_keys_B[pi], o_vals_B[pi]) for pi in range(n_parts)]
     )
-    rt = 0
-    Y_ob_A = fill_recalled_features(Y_ob_A, rt)
-    Y_ob_B = fill_recalled_features(Y_ob_B, rt)
+    Y_ob_A = fill_recalled_features(Y_ob_A)
+    Y_ob_B = fill_recalled_features(Y_ob_B)
 
     # constrct X
     CM_splits = np.array_split(CM, n_parts * n_events, axis=1)
@@ -281,8 +281,6 @@ for i_s, subj_id in enumerate(range(n_subjs)):
     # collect classifier performance
     scores[i_s, :, :] = np.vstack(
         [np.mean(scores_0, axis=1), scores_1, scores_2])
-    # np.shape(scores)
-    # np.mean(scores,axis=2)
 
     # compute number of features recalled for part 1,2,3
     n_feats_decd_0 = np.sum(Y_hat_0 != -1, axis=2).T
@@ -297,16 +295,17 @@ for i_s, subj_id in enumerate(range(n_subjs)):
         mu_, se_ = compute_stats(n_feats_decd_i.T)
         n_feats_decd_mu[i_s, ii] = mu_
 
-    f, ax = plt.subplots(1, 1, figsize=(7, 5))
-    for ii, n_feats_decd_i in enumerate(n_feats_decd):
-        ax.errorbar(x=range(n_param), y=mu_, yerr=se_,
-                    color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
-    ax.set_title('Number of features decoded')
-    ax.legend()
-    ax.set_xlabel('Time')
-    sns.despine()
-    f.tight_layout()
+    # f, ax = plt.subplots(1, 1, figsize=(7, 5))
+    # for ii, n_feats_decd_i in enumerate(n_feats_decd):
+    #     ax.errorbar(x=range(n_param), y=mu_, yerr=se_,
+    #                 color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
+    # ax.set_title('Number of features decoded')
+    # ax.legend()
+    # ax.set_xlabel('Time')
+    # sns.despine()
+    # f.tight_layout()
 
+    '''make a single trial decoding heatmap'''
     # ti = 14
     # # for ti in range(n_trials):
     # decodability_mat = np.vstack([Y_hat_0[ti], Y_hat_1[ti], Y_hat_2[ti]]).T
@@ -333,8 +332,21 @@ for i_s, subj_id in enumerate(range(n_subjs)):
     # ax.set_xticklabels([f'Block {pi}' for pi in range(n_parts)])
     # f.tight_layout()
 
+    Y_hat_allp[i_s] = [Y_hat_0, Y_hat_1, Y_hat_2]
+
+
+'''save data'''
+
+mvpa_data_dict = {
+    'scores': scores, 'n_feats_decd_mu': n_feats_decd_mu, 'Y_hat_allp': Y_hat_allp
+}
+mvpa_data_dict_fname = f'mvpa-aba-%.2f.pkl'
+pickle_save_dict(mvpa_data_dict, os.path.join(
+    'temp', mvpa_data_dict_fname))
+
 
 '''plot'''
+
 
 n_feats_decd_mu_rm0 = np.delete(n_feats_decd_mu, 2, axis=0)
 np.shape(n_feats_decd_mu_rm0)
@@ -348,7 +360,6 @@ for ii in range(n_parts):
                 yerr=n_feats_decd_mu_se[ii],
                 color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
 ax.set_title('Number of features decoded')
-# ax.legend()
 ax.set_xlabel('Time')
 sns.despine()
 f.tight_layout()

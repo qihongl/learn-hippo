@@ -49,7 +49,7 @@ penalty_train = 4
 fix_penalty = 2
 fix_cond = 'DM'
 
-n_examples_test = 256
+n_examples_test = 1024
 # similarity_cap_test = .3
 similarity_max_test = .9
 similarity_min_test = 0
