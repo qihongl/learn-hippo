@@ -87,7 +87,7 @@ slience_recall_time = None
 trunc = 8
 
 # subj_id = 0
-n_subjs = 1
+n_subjs = 10
 T_TOTAL = n_events * n_parts * n_param
 
 
@@ -281,6 +281,8 @@ for i_s, subj_id in enumerate(range(n_subjs)):
     # collect classifier performance
     scores[i_s, :, :] = np.vstack(
         [np.mean(scores_0, axis=1), scores_1, scores_2])
+    # np.shape(scores)
+    # np.mean(scores,axis=2)
 
     # compute number of features recalled for part 1,2,3
     n_feats_decd_0 = np.sum(Y_hat_0 != -1, axis=2).T
@@ -295,15 +297,15 @@ for i_s, subj_id in enumerate(range(n_subjs)):
         mu_, se_ = compute_stats(n_feats_decd_i.T)
         n_feats_decd_mu[i_s, ii] = mu_
 
-    # f, ax = plt.subplots(1, 1, figsize=(7, 5))
-    # for ii, n_feats_decd_i in enumerate(n_feats_decd):
-    #     ax.errorbar(x=range(n_param), y=mu_, yerr=se_,
-    #                 color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
-    # ax.set_title('Number of features decoded')
-    # ax.legend()
-    # ax.set_xlabel('Time')
-    # sns.despine()
-    # f.tight_layout()
+    f, ax = plt.subplots(1, 1, figsize=(7, 5))
+    for ii, n_feats_decd_i in enumerate(n_feats_decd):
+        ax.errorbar(x=range(n_param), y=mu_, yerr=se_,
+                    color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
+    ax.set_title('Number of features decoded')
+    ax.legend()
+    ax.set_xlabel('Time')
+    sns.despine()
+    f.tight_layout()
 
     # ti = 14
     # # for ti in range(n_trials):
@@ -334,19 +336,34 @@ for i_s, subj_id in enumerate(range(n_subjs)):
 
 '''plot'''
 
-# n_feats_decd_mu_rm0 = np.delete(n_feats_decd_mu, 2, axis=0)
-# np.shape(n_feats_decd_mu_rm0)
-#
-#
-# n_feats_decd_mu_mu, n_feats_decd_mu_se = compute_stats(
-#     n_feats_decd_mu_rm0, axis=0)
-# f, ax = plt.subplots(1, 1, figsize=(7, 5))
-# for ii in range(n_parts):
-#     ax.errorbar(x=range(n_param), y=n_feats_decd_mu_mu[ii],
-#                 yerr=n_feats_decd_mu_se[ii],
-#                 color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
-# ax.set_title('Number of features decoded')
-# # ax.legend()
-# ax.set_xlabel('Time')
-# sns.despine()
-# f.tight_layout()
+n_feats_decd_mu_rm0 = np.delete(n_feats_decd_mu, 2, axis=0)
+np.shape(n_feats_decd_mu_rm0)
+
+
+n_feats_decd_mu_mu, n_feats_decd_mu_se = compute_stats(
+    n_feats_decd_mu_rm0, axis=0)
+f, ax = plt.subplots(1, 1, figsize=(7, 5))
+for ii in range(n_parts):
+    ax.errorbar(x=range(n_param), y=n_feats_decd_mu_mu[ii],
+                yerr=n_feats_decd_mu_se[ii],
+                color=cb_pal[0], alpha=alphas[ii], label=f'Block {ii}')
+ax.set_title('Number of features decoded')
+# ax.legend()
+ax.set_xlabel('Time')
+sns.despine()
+f.tight_layout()
+
+'''compute average accuracy'''
+
+f, ax = plt.subplots(1, 1, figsize=(6, 5))
+mean_scores = np.mean(scores, axis=0).T
+for pi in range(n_parts):
+    ax.plot(mean_scores[:, pi], color=cb_pal[0],
+            alpha=alphas[pi], label=f'Block {ii}')
+ax.set_xlabel('Time')
+ax.set_ylabel('Accuracy')
+ax.set_ylim([0, 1])
+ax.legend()
+sns.despine()
+f.tight_layout()
+print(np.mean(mean_scores, axis=0))
