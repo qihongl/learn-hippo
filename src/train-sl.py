@@ -47,6 +47,7 @@ parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
 parser.add_argument('--n_examples', default=256, type=int)
+# parser.add_argument('--def_tp_controlled', default=0, type=int)
 parser.add_argument('--log_root', default='../log/', type=str)
 args = parser.parse_args()
 print(args)
@@ -80,6 +81,7 @@ n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
+def_tps_even_odd = 1
 
 '''init'''
 seed_val = subj_id
@@ -87,7 +89,7 @@ np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
 p = P(
-    exp_name=exp_name,
+    exp_name=exp_name, subj_id=subj_id,
     sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     def_prob=def_prob, n_def_tps=n_def_tps,
@@ -97,8 +99,10 @@ p = P(
     normalize_return=normalize_return, attach_cond=attach_cond,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta, cmpt=cmpt
+    lr=learning_rate, eta=eta, cmpt=cmpt,
+    def_tps_even_odd=def_tps_even_odd,
 )
+print(p.env.def_tps)
 # init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,

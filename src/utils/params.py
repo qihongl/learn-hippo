@@ -2,18 +2,21 @@
 
 from task.utils import sample_rand_path, sample_def_tps
 from utils.constants import ALL_ENC_MODE
+# import numpy as np
 
 
 class P():
     def __init__(
         self,
         exp_name='rnr',
+        subj_id=0,
         n_param=10,
         n_branch=3,
         pad_len=0,
         def_path=None,
         def_prob=None,
         n_def_tps=None,
+        def_tps_even_odd=0,
         penalty=1,
         penalty_random=0,
         penalty_discrete=1,
@@ -59,7 +62,19 @@ class P():
             def_prob = 1 / n_branch
         if n_def_tps is None:
             n_def_tps = n_param
-        def_tps = sample_def_tps(n_param, n_def_tps)
+
+        if def_tps_even_odd == 0:
+            def_tps = sample_def_tps(n_param, n_def_tps)
+        elif def_tps_even_odd == 1:
+            if subj_id % 2 == 0:
+                def_tps = [1, 0] * (n_param // 2)
+            elif subj_id % 2 == 1:
+                def_tps = [0, 1] * (n_param // 2)
+            else:
+                raise ValueError('subj id must be even or odd')
+        else:
+            raise ValueError('def_tps_even_odd must be 0 or 1')
+
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(
             n_param, n_branch)
         self.dk_id = self.a_dim - 1
