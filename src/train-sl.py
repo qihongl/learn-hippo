@@ -81,7 +81,7 @@ n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
 log_root = args.log_root
-def_tps_even_odd = 1
+
 
 '''init'''
 seed_val = subj_id
@@ -100,7 +100,6 @@ p = P(
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
     lr=learning_rate, eta=eta, cmpt=cmpt,
-    def_tps_even_odd=def_tps_even_odd,
 )
 print(p.env.def_tps)
 # init env
