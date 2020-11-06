@@ -16,7 +16,7 @@ class P():
         def_path=None,
         def_prob=None,
         n_def_tps=None,
-        def_tps_even_odd=0,
+        def_tps_even_odd=1,
         penalty=1,
         penalty_random=0,
         penalty_discrete=1,
