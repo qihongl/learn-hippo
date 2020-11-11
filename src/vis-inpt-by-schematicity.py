@@ -17,7 +17,7 @@ all_conds = list(TZ_COND_DICT.values())
 T = 16
 
 # exp_name = '0916-widesim-prandom-schema'
-exp_name = '1029-schema-evenodd'
+exp_name = '1029-schema-evenodd-pfixed'
 gdata_outdir = 'temp/'
 # n_subjs = 15
 

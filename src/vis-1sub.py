@@ -96,11 +96,10 @@ for def_prob in def_prob_range:
     similarity_min_test = 0
     n_examples_test = 256
 
-    # subj_ids = [9]
     subj_ids = np.arange(15)
 
     penaltys_train = [4]
-    penaltys_test = np.array([0, 4])
+    penaltys_test = np.array([2])
     # penaltys_test = np.array([2])
 
     n_subjs = len(subj_ids)
