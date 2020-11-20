@@ -1,5 +1,5 @@
-log/
-figs/
+log/*/
+figs/*/
 old/
 temp*/
 paper/
