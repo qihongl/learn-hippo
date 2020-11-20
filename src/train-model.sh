@@ -1,4 +1,3 @@
-train-sl.sh
 #!/bin/bash
 #SBATCH -t 19:55:00
 #SBATCH -c 1
