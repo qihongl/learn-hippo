@@ -1,3 +1,5 @@
+'''hypothetical control-patient isc in Zuo et al. 2020'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,7 +10,7 @@ def sample(n_time_steps, mu=0, sigma=1, x0=0):
     x = np.zeros(n_time_steps,)
     x[0] = x0
     for t in np.arange(1, n_time_steps):
-        x[t] = x[t-1] + np.random.normal(loc=mu, scale=sigma)
+        x[t] = x[t - 1] + np.random.normal(loc=mu, scale=sigma)
     return x
 
 
@@ -58,12 +60,10 @@ seed_val = 15
 np.random.seed(seed_val)
 y = sample(n_time_steps)
 
-# y1 = sample(n_time_steps, x0=x[-1])
-# y2 = sample(n_time_steps, x0=x[-1])
 
 f, ax = plt.subplots(1, 1, figsize=(10, 3.5))
-ax.plot(x+noise1)
-ax.plot(y+noise2)
+ax.plot(x + noise1)
+ax.plot(y + noise2)
 ax.set_xticks([])
 ax.set_yticks([])
 sns.despine()

@@ -40,11 +40,11 @@ dk_wm_mu, dk_wm_er = compute_stats(dk_wm)
 # plot
 f, ax = plt.subplots(1, 1, figsize=(7, 4))
 ax.errorbar(
-    x=range(len(dk_em_mu)), y=1-dk_em_mu, yerr=dk_em_er,
+    x=range(len(dk_em_mu)), y=1 - dk_em_mu, yerr=dk_em_er,
     label='w/ EM'
 )
 ax.errorbar(
-    x=np.arange(n_param, n_param * task.n_parts), y=1-dk_wm_mu, yerr=dk_wm_er,
+    x=np.arange(n_param, n_param * task.n_parts), y=1 - dk_wm_mu, yerr=dk_wm_er,
     label='w/o EM'
 )
 ax.axvline(n_param, color='grey', linestyle='--')
@@ -71,11 +71,11 @@ f, axes = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
 axes[0].set_title('Do I know the queried information?')
 
 axes[0].stem(
-    np.arange(n_param, n_param*task.n_parts), 1-dk_wm_i,
+    np.arange(n_param, n_param * task.n_parts), 1 - dk_wm_i,
     basefmt='grey'
 )
 axes[1].stem(
-    np.arange(n_param*task.n_parts), 1-dk_em_i,
+    np.arange(n_param * task.n_parts), 1 - dk_em_i,
     basefmt='grey'
 )
 if len(time_em_useful) > 0:
@@ -85,7 +85,8 @@ if len(time_em_useful) > 0:
         label=r'$q \in$ EM $\smallsetminus$ WM'
     )
 for ax in axes:
-    ax.axvline(n_param-.5, color='grey', linestyle='--', label='event boundary')
+    ax.axvline(n_param - .5, color='grey',
+               linestyle='--', label='event boundary')
     ax.set_yticks([0, 1])
     ax.set_ylim([-0.05, 1.2])
 
@@ -112,11 +113,11 @@ f, axes = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
 axes[0].set_title('Do I know the queried information?')
 
 axes[0].stem(
-    np.arange(n_param, n_param*task.n_parts), 1-dk_wm_i,
+    np.arange(n_param, n_param * task.n_parts), 1 - dk_wm_i,
     basefmt='grey'
 )
 axes[1].stem(
-    np.arange(n_param*task.n_parts), 1-dk_em_i,
+    np.arange(n_param * task.n_parts), 1 - dk_em_i,
     basefmt='grey'
 )
 if len(time_em_useful) > 0:
@@ -126,7 +127,8 @@ if len(time_em_useful) > 0:
         label=r'$q \in$ EM $\smallsetminus$ WM'
     )
 for ax in axes:
-    ax.axvline(n_param-.5, color='grey', linestyle='--', label='event boundary')
+    ax.axvline(n_param - .5, color='grey',
+               linestyle='--', label='event boundary')
     ax.set_yticks([0, 1])
     ax.set_ylim([-0.05, 1.2])
 
@@ -165,12 +167,12 @@ for ip, p in enumerate(p_remove_obs):
 
     ax.errorbar(
         x=range(len(dk_em_mu)),
-        y=1-dk_em_mu, yerr=dk_em_er,
+        y=1 - dk_em_mu, yerr=dk_em_er,
         label=f'RM, b={p}', color=b_pal[ip]
     )
     ax.errorbar(
         x=np.arange(n_param, n_param * task.n_parts),
-        y=1-dk_wm_mu, yerr=dk_wm_er,
+        y=1 - dk_wm_mu, yerr=dk_wm_er,
         label=f'DM, b={p}', color=g_pal[ip]
     )
 ax.axvline(n_param, color='grey', linestyle='--')

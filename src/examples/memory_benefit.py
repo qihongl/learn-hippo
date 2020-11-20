@@ -1,6 +1,7 @@
 '''demo: memory benefit
-even if there is no negative effect of recall (lure, noise on target, etc.)
+1. even if there is no negative effect of recall (lure, noise on target, etc.)
 memory benefit still decrease sup-linearly
+2. how does delay affect memory benefit
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ sns.set(style='white', context='poster')
 
 
 def compute_baseline(t, T, chance):
-    return chance * (T-t)/T + t/T
+    return chance * (T - t) / T + t / T
 
 
 def compute_fills(tao):
@@ -24,13 +25,13 @@ def compute_fills(tao):
 T = 30
 branching_factor = 3
 chance = 1 / branching_factor
-baseline = [compute_baseline(t, T, chance)for t in np.arange(0, T+1, 1)]
+baseline = [compute_baseline(t, T, chance)for t in np.arange(0, T + 1, 1)]
 
 
 # compute normalized memory benefit
 memory_benefit = np.zeros(T)
 memory_benefit_normalized = np.zeros(T)
-total_memory_benefit = (1-chance) * T / 2
+total_memory_benefit = (1 - chance) * T / 2
 for tao_ in range(T):
     height = 1 - baseline[tao_]
     base = T - tao_
@@ -76,12 +77,13 @@ axes[0].text(text_x, text_y, 'A',
 min_darkness = 1
 pad_lengths = [1, 6, 12]
 pad_lengths_names = ['no delay', 'short delay', 'long delay']
-b_pal = sns.color_palette("Blues", n_colors=len(pad_lengths)+min_darkness)
+b_pal = sns.color_palette("Blues", n_colors=len(pad_lengths) + min_darkness)
 b_pal = b_pal[min_darkness:]
 lgd = [Line2D([0], [0], color=b_pal[i], label=pad_lengths_names[i])
        for i in range(len(pad_lengths))]
 for i_pl, pd_len in enumerate(pad_lengths):
-    axes[1].plot(cum_memory_benefit[pd_len-1:], color=b_pal[i_pl], linewidth=4)
+    axes[1].plot(cum_memory_benefit[pd_len - 1:],
+                 color=b_pal[i_pl], linewidth=4)
 leg_ = axes[1].legend(
     title='prediction delay time', handles=lgd, frameon=False,
     bbox_to_anchor=(.55, .3)
@@ -97,27 +99,3 @@ axes[1].text(text_x, text_y, 'B',
 f.tight_layout()
 sns.despine()
 f.savefig('examples/figs/demo_mb.png', bbox_inches='tight', dpi=100)
-
-
-# f, ax = plt.subplots(1, 1, figsize=(6, 4))
-# plt.plot(memory_benefit)
-# plt.plot(cum_memory_benefit)
-#
-#
-# def compute_dcmb(cum_mb):
-#     T = len(cum_mb)
-#     dicnt_cum_mb = np.zeros_like(cum_mb)
-#     dicnt_cum_mb[0] = cum_mb[0]
-#     t = 1
-#     for t in np.arange(1, T):
-#         mul_discount = 1 - np.sum(cum_mb[t-1]) / np.sum(cum_mb)
-#         # dicnt_cum_mb[t] = cum_mb[t]*discount
-#         add_discount = np.sum(cum_mb[t-1])
-#         dicnt_cum_mb[t] = mul_discount*cum_mb[t] - add_discount
-#     return dicnt_cum_mb
-#
-#
-# for ipl, pd_len in enumerate(pad_lengths):
-#     dicnt_cum_memory_benefit = compute_dcmb(cum_memory_benefit[pd_len:])
-#     plt.plot(dicnt_cum_memory_benefit)
-# # plt.plot(cum_memory_benefit)

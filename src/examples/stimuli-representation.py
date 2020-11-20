@@ -58,31 +58,3 @@ axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
 
 f.savefig(f'examples/figs/stimulus-rep.png', dpi=100, bbox_inches='tight')
-
-
-# '''figure out the dk label'''
-#
-#
-# def get_know_label(t, x, y):
-#     know = np.zeros((task.T_total,))
-#     # the time points where y_t is presented
-#     yt_present = x[:, t] == 1
-#     when_yt_present = np.where(yt_present)[0]
-#     # y labels at yt_present
-#     observed_y = x[yt_present, -task.y_dim:]
-#     for tau in range(np.sum(yt_present)):
-#         print(observed_y[tau, :])
-#         print(np.all(observed_y[tau, :] == y[t]))
-#         if np.all(observed_y[tau, :] == y[t]):
-#             know[when_yt_present[tau]:] = 1
-#     return know
-#
-#
-# # pick a time point
-# t = 0
-# np.array([get_know_label(t, x, y) for t in range(n_param)]).T
-
-#
-# task.pad_len, task.T_part
-# for t in range(task.T_total):
-#     print(t, np.mod(t, task.T_part), np.mod(t, task.T_part) >= task.pad_len)

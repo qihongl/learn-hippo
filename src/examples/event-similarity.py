@@ -1,7 +1,8 @@
+'''study how different parameters, such as the branching factor of the graph,
+affect average event similarity'''
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 from task import SequenceLearning
 from analysis import compute_event_similarity_matrix
 from matplotlib.ticker import FormatStrFormatter
@@ -12,15 +13,10 @@ n_param = 15
 n_branch = 4
 n_samples = 101
 expected_similarity = 1 / n_branch
-# similarity_max = expected_similarity * 2
 
 # init
 task = SequenceLearning(n_param, n_branch, n_parts=1)
-# sample
 X, Y = task.sample(n_samples, to_torch=False)
-# unpack
-print(np.shape(X))
-print(np.shape(Y))
 
 # compute similarity
 normalize = True
@@ -34,7 +30,7 @@ similarity_matrix = compute_event_similarity_matrix(Y, normalize=normalize)
 f, ax = plt.subplots(1, 1, figsize=(6, 5))
 sns.heatmap(
     similarity_matrix,
-    xticklabels=n_samples//2, yticklabels=n_samples//2,
+    xticklabels=n_samples // 2, yticklabels=n_samples // 2,
     cmap='viridis', ax=ax
 )
 ax.set_xlabel('event i')
@@ -59,7 +55,7 @@ sns.distplot(
 )
 ax.axvline(max_bond, linestyle='--', color='grey', linewidth=linewidth)
 ax.axvline(similarity_max, linestyle='--',
-           color='grey', alpha=.5, linewidth=linewidth//2)
+           color='grey', alpha=.5, linewidth=linewidth // 2)
 ax.set_xlabel(xlabel)
 ax.set_ylabel('Freq.')
 ax.set_title(title)
@@ -86,7 +82,8 @@ for i, n_branch in enumerate(n_branch_list):
     task = SequenceLearning(n_param, n_branch, n_parts=1)
     X, Y = task.sample(n_samples, to_torch=False)
     similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
-    similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
+    similarity_matrix_tril = similarity_matrix[np.tril_indices(
+        n_samples, k=-1)]
     sim_mu[i] = np.mean(similarity_matrix_tril)
     sim_sd[i] = np.std(similarity_matrix_tril)
 
@@ -116,7 +113,8 @@ for i, n_param in enumerate(n_param_list):
     task = SequenceLearning(n_param, n_branch, n_parts=1)
     X, Y = task.sample(n_samples, to_torch=False)
     similarity_matrix = compute_event_similarity_matrix(Y, normalize=True)
-    similarity_matrix_tril = similarity_matrix[np.tril_indices(n_samples, k=-1)]
+    similarity_matrix_tril = similarity_matrix[np.tril_indices(
+        n_samples, k=-1)]
     sim_mu[i] = np.mean(similarity_matrix_tril)
     sim_sd[i] = np.std(similarity_matrix_tril)
 
