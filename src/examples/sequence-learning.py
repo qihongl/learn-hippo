@@ -2,23 +2,22 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from task import SequenceLearning
-sns.set(style='white', palette='colorblind', context='talk')
-# np.random.seed(2)
+sns.set(style='white', palette='colorblind', context='poster')
+np.random.seed(0)
 
 
 '''how to use'''
 # init
-n_param, n_branch = 5, 3
+n_param, n_branch = 16, 4
 pad_len = 0
 n_parts = 2
 n_samples = 5
-p_rm_ob_enc = .5
-p_rm_ob_rcl = .5
+p_rm_ob_enc = 0
+p_rm_ob_rcl = 0
 n_rm_fixed = False
 key_rep_type = 'time'
 task = SequenceLearning(
     n_param, n_branch, pad_len=pad_len,
-    # append_context=True,
     p_rm_ob_enc=p_rm_ob_enc,
     p_rm_ob_rcl=p_rm_ob_rcl,
     n_rm_fixed=n_rm_fixed,
@@ -37,27 +36,28 @@ x, y = X[i], Y[i]
 '''visualize the sample'''
 cmap = 'bone'
 f, axes = plt.subplots(
-    1, 2, figsize=(8, 6),
-    gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
+    1, 2, figsize=(12, 10), sharey=True,
+    gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]},
 )
 axes[0].imshow(x, cmap=cmap)
 axes[1].imshow(y, cmap=cmap)
 
-axes[0].set_title('x')
-axes[1].set_title('y')
-
-axes[0].set_xlabel('o-key/o-val/q-key')
-axes[1].set_xlabel('q-val')
-
-axes[0].set_ylabel('Time')
+axes[0].set_title('Input', fontname='Helvetica')
+axes[1].set_title('Target', fontname='Helvetica')
+# axes[0].set_xlabel(
+#     '\nObserved feature     Observed value    Queried feature    ', fontname='Helvetica')
+# axes[1].set_xlabel('\nQueried value', fontname='Helvetica')
+axes[0].set_ylabel('Time\n Part two ' + ' ' * 24 +
+                   ' Part one', fontname='Helvetica')
+# ax.xticks([])
 
 for ax in axes:
-    ax.axhline(n_param + pad_len - .5, color='red', linestyle='--')
+    ax.axhline(n_param + pad_len - .5, color='grey', linestyle='--')
+    ax.set_xticks([])
 axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
 axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
 
-f.savefig(f'examples/figs/seq-learn-rnn-{key_rep_type}.png',
-          dpi=100, bbox_inches='tight')
+f.savefig(f'examples/figs/stimulus-rep.png', dpi=100, bbox_inches='tight')
 
 
 # '''figure out the dk label'''

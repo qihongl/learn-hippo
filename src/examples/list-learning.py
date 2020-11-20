@@ -30,9 +30,9 @@ axes[0].set_ylabel('Time')
 axes[0].set_title('x')
 axes[1].set_title('y')
 # mark line
-axes[0].axvline(ll.k_dim-.5, color='red', linestyle='--')
+axes[0].axvline(ll.k_dim - .5, color='red', linestyle='--')
 n_timesteps = n_param
 for ax in axes:
-    ax.axhline(n_timesteps-.5, color='red', linestyle='--')
+    ax.axhline(n_timesteps - .5, color='red', linestyle='--')
 
 f.savefig('examples/figs/list-learning-rnn.png', dpi=100, bbox_inches='tight')
