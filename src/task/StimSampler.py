@@ -325,10 +325,20 @@ def _vpad(matrix, pad_len: int, side: str):
 '''test'''
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    # from task.utils import sample_rand_path,sample_def_tps
     # init a graph
     n_param, n_branch = 10, 2
     n_parts = 2
     pad_len = 0
+    # def_tps = np.array([1, 0] * 5)
+    # def_tps = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+    # def_tps = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    def_tps = np.array([1, 0] * (n_param // 2))
+    def_tps = np.array([0, 1] * (n_param // 2))
+    # def_path = np.tile(np.array([[1, 0], [0, 1]]), (1, 5)).T
+    # def_path = np.tile(np.array([[1, 0], [0, 1]]), (1, n_param // 2)).T
+    def_path = np.vstack([[1, 0] for i in range(10)])
+    def_prob = .9
     # pad_len = 'random'
     p_rm_ob_enc, p_rm_ob_rcl = .5, .5
     key_rep_type = 'time'
@@ -336,7 +346,8 @@ if __name__ == "__main__":
     sampler = StimSampler(
         n_param, n_branch,
         pad_len=pad_len,
-        key_rep_type=key_rep_type
+        key_rep_type=key_rep_type,
+        def_tps=def_tps, def_path=def_path, def_prob=def_prob
     )
     sample_, misc = sampler.sample(
         n_parts,
