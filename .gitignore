@@ -1,6 +1,6 @@
 log/
 figs/
-temp/
+old/
 temp*/
 paper/
 .DS_Store
