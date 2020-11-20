@@ -55,13 +55,11 @@ def run_tz(
         log_cache_i = [None] * T_total
 
         # init model wm and em
-        # penalty_val, penalty_rep = sample_penalty(p, fix_penalty)
         penalty_val_p1, penalty_rep_p1 = sample_penalty(p, fix_penalty, True)
         penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
-        # print()
 
         hc_t = agent.get_init_states()
-        agent.retrieval_off()
+        # agent.retrieval_off()
         agent.encoding_off()
 
         for t in range(T_total):
