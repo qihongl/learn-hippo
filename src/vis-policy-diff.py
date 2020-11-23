@@ -18,6 +18,8 @@ T = 16
 
 exp_name = '0916-widesim-pfixed'
 gdata_outdir = 'temp/'
+def_prob = .25
+
 penaltys_train = [0, 4]
 penaltys_test = [0, 4]
 
@@ -35,7 +37,9 @@ ma_cosine = defaultdict()
 for ptrain, ptest in zip(penaltys_train, penaltys_test):
     print(f'ptrain={ptrain}, ptest={ptest}')
     # load data
-    fname = f'{exp_name}-p{ptrain}-{ptest}-data.pkl'
+    fname = '%s-dp%.2f-p%d-%d.pkl' % (
+        exp_name, def_prob, ptrain, ptest)
+    # fname = f'{exp_name}-p{ptrain}-{ptest}-data.pkl'
     data_load_path = os.path.join(gdata_outdir, fname)
     data = pickle_load_dict(data_load_path)
     # unpack data

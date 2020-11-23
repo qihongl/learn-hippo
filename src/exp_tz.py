@@ -59,7 +59,7 @@ def run_tz(
         penalty_val_p2, penalty_rep_p2 = sample_penalty(p, fix_penalty)
 
         hc_t = agent.get_init_states()
-        # agent.retrieval_off()
+        agent.retrieval_off()
         agent.encoding_off()
 
         for t in range(T_total):
