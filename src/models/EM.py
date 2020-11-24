@@ -133,6 +133,26 @@ class EM():
 """helpers"""
 
 
+def transform_similarities(
+        raw_similarities, weighting_function,
+        leak=None, comp=None, w_input=None
+):
+    n_memories = len(raw_similarities)
+    if weighting_function == '1NN':
+        # one hot vector weighting for 1NN
+        best_memory_id = torch.argmax(raw_similarities)
+        similarities = torch.eye(n_memories)[best_memory_id]
+    elif weighting_function == 'LCA':
+        # transform the similarity by a LCA process
+        similarities = lca_transform(
+            raw_similarities,
+            leak=leak, comp=comp, w_input=w_input
+        )
+    else:
+        similarities = raw_similarities
+    return similarities
+
+
 def compute_similarities(
         input_pattern, vals, metric,
 ):

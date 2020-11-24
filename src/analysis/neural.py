@@ -6,7 +6,7 @@ from sklearn import metrics
 from itertools import product
 from utils.utils import to_sqnp, to_np, to_sqpth, to_pth, chunk
 from analysis import compute_stats
-from models.DND import compute_similarities, transform_similarities
+from models.EM import compute_similarities, transform_similarities
 
 
 def compute_trsm(activation_tensor):
