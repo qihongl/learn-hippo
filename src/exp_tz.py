@@ -32,7 +32,6 @@ def run_tz(
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
 
-        # pdb.set_trace()
         if scramble:
             X_i, Y_i = time_scramble(X_i, Y_i, task)
 
@@ -248,12 +247,6 @@ def one_hot_penalty(penalty_int, p):
     one_hot_dim = len(p.env.penalty_range)
     penalty_id = p.env.penalty_range.index(penalty_int)
     return np.eye(one_hot_dim)[penalty_id, :]
-
-
-def get_a0_r0(p):
-    a_0 = torch.tensor(p.dk_id)
-    r_0 = torch.tensor(0)
-    return a_0, r_0
 
 
 def time_scramble(X_i, Y_i, task, scramble_obs_only=True):
