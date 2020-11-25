@@ -1,29 +1,21 @@
-import pandas as pd
 import dabest
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from itertools import product
 from scipy.stats import pearsonr
 from task import SequenceLearning
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from utils.io import build_log_path, load_ckpt, pickle_load_dict, \
+from utils.io import build_log_path, pickle_load_dict, \
     get_test_data_dir, get_test_data_fname
-from analysis import compute_acc, compute_dk, compute_stats, \
-    compute_trsm, compute_cell_memory_similarity, create_sim_dict, \
-    compute_auc_over_time, compute_event_similarity, batch_compute_true_dk, \
-    process_cache, get_trial_cond_ids, compute_n_trials_to_skip,\
-    compute_cell_memory_similarity_stats, sep_by_qsource, prop_true, \
-    get_qsource, trim_data, make_df
+from analysis import compute_stats, \
+    compute_cell_memory_similarity, create_sim_dict, batch_compute_true_dk, \
+    process_cache, get_trial_cond_ids, trim_data, make_df
 
-from vis import plot_pred_acc_full, plot_pred_acc_rcl, get_ylim_bonds,\
-    plot_time_course_for_all_conds
 from brainiak.funcalign.srm import SRM
 from matplotlib.ticker import FormatStrFormatter
-from sklearn.decomposition.pca import PCA
 from itertools import combinations
 from scipy.special import comb
 # plt.switch_backend('agg')
@@ -31,7 +23,6 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-# exp_name = '0220-v1-widesim-comp.8'
 exp_name = '0916-widesim-prandom'
 
 subj_ids = np.arange(15)
@@ -153,7 +144,6 @@ for subj_id in subj_ids:
         cond_ids = get_trial_cond_ids(log_cond)
         activity_, ctrl_param_ = process_cache(log_cache, T_total, p)
         [C, H, M, CM, DA, V] = activity_
-        # [inpt, leak, comp] = ctrl_param_
         [inpt] = ctrl_param_
         comp_val = .8
         leak_val = 0

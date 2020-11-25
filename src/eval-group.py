@@ -11,19 +11,10 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata
 
 log_root = '../log/'
-# exp_name = '0220-v1-widesim-comp.8'
-# exp_name = '0717-dp'
 # def_prob_range = np.arange(.25, 1, .1)
 
-# for def_prob in def_prob_range:
-# for def_prob10 in np.arange(3, 10):
-#     # exp_name = '0425-schema.4-comp.8'
-#     exp_name = '0425-schema.%d-comp.8' % (def_prob10)
-#     def_prob = def_prob10 / 10
-# print(exp_name)
-
-# exp_name = '0425-schema.3-comp.8'
-exp_name = '0916-widesim-prandom'
+# exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 
 # def_prob = .3
 # n_def_tps = 8
@@ -33,7 +24,6 @@ n_def_tps = 0
 seed = 0
 supervised_epoch = 600
 epoch_load = 1000
-learning_rate = 7e-4
 
 n_branch = 4
 n_param = 16
@@ -42,15 +32,9 @@ enc_size = 16
 enc_size_test = enc_size
 n_event_remember = 2
 
-n_hidden = 194
-n_hidden_dec = 128
-eta = .1
 
 penalty_random = 1
 # testing param, ortho to the training directory
-penalty_discrete = 1
-penalty_onehot = 0
-normalize_return = 1
 attach_cond = 0
 # loading params
 pad_len_load = -1
@@ -72,18 +56,14 @@ slience_recall_times = [range(n_param), None]
 # slience_recall_times = [range(n_param)]
 # slience_recall_times = [None]
 
-subj_ids = np.arange(16)
+subj_ids = np.arange(15)
 
 penaltys_train = [4]
 penaltys_test = np.array([2])
-# penaltys_test = np.array([8])
-# penaltys_test = np.array(penaltys_train)
-# penaltys_train = [0, 1, 2, 4, 8]
-# penaltys_test = np.array([0, 1, 2, 4, 8])
 
-# all_conds = ['RM', 'DM', 'NM']
+all_conds = ['RM', 'DM', 'NM']
 # all_conds = ['RM']
-all_conds = [None]
+# all_conds = [None]
 scramble = False
 
 for slience_recall_time in slience_recall_times:
@@ -93,8 +73,6 @@ for slience_recall_time in slience_recall_times:
         print(f'slience_recall_time : {slience_recall_time}')
 
         penaltys_test_ = penaltys_test[penaltys_test <= penalty_train]
-        # penaltys_test_ = penaltys_test
-        # penaltys_test_ = np.arange(0, penalty_train + 1, 2)
         for fix_penalty in penaltys_test_:
             print(f'penalty_test : {fix_penalty}')
 
@@ -104,11 +82,8 @@ for slience_recall_time in slience_recall_times:
                 def_prob=def_prob, n_def_tps=n_def_tps,
                 enc_size=enc_size, n_event_remember=n_event_remember,
                 penalty=penalty_train, penalty_random=penalty_random,
-                penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
-                normalize_return=normalize_return, attach_cond=attach_cond,
+                attach_cond=attach_cond,
                 p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
-                n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-                lr=learning_rate, eta=eta,
             )
             # create logging dirs
             log_path, log_subpath = build_log_path(
@@ -171,8 +146,5 @@ for slience_recall_time in slience_recall_times:
                     test_data_dir, f'enc_size_test-{enc_size_test}')
                 if not os.path.exists(test_data_dir):
                     os.makedirs(test_data_dir)
-                # fpath = os.path.join(f'enc_size_test-{enc_size_test}')
-                #     test_data_dir, f'enc_size_test-{enc_size_test}', test_data_fname)
-            # else:
             fpath = os.path.join(test_data_dir, test_data_fname)
             pickle_save_dict(test_data_dict, fpath)

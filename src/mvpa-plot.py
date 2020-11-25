@@ -1,11 +1,8 @@
 import os
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from copy import deepcopy
-from collections import defaultdict
-from vis import print_dict
 from utils.io import pickle_load_dict
 from analysis import compute_stats, remove_none
 
@@ -55,7 +52,8 @@ p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
 # for all schema levels
 # dpi, def_prob = 6, .7
 # exp_name = '0717-dp'
-exp_name = '0916-widesim-pfixed'
+# exp_name = '0916-widesim-pfixed'
+exp_name = '1029-schema-evenodd-pfixed'
 # def_prob_range = np.arange(.25, 1, .1)
 
 for dpi, def_prob in enumerate(def_prob_range):
@@ -85,8 +83,6 @@ for dpi, def_prob in enumerate(def_prob_range):
 
     enc_acc_gmu[dpi], enc_acc_gse[dpi] = compute_stats(enc_acc_g)
     p_schematic_enc_err_g = p_schematic_enc_err_g[p_schematic_enc_err_g != None]
-    # p_schematic_enc_err_gmu[dpi], p_schematic_enc_err_gse[dpi] = compute_stats(
-    #     p_schematic_enc_err_g)
 
     #
     enc_dict = {c: [] for c in all_conditions}
