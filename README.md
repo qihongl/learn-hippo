@@ -1,7 +1,7 @@
 ## About this repo
 
 This repo hosts the python code for the following paper: 
-> Learning to use episodic memory for event prediction (2020) Qihong Lu, Uri Hasson, Kenneth A Norman. bioRxiv.
+[Learning to use episodic memory for event prediction (2020) Qihong Lu, Uri Hasson, Kenneth A Norman. bioRxiv.](url)
 
 This document contains an instruction about how to replicate all results figures in the paper. Most simulations can be replicated in a day if you have access to a cluster. 
 
