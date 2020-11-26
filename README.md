@@ -17,6 +17,8 @@ And we will try to host pre-trained weights somewhere asap.
 
 ## General procedure 
 
+Here we introduce the general procedure of how to replicate any simulation in the paper and explain the logic of the code. 
+
 ### 0. Download the code
 First, you need to clone this repo: 
 ```sh
@@ -39,25 +41,126 @@ srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
     --log_root $DATADIR
 ```
 
-The code block attached above also clarify how to train a model on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuation `{1}`, `{2}`, ... `{13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} ... --attach_cond ${13}`. What these variable names correspond to are explained in this [wiki document](url). 
+The code block attached above also clarify how to train models on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuation `{1}`, `{2}`, ... `{13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} ... --attach_cond ${13}`. What these variable names correspond to are explained in this [wiki document](url). 
 
 
 ### 2. Model evaluation 
 The model training script will evaluate the model on a test set by default. However, some simulations simply test previously trained models on some other data set or test previously trained models with their hippocampal module removed. So we need a way to evalute trained models on some test set with arbitrary condition. 
 
-To evaluate some trained model, go to `src/` and type: 
+To evaluate some trained model, go to `src/` and configure the simulation parameters in `eval-group.py` to specify which simulation are you running, then run the evaluation script: 
 
 ```sh
-./python eval-group.py
+python eval-group.py
 ```
+
+This script will use the input variables to locate the pre-trained models, test those models on a test set, then save the data. Note that the input variables here must match the input variables use in model training (step 1), otherwise the script won't be able locate the pre-trained models. 
 
 ### 3.Visualize the data 
 
-To visualize some basic results, go to `src/` and type: 
+To visualize some basic results, go to `src/` and configure the simulation parameters in `eval-group.py` to specify which simulation are you running. Then run the visualization script: 
 
 ```sh
 python vis-data.py
 ```
+
+Almost all figures (except for Figure 8, which involves MVPA decoding) from simulation 1 to 5 can be created using this script, with the 3 steps discussion above. Then for other simulations, please refer to the detail instruction for each simulation.  
+
+Note that this script will use the input variables to locate the data and then make plots. Note that the input variables here must match the input variables use in model training (step 1), otherwise the script won't be able locate the data. 
+
+## Detailed instruction for all simulations 
+
+### Simulation 1 
+
+For this simulation, simply train the model and visualize the data
+```sh
+./submit-sim1.sh
+python vis-data.py
+```
+
+### Simulation 2
+
+For this simulation, simply train the model and visualize the data
+```sh
+./submit-sim2.sh
+python vis-data.py
+```
+
+### Simulation 3 
+
+For this simulation, train the model and visualize the data
+```sh
+./submit-sim3-1.sh
+./submit-sim3-2.sh
+python vis-data.py
+```
+
+### Simulation 4
+
+For this simulation, train the model and visualize the data
+```sh
+./submit-sim4.sh
+python vis-data.py
+```
+
+### Simulation 5 
+
+This simulation re-use the models trained in simulation 2. First, re-evaluate the model by setting the encoding size the `n_param / 2`, which will let the model to encode episodic memories midway through an event sequence. Then you can visualize the data to see that their performance is worse. 
+```sh
+python vis-data.py
+```
+
+### Simulation 6
+
+This simulation re-use the models trained in simulation 2. First, re-evaluate the model: 
+```sh
+python eval-group.py
+```
+
+
+Then run the following code the run the inter-subject analysis and plot the data: 
+```sh
+python vis-isc.py
+```
+
+
+### Simulation 7 
+
+This simulation re-use the models trained in simulation 2. First, re-evaluate the model: 
+```sh
+python eval-group.py
+```
+Then run the following code the run the inter-subject analysis and plot the data: 
+```sh
+python vis-zuo-scramble.py
+```
+
+### Simulation 8
+
+In this simulation, we need to train the models in simulation 2 further on a new task. 
+
+```sh
+./submit-sim8.sh
+```
+
+Then visualize the data by 
+```sh
+python vis-aba.py
+```
+
+### Simulation 9 
+
+For this simulation, train the model and visualize the data
+```sh
+./submit-sim9.sh
+python vis-data.py
+```
+
+To perform MVPA analysis and visualize the data
+```sh
+python mvpa-run.py
+python mvpa-plot.py
+```
+
 
 ### Contact
 
