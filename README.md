@@ -142,10 +142,16 @@ In this simulation, we need to train the models in simulation 2 further on a new
 ./submit-sim8.sh
 ```
 
-Then visualize the data by 
+Then visualize the data 
 ```sh
 python vis-aba.py
 ```
+
+This script performs MVPA analysis and plots the result
+```sh
+python mvpa-aba.py
+```
+
 
 ### Simulation 9 
 
