@@ -17,7 +17,7 @@ And we will try to host pre-trained weights somewhere asap.
 
 ## General procedure 
 
-Here we introduce the general procedure of how to replicate any simulation in the paper and explain the logic of the code. 
+Here we introduce the general procedure of how to replicate any simulation in the paper and explain the logic of the code. We will use simulation 2 as an example, since many simulations depends on it. 
 
 ### 0. Download the code
 First, you need to clone this repo: 
@@ -31,7 +31,7 @@ I provided job submission files for all simulations: `src/submit-sim*.sh`. For e
 ./submit-sim2.sh
 ```
 
-Executing this file will submit 15 jobs to train 15 models in parallel with the specified simulation parameters. `submit-sim2.sh` will specify the parameter in [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh), then it will submits a python job with the following command: 
+Executing this file will submit 15 jobs to train 15 models in parallel with the specified simulation parameters. Specifically, `submit-sim2.sh` will fill in the parameters in [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh), then `train-mode.sh` will submits a python job with the following command: 
 
 ```sh
 srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
@@ -41,8 +41,26 @@ srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
     --log_root $DATADIR
 ```
 
-The code block attached above also clarify how to train models on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuation `{1}`, `{2}`, ... `{13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} ... --attach_cond ${13}`. What these variable names correspond to are explained in this [wiki document](url). 
+The code block attached above also clarifies how to train a model on any platform with any parameter configuration. Namely, suppose you want to train the model with some parameter configuation `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `attach_cond = {13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --attach_cond ${13}`. 
 
+Here's a brief summary of what these parameters mean: 
+```
+exp_name - the name of the experiment, only affects the directory name where the data will be saved
+subj_ids - the id of the subject, only affects the directory name where the data will be saved
+penalty - if penalty_random is 0 (false), then this is the penalty of making a prediction mistake; else penalty_random is 1, then the penalty value will be sampled from uniform[0, penalty]. 
+n_epoch - the total number of training epoch 
+sup_epoch - the number of supervised pre-training epoch 
+p_rm_ob_enc - the probability of withholding observation before part 2
+p_rm_ob_rcl - the probability of withholding observation during part 2
+similarity_max - the maximum event similarity in a single trial of experiment
+similarity_min - the minimum event similarity in a single trial of experiment
+penalty_random - see description for penalty 
+def_prob - the probability that the prototypical event happens
+n_def_tps - the number of time points with a prototypical event
+attach_cond - if 1 (true), attach the familiarity signal to the input; if (0) false, doesn't affect the input at all
+```
+
+A more detailed description of all parameters are [here](url). 
 
 ### 2. Model evaluation 
 The model training script will evaluate the model on a test set by default. However, some simulations simply test previously trained models on some other data set or test previously trained models with their hippocampal module removed. So we need a way to evalute trained models on some test set with arbitrary condition. 
