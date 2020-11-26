@@ -48,7 +48,6 @@ def compute_matches(proba_, target_):
 exp_name = '0916-widesim-pfixed'
 # exp_name = '1029-schema-evenodd-pfixed'
 # def_prob_range = np.arange(.25, 1, .1)
-# def_prob_range = [.25]
 
 # for def_prob in def_prob_range:
 def_prob = .25
@@ -658,4 +657,4 @@ mvpa_data_dict = {
 }
 mvpa_data_dict_fname = f'new-mvpa-schema-%.2f.pkl' % def_prob
 pickle_save_dict(mvpa_data_dict, os.path.join(
-    'temp', mvpa_data_dict_fname))
+    'data', mvpa_data_dict_fname))

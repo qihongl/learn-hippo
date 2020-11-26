@@ -1,9 +1,8 @@
-import dabest
 import os
+import dabest
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from scipy.stats import pearsonr
 from task import SequenceLearning
 from utils.params import P
@@ -13,12 +12,10 @@ from utils.io import build_log_path, pickle_load_dict, \
 from analysis import compute_stats, \
     compute_cell_memory_similarity, create_sim_dict, batch_compute_true_dk, \
     process_cache, get_trial_cond_ids, trim_data, make_df
-
 from brainiak.funcalign.srm import SRM
 from matplotlib.ticker import FormatStrFormatter
 from itertools import combinations
 from scipy.special import comb
-# plt.switch_backend('agg')
 
 sns.set(style='white', palette='colorblind', context='poster')
 
@@ -359,9 +356,7 @@ for ref_cond in cond_ids.keys():
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
-# for i_rc, ref_cond in enumerate(cond_ids.keys()):
 for i_c, cond in enumerate(['RM', 'DM']):
-    # for i_c, cond in enumerate(cond_ids.keys()):
     if i_c >= i_rc:
         ax.errorbar(
             x=range(T_part),
@@ -371,7 +366,6 @@ for i_c, cond in enumerate(['RM', 'DM']):
         )
         color_id += 1
 
-# ax.legend(bbox_to_anchor=(1, 1))
 ax.legend()
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
@@ -380,7 +374,7 @@ ax.set_ylabel('Linear correlation')
 ax.set_title('Spatial inter-subject correlation')
 sns.despine()
 f.tight_layout()
-f.savefig('temp/sisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
+f.savefig('../figs/sisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 
 '''plot temporal isc'''
 
@@ -403,8 +397,6 @@ sort_id = np.argsort(mu_['RM']['RM'])[::-1]
 f, ax = plt.subplots(1, 1, figsize=(9, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
-# for i_rc, ref_cond in enumerate(cond_ids.keys()):
-# for i_c, cond in enumerate(cond_ids.keys()):
 for i_c, cond in enumerate(['RM', 'DM']):
     if i_c >= i_rc:
         ax.errorbar(
@@ -441,9 +433,7 @@ for ref_cond in cond_ids.keys():
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
 color_id = 0
 i_rc, ref_cond = 0, 'RM'
-# for i_rc, ref_cond in enumerate(cond_ids.keys()):
 for i_c, cond in enumerate(['RM', 'DM']):
-    # for i_c, cond in enumerate(cond_ids.keys()):
     print(i_c, cond)
     if i_c >= i_rc:
         ax.errorbar(
@@ -461,7 +451,7 @@ ax.set_ylabel('Linear correlation')
 ax.set_title('Temporal inter-subject correlation')
 sns.despine()
 f.tight_layout()
-f.savefig('temp/tisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
+f.savefig('../figs/tisc-lineplot.png', dpi=120, bbox_to_anchor='tight')
 
 
 '''analyze isc change'''

@@ -9,8 +9,6 @@ from analysis import compute_stats, remove_none
 # define some constants
 sns.set(style='white', palette='colorblind', context='poster')
 all_conditions = ['no schema', 'schema consistent', 'schema violated']
-# all_outcome = ['correct', 'dk', 'mistake']
-# max_response_type = ['studied', 'dk', 'other']
 all_outcome = ['correct', 'dk', 'mistake', 'mistake-S']
 max_response_type = ['studied', 'dk', 'other', 'other-S']
 def_prob_range = np.arange(.25, 1, .1)
@@ -50,19 +48,14 @@ p_schematic_enc_err_gmu = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
 
 # for all schema levels
-# dpi, def_prob = 6, .7
-# exp_name = '0717-dp'
-# exp_name = '0916-widesim-pfixed'
 exp_name = '1029-schema-evenodd-pfixed'
-# def_prob_range = np.arange(.25, 1, .1)
 
 for dpi, def_prob in enumerate(def_prob_range):
-    # for dpi, def_prob in enumerate(def_prob_range):
     print('%d -  def_prob = %.2f' % (dpi, def_prob))
     # load data
     mvpa_data_dict_fname = 'new-mvpa-schema-%.2f.pkl' % (def_prob)
     mvpa_data_dict = pickle_load_dict(
-        os.path.join('temp', mvpa_data_dict_fname))
+        os.path.join('data', mvpa_data_dict_fname))
     enc_acc_g = np.array(mvpa_data_dict['enc_acc_g'])
     p_schematic_enc_err_g = np.array(
         mvpa_data_dict['schematic_enc_err_rate_g'])
@@ -84,7 +77,7 @@ for dpi, def_prob in enumerate(def_prob_range):
     enc_acc_gmu[dpi], enc_acc_gse[dpi] = compute_stats(enc_acc_g)
     p_schematic_enc_err_g = p_schematic_enc_err_g[p_schematic_enc_err_g != None]
 
-    #
+    # compute encoding data
     enc_dict = {c: [] for c in all_conditions}
     for i_s in range(n_subjs):
         if dfs_genc[i_s] is None:
@@ -97,7 +90,6 @@ for dpi, def_prob in enumerate(def_prob_range):
             for k, v in dict(vcounts).items():
                 temp_enc_dict[k] = v
             enc_dict[condition].append(deepcopy(temp_enc_dict))
-    # print_dict(enc_dict)
     all_enc_dicts['%.2f' % def_prob] = enc_dict
 
     '''by condition, then by outcome, decoded response counts counts'''
@@ -108,15 +100,11 @@ for dpi, def_prob in enumerate(def_prob_range):
 
         # split the df w.r.t. schema condition
         all_df = split_df_wrt_schema_condition(dfs_grcl[i_s])
-
-        # outcome = 'mistake'
         # prealloc
         counts_com_dict = {condition: None for condition in all_conditions}
         counts_cmo_dict = {condition: None for condition in all_conditions}
         # loop over all schema-based condition
-        # outcome='correct',condition='no schema',df_sc=df_is_ns
         for condition, df_sc in zip(all_conditions, all_df):
-            # df_sc = df_sc.loc[df_sc['has_enc_err'] == True]
             # prealloc
             outcome_counts = {o: 0 for o in all_outcome}
 
@@ -258,12 +246,8 @@ dr_se_byss = {
     for condition in all_conditions
 }
 
-'''by condition, decoded response counts'''
-
 
 '''plotting params'''
-
-# sns.palplot(sns.color_palette())
 color_y = sns.color_palette()[1]
 color_g = sns.color_palette()[2]
 color_r = sns.color_palette()[3]
@@ -279,9 +263,7 @@ f, ax = plt.subplots(1, 1, figsize=(7, 4))
 mvpa_acc_mus = np.array([v for k, v in mvpa_acc_mu.items()])
 mvpa_acc_ses = np.array([v for k, v in mvpa_acc_se.items()])
 for pi in range(np.shape(mvpa_acc_mus)[1]):
-    ax.errorbar(x=xticks, y=mvpa_acc_mus[:, pi],
-                # yerr=mvpa_acc_ses[:, pi]
-                )
+    ax.errorbar(x=xticks, y=mvpa_acc_mus[:, pi])
 ax.set_ylim([0, 1])
 ax.set_xticks(xticks)
 ax.set_xticklabels(xticklabels)
@@ -326,7 +308,6 @@ for ci, condition in enumerate(all_conditions):
     axes[ci].set_ylim([-.025, 1.025])
     axes[ci].set_xlim([-.5, 7.5])
     axes[ci].set_yticklabels([0, .5, 1])
-# axes[-1].legend()
 axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
                mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')
@@ -371,8 +352,6 @@ for ci, condition in enumerate(all_conditions):
     axes[ci].set_ylim([-.025, 1.025])
     axes[ci].set_xlim([-.5, 7.5])
     axes[ci].set_yticklabels([0, .5, 1])
-# axes[-1].legend(loc=3)
-# axes[1].legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
 axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
                mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')
@@ -380,98 +359,7 @@ sns.despine()
 f.tight_layout()
 img_name = 'mvpa-dr.png'
 f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')
-#
-# '''3. by condition, then by outcome, decoded response counts'''
-# for condition in all_conditions:
-#     f, axes = plt.subplots(4, 1, figsize=(9, 16))
-#     for i, outcome in enumerate(all_outcome):
-#         np.any(np.isnan(prop_dict_co_mu[condition][outcome]), axis=1)
-#
-#         # max_response_type
-#         mrt_stud = prop_dict_co_mu[condition][outcome][:, 0]
-#         mrt_dk = prop_dict_co_mu[condition][outcome][:, 1]
-#         mrt_other = prop_dict_co_mu[condition][outcome][:, 2]
-#         mrt_other_sc = prop_dict_co_mu[condition][outcome][:, 3]
-#         mrt_stud_se = prop_dict_co_se[condition][outcome][:, 0]
-#         mrt_dk_se = prop_dict_co_se[condition][outcome][:, 1]
-#         mrt_other_se = prop_dict_co_se[condition][outcome][:, 2]
-#         mrt_other_sc_se = prop_dict_co_se[condition][outcome][:, 3]
-#
-#         axes[i].bar(xticks, mrt_stud, width, yerr=mrt_stud_se,
-#                     label='studied', color=color_g, error_kw=error_kw)
-#         axes[i].bar(xticks, mrt_dk, width, yerr=mrt_dk_se,
-#                     bottom=mrt_stud, label='don\'t know', color=color_b, error_kw=error_kw)
-#         axes[i].bar(xticks, mrt_other, width, yerr=mrt_other_se,
-#                     bottom=mrt_stud + mrt_dk, label='other-non-schematic', color=color_r,
-#                     error_kw=error_kw)
-#         axes[i].bar(xticks, mrt_other_sc, width, yerr=mrt_other_sc_se,
-#                     bottom=mrt_stud + mrt_dk + mrt_other, label='other-schematic',
-#                     color=color_y, error_kw=error_kw)
-#
-#         if i == 0:
-#             axes[i].set_title(f'Condition = {condition}\noutcome = {outcome}')
-#         else:
-#             axes[i].set_title(f'outcome = {outcome}')
-#         axes[i].set_ylabel('%')
-#         axes[i].set_xticks(xticks)
-#         axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
-#         axes[i].set_yticks([0, .5, 1])
-#         axes[i].set_ylim([-.025, 1.025])
-#         axes[i].set_xlim([-.5, 7.5])
-#         axes[i].set_yticklabels([0, .5, 1])
-#     axes[-1].legend()
-#     axes[-1].set_xlabel('Schema strength')
-#     sns.despine()
-#     f.tight_layout()
-#
-#     img_name = 'mvpa-dr-counts-%s.png' % (condition)
-#     f.savefig(os.path.join('../figs', img_name))
-#
-#
-# '''4. by condition, then by mrt, outcome counts'''
-# for condition in all_conditions:
-#     f, axes = plt.subplots(4, 1, figsize=(9, 16))
-#     for i, mrt in enumerate(max_response_type):
-#         # max_response_type
-#         o_correct = prop_dict_cm_mu[condition][mrt][:, 0]
-#         o_dk = prop_dict_cm_mu[condition][mrt][:, 1]
-#         o_mistake = prop_dict_cm_mu[condition][mrt][:, 2]
-#         o_mistake_sc = prop_dict_cm_mu[condition][mrt][:, 3]
-#
-#         o_correct_se = prop_dict_cm_se[condition][mrt][:, 0]
-#         o_dk_se = prop_dict_cm_se[condition][mrt][:, 1]
-#         o_mistake_se = prop_dict_cm_se[condition][mrt][:, 2]
-#         o_mistake_sc_se = prop_dict_cm_se[condition][mrt][:, 3]
-#
-#         axes[i].bar(xticks, o_correct, width, yerr=o_correct_se,
-#                     label='correct', color=color_g, error_kw=error_kw)
-#         axes[i].bar(xticks, o_dk, width, yerr=o_dk_se,
-#                     bottom=o_correct, label='don\'t know', color=color_b, error_kw=error_kw)
-#         axes[i].bar(xticks, o_mistake, width, yerr=o_mistake_se,
-#                     bottom=o_correct + o_dk, label='mistake-non-schematic', color=color_r,
-#                     error_kw=error_kw)
-#         axes[i].bar(xticks, o_mistake_sc, width, yerr=o_mistake_sc_se,
-#                     bottom=o_correct + o_dk + o_mistake, label='mistake-schematic',
-#                     color=color_y, error_kw=error_kw)
-#
-#         if i == 0:
-#             axes[i].set_title(f'Condition = {condition}\ndecoded = {mrt}')
-#         else:
-#             axes[i].set_title(f'decoded = {mrt}')
-#         axes[i].set_ylabel('%')
-#         axes[i].set_xticks(xticks)
-#         axes[i].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
-#         axes[i].set_yticks([0, .5, 1])
-#         axes[i].set_ylim([-.025, 1.025])
-#         axes[i].set_xlim([-.5, 7.5])
-#         axes[i].set_yticklabels([0, .5, 1])
-#     axes[-1].legend()
-#     axes[-1].set_xlabel('Schema strength')
-#     sns.despine()
-#     f.tight_layout()
-#
-#     img_name = 'mvpa-outcome-counts-%s.png' % (condition)
-#     f.savefig(os.path.join('../figs', img_name))
+
 
 '''sub-figure in paper'''
 
@@ -512,7 +400,6 @@ for j, condition in enumerate(['schema consistent', 'schema violated']):
         axes[i, j].set_ylim([-.025, 1.025])
         axes[i, j].set_xlim([-.5, 7.5])
         axes[i, j].set_yticklabels([0, .5, 1])
-    # axes[-1, 0].legend()
     axes[0, 0].legend(bbox_to_anchor=(.6, 1.9, 1, 0.2), loc="lower left",
                       mode="expand", borderaxespad=-2, ncol=2)
     axes[-1, 0].set_xlabel('Schema strength')
@@ -573,9 +460,6 @@ for ci, condition in enumerate(all_conditions):
     axes[ci].set_yticklabels([0, .5, 1])
     axes[ci].set_ylim([-.025, 1.025])
     axes[ci].set_xlim([-.5, 7.5])
-
-# axes[-1].legend(loc=3)
-# axes[1].legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
 axes[0].legend(bbox_to_anchor=(0, 2, 1, 0.2), loc="lower left",
                mode="expand", borderaxespad=-1, ncol=2)
 axes[-1].set_xlabel('Schema strength')

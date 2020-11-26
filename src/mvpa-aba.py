@@ -5,35 +5,26 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from matplotlib.lines import Line2D
-from matplotlib.ticker import FormatStrFormatter
-from scipy.stats import pearsonr
-from sklearn import metrics
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 
 from task import SequenceLearning
 from analysis.neural import build_yob, build_cv_ids
 from analysis.task import get_oq_keys
-from utils.utils import chunk
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from utils.io import build_log_path, get_test_data_dir, \
-    pickle_load_dict, get_test_data_fname, pickle_save_dict
-from analysis import compute_cell_memory_similarity, compute_stats, \
-    compute_n_trials_to_skip, trim_data, get_trial_cond_ids, process_cache
+from utils.io import build_log_path, pickle_load_dict, get_test_data_fname, \
+    pickle_save_dict
+from analysis import compute_stats, compute_n_trials_to_skip, trim_data, \
+    get_trial_cond_ids, process_cache
 
 
 sns.set(style='white', palette='colorblind', context='poster')
 cb_pal = sns.color_palette('colorblind')
 alphas = [1 / 3, 2 / 3, 1]
 
-# log_root = '../log/'
-log_root = '/tigress/qlu/logs/learn-hippocampus/log'
-exp_name = '0916-widesim-prandom'
+log_root = '../log'
+exp_name = 'vary-test-penalty'
 
 seed = 0
 supervised_epoch = 600
@@ -85,9 +76,7 @@ n_events = 2
 n_parts = 3
 scramble = False
 slience_recall_time = None
-trunc = 8
 
-# subj_id = 0
 n_subjs = 10
 T_TOTAL = n_events * n_parts * n_param
 
@@ -343,7 +332,7 @@ mvpa_data_dict = {
 }
 mvpa_data_dict_fname = f'mvpa-aba.pkl'
 pickle_save_dict(mvpa_data_dict, os.path.join(
-    'temp', mvpa_data_dict_fname))
+    'data', mvpa_data_dict_fname))
 
 
 '''plot'''

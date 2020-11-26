@@ -36,7 +36,7 @@ all_conds = TZ_COND_DICT.values()
 # for def_prob in def_prob_range:
 # print(exp_name)
 
-exp_name = 'vary-training-penalty'
+exp_name = 'vary-test-penalty'
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
@@ -55,7 +55,7 @@ comp_val = .8
 leak_val = 0
 
 # testing param, ortho to the training directory
-penalty_random = 0
+penalty_random = 1
 
 # loading params
 pad_len_load = -1
@@ -80,7 +80,7 @@ n_examples_test = 256
 subj_ids = np.arange(15)
 
 penaltys_train = [4]
-penaltys_test = np.array([0, 4])
+penaltys_test = np.array([2])
 
 n_subjs = len(subj_ids)
 DM_qsources = ['EM only', 'both']
@@ -279,7 +279,7 @@ for penalty_train in penaltys_train:
 
             # TODO save enc data, probably don't need to do it here
             input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
-            pickle_save_dict(input_dict, f'temp/enc{enc_size_test}.pkl')
+            pickle_save_dict(input_dict, f'data/enc{enc_size_test}.pkl')
 
             # compute performance stats
             for i, cn in enumerate(all_conds):
@@ -591,7 +591,7 @@ for penalty_train in penaltys_train:
         }
         fname = '%s-dp%.2f-p%d-%d.pkl' % (
             exp_name, def_prob, penalty_train, penalty_test)
-        gdata_outdir = 'temp/'
+        gdata_outdir = 'data/'
         pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
 
         '''group level performance'''

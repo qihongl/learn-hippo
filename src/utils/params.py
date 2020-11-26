@@ -98,7 +98,6 @@ class P():
         )
         self.misc = misc(sup_epoch, n_epoch, n_example)
 
-        # TODO temp solution
         if penalty_onehot == 1:
             assert penalty_discrete == 1
         if penalty_discrete == 0:

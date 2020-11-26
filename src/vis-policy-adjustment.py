@@ -17,7 +17,7 @@ all_conds = list(TZ_COND_DICT.values())
 T = 16
 
 exp_name = '0916-widesim-prandom'
-gdata_outdir = 'temp/'
+gdata_outdir = 'data/'
 penaltys_train = [4]
 penaltys_test = [0, 4]
 

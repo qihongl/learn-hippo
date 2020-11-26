@@ -19,7 +19,7 @@ T = 16
 # exp_name = '0916-widesim-prandom-schema'
 exp_name = '1029-schema-evenodd-pfixed'
 # exp_name = '1029-schema-evenodd'
-gdata_outdir = 'temp/'
+gdata_outdir = 'data/'
 clip_subj = 15
 
 f, axes = plt.subplots(1, 3, figsize=(23, 5), sharey=True)
