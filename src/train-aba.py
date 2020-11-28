@@ -20,12 +20,12 @@ plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='talk')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', default='0916-widesim-prandom', type=str)
+parser.add_argument('--exp_name', default='vary-test-penalty', type=str)
 parser.add_argument('--subj_id', default=1, type=int)
 parser.add_argument('--n_param', default=16, type=int)
 parser.add_argument('--n_branch', default=4, type=int)
 parser.add_argument('--pad_len', default=-1, type=int)
-parser.add_argument('--def_prob', default=None, type=float)
+parser.add_argument('--def_prob', default=.25, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=16, type=int)
 parser.add_argument('--penalty', default=4, type=int)
@@ -42,7 +42,7 @@ parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
 parser.add_argument('--cmpt', default=0.8, type=float)
-parser.add_argument('--n_event_remember', default=4, type=int)
+parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--n_event_remember_aba', default=2, type=int)
 parser.add_argument('--sup_epoch', default=600, type=int)
 parser.add_argument('--n_epoch', default=1000, type=int)
@@ -74,7 +74,6 @@ n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
 cmpt = args.cmpt
 eta = args.eta
-n_event_remember = 2
 n_examples = args.n_examples
 n_epoch = args.n_epoch
 supervised_epoch = args.sup_epoch
@@ -102,9 +101,6 @@ p = P(
 n_parts = 3
 pad_len = 0
 p_rm_ob = 0.4
-# similarity_cap = .3
-# n_event_remember = 4
-n_event_remember = args.n_event_remember_aba
 
 # init env
 task = SequenceLearning(
@@ -115,13 +111,11 @@ task = SequenceLearning(
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
 # init agent
-# dict_len = 2
 agent = Agent(
     input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=n_event_remember, cmpt=p.net.cmpt,
 )
-# lr = p.net.lr
 optimizer = torch.optim.Adam(agent.parameters(), lr=p.net.lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, factor=1 / 2, patience=30, threshold=1e-3, min_lr=1e-8,
@@ -152,8 +146,6 @@ Log_mis = np.zeros((n_epoch, task.n_parts))
 Log_dk = np.zeros((n_epoch, task.n_parts))
 Log_cond = np.zeros((n_epoch, n_examples // 2))
 
-# epoch_id, i, t = 0, 0, 0
-# torch.autograd.set_detect_anomaly(True)
 fix_cond = 'DM'
 epoch_id = 0
 for epoch_id in np.arange(epoch_id, n_epoch):
@@ -166,12 +158,6 @@ for epoch_id in np.arange(epoch_id, n_epoch):
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
     [Log_loss_sup[epoch_id], Log_loss_actor[epoch_id], Log_loss_critic[epoch_id],
      Log_return[epoch_id], Log_pi_ent[epoch_id]] = metrics
-    # compute stats
-    # print(targ_a[0])
-    # print()
-    # print(dist_a[0])
-    # print(np.shape(targ_a[0]))
-    # print(np.shape(dist_a[0]))
     bm_ = compute_behav_metrics(targ_a, dist_a, task)
     Log_acc[epoch_id], Log_mis[epoch_id], Log_dk[epoch_id] = bm_
     acc_mu_pts_str = " ".join('%.2f' % i for i in Log_acc[epoch_id])
