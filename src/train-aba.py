@@ -141,7 +141,7 @@ if not os.path.exists(log_output_path):
 # pdb.set_trace()
 
 '''task definition'''
-log_freq = 20
+log_freq = 200
 Log_loss_critic = np.zeros(n_epoch,)
 Log_loss_actor = np.zeros(n_epoch,)
 Log_loss_sup = np.zeros(n_epoch,)
