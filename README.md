@@ -44,23 +44,35 @@ srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
 The code block attached above also clarifies how to train a model on any platform with any parameter configuration. Namely, suppose you want to train the model with some parameter configuation `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `attach_cond = {13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --attach_cond ${13}`. 
 
 Here's a brief summary of what these parameters mean: 
-```
-exp_name - the name of the experiment, only affects the directory name where the data will be saved
-subj_ids - the id of the subject, only affects the directory name where the data will be saved
-penalty - if penalty_random is 0 (false), then this is the penalty of making a prediction mistake; else penalty_random is 1, then the penalty value will be sampled from uniform[0, penalty]. 
-n_epoch - the total number of training epoch 
-sup_epoch - the number of supervised pre-training epoch 
-p_rm_ob_enc - the probability of withholding observation before part 2
-p_rm_ob_rcl - the probability of withholding observation during part 2
-similarity_max - the maximum event similarity in a single trial of experiment
-similarity_min - the minimum event similarity in a single trial of experiment
-penalty_random - see description for penalty 
-def_prob - the probability that the prototypical event happens
-n_def_tps - the number of time points with a prototypical event
-attach_cond - if 1 (true), attach the familiarity signal to the input; if (0) false, doesn't affect the input at all
-```
 
-A more detailed description of all parameters are [here](url). 
+`exp_name` - the name of the experiment, only affects the directory name where the data will be saved
+
+`subj_ids` - the id of the subject, only affects the directory name where the data will be saved
+
+`penalty` - if penalty_random is 0 (false), then this is the penalty of making a prediction mistake; else penalty_random is 1, then the penalty value will be sampled from uniformly from 0 up to the input value. 
+
+`n_epoch` - the total number of training epoch 
+
+`sup_epoch` - the number of supervised pre-training epoch 
+
+`p_rm_ob_enc` - the probability of withholding observation before part 2
+
+`p_rm_ob_rcl` - the probability of withholding observation during part 2
+
+`similarity_max` - the maximum event similarity in a single trial of experiment
+
+`similarity_min` - the minimum event similarity in a single trial of experiment
+
+`penalty_random` - see description for penalty 
+
+`def_prob` - the probability that the prototypical event happens
+
+`n_def_tps` - the number of time points with a prototypical event
+
+`attach_cond` - if 1 (true), attach the familiarity signal to the input; if (0) false, doesn't affect the input at all
+
+
+A more detailed description of all parameters are [here](url). All simulations in the paper 
 
 ### 2. Model evaluation 
 The model training script will evaluate the model on a test set by default. However, some simulations simply test previously trained models on some other data set or test previously trained models with their hippocampal module removed. So we need a way to evalute trained models on some test set with arbitrary condition. 
@@ -85,7 +97,9 @@ Almost all figures (except for Figure 8, which involves MVPA decoding) from simu
 
 Note that this script will use the input variables to locate the data and then make plots. Note that the input variables here must match the input variables use in model training (step 1), otherwise the script won't be able locate the data. 
 
-## Detailed instruction for all simulations 
+## Specific instruction for all simulations 
+
+This section lists the scripts you need to replicate every simulation in the paper. Note that when you use the python scripts analyze or visualize the data, the input parameters in the python script must match the parameters used in the training scripts. This enable the python script to find the location of the saved data. For example, in simulation 1, the input parameters in `vis-data.py` must match what's in `submit-sim1.sh`. 
 
 ### Simulation 1 
 
