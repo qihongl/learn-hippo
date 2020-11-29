@@ -89,8 +89,7 @@ Here's a list of all the code used in this project
     └── vis-zuo-scramble.py         # visualize the results for the scrambling analysis (see simulation 7)
 ```    
 
-
-## General procedure 
+## General procedure to replicate the simulation results
 
 Here we introduce the general procedure of how to replicate any simulation in the paper and explain the logic of the code. We will use simulation 2 as an example, since many simulations depends on it. 
 
@@ -259,7 +258,7 @@ python vis-data.py
 
 ### Simulation 6
 
-This simulation re-use the models trained in simulation 2. First, you need to re-evaluate the model on some different conditions. In 
+This simulation re-use the models trained in simulation 2. First, you need to re-evaluate the model on some different conditions. 
 ```sh
 python eval-group.py
 ```
@@ -284,13 +283,13 @@ python vis-zuo-scramble.py
 
 ### Simulation 8
 
-In this simulation, we need to train the models in simulation 2 further on a new task. 
+In this simulation, we need to train the models in simulation 2 further on a new task (make sure the input parameters in this python script match what's used in `submit-sim2.sh`)
 
 ```sh
 ./submit-sim8.sh
 ```
 
-Then visualize the data, 
+Then visualize the data (make sure the input parameters in this python script match what's used in `submit-sim2.sh`) 
 ```sh
 python vis-aba.py
 ```
@@ -306,10 +305,14 @@ python mvpa-aba.py
 For this simulation, train the model and visualize the data
 ```sh
 ./submit-sim9.sh
-python vis-data.py
 ```
 
-To perform MVPA analysis and visualize the data
+```sh
+python vis-data.py
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim9.sh`)
+
+To perform MVPA analysis and visualize the data 
 ```sh
 python mvpa-run.py
 python mvpa-plot.py
