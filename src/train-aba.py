@@ -60,6 +60,7 @@ pad_len = args.pad_len
 def_prob = args.def_prob
 n_def_tps = args.n_def_tps
 enc_size = n_param
+n_event_remember = args.n_event_remember
 penalty = args.penalty
 penalty_random = args.penalty_random
 penalty_discrete = args.penalty_discrete
