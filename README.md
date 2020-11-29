@@ -15,7 +15,81 @@ I used a cluster to parallelize model training, so that the training step for mo
 
 And we will try to host pre-trained weights somewhere asap. 
 
-## General procedure 
+## What's in the repo
+
+Here's a list of all the code used in this project
+
+```sh
+└── src
+    ├── analysis        # helper functions for analyzing the data 
+    │   ├── __init__.py
+    │   ├── behav.py
+    │   ├── general.py
+    │   ├── neural.py
+    │   ├── preprocessing.py
+    │   ├── task.py
+    │   └── utils.py
+    ├── examples        # some simple demos 
+    │   ├── event-empirical-similarity.py
+    │   ├── event-similarity-cap.py
+    │   ├── event-similarity.py
+    │   ├── memory_benefit.py
+    │   ├── schema-regularity.py
+    │   ├── stimuli-representation.py
+    │   ├── true-uncertainty.py
+    │   └── zuo-2019-control-patient-isc-logic.py
+    ├── models         # the components of the model 
+    │   ├── A2C.py             # the standard actor-critic algorithm 
+    │   ├── EM.py              # the episodic memory module
+    │   ├── LCALSTM.py         # the model 
+    │   ├── LCA_pytorch.py     # a pytorch implementation of leaking competing accumulator model
+    │   ├── _rl_helpers.py     # some RL helpers 
+    │   ├── initializer.py     # weight initializer
+    │   ├── metrics.py         # some helper functions for metrics 
+    │   ├── __init__.py    
+    ├── task            # the definition of the task 
+    │   ├── Schema.py           
+    │   ├── SequenceLearning.py
+    │   ├── StimSampler.py
+    │   ├── utils.py
+    │   └── __init__.py
+    ├── utils           # general utility functions
+    │   ├── constants.py
+    │   ├── io.py
+    │   ├── params.py
+    │   ├── utils.py
+    │   └── __init__.py    
+    ├── vis             # code for visualizing the data
+    │   ├── _utils.py
+    │   ├── _vis.py
+    │   └── __init__.py    
+    ├── submit-sim1.sh              # the script for submitting jobs for simulation 1, triggers train-model.sh
+    ├── submit-sim2.sh              # the script for submitting jobs for simulation 2, triggers train-model.sh
+    ├── submit-sim3-1.sh            # the script for submitting jobs for simulation 3 (part one), triggers train-model.sh
+    ├── submit-sim3-2.sh            # the script for submitting jobs for simulation 3 (part two), triggers train-model.sh
+    ├── submit-sim4.sh              # the script for submitting jobs for simulation 4, triggers train-model.sh
+    ├── submit-sim8.sh              # the script for submitting jobs for simulation 8, triggers train-model-aba.sh
+    ├── submit-sim9.sh              # the script for submitting jobs for simulation 9, triggers train-model.sh
+    ├── train-model-aba.sh          # submit a python job to train a model on the ABA experiment by Chang et al. 2020
+    ├── train-model.sh              # submit a python job to train a model for the twilight zone experiment by Chen et al. 2016
+    ├── eval-group.py               # evaluate a group of models 
+    ├── exp_aba.py                  # definition of the ABA experiment by Chang et al. 2020
+    ├── exp_tz.py                   # definition of the twilight zone experiment by Chen et al. 2016
+    ├── mvpa-aba.py                 # run MVPA analysis on the ABA experiment 
+    ├── mvpa-plot.py                # plot MVPA results from mvpa-run.py
+    ├── mvpa-run.py                 # run MVPA analysis (mainly for simulation 9, but useful for other simulations except for simulation 8)
+    ├── train-aba.py                # train the model for simulation 8
+    ├── train-sl.py                 # train the model (except for simulation 8)
+    ├── vis-aba.py                  # visualize the data for simulation 8
+    ├── vis-data.py                 # visualize some basic results  
+    ├── vis-inpt-by-schematicity.py # visualize the effect of schema level on input gate values (see simulation 9)
+    ├── vis-isc.py                  # visualize the ISC analysis (see simulation 6)
+    ├── vis-policy-adjustment.py    # visualize the how the model adjusts its policy according to the penalty level 
+    ├── vis-policy-diff.py          # visualize the how the model models trained in different penalty levels respond differently
+    └── vis-zuo-scramble.py         # visualize the results for the scrambling analysis (see simulation 7)
+```    
+
+## General procedure to replicate the simulation results
 
 Here we introduce the general procedure of how to replicate any simulation in the paper and explain the logic of the code. We will use simulation 2 as an example, since many simulations depends on it. 
 
@@ -25,13 +99,21 @@ First, you need to clone this repo:
 git clone https://https://github.com/qihongl/learn-hippo
 ```
 ### 1. Model training 
-I provided job submission files for all simulations: `src/submit-sim*.sh`. For example, [src/submit-sim2.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-sim2.sh) is the job submission file for simulation 2. To execute this file, simply go to the `src/` folder and type 
+I provided job submission files for all simulations: `src/submit-sim*.sh`. For example, [src/submit-sim2.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-sim2.sh) is the job submission file for simulation 2. Executing this file will submit 15 jobs to train 15 models in parallel with the specified simulation parameters. Specifically, `submit-sim2.sh` will fill in the parameters in [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh). 
+
+Several things to check before you run this script. 
+
+1. In `train-model.sh` ([line 13](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh#L13)), you need to set the logging directory to something that exisits on your machine. Then the data (e.g. trained network weights) will be saved to this directory. Later on, you need to use this logging directory so that those python scripts can find these data. 
+
+2. In `train-model.sh` ([line 9](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh#L9)), you need to set where to log the output (from the python script), again to some directory that exists on your machine. This is useful if you want to inspect the training process. 
+
+To execute submit jobs, simply go to the `src/` folder and type the following: 
 
 ```sh
 ./submit-sim2.sh
 ```
 
-Executing this file will submit 15 jobs to train 15 models in parallel with the specified simulation parameters. Specifically, `submit-sim2.sh` will fill in the parameters in [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh), then `train-mode.sh` will submits a python job with the following command: 
+This will activate `train-mode.sh` which will submits a python job with the following command: 
 
 ```sh
 srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
@@ -103,47 +185,80 @@ This section lists the scripts you need to replicate every simulation in the pap
 
 ### Simulation 1 
 
-For this simulation, simply train the model and visualize the data
+First, train the models 
 ```sh
 ./submit-sim1.sh
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim1.sh`)
+```sh
 python vis-data.py
 ```
+
 
 ### Simulation 2
 
-For this simulation, simply train the model and visualize the data
+First, train the models
 ```sh
 ./submit-sim2.sh
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim2.sh`)
+
+```sh
 python vis-data.py
 ```
 
+
 ### Simulation 3 
 
-For this simulation, train the model and visualize the data
+First, train the models for in the high event similarity environment: 
 ```sh
 ./submit-sim3-1.sh
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim3-1.sh`)
+
+```sh
+python vis-data.py
+```
+
+Then train the models for in the low event similarity environment: 
+```sh
 ./submit-sim3-2.sh
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim3-2.sh`)
+
+```sh
 python vis-data.py
 ```
 
 ### Simulation 4
 
-For this simulation, train the model and visualize the data
+First, train the models whlie providing the familiarity signal
 ```sh
 ./submit-sim4.sh
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim4.sh`)
+```sh
 python vis-data.py
 ```
 
+Compare these results to what you got from simulation 2 to see the effect of having the familiarity signal. 
+
+
 ### Simulation 5 
 
-This simulation re-use the models trained in simulation 2. First, re-evaluate the model by setting the encoding size the `n_param / 2`, which will let the model to encode episodic memories midway through an event sequence. Then you can visualize the data to see that their performance is worse. 
+This simulation re-use the models trained in simulation 2. First, re-evaluate the model by setting the `enc_size` to `n_param / 2`, which will let the model to encode episodic memories midway through an event sequence. 
+```sh
+python eval-group.py
+```
+
+Then you can visualize the data to see that their performance is worse (also make sure `enc_size` is `n_param / 2`, or whatever `enc_size` value you used when you evalute the model). 
 ```sh
 python vis-data.py
 ```
 
 ### Simulation 6
 
-This simulation re-use the models trained in simulation 2. First, re-evaluate the model: 
+This simulation re-use the models trained in simulation 2. First, you need to re-evaluate the model on some different conditions. 
 ```sh
 python eval-group.py
 ```
@@ -168,13 +283,13 @@ python vis-zuo-scramble.py
 
 ### Simulation 8
 
-In this simulation, we need to train the models in simulation 2 further on a new task. 
+In this simulation, we need to train the models in simulation 2 further on a new task (make sure the input parameters in this python script match what's used in `submit-sim2.sh`)
 
 ```sh
 ./submit-sim8.sh
 ```
 
-Then visualize the data 
+Then visualize the data (make sure the input parameters in this python script match what's used in `submit-sim2.sh`) 
 ```sh
 python vis-aba.py
 ```
@@ -190,10 +305,14 @@ python mvpa-aba.py
 For this simulation, train the model and visualize the data
 ```sh
 ./submit-sim9.sh
-python vis-data.py
 ```
 
-To perform MVPA analysis and visualize the data
+```sh
+python vis-data.py
+```
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim9.sh`)
+
+To perform MVPA analysis and visualize the data 
 ```sh
 python mvpa-run.py
 python mvpa-plot.py
