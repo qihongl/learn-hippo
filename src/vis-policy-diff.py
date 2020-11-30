@@ -16,8 +16,8 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 T = 16
 
-exp_name = '0916-widesim-pfixed'
-gdata_outdir = 'temp/'
+exp_name = 'vary-training-penalty'
+gdata_outdir = 'data/'
 def_prob = .25
 
 penaltys_train = [0, 4]
@@ -39,7 +39,6 @@ for ptrain, ptest in zip(penaltys_train, penaltys_test):
     # load data
     fname = '%s-dp%.2f-p%d-%d.pkl' % (
         exp_name, def_prob, ptrain, ptest)
-    # fname = f'{exp_name}-p{ptrain}-{ptest}-data.pkl'
     data_load_path = os.path.join(gdata_outdir, fname)
     data = pickle_load_dict(data_load_path)
     # unpack data

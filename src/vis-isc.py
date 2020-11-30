@@ -20,7 +20,7 @@ from scipy.special import comb
 sns.set(style='white', palette='colorblind', context='poster')
 
 log_root = '../log/'
-exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 
 subj_ids = np.arange(15)
 n_subjs = len(subj_ids)
@@ -56,10 +56,7 @@ p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 pad_len_test = 0
 penalty_test = 2
-
 slience_recall_time = None
-# slience_recall_time = 2
-
 n_examples_test = 256
 
 
@@ -72,8 +69,6 @@ CMs_dlist = {cond: [] for cond in all_conds}
 DAs_dlist = {cond: [] for cond in all_conds}
 ma_dlist = {cond: [] for cond in has_memory_conds}
 
-
-# fix_cond = 'RM'
 
 for subj_id in subj_ids:
     print(f'\nsubj_id = {subj_id}: ', end='')
@@ -182,8 +177,6 @@ for cond in all_conds:
 
 
 '''isc'''
-
-# from sklearn.preprocessing import StandardScaler
 dim_srm = 16
 srm = SRM(features=dim_srm)
 
@@ -191,9 +184,7 @@ test_prop = .5
 n_examples_tr = int(n_examples * (1 - test_prop))
 n_examples_te = n_examples - n_examples_tr
 
-# data = CMs_darray
 data = DAs_darray
-
 _, nH, _, _ = np.shape(data[cond])
 
 # split data
@@ -287,9 +278,7 @@ def compute_bs_bc_isc(
     return isc_mu
 
 
-# ref_cond = 'NM'
 win_size = 5
-
 bs_bc_sisc = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 bs_bc_tisc = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
 bs_bc_sw_tisc = {rcn: {cn: [] for cn in all_conds} for rcn in all_conds}
@@ -333,7 +322,6 @@ for i_rc, ref_cond in enumerate(all_conds):
 
 
 '''plot spatial pattern isc '''
-# sns.palplot(sns.color_palette(n_colors=8))
 c_pal = sns.color_palette(n_colors=8)
 color_id_pick = [0, 1, 2, 3, 4, 7]
 c_pal = [c_pal[color_id] for color_id in color_id_pick]
@@ -442,9 +430,7 @@ for i_c, cond in enumerate(['RM', 'DM']):
             label=f'{ref_cond}-{cond}', color=c_pal[color_id]
         )
         color_id += 1
-# ax.legend(bbox_to_anchor=(1, 1))
 ax.legend()
-# ax.axvline(T_part, color='red', linestyle='--', alpha=.5)
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 ax.set_xlabel(f'Time (sliding window size = {win_size})')
 ax.set_ylabel('Linear correlation')
@@ -461,7 +447,6 @@ n_subj_pairs = int(comb(n_subjs, 2))
 tma_dm_p2_test = tma['DM'][:, T_part:, n_examples_tr:]
 recall = np.mean(tma_dm_p2_test, axis=0)
 
-# cond = 'RM'
 r_val_sisc = {cond: np.zeros((n_subj_pairs, n_tps))
               for cond in has_memory_conds}
 p_val_sisc = {cond: np.zeros((n_subj_pairs, n_tps))
@@ -579,6 +564,7 @@ for cond in has_memory_conds:
 #
 #
 '''plot t-isc'''
+
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
 for cond in has_memory_conds:
     ax.errorbar(
@@ -594,10 +580,9 @@ ax.legend()
 sns.despine()
 f.tight_layout()
 
-
+xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
 f, ax = plt.subplots(1, 1, figsize=(6, 4))
 sns.violinplot(data=[r_mu_tisc[cond] for cond in has_memory_conds])
-# sns.swarmplot(data=[r_mu_sisc[cond] for cond in has_memory_conds])
 ax.axhline(0, color='grey', linestyle='--')
 ax.set_xticks(range(len(xticklabels)))
 ax.set_xticklabels(xticklabels)

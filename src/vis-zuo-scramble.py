@@ -27,8 +27,7 @@ sns.set(style='white', palette='colorblind', context='poster')
 
 
 log_root = '../log/'
-# exp_name = '0220-v1-widesim-comp.8'
-exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 subj_ids = np.arange(15)
 n_subjs = len(subj_ids)
 

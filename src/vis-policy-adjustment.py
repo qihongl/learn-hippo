@@ -16,8 +16,9 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 T = 16
 
-exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 gdata_outdir = 'data/'
+def_prob = .25
 penaltys_train = [4]
 penaltys_test = [0, 4]
 
@@ -35,7 +36,8 @@ ptrain = penaltys_train[0]
 for ptest in penaltys_test:
     print(f'ptrain={ptrain}, ptest={ptest}')
     # load data
-    fname = f'{exp_name}-p{ptrain}-{ptest}-data.pkl'
+    fname = '%s-dp%.2f-p%d-%d.pkl' % (
+        exp_name, def_prob, ptrain, ptest)
     data_load_path = os.path.join(gdata_outdir, fname)
     data = pickle_load_dict(data_load_path)
     # unpack data
