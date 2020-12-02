@@ -38,6 +38,7 @@ all_conds = TZ_COND_DICT.values()
 
 # the name of the experiemnt
 exp_name = 'vary-test-penalty'
+# exp_name = 'familiarity-signal'
 subj_ids = np.arange(15)
 penalty_random = 1
 def_prob = .25
@@ -48,7 +49,7 @@ n_def_tps = 0
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
-attach_cond = 1
+attach_cond = 0
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
