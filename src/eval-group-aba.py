@@ -9,11 +9,10 @@ from utils.params import P
 from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_fname
 
-# log_root = '../log/'
-log_root = '/tigress/qlu/logs/learn-hippocampus/log'
+log_root = '../log/'
+# log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 
-# exp_name = 'penalty-random-discrete'
-exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 
 seed = 0
 supervised_epoch = 600
@@ -51,8 +50,7 @@ penalty_train = 4
 fix_penalty = 2
 fix_cond = 'DM'
 
-n_examples_test = 1024
-# similarity_cap_test = .3
+n_examples_test = 256
 similarity_max_test = .9
 similarity_min_test = 0
 
