@@ -48,7 +48,7 @@ p_schematic_enc_err_gmu = np.zeros(len(def_prob_range))
 p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
 
 # for all schema levels
-exp_name = '1029-schema-evenodd-pfixed'
+exp_name = 'vary-schema-level'
 
 for dpi, def_prob in enumerate(def_prob_range):
     print('%d -  def_prob = %.2f' % (dpi, def_prob))

@@ -30,21 +30,18 @@ log_root = '../log/'
 all_conds = TZ_COND_DICT.values()
 
 
-# exp_name = '1029-schema-evenodd-pfixed'
-
+# exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 # for def_prob in def_prob_range:
-# print(exp_name)
 
 # the name of the experiemnt
 exp_name = 'vary-test-penalty'
 # exp_name = 'familiarity-signal'
 subj_ids = np.arange(15)
-penalty_random = 1
-def_prob = .25
-n_def_tps = 0
-# def_prob = .9
-# n_def_tps = 8
+penalty_random = 0
+# def_prob = .25
+# n_def_tps = 0
+n_def_tps = 8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
@@ -60,7 +57,7 @@ n_event_remember = 2
 comp_val = .8
 leak_val = 0
 # test param
-penaltys_train = [4]
+penaltys_train = [0, 2, 4]
 penaltys_test = np.array([0, 2, 4])
 enc_size_test = 16
 # enc_size_test = 8
@@ -530,7 +527,8 @@ for penalty_train in penaltys_train:
             pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
             for t in range(np.sum(ts_predict)):
                 data_pca = pca.fit_transform(data_cond[:, t, :])
-                pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
+                pca_cum_var_exp[t] = np.cumsum(
+                    pca.explained_variance_ratio_)
 
                 f, ax = plt.subplots(1, 1, figsize=(8, 5))
                 alpha = .5

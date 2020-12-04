@@ -45,8 +45,8 @@ def compute_matches(proba_, target_):
     return matches, match_rate
 
 
-exp_name = '0916-widesim-pfixed'
-# exp_name = '1029-schema-evenodd-pfixed'
+exp_name = 'vary-test-penalty'
+# exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 
 # for def_prob in def_prob_range:

@@ -16,9 +16,7 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 T = 16
 
-# exp_name = '0916-widesim-prandom-schema'
-exp_name = '1029-schema-evenodd-pfixed'
-# exp_name = '1029-schema-evenodd'
+exp_name = 'vary-schema-level'
 gdata_outdir = 'data/'
 clip_subj = 15
 
