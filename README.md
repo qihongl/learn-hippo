@@ -18,7 +18,10 @@ I used a cluster to parallelize model training, so that the training step for mo
 Here's a list of all the code used in this project
 
 ```sh
-└── src
+├── demo-log    # some data for the demo
+├── log         # the logging directory 
+├── figs        # figure directory, most scripts save figs to here 
+└── src         # source code
     ├── analysis        # helper functions for analyzing the data 
     │   ├── __init__.py
     │   ├── behav.py
