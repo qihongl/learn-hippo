@@ -11,9 +11,7 @@ Feel free to contact me if you have any question / comment. Thank you very much 
 
 I used python 3.6.9 for this project. The main dependencies are pytorch, numpy, scikit-learn, scipy, matplotlib, seaborn, dabest, bidict. I think the code should work as long as your packages are relatively up to date, but just in case, the full dependencies and their version information are listed in this [txt file](https://github.com/qihongl/learn-hippo/blob/master/dep.txt). 
 
-I used a cluster to parallelize model training, so that the training step for most simulations can be done in a day. The cluster I used at Princeton uses [Slurm](https://slurm.schedmd.com/documentation.html). So depends on where you are, the job submission files I provided might not work for you. However, the conversion should be relatively simple. 
-
-And we will try to host pre-trained weights somewhere asap. 
+I used a cluster to parallelize model training, so that the training step for most simulations can be done in a day. The cluster I used at Princeton uses [Slurm](https://slurm.schedmd.com/documentation.html). So depends on where you are, the job submission files I provided might not work for you. However, the conversion should be relatively simple (explain below). 
 
 ## What's in the repo
 
