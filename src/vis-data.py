@@ -39,9 +39,9 @@ exp_name = 'vary-test-penalty'
 # exp_name = 'familiarity-signal'
 subj_ids = np.arange(15)
 penalty_random = 0
-# def_prob = .25
-# n_def_tps = 0
-n_def_tps = 8
+def_prob = .25
+n_def_tps = 0
+# n_def_tps = 8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
@@ -57,7 +57,7 @@ n_event_remember = 2
 comp_val = .8
 leak_val = 0
 # test param
-penaltys_train = [0, 2, 4]
+penaltys_train = [4]
 penaltys_test = np.array([0, 2, 4])
 enc_size_test = 16
 # enc_size_test = 8
@@ -142,7 +142,6 @@ for penalty_train in penaltys_train:
             def_tps = env['def_tps']
             log_subpath['data']
             print(log_subpath['data'])
-            def_tps
 
             # init env
             p.update_enc_size(enc_size_test)
@@ -193,7 +192,6 @@ for penalty_train in penaltys_train:
             n_trials = n_examples_test - n_examples_skip
             trial_id = np.arange(n_trials)
 
-            # TODO why don't trim Y_raw?
             data_to_trim = [dist_a_, Y_, log_cond_, log_cache_, X_raw]
             [dist_a, Y, log_cond, log_cache, X_raw] = trim_data(
                 n_examples_skip, data_to_trim)
@@ -265,9 +263,9 @@ for penalty_train in penaltys_train:
             def_path_int_g[i_s] = def_path_int
             def_tps_g[i_s] = def_tps
 
-            # TODO save enc data, probably don't need to do it here
-            input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
-            pickle_save_dict(input_dict, f'data/enc{enc_size_test}.pkl')
+            # save enc data, probably don't need to do it here
+            # input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
+            # pickle_save_dict(input_dict, f'data/enc{enc_size_test}.pkl')
 
             # compute performance stats
             for i, cn in enumerate(all_conds):
