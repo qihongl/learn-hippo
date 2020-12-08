@@ -1,3 +1,4 @@
+import sys
 import os
 import torch
 import numpy as np
@@ -9,19 +10,54 @@ from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
 from utils.constants import TZ_COND_DICT
-from utils.io import build_log_path, load_ckpt, load_env_metadata
+from utils.io import build_log_path, load_ckpt, load_env_metadata, pickle_load_dict
 from analysis import compute_acc, compute_dk, compute_mistake, trim_data, \
     compute_cell_memory_similarity, create_sim_dict,  process_cache,\
     batch_compute_true_dk,  get_trial_cond_ids, compute_n_trials_to_skip,\
     compute_cell_memory_similarity_stats, sep_by_qsource, get_qsource
 from analysis.task import get_oq_keys
-from vis import plot_pred_acc_rcl, get_ylim_bonds
+from analysis.neural import build_yob, build_cv_ids
+from vis import plot_pred_acc_rcl, get_ylim_bonds, imshow_decoding_heatmap
 from matplotlib.ticker import FormatStrFormatter
+# import matplotlib.patches as patches
 sns.set(style='white', palette='colorblind', context='poster')
 all_conds = TZ_COND_DICT.values()
 seed = 0
+log_root = '../demo-log/'
+fig_log_dir = '../figs'
+# fig_log_dir = '../../results'
 
-# loading params
+'''change parameters here'''
+simulation_id = 1
+
+if simulation_id == 1:
+    exp_name = 'vary-training-penalty'
+    attach_cond = 0
+    enc_size_test = 16
+    penalty_train = penalty_test = 4
+elif simulation_id == 2:
+    exp_name = 'vary-test-penalty'
+    attach_cond = 0
+    enc_size_test = 16
+    penalty_train = 4
+    penalty_test = 4
+elif simulation_id == 4:
+    exp_name = 'familiarity-signal'
+    attach_cond = 1
+    enc_size_test = 16
+    penalty_train = penalty_test = 4
+elif simulation_id == 5:
+    exp_name = 'vary-test-penalty'
+    attach_cond = 0
+    enc_size_test = 8
+    penalty_train = 4
+    penalty_test = 4
+else:
+    raise ValueError(
+        'This demo only support simulation 1, 2, 4, and 5. Simulation {simulation_id} is not available.'
+    )
+
+# default params
 supervised_epoch = 600
 epoch_load = 1000
 n_branch = 4
@@ -30,7 +66,7 @@ enc_size = 16
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
-def_prob = None
+def_prob = .25
 n_def_tps = 0
 comp_val = .8
 p_test = 0
@@ -39,22 +75,8 @@ p_rm_ob_rcl_test = p_test
 similarity_max_test = .9
 similarity_min_test = 0
 fix_cond = None
-
-'''change parameters here'''
-
-log_root = '../demo-log/'
-exp_name = 'vary-training-penalty'
-# exp_name = 'vary-test-penalty'
-# exp_name = 'familiarity-signal'
-
 n_examples_test = 256
-attach_cond = 0
-# testing params
-# enc_size_test = 8
-enc_size_test = enc_size
 subj_id = 0
-penalty_train = 4
-penalty_test = 4
 
 p = P(
     exp_name=exp_name, sup_epoch=supervised_epoch,
@@ -77,9 +99,8 @@ p.update_enc_size(enc_size_test)
 
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch,
-    p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
+    p_rm_ob_enc=p_test, p_rm_ob_rcl=p_test, similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max_test, similarity_min=similarity_min_test,
-    similarity_cap_lag=p.n_event_remember,
 )
 x_dim = task.x_dim
 if attach_cond != 0:
@@ -92,7 +113,7 @@ agent = Agent(
 )
 agent, optimizer = load_ckpt(epoch_load, log_subpath['ckpts'], agent)
 
-# training objective
+# test the model
 np.random.seed(seed)
 torch.manual_seed(seed)
 [results, metrics, XY] = run_tz(
@@ -178,6 +199,10 @@ for i, cn in enumerate(['RM', 'DM', 'NM']):
     )
     axes[i].set_ylim([-.05, 1.05])
 
+fname = os.path.join(fig_log_dir, 'event-prediction-performance.png')
+f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
+
 lca_param_names = ['input gate', 'competition']
 lca_param_records = [inpt, comp]
 
@@ -233,6 +258,8 @@ for i, ax in enumerate(axes):
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 f.tight_layout()
 sns.despine()
+fname = os.path.join(fig_log_dir, 'memory-activation.png')
+f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
 
 '''use CURRENT uncertainty to predict memory activation'''
@@ -264,6 +291,9 @@ ax.legend(['not already observed',
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 f.tight_layout()
 sns.despine()
+fname = os.path.join(fig_log_dir, 'dm-memory-activation-uncertainty.png')
+f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
 
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
 for key, [mu_, er_] in ig_cond_p2_stats.items():
@@ -280,3 +310,120 @@ ax.legend(['not already observed',
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 f.tight_layout()
 sns.despine()
+fname = os.path.join(fig_log_dir, 'dm-input-gate-uncertainty.png')
+f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
+
+'''load back pretrained MVPA classifier'''
+mvpa_data_dict_fname = f'mvpa-{exp_name}-p{penalty_train}-{penalty_test}-%.2f.pkl' % def_prob
+if not os.path.isfile(os.path.join('data/', mvpa_data_dict_fname)):
+    sys.exit('No pre-trained classifier for this config')
+mvpa_results = pickle_load_dict(os.path.join('data/', mvpa_data_dict_fname))
+clfs = mvpa_results['classifier_g'][subj_id]
+
+'''organize the data for MVPA analysis'''
+corrects_p2 = corrects[:, T_part:]
+mistakes_p1 = mistakes[:, :T_part]
+mistakes_p2 = mistakes[:, T_part:]
+targets_p1, targets_p2 = targets[:, :T_part], targets[:, T_part:]
+actions_p1, actions_p2 = actions[:, :T_part], actions[:, T_part:]
+
+# pre-extract p2 data for the DM condition
+corrects_dmp2 = corrects_p2[cond_ids['DM']]
+mistakes_dmp2 = mistakes_p2[cond_ids['DM']]
+mistakes_dmp1 = mistakes_p1[cond_ids['DM']]
+
+targets_dmp2 = targets_p2[cond_ids['DM'], :]
+actions_dmp2 = actions_p2[cond_ids['DM']]
+targets_dmp1 = targets_p1[cond_ids['DM'], :]
+actions_dmp1 = actions_p1[cond_ids['DM']]
+
+# get observation key and values for p1 p2
+o_keys = np.zeros((n_trials, T_total))
+for i in trial_id:
+    o_keys[i], _, _ = get_oq_keys(X_raw[i], task)
+o_keys_p1, o_keys_p2 = o_keys[:, :T_part], o_keys[:, T_part:]
+o_keys_dmp1 = o_keys_p1[cond_ids['DM']]
+o_keys_dmp2 = o_keys_p2[cond_ids['DM']]
+
+# precompute mistakes-related variables
+has_mistake = np.sum(mistakes_dmp2, axis=1) > 0
+# split trials w/ vs. w/o mistakes
+actions_dmp1hm = actions_dmp1[has_mistake, :]
+targets_dmp1hm = targets_dmp1[has_mistake, :]
+actions_dmp2hm = actions_dmp2[has_mistake, :]
+targets_dmp2hm = targets_dmp2[has_mistake, :]
+mistakes_dmp2hm = mistakes_dmp2[has_mistake, :]
+o_keys_dmp1hm = o_keys_dmp1[has_mistake, :]
+o_keys_dmp2hm = o_keys_dmp2[has_mistake, :]
+actions_dmp1nm = actions_dmp1[~has_mistake, :]
+targets_dmp1nm = targets_dmp1[~has_mistake, :]
+actions_dmp2nm = actions_dmp2[~has_mistake, :]
+targets_dmp2nm = targets_dmp2[~has_mistake, :]
+corrects_dmp2nm = corrects_dmp2[~has_mistake, :]
+o_keys_dmp1nm = o_keys_dmp1[~has_mistake, :]
+o_keys_dmp2nm = o_keys_dmp2[~has_mistake, :]
+
+o_keys_dmhm = np.hstack([o_keys_dmp1hm, o_keys_dmp2hm])
+actions_dmhm = np.hstack([actions_dmp1hm, actions_dmp2hm])
+targets_dmhm = np.hstack([targets_dmp1hm, targets_dmp2hm])
+o_keys_dmnm = np.hstack([o_keys_dmp1nm, o_keys_dmp2nm])
+actions_dmnm = np.hstack([actions_dmp1nm, actions_dmp2nm])
+targets_dmnm = np.hstack([targets_dmp1nm, targets_dmp2nm])
+
+actions_dmnm[actions_dmnm == n_branch] = -1
+actions_dmhm[actions_dmhm == n_branch] = -1
+actions_dmhm += 1
+actions_dmnm += 1
+targets_dmhm += 1
+targets_dmnm += 1
+
+'''apply the classifier and plot the decoding result for 2 trials'''
+Yob_proba = np.zeros((n_trials, T_part, T_total, n_branch + 1))
+for t in range(n_param):
+    for i in range(n_trials):
+        Yob_proba[i, t] = clfs[t].predict_proba(CM[i])
+
+# get decoding heatmaps
+Yob_proba_dm = Yob_proba[cond_ids['DM']]
+Yob_proba_hm = Yob_proba_dm[has_mistake, :]
+Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
+
+# show mistakes
+i, j = 1, 0
+# for the i-th mistakes trial, plot the j-th mistake
+# for i in range(np.shape(mistakes_dmp2hm)[0]):
+# when/what feature were mistaken
+mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
+# for j in range(len(mistake_feature_i)):
+decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
+feat_otimes = np.where(
+    o_keys_dmhm[i] == mistake_feature_i[j])[0]
+feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
+targets_dmnm_i = targets_dmhm[i, :]
+actions_dmnm_i = actions_dmhm[i, :]
+f, axes = imshow_decoding_heatmap(
+    decoded_feat_mat, feat_otimes, feat_qtimes,
+    targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+)
+fname = os.path.join(fig_log_dir, f'mistake-{i}-{j}.png')
+f.savefig(fname, dpi=100, bbox_to_anchor='tight')
+
+# show correct trials
+i, j = 1, 2
+# for i in range(np.shape(corrects_dmp2nm)[0]):
+# when/what feature were mistaken
+correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
+# for j in range(len(correct_feature_i)):
+decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
+feat_otimes = np.where(
+    o_keys_dmnm[i] == correct_feature_i[j])[0]
+feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
+targets_dmnm_i = targets_dmnm[i, :]
+actions_dmnm_i = actions_dmnm[i, :]
+f, axes = imshow_decoding_heatmap(
+    decoded_feat_mat, feat_otimes, feat_qtimes,
+    targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+)
+fname = os.path.join(fig_log_dir, f'correct-{i}-{j}.png')
+f.savefig(fname, dpi=100, bbox_to_anchor='tight')

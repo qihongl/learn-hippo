@@ -1,5 +1,7 @@
 import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 from analysis import compute_stats
 from utils.utils import to_sqnp
