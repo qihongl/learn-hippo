@@ -35,17 +35,21 @@ if simulation_id == 1:
     attach_cond = 0
     enc_size_test = 16
     penalty_train = penalty_test = 4
+    # penalty_train = penalty_test = 0
 elif simulation_id == 2:
     exp_name = 'vary-test-penalty'
     attach_cond = 0
     enc_size_test = 16
     penalty_train = 4
     penalty_test = 4
+    # penalty_test = 2
+    # penalty_test = 0
 elif simulation_id == 4:
     exp_name = 'familiarity-signal'
     attach_cond = 1
     enc_size_test = 16
-    penalty_train = penalty_test = 4
+    penalty_train = 4
+    penalty_test = 4
 elif simulation_id == 5:
     exp_name = 'vary-test-penalty'
     attach_cond = 0
