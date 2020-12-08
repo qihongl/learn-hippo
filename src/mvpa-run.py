@@ -45,7 +45,7 @@ def compute_matches(proba_, target_):
     return matches, match_rate
 
 
-exp_name = 'vary-test-penalty'
+exp_name = 'vary-training-penalty'
 # exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 def_prob = .25
@@ -80,7 +80,7 @@ similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(1)
+subj_ids = np.arange(15)
 
 penalty_test = 4
 penalty_train = 4
@@ -147,7 +147,7 @@ for i_s, subj_id in enumerate(subj_ids):
     fpath = os.path.join(test_data_dir, test_data_fname)
     if not os.path.exists(fpath):
         print('DNE')
-        # print(fpath)
+        print(fpath)
         continue
 
     test_data_dict = pickle_load_dict(fpath)
@@ -241,18 +241,11 @@ for i_s, subj_id in enumerate(subj_ids):
     is_def_tp = np.array(def_tps).astype(np.bool)
     def_path_int = np.argmax(def_path, axis=1)
 
-    '''plotting params'''
-    fig_dir = os.path.join(log_subpath['figs'], test_data_subdir)
-    if not os.path.exists(fig_dir):
-        os.makedirs(fig_dir)
-
     '''decoding data-prep
     '''
     # reformat X
     CM_p1rs = np.reshape(CM_p1, (n_trials * T_part, -1))
-    DA_p1rs = np.reshape(DA_p1, (n_trials * T_part, -1))
     CM_p2rs = np.reshape(CM_p2, (n_trials * T_part, -1))
-    DA_p2rs = np.reshape(DA_p2, (n_trials * T_part, -1))
 
     # build y
     Yob_p1 = build_yob(o_keys_p1, o_vals_p1)
@@ -267,43 +260,29 @@ for i_s, subj_id in enumerate(subj_ids):
     targets_dmp1hm = targets_dmp1[has_mistake, :]
     actions_dmp2hm = actions_dmp2[has_mistake, :]
     targets_dmp2hm = targets_dmp2[has_mistake, :]
-    corrects_dmp2hm = corrects_dmp2[has_mistake, :]
     mistakes_dmp2hm = mistakes_dmp2[has_mistake, :]
-    dks_dmp2hm = dks_dmp2[has_mistake, :]
     CM_dmp2hm = CM_dmp2[has_mistake, :, :]
-    DA_dmp2hm = DA_dmp2[has_mistake, :, :]
     o_keys_dmp1hm = o_keys_dmp1[has_mistake, :]
     o_keys_dmp2hm = o_keys_dmp2[has_mistake, :]
-    o_vals_dmp1hm = o_vals_dmp1[has_mistake, :]
-    o_vals_dmp2hm = o_vals_dmp2[has_mistake, :]
 
     actions_dmp1nm = actions_dmp1[~has_mistake, :]
     targets_dmp1nm = targets_dmp1[~has_mistake, :]
     actions_dmp2nm = actions_dmp2[~has_mistake, :]
     targets_dmp2nm = targets_dmp2[~has_mistake, :]
     corrects_dmp2nm = corrects_dmp2[~has_mistake, :]
-    mistakes_dmp2nm = mistakes_dmp2[~has_mistake, :]
-    dks_dmp2nm = dks_dmp2[~has_mistake, :]
     CM_dmp2nm = CM_dmp2[~has_mistake, :, :]
-    DA_dmp2nm = DA_dmp2[~has_mistake, :, :]
     o_keys_dmp1nm = o_keys_dmp1[~has_mistake, :]
     o_keys_dmp2nm = o_keys_dmp2[~has_mistake, :]
-    o_vals_dmp1nm = o_vals_dmp1[~has_mistake, :]
-    o_vals_dmp2nm = o_vals_dmp2[~has_mistake, :]
 
     o_keys_dmhm = np.hstack([o_keys_dmp1hm, o_keys_dmp2hm])
-    o_vals_dmhm = np.hstack([o_vals_dmp1hm, o_vals_dmp2hm])
     actions_dmhm = np.hstack([actions_dmp1hm, actions_dmp2hm])
     targets_dmhm = np.hstack([targets_dmp1hm, targets_dmp2hm])
-
     o_keys_dmnm = np.hstack([o_keys_dmp1nm, o_keys_dmp2nm])
-    o_vals_dmnm = np.hstack([o_vals_dmp1nm, o_vals_dmp2nm])
     actions_dmnm = np.hstack([actions_dmp1nm, actions_dmp2nm])
     targets_dmnm = np.hstack([targets_dmp1nm, targets_dmp2nm])
 
     actions_dmnm[actions_dmnm == n_branch] = -1
     actions_dmhm[actions_dmhm == n_branch] = -1
-
     actions_dmhm += 1
     actions_dmnm += 1
     targets_dmhm += 1
@@ -382,13 +361,13 @@ for i_s, subj_id in enumerate(subj_ids):
         classifier_g[i_s] = final_models
 
     # LogisticRegression(penalty='l2')
-
     matches, match_rate = compute_matches(Yob_proba, Yob)
     match_rate_p1 = np.sum(
         matches[:, :T_part, :]) / matches[:, :T_part, :].size
     match_rate_p2 = np.sum(
         matches[:, T_part:, :]) / matches[:, T_part:, :].size
     match_rate_g[i_s] = [match_rate_p1, match_rate_p2]
+    print(f'mvpa accuracy = {match_rate_g}')
 
     '''stats for encoding acc'''
     Yob_proba_enc = Yob_proba[cond_ids['DM'], :, T_part - 1, :]
@@ -562,6 +541,9 @@ for i_s, subj_id in enumerate(subj_ids):
     Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
 
     # for the i-th mistakes trial, plot the j-th mistake
+    fig_dir = os.path.join(log_subpath['figs'], test_data_subdir)
+    if not os.path.exists(fig_dir):
+        os.makedirs(fig_dir)
     td_dir_path = os.path.join(fig_dir, 'trial_data')
     if not os.path.exists(td_dir_path):
         os.makedirs(td_dir_path)

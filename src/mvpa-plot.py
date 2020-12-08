@@ -49,11 +49,13 @@ p_schematic_enc_err_gse = np.zeros(len(def_prob_range))
 
 # for all schema levels
 exp_name = 'vary-schema-level'
+penalty_train = 2
+penalty_test = 2
 
 for dpi, def_prob in enumerate(def_prob_range):
     print('%d -  def_prob = %.2f' % (dpi, def_prob))
     # load data
-    mvpa_data_dict_fname = 'new-mvpa-schema-%.2f.pkl' % (def_prob)
+    mvpa_data_dict_fname = f'mvpa-{exp_name}-p{penalty_train}-{penalty_test}-%.2f.pkl' % def_prob
     mvpa_data_dict = pickle_load_dict(
         os.path.join('data', mvpa_data_dict_fname))
     enc_acc_g = np.array(mvpa_data_dict['enc_acc_g'])
