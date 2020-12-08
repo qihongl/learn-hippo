@@ -1,5 +1,6 @@
 log/*/
 figs/*/
+figs/*.png
 old/
 temp*/
 paper/

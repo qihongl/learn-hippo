@@ -141,3 +141,40 @@ def show_weight_stats(agent):
         print(name, np.shape(wts_np))
         print('\tNorm: %6.2f, Mean: %6.2f, Min %6.2f, Max: %6.2f' %
               (wts_norm, wts_mean, wts_min, wts_max))
+
+
+def imshow_decoding_heatmap(
+    decoded_feat_mat_i, feat_otimes_i, feat_qtimes_i, targets_i, actions_i,
+    n_param, n_branch
+):
+    # split into part one vs part two
+    [decoded_feat_mat_p1, decoded_feat_mat_p2] = np.split(
+        decoded_feat_mat_i, 2, axis=0)
+
+    f, axes = plt.subplots(
+        1, 2, figsize=(13, 4), sharey=True,
+        gridspec_kw={'width_ratios': [n_param, n_param]}
+    )
+    for k, dmat in enumerate([decoded_feat_mat_p1, decoded_feat_mat_p2]):
+        axes[k].imshow(dmat.T, aspect='auto', cmap='bone')
+        axes[k].set_xlabel(['Part one', 'Part two'][k])
+
+    for fot, fqt in zip(feat_otimes_i, feat_qtimes_i):
+        # if the observation and respose align, shift the box slightly so that they
+        # are not directly on top of each other
+        shift = .05 if fqt == fot else 0
+        rect = patches.Rectangle(
+            (fot % n_param - .5 - shift, targets_i[fqt] - .5), 1, 1,
+            edgecolor='green', facecolor='none', linewidth=3
+        )
+        axes[fot // n_param].add_patch(rect)
+        rect = patches.Rectangle(
+            (fqt % n_param - .5 + shift, actions_i[fqt] - .5), 1, 1,
+            edgecolor='orange', facecolor='none', linewidth=3
+        )
+        axes[fqt // n_param].add_patch(rect)
+    axes[0].set_ylabel('Feature value')
+    axes[0].set_yticks(np.arange(n_branch + 1))
+    axes[0].set_yticklabels(np.arange(n_branch + 1))
+    f.tight_layout()
+    return f, axes
