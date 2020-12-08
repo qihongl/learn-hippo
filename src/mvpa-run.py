@@ -48,9 +48,8 @@ def compute_matches(proba_, target_):
 exp_name = 'vary-test-penalty'
 # exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
-
-# for def_prob in def_prob_range:
 def_prob = .25
+# for def_prob in def_prob_range:
 print(def_prob)
 
 supervised_epoch = 600
@@ -60,31 +59,16 @@ learning_rate = 7e-4
 n_branch = 4
 n_param = 16
 enc_size = 16
-n_event_remember = 2
 # n_def_tps = 8
 n_def_tps = 0
-
 comp_val = .8
-leak_val = 0
-
-n_hidden = 194
-n_hidden_dec = 128
-eta = .1
-
-# testing param, ortho to the training directory
 penalty_random = 0
-penalty_discrete = 1
-penalty_onehot = 0
-normalize_return = 1
-
-# loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
 
 # testing params
 enc_size_test = 16
-
 pad_len_test = 0
 p_test = 0
 p_rm_ob_enc_test = p_test
@@ -96,7 +80,7 @@ similarity_min_test = 0
 n_examples_test = 256
 
 # subj_ids = [9]
-subj_ids = np.arange(3)
+subj_ids = np.arange(1)
 
 penalty_test = 4
 penalty_train = 4
@@ -119,8 +103,8 @@ schematic_enc_err_rate_g = [None] * n_subjs
 df_grcl = [None] * n_subjs
 df_genc = [None] * n_subjs
 prop_pfenc_g = [None] * n_subjs
-# match_rate_g = [None] * n_subjs
 match_rate_g = np.zeros((n_subjs, 2))
+classifier_g = [None] * n_subjs
 
 for i_s, subj_id in enumerate(subj_ids):
     np.random.seed(subj_id)
@@ -130,14 +114,10 @@ for i_s, subj_id in enumerate(subj_ids):
     p = P(
         exp_name=exp_name, sup_epoch=supervised_epoch,
         n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-        enc_size=enc_size, n_event_remember=n_event_remember,
-        def_prob=def_prob, n_def_tps=n_def_tps,
+        enc_size=enc_size, def_prob=def_prob, n_def_tps=n_def_tps,
         penalty=penalty_train, penalty_random=penalty_random,
-        penalty_onehot=penalty_onehot, penalty_discrete=penalty_discrete,
-        normalize_return=normalize_return,
         p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
-        n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-        lr=learning_rate, eta=eta,
+        lr=learning_rate,
     )
     # create logging dirs
     test_params = [penalty_test, pad_len_test, slience_recall_time]
@@ -148,7 +128,6 @@ for i_s, subj_id in enumerate(subj_ids):
 
     def_tps = env['def_tps']
     # def_tps_list[i_s] = def_tps
-    # log_subpath['data']
     print(log_subpath['data'])
     p.update_enc_size(enc_size_test)
 
@@ -195,9 +174,8 @@ for i_s, subj_id in enumerate(subj_ids):
     # skip examples untill EM is full
     n_examples_skip = compute_n_trials_to_skip(log_cond_, p)
     n_examples = n_examples_test - n_examples_skip
-    data_to_trim = [dist_a_, Y_, log_cond_,
-                    log_cache_, true_dk_wm_, true_dk_em_, X_raw]
-    [dist_a, Y, log_cond, log_cache, true_dk_wm, true_dk_em, X_raw] = trim_data(
+    data_to_trim = [dist_a_, Y_, log_cond_, log_cache_,  X_raw]
+    [dist_a, Y, log_cond, log_cache, X_raw] = trim_data(
         n_examples_skip, data_to_trim)
     # process the data
     n_trials = np.shape(X_raw)[0]
@@ -209,7 +187,7 @@ for i_s, subj_id in enumerate(subj_ids):
     [inpt] = ctrl_param_
 
     comp = np.full(np.shape(inpt), comp_val)
-    leak = np.full(np.shape(inpt), leak_val)
+    leak = np.full(np.shape(inpt), 0)
 
     # onehot to int
     actions = np.argmax(dist_a, axis=-1)
@@ -337,7 +315,7 @@ for i_s, subj_id in enumerate(subj_ids):
     # data prep
     CM = np.hstack([CM_p1, CM_p2])
     Yob = np.hstack([Yob_p1, Yob_p2])
-    CM_rs = np.reshape(CM, (n_trials * T_total, n_hidden))
+    CM_rs = np.reshape(CM, (n_trials * T_total, p.net.n_hidden))
     Yob_rs = np.reshape(Yob, (n_trials * T_total, T_part))
 
     # for the RM condition
@@ -367,9 +345,8 @@ for i_s, subj_id in enumerate(subj_ids):
     rc_alphas = np.logspace(-2, 5, num=4)
     parameters = {'C': rc_alphas}
     cvsplits = chunk(list(range(n_trials)), n_folds)
-
     Yob_proba = np.zeros((n_trials, T_part, T_total, n_branch + 1))
-
+    best_C = np.zeros(n_folds)
     for fid, testset_ids_i in enumerate(cvsplits):
         temask = np.logical_and(
             trial_id_unroll >= testset_ids_i[0],
@@ -393,6 +370,18 @@ for i_s, subj_id in enumerate(subj_ids):
             for ii in testset_ids_i:
                 Yob_proba[ii, n][:, obsed_class] = cvgs.best_estimator_.predict_proba(
                     CM[ii])
+
+        best_C[fid] = cvgs.best_estimator_.C
+        final_models = [
+            LogisticRegression(penalty='l2', C=np.mean(best_C))
+            for _ in range(T_part)
+        ]
+
+        for n in range(T_part):
+            final_models[n].fit(CM_rs, Yob_rs[:, n])
+        classifier_g[i_s] = final_models
+
+    # LogisticRegression(penalty='l2')
 
     matches, match_rate = compute_matches(Yob_proba, Yob)
     match_rate_p1 = np.sum(
@@ -445,8 +434,7 @@ for i_s, subj_id in enumerate(subj_ids):
         columns=['trial_id', 'time', 'schema_consistent', 'has_enc_err',
                  'max_response'],
     )
-    i, t = 0, 0
-
+    # i, t = 0, 0
     for i in range(n_trials_dm):
         for t in range(T_part):
 
@@ -532,75 +520,72 @@ for i_s, subj_id in enumerate(subj_ids):
 
     '''plot'''
 
+    # helper function
+    def imshow_decoding_heatmap(
+        decoded_feat_mat_i, feat_otimes_i, feat_qtimes_i, targets_i, actions_i,
+        n_param, n_branch
+    ):
+        # split into part one vs part two
+        [decoded_feat_mat_p1, decoded_feat_mat_p2] = np.split(
+            decoded_feat_mat_i, 2, axis=0)
+
+        f, axes = plt.subplots(
+            1, 2, figsize=(13, 4), sharey=True,
+            gridspec_kw={'width_ratios': [n_param, n_param]}
+        )
+        for k, dmat in enumerate([decoded_feat_mat_p1, decoded_feat_mat_p2]):
+            axes[k].imshow(dmat.T, aspect='auto', cmap='bone')
+            axes[k].set_xlabel(['Part one', 'Part two'][k])
+
+        for fot, fqt in zip(feat_otimes_i, feat_qtimes_i):
+            rect = patches.Rectangle(
+                (fot % n_param - .5, targets_i[fqt] - .5), 1, 1,
+                edgecolor='green', facecolor='none', linewidth=3
+            )
+            axes[fot // n_param].add_patch(rect)
+
+        for fqt in feat_qtimes_i:
+            rect = patches.Rectangle(
+                (fqt % n_param - .5, actions_i[fqt] - .5), 1, 1,
+                edgecolor='orange', facecolor='none', linewidth=3
+            )
+            axes[fqt // n_param].add_patch(rect)
+        axes[0].set_ylabel('Feature value')
+        axes[0].set_yticks(np.arange(n_branch + 1))
+        axes[0].set_yticklabels(np.arange(n_branch + 1))
+        f.tight_layout()
+        return f, axes
+
+    # get decoding heatmaps
     Yob_proba_dm = Yob_proba[cond_ids['DM']]
     Yob_proba_hm = Yob_proba_dm[has_mistake, :]
     Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
 
     # for the i-th mistakes trial, plot the j-th mistake
-    i, j = 0, 0
+    td_dir_path = os.path.join(fig_dir, 'trial_data')
+    if not os.path.exists(td_dir_path):
+        os.makedirs(td_dir_path)
+    # i, j = 0, 0
     for i in range(np.shape(mistakes_dmp2hm)[0]):
         # when/what feature were mistaken
         mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
         for j in range(len(mistake_feature_i)):
-
             decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
-
             feat_otimes = np.where(
                 o_keys_dmhm[i] == mistake_feature_i[j])[0]
-            feat_ovals = o_vals_dmhm[i][feat_otimes]
-
             feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
+            targets_dmnm_i = targets_dmhm[i, :]
+            actions_dmnm_i = actions_dmhm[i, :]
 
-            f, ax = plt.subplots(1, 1, figsize=(9, 4))
-            # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-            ax.imshow(
-                decoded_feat_mat.T, aspect='auto', cmap='bone')
-            ax.axvline(T_part - .5, linestyle='--', color='grey')
-
-            for fot, fqt in zip(feat_otimes, feat_qtimes):
-                rect = patches.Rectangle(
-                    (fot - .5, targets_dmhm[i, :][fqt] - .5), 1, 1,
-                    edgecolor='green', facecolor='none', linewidth=3
-                )
-
-                ax.add_patch(rect)
-            for fqt in feat_qtimes:
-                rect = patches.Rectangle(
-                    (fqt - .5, actions_dmhm[i, :][fqt] - .5), 1, 1,
-                    edgecolor='orange', facecolor='none', linewidth=3
-                )
-                ax.add_patch(rect)
-            if is_def_tp[feat_qtimes[0]] and def_prob != 1 / n_branch:
-                ax.scatter(
-                    feat_qtimes,
-                    1 + np.array([def_path_int[feat_qtimes[0]]] * 2),
-                    s=50, color='red'
-                )
-
-            ax.set_xlabel('Part 1                    Part 2')
-            ax.set_ylabel('Choice')
-            ax.set_xticks([0, T_part - 1, T_total - 1])
-            ax.set_xticklabels([0, T_part - 1, T_total - 1])
-            ax.set_yticks(np.arange(n_branch + 1))
-            ax.set_yticklabels(np.arange(n_branch + 1))
-            f.tight_layout()
-
-            td_dir_path = os.path.join(fig_dir, 'trial_data')
-            if not os.path.exists(td_dir_path):
-                os.makedirs(td_dir_path)
+            f, axes = imshow_decoding_heatmap(
+                decoded_feat_mat, feat_otimes, feat_qtimes,
+                targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+            )
             fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-            # print()
-
-            if np.any(i == enc_err_locs[0]):
-                td_dir_path = os.path.join(fig_dir, 'trial_data/sverr')
-                if not os.path.exists(td_dir_path):
-                    os.makedirs(td_dir_path)
-                fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
-                f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
     '''corrects'''
-    i, j = 0, 0
+    # i, j = 0, 0
     for i in range(np.shape(corrects_dmp2nm)[0]):
         # when/what feature were mistaken
         correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
@@ -608,44 +593,13 @@ for i_s, subj_id in enumerate(subj_ids):
             decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
             feat_otimes = np.where(
                 o_keys_dmnm[i] == correct_feature_i[j])[0]
-            feat_ovals = o_vals_dmnm[i][feat_otimes]
-
             feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
-
-            f, ax = plt.subplots(1, 1, figsize=(9, 4))
-            # ax.imshow(decoded_feat_mat, aspect='auto', cmap='bone')
-            ax.imshow(
-                decoded_feat_mat.T, aspect='auto', cmap='bone')
-            ax.axvline(T_part - .5, linestyle='--', color='grey')
-            for fot, fqt in zip(feat_otimes, feat_qtimes):
-                rect = patches.Rectangle(
-                    (fot - .5, targets_dmnm[i, :][fqt] - .5), 1, 1,
-                    edgecolor='green', facecolor='none', linewidth=3
-                )
-                ax.add_patch(rect)
-            for fqt in feat_qtimes:
-                rect = patches.Rectangle(
-                    (fqt - .5, actions_dmnm[i, :][fqt] - .5), 1, 1,
-                    edgecolor='orange', facecolor='none', linewidth=3
-                )
-                ax.add_patch(rect)
-            if is_def_tp[feat_qtimes[0]] and def_prob != 1 / n_branch:
-                ax.scatter(
-                    feat_qtimes, 1 +
-                    np.array([def_path_int[feat_qtimes[0]]] * 2),
-                    s=50, color='red')
-
-            ax.set_xlabel('Part 1                    Part 2')
-            ax.set_ylabel('Choice')
-            ax.set_xticks([0, T_part - 1, T_total - 1])
-            ax.set_xticklabels([0, T_part - 1, T_total - 1])
-            ax.set_yticks(np.arange(n_branch + 1))
-            ax.set_yticklabels(np.arange(n_branch + 1))
-            f.tight_layout()
-
-            td_dir_path = os.path.join(fig_dir, 'trial_data')
-            if not os.path.exists(td_dir_path):
-                os.makedirs(td_dir_path)
+            targets_dmnm_i = targets_dmnm[i, :]
+            actions_dmnm_i = actions_dmnm[i, :]
+            f, axes = imshow_decoding_heatmap(
+                decoded_feat_mat, feat_otimes, feat_qtimes,
+                targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+            )
             fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
@@ -653,7 +607,8 @@ for i_s, subj_id in enumerate(subj_ids):
 mvpa_data_dict = {
     'enc_acc_g': enc_acc_g, 'prop_pfenc_g': prop_pfenc_g,
     'schematic_enc_err_rate_g': schematic_enc_err_rate_g,
-    'df_grcl': df_grcl, 'df_genc': df_genc, 'match_rate_g': match_rate_g
+    'df_grcl': df_grcl, 'df_genc': df_genc, 'match_rate_g': match_rate_g,
+    'classifier_g': classifier_g
 }
 mvpa_data_dict_fname = f'new-mvpa-schema-%.2f.pkl' % def_prob
 pickle_save_dict(mvpa_data_dict, os.path.join(
