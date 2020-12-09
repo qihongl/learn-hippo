@@ -34,6 +34,7 @@ def compute_cell_memory_similarity(
         C, V, inpt, leak, comp,
         kernel='cosine', recall_func='LCA'
 ):
+
     n_examples, n_timepoints, n_dim = np.shape(C)
     n_memories = len(V[0])
     # prealloc

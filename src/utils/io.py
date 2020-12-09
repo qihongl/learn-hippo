@@ -123,7 +123,7 @@ def load_ckpt(
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         agent.train()
         # msg
-        print(f'epoch {epoch_load} loaded')
+        print(f'network weights - epoch {epoch_load} loaded')
         return agent, optimizer
     return None, None
 

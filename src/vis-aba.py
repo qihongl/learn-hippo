@@ -32,7 +32,7 @@ cb_pal = sns.color_palette('colorblind')
 alphas = [1 / 3, 2 / 3, 1]
 
 log_root = '../log/'
-exp_name = '0916-widesim-prandom'
+exp_name = 'vary-test-penalty'
 
 seed = 0
 supervised_epoch = 600
@@ -87,10 +87,8 @@ scramble = False
 slience_recall_time = None
 trunc = 8
 
-# subj_id = 0
 n_subjs = 15
 T_TOTAL = n_events * n_parts * n_param
-
 
 '''helper funcs'''
 
@@ -174,7 +172,7 @@ for i_s, subj_id in enumerate(range(n_subjs)):
         f'p_rm_ob-{p_rm_ob}', f'similarity_cap-{similarity_min_test}_{similarity_max_test}')
     fpath = os.path.join(log_data_path, test_data_fname)
     if not os.path.exists(fpath):
-        print('DNE')
+        print(f'DNE: {fpath}')
         continue
 
     test_data_dict = pickle_load_dict(fpath)
@@ -296,7 +294,7 @@ for i_s, subj_id in enumerate(range(n_subjs)):
 
 '''plot'''
 
-
+grey_pal = sns.color_palette('Greys', n_colors=n_parts)
 lines = [Line2D([0], [0], color=c, linewidth=3) for c in grey_pal]
 labels = ['Block %d' % i for i in range(n_parts)]
 # accuracy, dks, mistakes - line plot

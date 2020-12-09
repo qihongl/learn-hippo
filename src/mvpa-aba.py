@@ -77,7 +77,7 @@ n_parts = 3
 scramble = False
 slience_recall_time = None
 
-n_subjs = 10
+n_subjs = 15
 T_TOTAL = n_events * n_parts * n_param
 
 
@@ -335,13 +335,8 @@ pickle_save_dict(mvpa_data_dict, os.path.join(
     'data', mvpa_data_dict_fname))
 
 
-'''plot'''
-
-
+'''plot # features decoded over blocks'''
 n_feats_decd_mu_rm0 = np.delete(n_feats_decd_mu, 2, axis=0)
-np.shape(n_feats_decd_mu_rm0)
-
-
 n_feats_decd_mu_mu, n_feats_decd_mu_se = compute_stats(
     n_feats_decd_mu_rm0, axis=0)
 f, ax = plt.subplots(1, 1, figsize=(7, 5))
@@ -360,7 +355,7 @@ f, ax = plt.subplots(1, 1, figsize=(6, 5))
 mean_scores = np.mean(scores, axis=0).T
 for pi in range(n_parts):
     ax.plot(mean_scores[:, pi], color=cb_pal[0],
-            alpha=alphas[pi], label=f'Block {ii}')
+            alpha=alphas[pi], label=f'Block {pi}')
 ax.set_xlabel('Time')
 ax.set_ylabel('Accuracy')
 ax.set_ylim([0, 1])

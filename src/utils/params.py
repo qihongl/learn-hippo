@@ -33,7 +33,7 @@ class P():
         enc_size=None,
         enc_mode='cum',
         noisy_encoding=0,
-        n_event_remember=4,
+        n_event_remember=2,
         recall_func='LCA',
         kernel='cosine',
         n_hidden=194,

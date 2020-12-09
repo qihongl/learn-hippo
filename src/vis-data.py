@@ -30,25 +30,23 @@ log_root = '../log/'
 all_conds = TZ_COND_DICT.values()
 
 
-# exp_name = '1029-schema-evenodd-pfixed'
-
+# exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 # for def_prob in def_prob_range:
-# print(exp_name)
 
 # the name of the experiemnt
 exp_name = 'vary-test-penalty'
+# exp_name = 'familiarity-signal'
 subj_ids = np.arange(15)
-penalty_random = 1
+penalty_random = 0
 def_prob = .25
 n_def_tps = 0
-# def_prob = .9
 # n_def_tps = 8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
-attach_cond = 1
+attach_cond = 0
 supervised_epoch = 600
 epoch_load = 1000
 learning_rate = 7e-4
@@ -144,7 +142,6 @@ for penalty_train in penaltys_train:
             def_tps = env['def_tps']
             log_subpath['data']
             print(log_subpath['data'])
-            def_tps
 
             # init env
             p.update_enc_size(enc_size_test)
@@ -195,7 +192,6 @@ for penalty_train in penaltys_train:
             n_trials = n_examples_test - n_examples_skip
             trial_id = np.arange(n_trials)
 
-            # TODO why don't trim Y_raw?
             data_to_trim = [dist_a_, Y_, log_cond_, log_cache_, X_raw]
             [dist_a, Y, log_cond, log_cache, X_raw] = trim_data(
                 n_examples_skip, data_to_trim)
@@ -267,9 +263,9 @@ for penalty_train in penaltys_train:
             def_path_int_g[i_s] = def_path_int
             def_tps_g[i_s] = def_tps
 
-            # TODO save enc data, probably don't need to do it here
-            input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
-            pickle_save_dict(input_dict, f'data/enc{enc_size_test}.pkl')
+            # save enc data, probably don't need to do it here
+            # input_dict = {'Y': Y, 'dist_a': dist_a, 'cond_ids': cond_ids}
+            # pickle_save_dict(input_dict, f'data/enc{enc_size_test}.pkl')
 
             # compute performance stats
             for i, cn in enumerate(all_conds):
@@ -529,7 +525,8 @@ for penalty_train in penaltys_train:
             pca_cum_var_exp = np.zeros((np.sum(ts_predict), n_pcs))
             for t in range(np.sum(ts_predict)):
                 data_pca = pca.fit_transform(data_cond[:, t, :])
-                pca_cum_var_exp[t] = np.cumsum(pca.explained_variance_ratio_)
+                pca_cum_var_exp[t] = np.cumsum(
+                    pca.explained_variance_ratio_)
 
                 f, ax = plt.subplots(1, 1, figsize=(8, 5))
                 alpha = .5

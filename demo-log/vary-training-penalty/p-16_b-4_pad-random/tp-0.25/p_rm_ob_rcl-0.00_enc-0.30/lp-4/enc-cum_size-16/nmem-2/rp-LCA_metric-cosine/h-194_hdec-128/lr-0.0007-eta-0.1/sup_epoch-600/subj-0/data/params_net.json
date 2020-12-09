@@ -1,0 +1,18 @@
+{
+  "recall_func": "LCA",
+  "kernel": "cosine",
+  "enc_mode": "cum",
+  "enc_size": 16,
+  "noisy_encoding": 0,
+  "n_hidden": 194,
+  "n_hidden_dec": 128,
+  "lr": 0.0007,
+  "gamma": 0,
+  "eta": 0.1,
+  "cmpt": 0.8,
+  "dict_len": 2,
+  "x_dim": 132,
+  "y_dim": 4,
+  "a_dim": 5,
+  "dk_id": 4
+}

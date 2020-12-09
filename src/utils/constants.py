@@ -1,7 +1,5 @@
 from bidict import bidict
 
-# LOG_ROOT = '../log/'
-# FIG_ROOT = '../fig/'
 ALL_SUBDIRS = ['ckpts', 'data', 'figs']
 
 # file name templates
@@ -14,15 +12,9 @@ NET_JSON_FNAME = 'params_net.json'
 #
 ALL_ENC_MODE = ['cum', 'disj']
 
-
-# RNR_CKPT_TEMPLATE = 'rnr_ep-%d_tz-%d.pt'
-# RNR_EVAL_FTEMPLATE = 'eval-rnr-e%d-nmvs%d.pkl'
-
 # conditions
 TZ_COND_DICT = bidict({0: 'RM', 1: 'DM', 2: 'NM'})
-# P_TZ_CONDS = [.25, .25, .5]
 P_TZ_CONDS = [.25, .25, .5]
-# P_TZ_CONDS = [.5, .5, 0]
 TZ_CONDS = list(TZ_COND_DICT.values())
 
 RNR_COND_DICT = bidict({0: 'R', 1: 'NR'})
