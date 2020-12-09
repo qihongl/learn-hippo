@@ -1,6 +1,5 @@
 import os
 import torch
-# import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -25,13 +24,8 @@ warnings.filterwarnings("ignore")
 # plt.switch_backend('agg')
 sns.set(style='white', palette='colorblind', context='poster')
 all_conds = TZ_COND_DICT.values()
-# log_root = '../log/'
-log_root = '/tigress/qlu/logs/learn-hippocampus/log'
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--def_prob', default=None, type=float)
-args = parser.parse_args()
-def_prob = args.def_prob
+log_root = '../log/'
+# log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 
 
 def compute_matches(proba_, target_):
@@ -44,10 +38,10 @@ def compute_matches(proba_, target_):
     return matches, match_rate
 
 
-# exp_name = 'vary-training-penalty'
-# def_prob = .25
+exp_name = 'vary-training-penalty'
+def_prob = .25
 
-exp_name = 'vary-schema-level'
+# exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 # for def_prob in def_prob_range:
 # print(def_prob)
@@ -78,8 +72,6 @@ slience_recall_time = None
 similarity_max_test = .9
 similarity_min_test = 0
 n_examples_test = 256
-
-# subj_ids = [9]
 subj_ids = np.arange(15)
 
 penalty_test = 2
@@ -488,57 +480,57 @@ for i_s, subj_id in enumerate(subj_ids):
     df_grcl[i_s] = df_rcl
     df_genc[i_s] = df_enc
 
-    # '''plot'''
-    #
-    # # get decoding heatmaps
-    # Yob_proba_dm = Yob_proba[cond_ids['DM']]
-    # Yob_proba_hm = Yob_proba_dm[has_mistake, :]
-    # Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
-    #
-    # # for the i-th mistakes trial, plot the j-th mistake
-    # fig_dir = os.path.join(log_subpath['figs'], test_data_subdir)
-    # if not os.path.exists(fig_dir):
-    #     os.makedirs(fig_dir)
-    # td_dir_path = os.path.join(fig_dir, 'trial_data')
-    # if not os.path.exists(td_dir_path):
-    #     os.makedirs(td_dir_path)
-    # # i, j = 0, 0
-    # for i in range(np.shape(mistakes_dmp2hm)[0]):
-    #     # when/what feature were mistaken
-    #     mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
-    #     for j in range(len(mistake_feature_i)):
-    #         decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
-    #         feat_otimes = np.where(
-    #             o_keys_dmhm[i] == mistake_feature_i[j])[0]
-    #         feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
-    #         targets_dmnm_i = targets_dmhm[i, :]
-    #         actions_dmnm_i = actions_dmhm[i, :]
-    #
-    #         f, axes = imshow_decoding_heatmap(
-    #             decoded_feat_mat, feat_otimes, feat_qtimes,
-    #             targets_dmnm_i, actions_dmnm_i, n_param, n_branch
-    #         )
-    #         fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
-    #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
-    #
-    # '''corrects'''
-    # # i, j = 0, 0
-    # for i in range(np.shape(corrects_dmp2nm)[0]):
-    #     # when/what feature were mistaken
-    #     correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
-    #     for j in range(len(correct_feature_i)):
-    #         decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
-    #         feat_otimes = np.where(
-    #             o_keys_dmnm[i] == correct_feature_i[j])[0]
-    #         feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
-    #         targets_dmnm_i = targets_dmnm[i, :]
-    #         actions_dmnm_i = actions_dmnm[i, :]
-    #         f, axes = imshow_decoding_heatmap(
-    #             decoded_feat_mat, feat_otimes, feat_qtimes,
-    #             targets_dmnm_i, actions_dmnm_i, n_param, n_branch
-    #         )
-    #         fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
-    #         f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    '''plot'''
+
+    # get decoding heatmaps
+    Yob_proba_dm = Yob_proba[cond_ids['DM']]
+    Yob_proba_hm = Yob_proba_dm[has_mistake, :]
+    Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
+
+    # for the i-th mistakes trial, plot the j-th mistake
+    fig_dir = os.path.join(log_subpath['figs'], test_data_subdir)
+    if not os.path.exists(fig_dir):
+        os.makedirs(fig_dir)
+    td_dir_path = os.path.join(fig_dir, 'trial_data')
+    if not os.path.exists(td_dir_path):
+        os.makedirs(td_dir_path)
+    # i, j = 0, 0
+    for i in range(np.shape(mistakes_dmp2hm)[0]):
+        # when/what feature were mistaken
+        mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
+        for j in range(len(mistake_feature_i)):
+            decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
+            feat_otimes = np.where(
+                o_keys_dmhm[i] == mistake_feature_i[j])[0]
+            feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
+            targets_dmnm_i = targets_dmhm[i, :]
+            actions_dmnm_i = actions_dmhm[i, :]
+
+            f, axes = imshow_decoding_heatmap(
+                decoded_feat_mat, feat_otimes, feat_qtimes,
+                targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+            )
+            fig_path = os.path.join(td_dir_path, f'mistake-{i}-{j}')
+            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+
+    '''corrects'''
+    # i, j = 0, 0
+    for i in range(np.shape(corrects_dmp2nm)[0]):
+        # when/what feature were mistaken
+        correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
+        for j in range(len(correct_feature_i)):
+            decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
+            feat_otimes = np.where(
+                o_keys_dmnm[i] == correct_feature_i[j])[0]
+            feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
+            targets_dmnm_i = targets_dmnm[i, :]
+            actions_dmnm_i = actions_dmnm[i, :]
+            f, axes = imshow_decoding_heatmap(
+                decoded_feat_mat, feat_otimes, feat_qtimes,
+                targets_dmnm_i, actions_dmnm_i, n_param, n_branch
+            )
+            fig_path = os.path.join(td_dir_path, f'correct-{i}-{j}')
+            f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
 '''compute average encoding accuracy across subjects'''
 mvpa_data_dict = {
