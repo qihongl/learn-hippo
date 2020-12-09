@@ -271,9 +271,7 @@ for i_s, subj_id in enumerate(subj_ids):
     targets_dmhm += 1
     targets_dmnm += 1
 
-    '''decoding - train on ground truth feature presence during part 1,
-    NM/RM during part 2, and inferred feature presence during DM part 2
-    '''
+    '''decoding'''
     # data prep
     CM = np.hstack([CM_p1, CM_p2])
     Yob = np.hstack([Yob_p1, Yob_p2])
