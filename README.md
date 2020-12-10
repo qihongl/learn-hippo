@@ -13,7 +13,7 @@ If you would like to play with the model, here's a [Code Ocean capsule](https://
 
 [URL]()
 
-You can run Simulation 1, 2, 4, and 5 and see the results 10 minutes. Once you are in the Code Ocean capsule, simply click **reproducible run**. To specify which simulation you would like to run, go to `code/src/demo.py`, on line 31, change `simulation_id` to 1, 2, 4, or 5, and then click **reproducible run** again. Once you are done, click the figures listed in the timeline (right hand side, under reproducible run). 
+You can run Simulation 1, 2, 4, and 5 and see the results 10 minutes. Once you are in the Code Ocean capsule, simply click **reproducible run**. To specify which simulation you would like to run, go to `code/src/demo.py`, on line 31, change `simulation_id` to 1, 2, 4, or 5, and then click **reproducible run** again. Once you are done, you can check the figures listed in the timeline (right hand side, under reproducible run). 
 
 ## Dependencies 
 
