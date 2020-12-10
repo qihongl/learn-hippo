@@ -5,7 +5,7 @@ This repo hosts the python code for the following paper:
 
 If you have access to a cluster, most simulations can be replicated in a day. 
 
-Feel free to contact me if you have any question / comment. Thank you very much ahead! 
+Feel free to contact me if you have any questions / comments. Thank you very much in advance! 
 
 ## Playing with some pre-trained models
 
@@ -13,12 +13,12 @@ If you would like to play with the model, here's a [Code Ocean capsule](https://
 
 [URL]()
 
-You can run Simulation 1, 2, 4, and 5 and see the results 10 minutes. Once you are in the Code Ocean capsule, simply click **reproducible run**. To specify which simulation you would like to run, go to `code/src/demo.py`, on line 31, change `simulation_id` to 1, 2, 4, or 5, and then click **reproducible run** again. Once you are done, you can check the figures listed in the timeline (right hand side, under reproducible run). 
+You can run Simulations 1, 2, 4, and 5 and see the results in 10 minutes. Once you are in the Code Ocean capsule, simply click **reproducible run**. To specify which simulation you would like to run, go to `code/src/demo.py`, on line 31, change `simulation_id` to 1, 2, 4, or 5, and then click **reproducible run** again. Once you are done, you can check the figures listed in the timeline (right hand side, under reproducible run). 
 
 ## Dependencies 
 
-This is a python-based project. The list of dependencies and their version information are listed [here](https://github.com/qihongl/learn-hippo/blob/master/requirement.txt). 
-The code should work as long as the version of your packages are close to what I used. 
+This is a python-based project. The list of dependencies and their version information is provided [here](https://github.com/qihongl/learn-hippo/blob/master/requirement.txt). 
+The code should work as long as the versions of your packages are close to what I used. 
 
 I used a cluster to parallelize model training, so that most simulations took less than a day. The cluster I used at Princeton uses [Slurm](https://slurm.schedmd.com/documentation.html). So depends on where you are, the job submission files 
 (e.g. 
@@ -26,7 +26,7 @@ I used a cluster to parallelize model training, so that most simulations took le
 [src/train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh)
 )
 I wrote might not work for you. 
-However, these scripts simply documents the simulation parameters I used and it is relatively simple to adapt them for your cluster/platform (see the section on **Replicate the simulation results - general guidelines**). 
+However, these scripts simply document the simulation parameters I used and it is relatively simple to adapt them for your cluster/platform (see the section on **Replicate the simulation results - general guidelines**). 
 
 ## What's in the repo
 
@@ -38,47 +38,47 @@ Here's the structure of this repo
 ├── figs        # figure directory, most scripts save figs to here 
 └── src         # source code
     ├── analysis        # helper functions for analyzing the data 
-    │   ├── __init__.py
-    │   ├── behav.py
-    │   ├── general.py
-    │   ├── neural.py
-    │   ├── preprocessing.py
-    │   ├── task.py
-    │   └── utils.py
+    │   ├── __init__.py
+    │   ├── behav.py
+    │   ├── general.py
+    │   ├── neural.py
+    │   ├── preprocessing.py
+    │   ├── task.py
+    │   └── utils.py
     ├── examples        # some simple demos 
-    │   ├── event-empirical-similarity.py
-    │   ├── event-similarity-cap.py
-    │   ├── event-similarity.py
-    │   ├── memory_benefit.py
-    │   ├── schema-regularity.py
-    │   ├── stimuli-representation.py
-    │   ├── true-uncertainty.py
-    │   └── zuo-2019-control-patient-isc-logic.py
+    │   ├── event-empirical-similarity.py
+    │   ├── event-similarity-cap.py
+    │   ├── event-similarity.py
+    │   ├── memory_benefit.py
+    │   ├── schema-regularity.py
+    │   ├── stimuli-representation.py
+    │   ├── true-uncertainty.py
+    │   └── zuo-2019-control-patient-isc-logic.py
     ├── models         # the components of the model 
-    │   ├── A2C.py             # the standard actor-critic algorithm 
-    │   ├── EM.py              # the episodic memory module
-    │   ├── LCALSTM.py         # the model 
-    │   ├── LCA_pytorch.py     # a pytorch implementation of leaking competing accumulator model
-    │   ├── _rl_helpers.py     # some RL helpers 
-    │   ├── initializer.py     # weight initializer
-    │   ├── metrics.py         # some helper functions for metrics 
-    │   ├── __init__.py    
+    │   ├── A2C.py             # the standard actor-critic algorithm 
+    │   ├── EM.py              # the episodic memory module
+    │   ├── LCALSTM.py         # the model 
+    │   ├── LCA_pytorch.py     # a pytorch implementation of leaky competing accumulator model
+    │   ├── _rl_helpers.py     # some RL helpers 
+    │   ├── initializer.py     # weight initializer
+    │   ├── metrics.py         # some helper functions for metrics 
+    │   ├── __init__.py    
     ├── task            # the definition of the task 
-    │   ├── Schema.py           
-    │   ├── SequenceLearning.py
-    │   ├── StimSampler.py
-    │   ├── utils.py
-    │   └── __init__.py
+    │   ├── Schema.py           
+    │   ├── SequenceLearning.py
+    │   ├── StimSampler.py
+    │   ├── utils.py
+    │   └── __init__.py
     ├── utils           # general utility functions
-    │   ├── constants.py
-    │   ├── io.py
-    │   ├── params.py
-    │   ├── utils.py
-    │   └── __init__.py    
+    │   ├── constants.py
+    │   ├── io.py
+    │   ├── params.py
+    │   ├── utils.py
+    │   └── __init__.py    
     ├── vis             # code for visualizing the data
-    │   ├── _utils.py
-    │   ├── _vis.py
-    │   └── __init__.py    
+    │   ├── _utils.py
+    │   ├── _vis.py
+    │   └── __init__.py    
     ├── submit-sim1.sh              # the script for submitting jobs for simulation 1, triggers train-model.sh
     ├── submit-sim2.sh              # the script for submitting jobs for simulation 2, triggers train-model.sh
     ├── submit-sim3-1.sh            # the script for submitting jobs for simulation 3 (part one), triggers train-model.sh
@@ -87,11 +87,11 @@ Here's the structure of this repo
     ├── submit-sim8.sh              # the script for submitting jobs for simulation 8, triggers train-model-aba.sh
     ├── submit-sim9.sh              # the script for submitting jobs for simulation 9, triggers train-model.sh
     ├── train-model-aba.sh          # submit a python job to train a model on the ABA experiment by Chang et al. 2020
-    ├── train-model.sh              # submit a python job to train a model for the twilight zone experiment by Chen et al. 2016
+    ├── train-model.sh              # submit a python job to train a model for the Twilight Zone experiment by Chen et al. 2016
     ├── demo.py                     # a demo for Code Ocean
     ├── eval-group.py               # evaluate a group of models 
     ├── exp_aba.py                  # definition of the ABA experiment by Chang et al. 2020
-    ├── exp_tz.py                   # definition of the twilight zone experiment by Chen et al. 2016
+    ├── exp_tz.py                   # definition of the Twilight Zone experiment by Chen et al. 2016
     ├── mvpa-aba.py                 # run MVPA analysis on the ABA experiment 
     ├── mvpa-plot.py                # plot MVPA results from mvpa-run.py
     ├── mvpa-run.py                 # run MVPA analysis (mainly for simulation 9, but useful for other simulations except for simulation 8)
@@ -108,7 +108,7 @@ Here's the structure of this repo
 
 ## Replicate the simulation results - general guidelines
 
-Here we introduce the general procedure of how to replicate any simulation in the paper. We will use simulation 2 as an example. 
+Here we introduce the general procedure for how to replicate any simulation in the paper. We will use simulation 2 as an example. 
 
 ### 0. Download the code
 First, you need to clone this repo: 
@@ -119,13 +119,13 @@ git clone https://https://github.com/qihongl/learn-hippo
 I provided job submission files for all simulations: `src/submit-sim*.sh`. 
 For example, [src/submit-sim2.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-sim2.sh) is the job submission file for simulation 2. Executing this file will train 15 models in parallel with the specified simulation parameters. Note that the job of `submit-sim*.sh` is to specify simulation parameters and trigger 
 [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh). 
-Then `train-model.sh` takes those simulation parameters and run a python program that trains the model, which is general across simulations. 
+Then `train-model.sh` takes those simulation parameters and runs a python program that trains the model, which is general across simulations. 
 
 Several things to check before you run this script. 
 
 1. In `train-model.sh` ([line 11](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh#L11)), you need to set the `DATADIR`, the logging directory, to something that exisits on your machine. Then the data (e.g. trained network weights) will be saved to this directory. Later on, other programs, such as the code for visualizing data, will need to access this directory to find the weights for the trained models. 
 
-2. In `train-model.sh` ([line 7](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh#L7)), you need to set where to log the output (from the python script), to a directory that exists on your machine. This is useful if you want to inspect the training process. 
+2. In `train-model.sh` ([line 7](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh#L7)), you need to set where to log the output (from the python script) to a directory that exists on your machine. This is useful if you want to inspect the training process. 
 
 To train models for simulation 2, simply go to the `src/` folder and type the following: 
 
@@ -133,7 +133,7 @@ To train models for simulation 2, simply go to the `src/` folder and type the fo
 ./submit-sim2.sh
 ```
 
-This will trigger `train-mode.sh` and it will submits a python job with the following command with the specified simulation parameters: 
+This will trigger `train-mode.sh` and it will submit a python job with the following command with the specified simulation parameters: 
 
 ```sh
 srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
@@ -143,7 +143,7 @@ srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
     --log_root $DATADIR
 ```
 
-The code above clarifies how to train a model on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuation `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `attach_cond = {13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --attach_cond ${13}`. This works on your laptop too. 
+The code above clarifies how to train a model on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuration `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `attach_cond = {13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --attach_cond ${13}`. This works on your laptop too. 
 
 Here's a brief summary of what these parameters mean: 
 
@@ -151,11 +151,11 @@ Here's a brief summary of what these parameters mean:
 
 `subj_ids` - the id of the subject, only affects the directory name where the data will be saved
 
-`penalty` - if penalty_random is 0 (false), then this is the penalty of making a prediction mistake; else penalty_random is 1, then the penalty value will be sampled from uniformly from 0 up to the input value. 
+`penalty` - if penalty_random is 0 (false), then this is the penalty of making a prediction mistake; else if penalty_random is 1, then the penalty value will be sampled uniformly from 0 up to the input value. 
 
-`n_epoch` - the total number of training epoch 
+`n_epoch` - the total number of training epochs 
 
-`sup_epoch` - the number of supervised pre-training epoch 
+`sup_epoch` - the number of supervised pre-training epochs 
 
 `p_rm_ob_enc` - the probability of withholding observation before part 2
 
@@ -176,7 +176,7 @@ Here's a brief summary of what these parameters mean:
 
 ### 2. Model evaluation 
 
-`eval-group.py` evaluates some pre-trained models on some tasks with the specified simulation parameters. Actually, the training script evaluates the model on some test set by default, but in some simulations, I test the pre-trained models on some new tasks that the model hasn't been trained on. `eval-group.py` is a generic evaluation script that allows me to do that. 
+`eval-group.py` evaluates some pre-trained models on some tasks with the specified simulation parameters. Actually, the training script evaluates the model on some test sets by default, but in some simulations, I test the pre-trained models on some new tasks that the model hasn't been trained on. `eval-group.py` is a generic evaluation script that allows me to do that. 
 
 To evaluate some trained model, go to `src/` and configure the simulation parameters in `eval-group.py` to specify which simulation are you running, then run the evaluation script: 
 
@@ -194,11 +194,11 @@ To visualize the results, go to `src/` and configure the simulation parameters i
 python vis-data.py
 ```
 
-Note that this script will use the input simulation parameters to locate the data and then make plots. So input simulation parameters here must match the simulation parameters used for model training (step 1), otherwise the script won't be able locate the data. 
+Note that this script will use the input simulation parameters to locate the data and then make plots. So input simulation parameters here must match the simulation parameters used for model training (step 1), otherwise the script won't be able to locate the data. 
 
-## Specific instruction for each simulation
+## Specific instructions for each simulation
 
-This section lists the scripts you need to replicate every simulation in the paper. Note that when you use the python scripts to visualize the data (e.g. `vis-*.py`), the input parameters must match the parameters used in the training scripts. This enable the python script to find the location of the saved data. 
+This section lists the scripts you need to replicate every simulation in the paper. Note that when you use the python scripts to visualize the data (e.g. `vis-*.py`), the input parameters must match the parameters used in the training scripts. This enables the python script to find the location of the saved data. 
 
 ### Simulation 1 
 
@@ -237,7 +237,7 @@ Visualize the data (make sure the input parameters in this python script match w
 python vis-data.py
 ```
 
-Then train the models for in the low event similarity environment: 
+Then train the models in the low event similarity environment: 
 ```sh
 ./submit-sim3-2.sh
 ```
@@ -270,7 +270,7 @@ and visualize the data again.
 
 ### Simulation 5 
 
-This simulation re-use the models trained in simulation 2. First, re-evaluate the model by setting the `enc_size` to `8`, which will let the model to encode episodic memories midway through an event sequence. 
+This simulation re-uses the models trained in simulation 2. First, re-evaluate the model by setting the `enc_size` to `8`, which will let the model to encode episodic memories midway through an event sequence. 
 ```sh
 python eval-group.py
 ```
@@ -282,12 +282,12 @@ python vis-data.py
 
 ### Simulation 6
 
-This simulation re-use the models trained in simulation 2. First, you need to re-evaluate the model on RM, DM, NM condition separately. The simulation parameters in `eval-group.py` is configured to do this, so simply run
+This simulation re-uses the models trained in simulation 2. First, you need to re-evaluate the model on RM, DM, NM condition separately. The simulation parameters in `eval-group.py` are configured to do this, so simply run
 ```sh
 python eval-group.py
 ```
 
-Then run the following code the run the inter-subject analysis: 
+Then run the following code to run the inter-subject analysis: 
 ```sh
 python vis-isc.py
 ```
@@ -295,7 +295,7 @@ python vis-isc.py
 
 ### Simulation 7 
 
-This simulation re-use the models trained in simulation 2. First, you need re-evaluate the model on temporally scrambled stimuli while having their hippocampus turned off, The simulation parameters in `eval-group.py` is configured to do this, so simply run 
+This simulation re-use the models trained in simulation 2. First, you need re-evaluate the model on temporally scrambled stimuli while having their hippocampus turned off, The simulation parameters in `eval-group.py` are configured to do this, so simply run 
 ```sh
 python eval-group.py
 ```
@@ -346,3 +346,5 @@ python mvpa-plot.py
 ### Contact
 
 Qihong Lu (qlu@princeton.edu)
+
+
