@@ -9,9 +9,7 @@ Feel free to contact me if you have any questions / comments. Thank you very muc
 
 ## Playing with some pre-trained models
 
-If you would like to play with the model, here's a [Code Ocean capsule](https://codeocean.com/) we created, which contains the code in this repo and some pretrained weights.  
-
-[URL]()
+If you would like to play with the model, here's a [Code Ocean capsule](https://codeocean.com/capsule/3639589/tree) we created, which contains the code in this repo and some pretrained weights.  
 
 You can run Simulations 1, 2, 4, and 5 and see the results in 10 minutes. Once you are in the Code Ocean capsule, simply click **reproducible run**. To specify which simulation you would like to run, go to `code/src/demo.py`, on line 31, change `simulation_id` to 1, 2, 4, or 5, and then click **reproducible run** again. Once you are done, you can check the figures listed in the timeline (right hand side, under reproducible run). 
 
