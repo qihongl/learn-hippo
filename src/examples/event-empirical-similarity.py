@@ -11,13 +11,13 @@ sns.set(style='white', palette='colorblind', context='poster')
 '''study inter-event similarity as a function of n_branch, n_param'''
 n_param = 16
 n_branch = 4
-n_samples = 300
+n_samples = 500
 similarity_cap_lag = 2
 
 def_prob = .25
-similarity_pairs = [[0.0, .35], [.4, .9]]
+similarity_pairs = [[0.0, .4], [0, .9], [.35, .9]]
 
-similarity_labels = ['low', 'high']
+similarity_labels = ['low', 'normal', 'high']
 n_conditions = len(similarity_pairs)
 
 event_sims = np.zeros((n_conditions, n_samples - 1))
@@ -41,22 +41,16 @@ for i, (similarity_min, similarity_max) in enumerate(similarity_pairs):
 
     event_sims[i] = similarity_matrix[similarity_mask_recent]
 
-'''analysis'''
-similarity_vals_df = np.ravel(event_sims)
-similarity_labels_df = list(itertools.chain(
-    *[[sl] * (n_samples - 1) for sl in similarity_labels])
-)
-col_names = ['similarity', 'condition']
-data = [similarity_vals_df, similarity_labels_df]
-data_dict = dict(zip(col_names, data))
-
-df = pd.DataFrame.from_dict(data_dict)
-f, ax = plt.subplots(1, 1, figsize=(6, 5))
-sns.boxplot(
-    x=col_names[1], y=col_names[0],
-    data=df, ax=ax
-)
-ax.set_ylabel('Event similarity')
-ax.set_xlabel('Condition')
+'''plot'''
+mu, se = compute_stats(event_sims, axis=1)
+cps = sns.color_palette(n_colors=len(mu))
+f, ax = plt.subplots(1, 1, figsize=(9, 6))
+for i in range(n_conditions):
+    sns.kdeplot(event_sims[i], ax=ax, label=similarity_labels[i])
+ax.legend()
+for j, mu_j in enumerate(mu):
+    ax.axvline(mu_j, color=cps[j], linestyle='--', alpha=.6)
+ax.set_title('Event similarity by condition')
+ax.set_xlabel('Event similarity')
 sns.despine()
 f.tight_layout()
