@@ -10,13 +10,11 @@ from models.initializer import initialize_weights
 # number of vector signal (lstm gates)
 N_VSIG = 3
 # number of scalar signal (sigma)
-N_SSIG = 2
+N_SSIG = 1
 # the ordering in the cache
-scalar_signal_names = ['input strength', 'competition']
+scalar_signal_names = ['input strength']
 vector_signal_names = ['f', 'i', 'o']
-
 sigmoid = nn.Sigmoid()
-gain = 1
 
 
 class LCALSTM(nn.Module):
@@ -27,8 +25,7 @@ class LCALSTM(nn.Module):
             rnn_hidden_dim, dec_hidden_dim,
             kernel='cosine', dict_len=100,
             weight_init_scheme='ortho',
-            init_state_trainable=False,
-            noisy_encoding=0, cmpt=.8
+            cmpt=.8
     ):
         super(LCALSTM, self).__init__()
         self.cmpt = cmpt
@@ -47,13 +44,6 @@ class LCALSTM(nn.Module):
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
-        self.init_state_trainable = init_state_trainable
-        if noisy_encoding == 0:
-            self.noisy_encoding = False
-        elif noisy_encoding == 1:
-            self.noisy_encoding = True
-        else:
-            raise ValueError('noisy_encoding arg must be 0 or 1')
         self.init_model()
 
     def init_model(self):
@@ -64,8 +54,6 @@ class LCALSTM(nn.Module):
         self.ssig_names = scalar_signal_names
         # init params
         initialize_weights(self, self.weight_init_scheme)
-        if self.init_state_trainable:
-            self.init_init_states()
 
     def init_init_states(self):
         scale = 1 / self.rnn_hidden_dim
@@ -77,11 +65,8 @@ class LCALSTM(nn.Module):
         )
 
     def get_init_states(self, scale=.1, device='cpu'):
-        if self.init_state_trainable:
-            h_0_, c_0_ = self.h_0, self.c_0
-        else:
-            h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
-            c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+        h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
+        c_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
         return (h_0_, c_0_)
 
     def forward(self, x_t, hc_prev, beta=1):
@@ -106,8 +91,8 @@ class LCALSTM(nn.Module):
         dec_act_t = F.relu(self.ih(h_t))
         # recall / encode
         hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
-        phi_t = sigmoid(self.hpc(hpc_input_t))
-        [inps_t, comp_t] = torch.squeeze(phi_t)
+        inps_t = sigmoid(self.hpc(hpc_input_t))
+        # [inps_t, comp_t] = torch.squeeze(phi_t)
         m_t = self.recall(c_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
@@ -121,7 +106,7 @@ class LCALSTM(nn.Module):
         h_t = h_t.view(1, h_t.size(0), -1)
         cm_t = cm_t.view(1, cm_t.size(0), -1)
         # scache results
-        scalar_signal = [inps_t, 0, comp_t]
+        scalar_signal = [inps_t, 0, 0]
         vector_signal = [f_t, i_t, o_t]
         misc = [h_t, m_t, cm_t, dec_act_t, self.em.get_vals()]
         cache = [vector_signal, scalar_signal, misc]
@@ -161,14 +146,7 @@ class LCALSTM(nn.Module):
 
     def encode(self, cm_t):
         if not self.em.encoding_off:
-            if self.noisy_encoding:
-                # a two memory case, a bit artificial
-                # can generalize to n-memory case with random noise
-                noise = sample_random_vector(self.rnn_hidden_dim, scale=1)
-                self.em.save_memory(cm_t + noise)
-                self.em.save_memory(cm_t - noise)
-            else:
-                self.em.save_memory(cm_t)
+            self.em.save_memory(cm_t)
 
     def pick_action(self, action_distribution):
         """action selection by sampling from a multinomial.
@@ -188,11 +166,6 @@ class LCALSTM(nn.Module):
         a_t = m.sample()
         log_prob_a_t = m.log_prob(a_t)
         return a_t, log_prob_a_t
-
-    def add_simple_lures(self, n_lures=1):
-        lures = [sample_random_vector(self.rnn_hidden_dim)
-                 for _ in range(n_lures)]
-        self.em.inject_memories(lures)
 
     def init_em_config(self):
         self.flush_episodic_memory()
