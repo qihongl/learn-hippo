@@ -100,9 +100,9 @@ for pi, (penalty_train, penalty_test) in enumerate(penalty_train_test):
     axes[pi].set_title(penalty_train_test_label[pi])
     axes[pi].set_xticks(range(n_def_prob))
     axes[pi].set_xticklabels(['%.2f' % dp for dp in def_prob_range])
-    axes[pi].set_xlabel('Schema level')
+    axes[pi].set_xlabel('Schema strength')
 axes[0].set_ylabel('Average input gate')
-axes[0].legend()
+axes[1].legend()
 sns.despine()
 img_name = 'ig-characteristics-by-schematicity.png'
 f.savefig(os.path.join('../figs', img_name), bbox_inches='tight')

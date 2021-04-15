@@ -320,9 +320,9 @@ f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
 '''load back pretrained MVPA classifier'''
 mvpa_data_dict_fname = f'mvpa-{exp_name}-p{penalty_train}-{penalty_test}-%.2f.pkl' % def_prob
-if not os.path.isfile(os.path.join('data/', mvpa_data_dict_fname)):
+if not os.path.isfile(os.path.join(log_root, mvpa_data_dict_fname)):
     sys.exit('No pre-trained classifier for this config')
-mvpa_results = pickle_load_dict(os.path.join('data/', mvpa_data_dict_fname))
+mvpa_results = pickle_load_dict(os.path.join(log_root, mvpa_data_dict_fname))
 clfs = mvpa_results['classifier_g'][subj_id]
 
 '''organize the data for MVPA analysis'''

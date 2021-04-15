@@ -235,7 +235,7 @@ sns.despine()
 f.tight_layout()
 fig_path = os.path.join(log_subpath['figs'], 'tz-lc.png')
 f.suptitle('learning curves', fontsize=15)
-f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+f.savefig(fig_path, dpi=100)
 
 '''plot performance'''
 # prep data
@@ -256,7 +256,7 @@ for cond_name_ in list(TZ_COND_DICT.values()):
         title=f'Performance on the TZ task: {cond_name_}',
     )
     fig_path = os.path.join(log_subpath['figs'], f'tz-acc-{cond_name_}.png')
-    f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
+    f.savefig(fig_path, dpi=100)
 
 
 '''eval the model'''

@@ -29,7 +29,7 @@ def build_log_path(
     # net params
     enc_str = f'enc-{p.net.enc_mode}_size-{p.net.enc_size}'
     enc_capc_str = f'nmem-{p.n_event_remember}'
-    recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}'
+    recall_str = f'rp-{p.net.recall_func}_metric-{p.net.kernel}_cmpt-{p.net.cmpt}'
     network_str = f'h-{p.net.n_hidden}_hdec-{p.net.n_hidden_dec}'
     train_str = f'lr-{p.net.lr}-eta-{p.net.eta}'
     curic_str = f'sup_epoch-{p.misc.sup_epoch}'
@@ -46,34 +46,6 @@ def build_log_path(
     }
     _make_all_dirs(log_path, log_subpath, mkdir=mkdir, verbose=verbose)
     return log_path, log_subpath
-
-
-def update_rnr_log_subpath(log_subpath, n_mvs_rnr):
-    """Add subpath for the rnr experiments
-
-    e.g.
-    log_subpath = update_rnr_log_subpath(log_subpath, p.env.rnr.n_mvs)
-
-    Parameters
-    ----------
-    log_subpath : list
-        see build_log_path()
-    n_mvs_rnr : int
-        see p.env.rnr.n_mvs
-
-    Returns
-    -------
-    list
-        `log_subpath` with rnr sub dirs
-
-    """
-    log_subpath['rnr-data'] = os.path.join(
-        log_subpath['data'], 'n_mvs-%s' % n_mvs_rnr)
-    log_subpath['rnr-ckpts'] = os.path.join(
-        log_subpath['ckpts'], 'n_mvs-%s' % n_mvs_rnr)
-    log_subpath['rnr-figs'] = os.path.join(
-        log_subpath['figs'], 'n_mvs-%s' % n_mvs_rnr)
-    return log_subpath
 
 
 def _make_all_dirs(log_path, log_subpath, mkdir=True, verbose=False):
@@ -188,10 +160,10 @@ def pickle_save_dict(input_dict, save_path):
 
     Parameters
     ----------
-    input_dict : type
-        Description of parameter `input_dict`.
-    save_path : type
-        Description of parameter `save_path`.
+    input_dict : dict
+        a dictionary to be saved
+    save_path : str
+        file path
 
     """
     with open(save_path, 'wb') as handle:
@@ -203,13 +175,13 @@ def pickle_load_dict(fpath):
 
     Parameters
     ----------
-    fpath : type
-        Description of parameter `fpath`.
+    fpath : str
+        file path
 
     Returns
     -------
     type
-        Description of returned object.
+        dict
 
     """
     return pickle.load(open(fpath, "rb"))
@@ -220,10 +192,10 @@ def pickle_save_df(input_df, save_path):
 
     Parameters
     ----------
-    input_df : type
-        Description of parameter `input_df`.
-    save_path : type
-        Description of parameter `save_path`.
+    input_df : df
+        a df to be saved
+    save_path : str
+        file path
 
     """
     input_df.to_pickle(save_path)
