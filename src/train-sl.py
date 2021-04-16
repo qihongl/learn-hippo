@@ -42,7 +42,7 @@ parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
 parser.add_argument('--eta', default=0.1, type=float)
-parser.add_argument('--cmpt', default=0.8, type=float)
+parser.add_argument('--cmpt', default=0.4, type=float)
 parser.add_argument('--n_event_remember', default=2, type=int)
 parser.add_argument('--sup_epoch', default=1, type=int)
 parser.add_argument('--n_epoch', default=2, type=int)
@@ -100,7 +100,6 @@ p = P(
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
     lr=learning_rate, eta=eta, cmpt=cmpt,
 )
-print(p.env.def_tps)
 # init env
 task = SequenceLearning(
     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=p.env.pad_len,
