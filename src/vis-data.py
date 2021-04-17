@@ -2,12 +2,15 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 import warnings
 
 from scipy.stats import pearsonr
+from scipy import spatial
 from sklearn import metrics
 from task import SequenceLearning
+from utils.utils import to_np
 from utils.params import P
 from utils.constants import TZ_COND_DICT
 from utils.io import build_log_path, get_test_data_dir, \
@@ -21,6 +24,8 @@ from analysis.task import get_oq_keys
 from vis import plot_pred_acc_rcl, get_ylim_bonds
 from matplotlib.ticker import FormatStrFormatter
 from sklearn.decomposition.pca import PCA
+# matplotlib.use('Agg')
+
 
 warnings.filterwarnings("ignore")
 sns.set(style='white', palette='colorblind', context='poster')
@@ -28,17 +33,17 @@ gr_pal = sns.color_palette('colorblind')[2:4]
 log_root = '../log/'
 # log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 all_conds = TZ_COND_DICT.values()
-
+# for comp_val in [.2, .4, .6, .8, 1.0]:
 
 # exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
 # for def_prob in def_prob_range:
 
 # the name of the experiemnt
-exp_name = 'vary-test-penalty'
+exp_name = 'vary-training-penalty'
 # exp_name = 'familiarity-signal'
 subj_ids = np.arange(15)
-penalty_random = 0
+penalty_random = 1
 def_prob = .25
 n_def_tps = 0
 # n_def_tps = 8
@@ -54,7 +59,7 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 n_event_remember = 2
-comp_val = .8
+comp_val = 0.4
 leak_val = 0
 # test param
 penaltys_train = [4]
@@ -66,6 +71,7 @@ p_test = 0
 p_rm_ob_enc_test = p_test
 p_rm_ob_rcl_test = p_test
 slience_recall_time = None
+# slience_recall_time = range(n_param)
 similarity_max_test = .9
 similarity_min_test = 0
 n_examples_test = 256
@@ -119,6 +125,7 @@ for penalty_train in penaltys_train:
         targets_dmp2_g = [None] * n_subjs
         def_path_int_g = [None] * n_subjs
         def_tps_g = [None] * n_subjs
+        memory_sim_g = [None] * n_subjs
 
         for i_s, subj_id in enumerate(subj_ids):
             np.random.seed(subj_id)
@@ -132,6 +139,7 @@ for penalty_train in penaltys_train:
                 def_prob=def_prob, n_def_tps=n_def_tps,
                 penalty=penalty_train, penalty_random=penalty_random,
                 p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
+                cmpt=comp_val,
             )
             # create logging dirs
             test_params = [penalty_test, pad_len_test, slience_recall_time]
@@ -370,6 +378,17 @@ for penalty_train in penaltys_train:
                         avg_ma[cond][m_type] = np.mean(
                             sim_lca_dict[cond][m_type], axis=-1)
 
+            '''iter-memory similarity
+            '''
+            V_np = np.zeros((n_trials, 2, len(V[0][0])))
+            for i, V_i in enumerate(V):
+                for j, V_ij in enumerate(V_i):
+                    V_np[i, j] = to_np(V_ij)
+            memory_sim_g[i_s] = np.mean([
+                spatial.distance.cosine(V_np[i, 0], V_np[i, 1])
+                for i in range(n_trials)
+            ])
+
             '''plot target/lure activation for all conditions - horizontal'''
             ylim_bonds = {'LCA': None, 'cosine': None}
             ker_name, sim_stats_plt_ = 'LCA', sim_lca_stats
@@ -441,8 +460,8 @@ for penalty_train in penaltys_train:
             ax.set_ylabel('Activation')
             ax.set_ylim([-.05, None])
             ax.set_xticks([0, p.env.n_param - 1])
-            ax.legend(['not already observed',
-                       'already observed'], fancybox=True)
+            ax.legend(['not recently observed',
+                       'recently observed'], fancybox=True)
             # ax.legend([])
             ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
             f.tight_layout()
@@ -569,17 +588,16 @@ for penalty_train in penaltys_train:
             'mis_dict': mis_dict,
             'lca_ma_list': ma_list,
             'cosine_ma_list': ma_cos_list,
+            'memory_sim_g': memory_sim_g,
             'inpt_dmp2_g': inpt_dmp2_g,
             'actions_dmp2_g': actions_dmp2_g,
             'targets_dmp2_g': targets_dmp2_g,
             'def_path_int_g': def_path_int_g,
             'def_tps_g': def_tps_g
-
         }
-        fname = '%s-dp%.2f-p%d-%d.pkl' % (
-            exp_name, def_prob, penalty_train, penalty_test)
-        gdata_outdir = 'data/'
-        pickle_save_dict(gdata_dict, os.path.join(gdata_outdir, fname))
+        fname = 'p%d-%d.pkl' % (penalty_train, penalty_test)
+        dir_all_subjs = os.path.dirname(log_path)
+        pickle_save_dict(gdata_dict, os.path.join(dir_all_subjs, fname))
 
         '''group level performance'''
         n_se = 1
@@ -724,7 +742,7 @@ for penalty_train in penaltys_train:
             )
         ax.set_ylabel('Memory activation')
         ax.set_xlabel('Time (part 2)')
-        ax.legend(['not already observed', 'already observed'])
+        ax.legend(['not recently observed', 'recently observed'])
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -769,7 +787,7 @@ for penalty_train in penaltys_train:
             )
         ax.set_ylabel('Input gate')
         ax.set_xlabel('Time (part 2)')
-        # ax.legend(['not already observed', 'already observed'])
+        # ax.legend(['not recently observed', 'recently observed'])
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -783,7 +801,7 @@ for penalty_train in penaltys_train:
         f, ax = plt.subplots(1, 1, figsize=(6, 4.5))
         ax.plot(0, 0)
         ax.plot(0, 1)
-        ax.legend(['not already observed', 'already observed'])
+        ax.legend(['not recently observed', 'recently observed'])
         sns.despine()
         fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-observed-not-legend.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
