@@ -33,7 +33,7 @@ gr_pal = sns.color_palette('colorblind')[2:4]
 log_root = '../log/'
 # log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 all_conds = TZ_COND_DICT.values()
-# for comp_val in [.2, .4, .6, .8, 1.0]:
+# for cmpt in [.2, .4, .6, .8, 1.0]:
 
 # exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
@@ -54,12 +54,10 @@ p_rm_ob_rcl_load = 0
 attach_cond = 0
 supervised_epoch = 600
 epoch_load = 1000
-learning_rate = 7e-4
 n_branch = 4
 n_param = 16
 enc_size = 16
-n_event_remember = 2
-comp_val = 0.4
+cmpt = 0.4
 leak_val = 0
 # test param
 penaltys_train = [4]
@@ -135,11 +133,10 @@ for penalty_train in penaltys_train:
             p = P(
                 exp_name=exp_name, sup_epoch=supervised_epoch,
                 n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-                enc_size=enc_size, n_event_remember=n_event_remember,
-                def_prob=def_prob, n_def_tps=n_def_tps,
+                enc_size=enc_size, def_prob=def_prob, n_def_tps=n_def_tps,
                 penalty=penalty_train, penalty_random=penalty_random,
                 p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
-                cmpt=comp_val,
+                cmpt=cmpt,
             )
             # create logging dirs
             test_params = [penalty_test, pad_len_test, slience_recall_time]
@@ -214,7 +211,7 @@ for penalty_train in penaltys_train:
             q_source = get_qsource(true_dk_em, true_dk_wm, cond_ids, p)
 
             # load lca params
-            comp = np.full(np.shape(inpt), comp_val)
+            comp = np.full(np.shape(inpt), cmpt)
             leak = np.full(np.shape(inpt), leak_val)
 
             # compute performance

@@ -8,10 +8,10 @@ from utils.constants import ALL_ENC_MODE
 class P():
     def __init__(
         self,
-        exp_name='rnr',
+        exp_name='test',
         subj_id=0,
-        n_param=10,
-        n_branch=3,
+        n_param=16,
+        n_branch=4,
         pad_len=0,
         def_path=None,
         def_prob=None,
@@ -41,7 +41,7 @@ class P():
         lr=7e-4,
         gamma=0,
         eta=.1,
-        cmpt=.8,
+        cmpt=.4,
         sup_epoch=None,
         n_epoch=None,
         n_example=None,

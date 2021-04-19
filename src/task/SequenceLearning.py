@@ -30,7 +30,7 @@ class SequenceLearning():
             n_rm_fixed=False,
             similarity_max=None,
             similarity_min=None,
-            similarity_cap_lag=4,
+            similarity_cap_lag=2,
             permute_queries=False,
             key_rep_type='time',
             sampling_mode='enumerative'

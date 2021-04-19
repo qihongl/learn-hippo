@@ -322,8 +322,9 @@ for i_rc, ref_cond in enumerate(all_conds):
 
 
 '''plot spatial pattern isc '''
-c_pal = sns.color_palette(n_colors=8)
-color_id_pick = [0, 1, 2, 3, 4, 7]
+c_pal = sns.color_palette('colorblind', n_colors=8)
+# sns.palplot(c_pal)
+color_id_pick = [0, 4]
 c_pal = [c_pal[color_id] for color_id in color_id_pick]
 
 # compute stats
@@ -432,8 +433,8 @@ for i_c, cond in enumerate(['RM', 'DM']):
         color_id += 1
 ax.legend()
 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-ax.set_xlabel(f'Time (sliding window size = {win_size})')
-ax.set_ylabel('Linear correlation')
+ax.set_xlabel(f'Time (part 2)')
+ax.set_ylabel('R')
 ax.set_title('Temporal inter-subject correlation')
 sns.despine()
 f.tight_layout()
@@ -539,10 +540,10 @@ for cond in has_memory_conds:
 #     data_dict[f'RM-{cond}'] = np.mean(r_val_sisc[cond], axis=-1)
 #
 # df = make_df(data_dict)
-# iris_dabest = dabest.load(
+# db = dabest.load(
 #     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 # )
-# iris_dabest.mean_diff.plot(
+# db.mean_diff.plot(
 #     swarm_label='Linear correlation', fig_size=(7, 5)
 # )
 #
@@ -563,44 +564,44 @@ for cond in has_memory_conds:
 # f.tight_layout()
 #
 #
-'''plot t-isc'''
-
-f, ax = plt.subplots(1, 1, figsize=(7, 5))
-for cond in has_memory_conds:
-    ax.errorbar(
-        x=range(len(r_mu_tisc[cond])),
-        y=r_mu_tisc[cond], yerr=r_se_tisc[cond], label=f'RM-{cond}'
-    )
-ax.axhline(0, color='grey', linestyle='--')
-ax.set_xlabel('Time')
-ax.set_ylabel('Linear Corr.')
-ax.set_title('Correlation: recall vs. ISC change')
-ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-ax.legend()
-sns.despine()
-f.tight_layout()
-
-xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
-f, ax = plt.subplots(1, 1, figsize=(6, 4))
-sns.violinplot(data=[r_mu_tisc[cond] for cond in has_memory_conds])
-ax.axhline(0, color='grey', linestyle='--')
-ax.set_xticks(range(len(xticklabels)))
-ax.set_xticklabels(xticklabels)
-ax.set_xlabel('Condition')
-ax.set_ylabel('Linear Correlation')
-ax.set_title('Correlation: recall vs. ISC change')
-sns.despine()
-f.tight_layout()
-
+# '''plot t-isc'''
+#
+# f, ax = plt.subplots(1, 1, figsize=(7, 5))
+# for cond in has_memory_conds:
+#     ax.errorbar(
+#         x=range(len(r_mu_tisc[cond])),
+#         y=r_mu_tisc[cond], yerr=r_se_tisc[cond], label=f'RM-{cond}'
+#     )
+# ax.axhline(0, color='grey', linestyle='--')
+# ax.set_xlabel('Time')
+# ax.set_ylabel('Linear Corr.')
+# ax.set_title('Correlation: recall vs. ISC change')
+# ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+# ax.legend()
+# sns.despine()
+# f.tight_layout()
+#
+# xticklabels = [f'RM-{cond}' for cond in has_memory_conds]
+# f, ax = plt.subplots(1, 1, figsize=(6, 4))
+# sns.violinplot(data=[r_mu_tisc[cond] for cond in has_memory_conds])
+# ax.axhline(0, color='grey', linestyle='--')
+# ax.set_xticks(range(len(xticklabels)))
+# ax.set_xticklabels(xticklabels)
+# ax.set_xlabel('Condition')
+# ax.set_ylabel('Linear Correlation')
+# ax.set_title('Correlation: recall vs. ISC change')
+# sns.despine()
+# f.tight_layout()
+#
 
 data_dict = {}
 for cond in list(r_mu_sisc.keys()):
     data_dict[f'RM-{cond}'] = np.mean(r_val_tisc[cond], axis=-1)
 
 df = make_df(data_dict)
-iris_dabest = dabest.load(
+db = dabest.load(
     data=df, x="Condition", y="Value", idx=list(data_dict.keys())
 )
-iris_dabest.mean_diff.plot(
-    swarm_label='Linear correlation', fig_size=(7, 5),
+db.mean_diff.plot(
+    swarm_label='Linear correlation', fig_size=(7, 5), custom_palette=c_pal
 )
