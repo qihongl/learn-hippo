@@ -28,6 +28,7 @@ parser.add_argument('--pad_len', default=-1, type=int)
 parser.add_argument('--def_prob', default=None, type=float)
 parser.add_argument('--n_def_tps', default=0, type=int)
 parser.add_argument('--enc_size', default=16, type=int)
+parser.add_argument('--dict_len', default=None, type=int)
 parser.add_argument('--penalty', default=4, type=int)
 parser.add_argument('--penalty_random', default=1, type=int)
 parser.add_argument('--penalty_discrete', default=1, type=int)
@@ -60,6 +61,7 @@ pad_len = args.pad_len
 def_prob = args.def_prob
 n_def_tps = args.n_def_tps
 enc_size = args.enc_size
+dict_len = args.dict_len
 penalty = args.penalty
 penalty_random = args.penalty_random
 penalty_discrete = args.penalty_discrete
@@ -92,7 +94,7 @@ p = P(
     sup_epoch=supervised_epoch,
     n_param=n_param, n_branch=n_branch, pad_len=pad_len,
     def_prob=def_prob, n_def_tps=n_def_tps,
-    enc_size=enc_size, n_event_remember=n_event_remember,
+    enc_size=enc_size, dict_len=dict_len, n_event_remember=n_event_remember,
     penalty=penalty, penalty_random=penalty_random,
     penalty_discrete=penalty_discrete, penalty_onehot=penalty_onehot,
     normalize_return=normalize_return, attach_cond=attach_cond,
@@ -108,12 +110,9 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
-x_dim = task.x_dim
-if attach_cond != 0:
-    x_dim += 1
 # init agent
 agent = Agent(
-    input_dim=x_dim, output_dim=p.a_dim,
+    input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )

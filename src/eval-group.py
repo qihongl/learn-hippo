@@ -22,9 +22,9 @@ epoch_load = 1000
 n_branch = 4
 n_param = 16
 enc_size = 16
-# enc_size_test = 8
-enc_size_test = enc_size
-n_event_remember = 2
+enc_size_test = 8
+dict_len_test = 3
+# enc_size_test = enc_size
 
 penalty_random = 1
 # testing param, ortho to the training directory
@@ -45,15 +45,19 @@ similarity_max_test = .9
 similarity_min_test = 0
 
 '''loop over conditions for testing'''
-slience_recall_times = [range(n_param), None]
-
 subj_ids = np.arange(15)
 
 penaltys_train = [4]
-penaltys_test = np.array([2])
+penaltys_test = np.array([0, 2, 4])
 
-all_conds = ['RM', 'DM', 'NM']
-scramble_options = [True, False]
+# slience_recall_times = [range(n_param), None]
+slience_recall_times = [None]
+# slience_recall_times = [range(n_param)]
+# all_conds = ['RM', 'DM', 'NM']
+# all_conds = ['DM']
+all_conds = [None]
+# scramble_options = [True, False]
+scramble_options = [False]
 
 for scramble in scramble_options:
     for slience_recall_time in slience_recall_times:
@@ -69,8 +73,7 @@ for scramble in scramble_options:
                 p = P(
                     exp_name=exp_name, sup_epoch=supervised_epoch,
                     n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-                    def_prob=def_prob, n_def_tps=n_def_tps,
-                    enc_size=enc_size, n_event_remember=n_event_remember,
+                    def_prob=def_prob, n_def_tps=n_def_tps, enc_size=enc_size,
                     penalty=penalty_train, penalty_random=penalty_random,
                     attach_cond=attach_cond,
                     p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
@@ -79,7 +82,6 @@ for scramble in scramble_options:
                 log_path, log_subpath = build_log_path(
                     subj_id, p, log_root=log_root, mkdir=False, verbose=False
                 )
-
                 # init env
                 env_data = load_env_metadata(log_subpath)
                 def_path = env_data['def_path']
@@ -92,14 +94,11 @@ for scramble in scramble_options:
                     similarity_max=similarity_max_test, similarity_min=similarity_min_test,
                     similarity_cap_lag=p.n_event_remember,
                 )
-                x_dim = task.x_dim
-                if attach_cond != 0:
-                    x_dim += 1
                 # load the agent back
                 agent = Agent(
-                    input_dim=x_dim, output_dim=p.a_dim,
+                    input_dim=task.x_dim, output_dim=p.a_dim,
                     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-                    dict_len=p.net.dict_len
+                    dict_len=dict_len_test
                 )
 
                 agent, optimizer = load_ckpt(
