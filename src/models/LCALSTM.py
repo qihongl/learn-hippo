@@ -20,12 +20,8 @@ sigmoid = nn.Sigmoid()
 class LCALSTM(nn.Module):
 
     def __init__(
-            self,
-            input_dim, output_dim,
-            rnn_hidden_dim, dec_hidden_dim,
-            kernel='cosine', dict_len=100,
-            weight_init_scheme='ortho',
-            cmpt=.8
+            self, input_dim, output_dim, rnn_hidden_dim, dec_hidden_dim,
+            kernel='cosine', dict_len=2, weight_init_scheme='ortho', cmpt=.4
     ):
         super(LCALSTM, self).__init__()
         self.cmpt = cmpt
@@ -55,14 +51,14 @@ class LCALSTM(nn.Module):
         # init params
         initialize_weights(self, self.weight_init_scheme)
 
-    def init_init_states(self):
-        scale = 1 / self.rnn_hidden_dim
-        self.h_0 = torch.nn.Parameter(
-            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-        )
-        self.c_0 = torch.nn.Parameter(
-            sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-        )
+    # def init_init_states(self):
+    #     scale = 1 / self.rnn_hidden_dim
+    #     self.h_0 = torch.nn.Parameter(
+    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
+    #     )
+    #     self.c_0 = torch.nn.Parameter(
+    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
+    #     )
 
     def get_init_states(self, scale=.1, device='cpu'):
         h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
@@ -96,7 +92,6 @@ class LCALSTM(nn.Module):
         m_t = self.recall(c_t, inps_t)
         cm_t = c_t + m_t
         self.encode(cm_t)
-        '''final decision attempt'''
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
         dec_act_t = F.relu(self.ih(h_t))
@@ -139,9 +134,7 @@ class LCALSTM(nn.Module):
             m_t = torch.zeros_like(c_t)
         else:
             # retrieve memory
-            m_t = self.em.get_memory(
-                c_t, leak=0, comp=comp_t, w_input=inps_t
-            )
+            m_t = self.em.get_memory(c_t, leak=0, comp=comp_t, w_input=inps_t)
         return m_t
 
     def encode(self, cm_t):

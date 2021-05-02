@@ -200,6 +200,6 @@ df.head()
 dabest_data = dabest.load(
     data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
 )
-dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(9, 6))
+dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(11, 6))
 print(dabest_data.mean_diff)
 dabest_data.mean_diff.statistical_tests

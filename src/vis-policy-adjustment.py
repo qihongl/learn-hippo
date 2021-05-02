@@ -237,7 +237,7 @@ sns.despine()
 f.tight_layout()
 
 '''slope graph'''
-data_dict = {'Penalty 0': rt[0], 'Penalty 4': rt[4]}
+data_dict = {'Penalty low': rt[0], 'Penalty high': rt[4]}
 df = pd.DataFrame(data_dict)
 df['ids'] = np.arange(n_subjs)
 df.head()
@@ -246,6 +246,6 @@ df.head()
 dabest_data = dabest.load(
     data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
 )
-dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(9, 6))
+dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(11, 6))
 print(dabest_data.mean_diff)
 dabest_data.mean_diff.statistical_tests
