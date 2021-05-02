@@ -30,6 +30,7 @@ class EM():
         self.size = size
         self.dim = dim
         self.kernel = kernel
+        self.vals = []
         self.reset_memory()
         self._check_config()
 
@@ -46,11 +47,14 @@ class EM():
         self.vals = []
 
     def _save_memory(self, val):
-        # self.vals.append(val.data.view(1, -1))
         self.vals.append(torch.squeeze(val.data))
         # remove the oldest memory, if overflow
         if len(self.vals) > self.size:
             self.vals.pop(0)
+
+    def remove_memory(self, id):
+        assert id <= len(self.vals) - 1, 'index out of bound'
+        return self.vals.pop(id)
 
     def save_memory(self, val):
         """Save an episodic memory
@@ -210,3 +214,37 @@ def lca_transform(
     # take the final valuse
     lca_similarities = lca_outputs[-1, :]
     return lca_similarities
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from copy import deepcopy
+    import numpy as np
+    import torch
+
+    '''how to init'''
+    size, dim = 4, 8
+    em = EM(size, dim)
+    em.encoding_off = False
+
+    '''how to add memory'''
+    n_mem = 2
+    for i in range(n_mem):
+        m = torch.ones(size=(dim,)) * i
+        em.save_memory(m)
+    print(em.vals)
+
+    '''how to delete a specific memory'''
+    # make a copy 1st
+    em_vals = deepcopy(em.vals)
+    # remove the 2nd to last memory
+    mem_rmd = em.remove_memory(-2)
+    print('before removal:')
+    print(em_vals)
+    print('after:')
+    print(em.vals)
+    print('the removed memory:')
+    print(mem_rmd)
+    # recover the memories by the deepcopy
+    em.vals = em_vals
+    print(em.vals)

@@ -23,8 +23,9 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 enc_size_test = 8
-dict_len_test = 3
+dict_len_test = 4
 # enc_size_test = enc_size
+rm_mid_targ = False
 
 penalty_random = 1
 # testing param, ortho to the training directory
@@ -116,7 +117,8 @@ for scramble in scramble_options:
                     agent, optimizer, task, p, n_examples_test,
                     supervised=False, learning=False, get_data=True,
                     fix_cond=fix_cond, fix_penalty=fix_penalty,
-                    slience_recall_time=slience_recall_time, scramble=scramble
+                    slience_recall_time=slience_recall_time, scramble=scramble,
+                    rm_mid_targ=rm_mid_targ
                 )
 
                 # save the data

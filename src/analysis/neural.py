@@ -74,12 +74,22 @@ def create_sim_dict(sim, cond_ids, n_targ=1):
         similatity values
 
     """
+    # get how many memories was stored
+    dict_len = np.shape(sim)[-1]
+    # compute the number of lures
+    # e.g if n_targ, dict_len = 1, 2, then n_lure = 1
+    # e.g if n_targ, dict_len = 2, 4, then n_lure = 2
+    # e.g if n_targ, dict_len = 2, 3, then n_lure = 1
+    n_lure = dict_len - n_targ
+    # split data by condition
     sim_dict_ = {cn: sim[cids] for cn, cids in cond_ids.items()}
+    # prealloc
     sim_dict = {cn: {'targ': None, 'lure': None} for cn in cond_ids.keys()}
+    # sep targ vs. lure  condition specific
     sim_dict['NM']['lure'] = sim_dict_['NM']
     for cn in ['RM', 'DM']:
         sim_dict[cn]['targ'] = np.atleast_3d(sim_dict_[cn][:, :, -n_targ:])
-        sim_dict[cn]['lure'] = np.atleast_3d(sim_dict_[cn][:, :, :-n_targ])
+        sim_dict[cn]['lure'] = np.atleast_3d(sim_dict_[cn][:, :, :n_lure])
     return sim_dict
 
 

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 import pdb
-
+from copy import deepcopy
 from analysis import entropy
 from utils.utils import to_sqnp
 from utils.constants import TZ_COND_DICT, P_TZ_CONDS
@@ -12,9 +12,9 @@ from models import get_reward, compute_returns, compute_a2c_loss
 
 def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
-        fix_cond=None, fix_penalty=None,
-        slience_recall_time=None, scramble=False,
-        learning=True, get_cache=True, get_data=False,
+        fix_cond=None, fix_penalty=None, slience_recall_time=None,
+        scramble=False, learning=True, get_cache=True, get_data=False,
+        rm_mid_targ=False,
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -69,6 +69,10 @@ def run_tz(
                 penalty_val, penalty_rep = penalty_val_p1, penalty_rep_p1
             else:
                 penalty_val, penalty_rep = penalty_val_p2, penalty_rep_p2
+                if rm_mid_targ and t_relative == 0:
+                    # save memories and the start of p2 and pop midway target
+                    em_copy = deepcopy(agent.em.vals)
+                    mem_rmd = agent.em.remove_memory(-2)
 
             # testing condition
             if slience_recall_time is not None:
@@ -79,7 +83,7 @@ def run_tz(
                 set_encoding_flag(t, enc_times, cond_i, agent)
 
             # forward
-            x_it = append_prev_info(X_i[t], [penalty_rep])
+            x_it = append_info(X_i[t], [penalty_rep])
             pi_a_t, v_t, hc_t, cache_t = agent.forward(
                 x_it.view(1, 1, -1), hc_t)
             # after delay period, compute loss
@@ -98,8 +102,7 @@ def run_tz(
 
             if not supervised:
                 # update WM/EM bsaed on the condition
-                hc_t = cond_manipulation(
-                    cond_i, t, event_ends[0], hc_t, agent)
+                hc_t = cond_manipulation(cond_i, t, event_ends[0], hc_t, agent)
 
             # cache results for later analysis
             if get_cache:
@@ -108,6 +111,9 @@ def run_tz(
             if t % T_part >= pad_len:
                 log_dist_a[i].append(to_sqnp(pi_a_t))
                 log_targ_a[i].append(to_sqnp(Y_i[t]))
+            # at the end, recover the removed midway memory
+            if t == T_total - 1 and rm_mid_targ:
+                agent.em.vals = em_copy
 
         # compute RL loss
         returns = compute_returns(rewards, normalize=p.env.normalize_return)
@@ -149,7 +155,7 @@ def run_tz(
     return out
 
 
-def append_prev_info(x_it_, scalar_list):
+def append_info(x_it_, scalar_list):
     for s in scalar_list:
         x_it_ = torch.cat(
             [x_it_, s.type(torch.FloatTensor).view(tensor_length(s))]
@@ -193,10 +199,7 @@ def set_encoding_flag(t, enc_times, cond, agent):
         agent.encoding_off()
 
 
-def slience_recall(
-        t_relative, in_2nd_part, slience_recall_time,
-        agent
-):
+def slience_recall(t_relative, in_2nd_part, slience_recall_time, agent):
     if in_2nd_part:
         if t_relative in slience_recall_time:
             agent.retrieval_off()
@@ -204,7 +207,7 @@ def slience_recall(
             agent.retrieval_on()
 
 
-def cond_manipulation(tz_cond, t, event_bond, hc_t, agent, n_lures=1):
+def cond_manipulation(tz_cond, t, event_bond, hc_t, agent):
     '''condition specific manipulation
     such as flushing, insert lure, etc.
     '''
