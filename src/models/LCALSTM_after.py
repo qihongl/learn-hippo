@@ -21,7 +21,8 @@ class LCALSTM_after(nn.Module):
 
     def __init__(
             self, input_dim, output_dim, rnn_hidden_dim, dec_hidden_dim,
-            kernel='cosine', dict_len=2, weight_init_scheme='ortho', cmpt=.4
+            kernel='cosine', dict_len=2, weight_init_scheme='ortho',
+            cmpt=.8,
     ):
         super(LCALSTM_after, self).__init__()
         self.cmpt = cmpt
@@ -82,7 +83,7 @@ class LCALSTM_after(nn.Module):
         # hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
         # inps_t = sigmoid(self.hpc(hpc_input_t))
         # [inps_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, .5)
+        m_t = self.recall(c_t, .3)
         hpc_input_t = torch.cat([m_t, c_t, dec_act_t], dim=1)
         em_g_t = sigmoid(self.hpc(hpc_input_t))
         cm_t = c_t + m_t * em_g_t

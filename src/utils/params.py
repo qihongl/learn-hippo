@@ -42,7 +42,7 @@ class P():
         lr=7e-4,
         gamma=0,
         eta=.1,
-        cmpt=.4,
+        cmpt=.8,
         sup_epoch=None,
         n_epoch=None,
         n_example=None,
