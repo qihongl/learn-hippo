@@ -81,8 +81,8 @@ class P():
             n_param, n_branch)
         self.dk_id = self.a_dim - 1
         # if the condition label (familiarity) is attached to the input...
-        if attach_cond != 0:
-            self.x_dim += 1
+        # if attach_cond != 0:
+        #     self.x_dim += 1
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,

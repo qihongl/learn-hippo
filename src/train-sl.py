@@ -110,9 +110,13 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
+
+x_dim = task.x_dim
+if attach_cond != 0:
+    x_dim += 1
 # init agent
 agent = Agent(
-    input_dim=p.x_dim, output_dim=p.a_dim,
+    input_dim=x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
