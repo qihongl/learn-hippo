@@ -112,7 +112,7 @@ task = SequenceLearning(
 )
 # init agent
 agent = Agent(
-    input_dim=task.x_dim, output_dim=p.a_dim,
+    input_dim=p.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
