@@ -121,10 +121,10 @@ def run_tz(
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
         if learning:
-            # if supervised:
-            loss = loss_sup
-            # else:
-            #     loss = loss_actor + loss_critic - pi_ent * p.net.eta
+            if supervised:
+                loss = loss_sup
+            else:
+                loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
