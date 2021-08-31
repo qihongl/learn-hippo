@@ -40,6 +40,7 @@ parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=.9, type=float)
 parser.add_argument('--similarity_min', default=0, type=float)
 parser.add_argument('--permute_obs', default=1, type=float)
+parser.add_argument('--noRL', default=0, type=float)
 parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
@@ -74,6 +75,7 @@ p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
 permute_observations = bool(args.permute_obs)
+noRL = bool(args.noRL)
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -165,8 +167,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         optimizer = optimizer_rl
 
     [results, metrics] = run_tz(
-        agent, optimizer, task, p, n_examples,
-        supervised=supervised, fix_cond=None, learning=True, get_cache=False,
+        agent, optimizer, task, p, n_examples, fix_cond=None, learning=True,
+        get_cache=False, supervised=supervised, noRL=noRL,
     )
 
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results

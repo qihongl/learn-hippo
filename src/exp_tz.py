@@ -14,7 +14,7 @@ def run_tz(
         agent, optimizer, task, p, n_examples, supervised,
         fix_cond=None, fix_penalty=None, slience_recall_time=None,
         scramble=False, learning=True, get_cache=True, get_data=False,
-        rm_mid_targ=False,
+        rm_mid_targ=False, noRL=False,
 ):
     # sample data
     X, Y = task.sample(n_examples, to_torch=True)
@@ -121,11 +121,13 @@ def run_tz(
         pi_ent = torch.stack(ents).sum()
         # if learning and not supervised
         if learning:
-            loss = loss_sup
-            # if supervised:
-            #     loss = loss_sup
-            # else:
-            #     loss = loss_actor + loss_critic - pi_ent * p.net.eta
+            if noRL:
+                loss = loss_sup
+            else:
+                if supervised:
+                    loss = loss_sup
+                else:
+                    loss = loss_actor + loss_critic - pi_ent * p.net.eta
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(agent.parameters(), 1)
