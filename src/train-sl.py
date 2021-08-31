@@ -39,6 +39,7 @@ parser.add_argument('--p_rm_ob_enc', default=0.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=.9, type=float)
 parser.add_argument('--similarity_min', default=0, type=float)
+parser.add_argument('--permute_observations', default=1, type=float)
 parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
@@ -72,6 +73,7 @@ p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
+permute_observations = bool(args.permute_observations)
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -109,6 +111,7 @@ task = SequenceLearning(
     def_path=p.env.def_path, def_prob=p.env.def_prob, def_tps=p.env.def_tps,
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
+    permute_observations=permute_observations
 )
 
 x_dim = task.x_dim

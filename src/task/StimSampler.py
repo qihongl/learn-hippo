@@ -88,10 +88,8 @@ class StimSampler():
 
     def sample(
             self,
-            n_parts=2,
-            p_rm_ob_enc=0,
-            p_rm_ob_rcl=0,
-            permute_queries=False,
+            n_parts=2, p_rm_ob_enc=0, p_rm_ob_rcl=0,
+            permute_observations=True, permute_queries=False,
     ):
         """sample a multi-part "movie", with repetition structure
 
@@ -114,16 +112,23 @@ class StimSampler():
         # sample the state-param associtations
         keys_vec_, vals_vec_, ctxs_vec_, misc = self._sample()
         # sample for the observation phase
-        # print(keys_vec_, vals_vec_, n_parts)
-        o_keys_vec, o_vals_vec = self._sample_permutations(
-            keys_vec_, vals_vec_, n_parts)
-        # sample for the query phase
-        if permute_queries:
-            q_keys_vec, q_vals_vec = self._sample_permutations(
-                keys_vec_, vals_vec_, n_parts)
-        else:
-            q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
-            q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
+        o_keys_vec, o_vals_vec = self._sample_permutations_sup(
+            keys_vec_, vals_vec_, n_parts, permute_observations)
+        q_keys_vec, q_vals_vec = self._sample_permutations_sup(
+            keys_vec_, vals_vec_, n_parts, permute_queries)
+        # if permute_observations:
+        #     o_keys_vec, o_vals_vec = self._sample_permutations(
+        #         keys_vec_, vals_vec_, n_parts)
+        # else:
+        #     o_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
+        #     o_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
+        # # sample for the query phase
+        # if permute_queries:
+        #     q_keys_vec, q_vals_vec = self._sample_permutations(
+        #         keys_vec_, vals_vec_, n_parts)
+        # else:
+        #     q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
+        #     q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
         # corrupt input during encoding
         o_keys_vec, o_vals_vec = self._corrupt_observations(
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
@@ -138,9 +143,18 @@ class StimSampler():
         sample_ = [o_sample_, q_sample_]
         return sample_, misc
 
-    def _sample_permutations(
-            self, keys_vec_raw, vals_vec_raw, n_perms
+    def _sample_permutations_sup(
+        self, keys_vec_raw, vals_vec_raw, n_parts, permute
     ):
+        if permute:
+            s_keys_vec, s_vals_vec = self._sample_permutations(
+                keys_vec_raw, vals_vec_raw, n_parts)
+        else:
+            s_keys_vec = np.stack([keys_vec_raw for _ in range(n_parts)])
+            s_vals_vec = np.stack([vals_vec_raw for _ in range(n_parts)])
+        return s_keys_vec, s_vals_vec
+
+    def _sample_permutations(self, keys_vec_raw, vals_vec_raw, n_perms):
         """given some raw key-val pairs, generate temporal permutation sets
         """
         T = self.n_param
@@ -341,7 +355,10 @@ if __name__ == "__main__":
     def_prob = .9
     # pad_len = 'random'
     p_rm_ob_enc, p_rm_ob_rcl = .5, .5
+    p_rm_ob_enc, p_rm_ob_rcl = 0, 0
     key_rep_type = 'time'
+    permute_queries = False
+    permute_observations = False
     # key_rep_type = 'gaussian'
     sampler = StimSampler(
         n_param, n_branch,
@@ -350,8 +367,8 @@ if __name__ == "__main__":
         def_tps=def_tps, def_path=def_path, def_prob=def_prob
     )
     sample_, misc = sampler.sample(
-        n_parts,
-        p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl
+        n_parts, p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
+        # permute_queries=permute_queries, permute_observations=permute_observations
     )
     observations, queries = sample_
     [o_keys_vec, o_vals_vec, o_ctxs_vec] = observations

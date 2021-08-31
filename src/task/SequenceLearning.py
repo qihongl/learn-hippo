@@ -32,6 +32,7 @@ class SequenceLearning():
             similarity_min=None,
             similarity_cap_lag=2,
             permute_queries=False,
+            permute_observations=True,
             key_rep_type='time',
             sampling_mode='enumerative'
     ):
@@ -63,6 +64,7 @@ class SequenceLearning():
         self.n_rm_fixed = n_rm_fixed
         # whether to permute queries
         self.permute_queries = permute_queries
+        self.permute_observations = permute_observations
         # task dimension
         self.k_dim = self.stim_sampler.k_dim
         self.v_dim = self.stim_sampler.v_dim
@@ -99,6 +101,7 @@ class SequenceLearning():
                 p_rm_ob_enc=self.p_rm_ob_enc,
                 p_rm_ob_rcl=self.p_rm_ob_rcl,
                 permute_queries=self.permute_queries,
+                permute_observations=self.permute_observations,
             )
             # compute similarity(event_i vs. event_j) for j in prev-k-events
             _, Y_i_int = misc_i
