@@ -39,7 +39,6 @@ parser.add_argument('--p_rm_ob_enc', default=0.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=.9, type=float)
 parser.add_argument('--similarity_min', default=0, type=float)
-parser.add_argument('--permute_obs', default=1, type=float)
 parser.add_argument('--noRL', default=0, type=float)
 parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
@@ -74,7 +73,6 @@ p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
-permute_observations = bool(args.permute_obs)
 noRL = bool(args.noRL)
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
@@ -113,7 +111,6 @@ task = SequenceLearning(
     def_path=p.env.def_path, def_prob=p.env.def_prob, def_tps=p.env.def_tps,
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
-    permute_observations=permute_observations
 )
 
 x_dim = task.x_dim
@@ -290,7 +287,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
         fix_cond=fix_cond, fix_penalty=fix_penalty,
-        slience_recall_time=slience_recall_time, scramble=scramble
+        slience_recall_time=slience_recall_time, scramble=scramble,
     )
     # save the data
     test_params = [fix_penalty, pad_len_test, slience_recall_time]

@@ -226,17 +226,22 @@ if __name__ == "__main__":
     from task.utils import scramble_array
 
     n_param, n_branch = 6, 3
-    n_parts = 3
-    p_rm_ob_enc = 0.5
-    p_rm_ob_rcl = 0.5
+    n_parts = 2
+    # p_rm_ob_enc = 0.5
+    # p_rm_ob_rcl = 0.5
+    p_rm_ob_enc = 0
+    p_rm_ob_rcl = 0
     similarity_max = .5
     similarity_min = 1 / n_branch
+    permute_queries = False
+    permute_observations = False
     # pad_len = 'random'
     pad_len = 0
     task = SequenceLearning(
         n_param=n_param, n_branch=n_branch, pad_len=pad_len,
         p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl, n_parts=n_parts,
-        similarity_max=similarity_max, similarity_min=similarity_min
+        similarity_max=similarity_max, similarity_min=similarity_min,
+        permute_queries=permute_queries, permute_observations=permute_observations
     )
 
     # gen samples
@@ -273,35 +278,35 @@ if __name__ == "__main__":
     axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
     axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
 
-    '''interleaved story'''
-    X, Y, misc = task.sample(
-        n_samples, interleave=True, to_torch=False, return_misc=True
-    )
-    # get a sample
-    i = 0
-    X_ab, Y_ab = X[i], Y[i]
-    # X_ab, Y_ab = interleave_stories(X, Y, n_parts)
-    # X_ab, Y_ab = X_ab[0], Y_ab[0]
-
-    cmap = 'bone'
-    f, axes = plt.subplots(
-        1, 2, figsize=(6, 12),
-        gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
-    )
-    axes[0].imshow(X_ab, cmap=cmap, vmin=0, vmax=1)
-    axes[1].imshow(Y_ab, cmap=cmap, vmin=0, vmax=1)
-
-    T_total = np.shape(Y_ab)[0]
-    for eb in np.arange(0, T_total, n_param)[1:]:
-        for ax in axes:
-            ax.axhline(eb - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
-    axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
-    axes[0].set_xlabel('o-key | o-val | q-key')
-    axes[1].set_xlabel('q-val')
-
-    yticks = [eb - n_param //
-              2 for eb in np.arange(0, T_total + 1, n_param)[1:]]
-    yticklabels = ['A', 'B'] * n_parts
-    axes[0].set_yticks(yticks)
-    axes[0].set_yticklabels(yticklabels)
+    # '''interleaved story'''
+    # X, Y, misc = task.sample(
+    #     n_samples, interleave=True, to_torch=False, return_misc=True
+    # )
+    # # get a sample
+    # i = 0
+    # X_ab, Y_ab = X[i], Y[i]
+    # # X_ab, Y_ab = interleave_stories(X, Y, n_parts)
+    # # X_ab, Y_ab = X_ab[0], Y_ab[0]
+    #
+    # cmap = 'bone'
+    # f, axes = plt.subplots(
+    #     1, 2, figsize=(6, 12),
+    #     gridspec_kw={'width_ratios': [task.x_dim, task.y_dim]}
+    # )
+    # axes[0].imshow(X_ab, cmap=cmap, vmin=0, vmax=1)
+    # axes[1].imshow(Y_ab, cmap=cmap, vmin=0, vmax=1)
+    #
+    # T_total = np.shape(Y_ab)[0]
+    # for eb in np.arange(0, T_total, n_param)[1:]:
+    #     for ax in axes:
+    #         ax.axhline(eb - .5, color='red', linestyle='--')
+    # axes[0].axvline(task.k_dim - .5, color='red', linestyle='--')
+    # axes[0].axvline(task.k_dim + task.v_dim - .5, color='red', linestyle='--')
+    # axes[0].set_xlabel('o-key | o-val | q-key')
+    # axes[1].set_xlabel('q-val')
+    #
+    # yticks = [eb - n_param //
+    #           2 for eb in np.arange(0, T_total + 1, n_param)[1:]]
+    # yticklabels = ['A', 'B'] * n_parts
+    # axes[0].set_yticks(yticks)
+    # axes[0].set_yticklabels(yticklabels)
