@@ -87,7 +87,6 @@ for pi, penalty_test in enumerate(penaltys_test):
         n_subjs_ = len(remove_none(data['acc_dict']['DM']['mu']))
 
         auc_mu[i], auc_se[i] = compute_stats(remove_none(auc_list))
-        np.shape(remove_none(ma_list))
 
         for cond in all_conds:
             acc_p2 = np.array(remove_none(acc_dict[cond]['mu']))[:, n_param:]
@@ -109,24 +108,28 @@ for pi, penalty_test in enumerate(penaltys_test):
         mad_mu[i], mad_se[i] = compute_stats(
             np.mean(mat_, axis=1) - np.mean(mal_, axis=1))
 
-    # rwd_gm = rwd_mu['RM'] + rwd_mu['DM'] + rwd_mu['NM']
-    # # f, ax = plt.subplots(1, 1, figsize=(5, 4))
-    # ax.plot(rwd_gm)
+    rwd_gmu = rwd_mu['RM'] + rwd_mu['DM'] + rwd_mu['NM']
+    rwd_ger = (rwd_se['RM'] + rwd_se['DM'] + rwd_se['NM']) / 3
+    # f, ax = plt.subplots(1, 1, figsize=(5, 4))
+    # ax.errorbar(x=range(len(comp_vals)), y=rwd_gmu,
+    #             yerr=rwd_ger, color=blues[pi])
     # ax.set_xlabel('cmpt')
-    # ax.set_ylabel('R')
+    # ax.set_ylabel('Reward / time step')
     # ax.set_xticks(range(len(comp_vals)))
     # ax.set_xticklabels(comp_vals)
     # sns.despine()
+    # ax.legend(penaltys_test, title='penalty test',
+    #           bbox_to_anchor=(1.05, 1.0), loc='upper left')
 
-    # # f, ax = plt.subplots(1, 1, figsize=(5, 4))
-    # ax.errorbar(range(len(comp_vals)), mat_mu, mat_se)
-    # # ax.errorbar(range(len(comp_vals)), mal_mu, mal_se)
-    # ax.set_xlabel('cmpt')
-    # ax.set_ylabel('ma')
-    # ax.set_xticks(range(len(comp_vals)))
-    # ax.set_xticklabels(comp_vals)
-    # sns.despine()
-
+# # f, ax = plt.subplots(1, 1, figsize=(5, 4))
+# ax.errorbar(range(len(comp_vals)), mat_mu, mat_se)
+# # ax.errorbar(range(len(comp_vals)), mal_mu, mal_se)
+# ax.set_xlabel('cmpt')
+# ax.set_ylabel('ma')
+# ax.set_xticks(range(len(comp_vals)))
+# ax.set_xticklabels(comp_vals)
+# sns.despine()
+#
     ax.errorbar(range(len(comp_vals)), mad_mu, mad_se, color=blues[pi])
     ax.legend(penaltys_test, title='penalty test',
               bbox_to_anchor=(1.05, 1.0), loc='upper left')

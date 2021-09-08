@@ -36,58 +36,46 @@ log_root = '../log/'
 all_conds = TZ_COND_DICT.values()
 # for cmpt in [.2, .4, .6, .8, 1.0]:
 
-# exp_name = 'vary-schema-level-prandom'
-# exp_name = 'vary-schema-level-prandom-ndk'
-
-def_prob = .25
-n_def_tps = 0
+# exp_name = 'vary-schema-level'
 # def_prob_range = np.arange(.25, 1, .1)
-# n_def_tps = 8
 # for def_prob in def_prob_range:
 
 # the name of the experiemnt
-# exp_name = 'vary-test-penalty'
-# exp_name = 'vary-test-penalty-after-ig.3-enc8d4'
 # exp_name = 'vary-test-penalty-after-ig.3'
-# exp_name = 'vary-schema-level'
+exp_name = 'vary-test-penalty-after-ig.3-enc8d4'
+# exp_name = 'vary-schema-level-after-ig.3'
+# exp_name = 'tune-cmpt'
 # exp_name = 'familiarity-signal'
-# exp_name = 'vary-test-penalty-noRL-highp'
-# exp_name = 'vary-test-penalty'
-# exp_name = 'vary-test-penalty-fixobs-rl'
-# exp_name = 'vary-training-penalty-norl'
-# exp_name = 'vary-training-penalty'
-exp_name = 'vary-test-penalty'
-# exp_name = 'low-similarity'
-subj_ids = np.arange(15)
+subj_ids = np.arange(14)
 penalty_random = 1
-
+def_prob = .25
+n_def_tps = 0
+# n_def_tps = 8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
+attach_cond = 0
 supervised_epoch = 600
 epoch_load = 1000
 n_branch = 4
 n_param = 16
+enc_size = 8
 
 cmpt = .8
+inpt_val = .3
 leak_val = 0
 # test param
 penaltys_train = [4]
-# penaltys_train = [0, 4]
-penaltys_test = np.array([0, 2, 4])
+# penaltys_train = [0, 2, 4]
+# penaltys_test = np.array([0, 2, 4])
 penaltys_test = np.array([2])
-# penaltys_test = np.array([0, 4])
-
-enc_size = 16
-enc_size_test = 16
-dict_len = 2
-n_targ = 1
-# enc_size = 8
-# enc_size_test = 8
-# dict_len = 4
-# n_targ = 2
-
+# enc_size_test = 16
+# dict_len = 2
+# n_targ = 1
+enc_size_test = 8
+dict_len = 4
+n_targ = 2
 n_lure = dict_len - n_targ
 
 pad_len_test = 0
@@ -137,7 +125,6 @@ for penalty_train in penaltys_train:
         ma_cos_list = [None] * n_subjs
         tma_dm_p2_dict_bq = {qs: [None] * n_subjs for qs in DM_qsources}
         ig_dm_p2_dict_bq = {qs: [None] * n_subjs for qs in DM_qsources}
-        ttn_dm_p2_dict_bq = {qs: [None] * n_subjs for qs in DM_qsources}
         q_source_list = [None] * n_subjs
         ms_lure_list = [None] * n_subjs
         ms_targ_list = [None] * n_subjs
@@ -232,15 +219,15 @@ for penalty_train in penaltys_train:
 
             # process the data
             cond_ids = get_trial_cond_ids(log_cond)
-            [C, H, M, CM, DA, V], [inpt] = process_cache(
+            [C, H, M, CM, DA, V], [emgate] = process_cache(
                 log_cache, T_total, p)
             # compute ground truth / objective uncertainty, delay phase removed
             true_dk_wm, true_dk_em = batch_compute_true_dk(X_raw, task)
             q_source = get_qsource(true_dk_em, true_dk_wm, cond_ids, p)
 
             # load lca params
-            comp = np.full(np.shape(inpt), cmpt)
-            leak = np.full(np.shape(inpt), leak_val)
+            comp = np.full(np.shape(emgate), cmpt)
+            leak = np.full(np.shape(emgate), leak_val)
 
             # compute performance
             actions = np.argmax(dist_a, axis=-1)
@@ -257,7 +244,7 @@ for penalty_train in penaltys_train:
             mistakes_p1 = mistakes[:, :T_part]
             mistakes_p2 = mistakes[:, T_part:]
             dks_p1, dks_p2 = dks[:, :T_part], dks[:, T_part:]
-            inpt_p2 = inpt[:, T_part:]
+            inpt_p2 = emgate[:, T_part:]
             targets_p1 = targets[:, :T_part]
             targets_p2 = targets[:, T_part:]
             actions_p1 = actions[:, :T_part]
@@ -382,11 +369,6 @@ for penalty_train in penaltys_train:
             # f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
             '''state similarity'''
-            cbpal = sns.color_palette(n_colors=2)
-            f, ax = plt.subplots(1, 1, figsize=(4, 4))
-            ax.plot(0)
-            ax.plot(1)
-            ax.legend(['boundary', 'midway'])
 
             cmcov_ii = np.array([cosine_similarity(CM_p1[ii], CM_p2[ii])
                                  for ii in range(n_trials)])
@@ -397,9 +379,9 @@ for penalty_train in penaltys_train:
             cbpal = sns.color_palette(n_colors=2)
             f, axes = plt.subplots(1, 2, figsize=(10, 4))
             axes[0].errorbar(x=range(n_param), y=cmcov_mu[2][-1, :],
-                             yerr=cmcov_se[2][-1, :], label='boundary', color=cbpal[0])
+                             yerr=cmcov_se[2][-1, :], label='bound', color=cbpal[0])
             axes[0].errorbar(x=range(n_param), y=cmcov_mu[2][n_param // 2 - 1, :],
-                             yerr=cmcov_se[2][n_param // 2 - 1, :], label='midway', color=cbpal[1])
+                             yerr=cmcov_se[2][n_param // 2 - 1, :], label='mid', color=cbpal[1])
             axes[0].set_xlabel('Time (part 2)')
             axes[0].set_xticks([0, 5, 10, n_param - 1])
             axes[0].set_ylabel('Cosine similarity')
@@ -415,6 +397,7 @@ for penalty_train in penaltys_train:
             #     (0, n_param - 1), n_param, 1,
             #     edgecolor=cbpal[0], facecolor='none', linewidth=3
             # ))
+            # axes[1].add_patch(patches.Rectangle(
             #     (0, n_param // 2 - 1), n_param, 1,
             #     edgecolor=cbpal[1], facecolor='none', linewidth=3, zorder=10
             # ))
@@ -429,9 +412,9 @@ for penalty_train in penaltys_train:
             # f, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
             # for ci, (cond_id, ax) in enumerate(zip(cond_ids.keys(), axes)):
             #     ax.errorbar(x=range(n_param), y=cmcov_mu[ci][-1, :],
-            #                 yerr=cmcov_se[ci][-1, :], label='boundary')
+            #                 yerr=cmcov_se[ci][-1, :], label='bound')
             #     ax.errorbar(x=range(n_param), y=cmcov_mu[ci][n_param // 2 - 1, :],
-            #                 yerr=cmcov_se[ci][n_param // 2 - 1, :], label='midway')
+            #                 yerr=cmcov_se[ci][n_param // 2 - 1, :], label='mid')
             #     ax.set_title(f'{cond_id}')
             #     ax.set_xlabel('Time (part 2)')
             # axes[0].set_ylabel('Cosine similarity')
@@ -486,10 +469,9 @@ for penalty_train in penaltys_train:
 
             '''compare norm
             '''
-
             data_ = DA_p2
             data_name = 'DA_p2'
-            tt_norms = np.linalg.norm(data_, axis=2)  # trial by time norms
+
             dk_norms = np.linalg.norm(data_[dks_p2], axis=1)
             ndk_norms = np.linalg.norm(data_[~dks_p2], axis=1)
             dk_norm_mu, dk_norm_se = compute_stats(dk_norms)
@@ -511,15 +493,19 @@ for penalty_train in penaltys_train:
             '''compute cell-memory similarity / memory activation '''
             lca_param_names = ['EM gate', 'competition']
             lca_param_dicts = [inpt_dict, comp_dict]
-            lca_param_records = [inpt, comp]
+            lca_param_records = [emgate, comp]
             for i, cn in enumerate(all_conds):
                 for p_dict, p_record in zip(lca_param_dicts, lca_param_records):
                     p_dict[cn]['mu'][i_s], p_dict[cn]['er'][i_s] = compute_stats(
                         p_record[cond_ids[cn]])
 
             # compute similarity between cell state vs. memories
+            constant_front_gate = np.full(np.shape(emgate), inpt_val)
             sim_cos, sim_lca = compute_cell_memory_similarity(
-                C, V, inpt, leak, comp)
+                C, V, constant_front_gate, leak, comp)
+
+            sim_lca = sim_lca * \
+                np.stack([emgate for i in range(dict_len)], axis=2)
 
             # labels = ['lure - mid', 'lure - end', 'targ - mid', 'targ - end']
             # labels = ['lure - end', 'targ - mid', 'targ - end']
@@ -557,6 +543,17 @@ for penalty_train in penaltys_train:
                     if sim_lca_dict[cond][m_type] is not None:
                         avg_ma[cond][m_type] = np.mean(
                             sim_lca_dict[cond][m_type], axis=-1)
+
+            # '''iter-memory similarity
+            # '''
+            # V_np = np.zeros((n_trials, 2, len(V[0][0])))
+            # for i, V_i in enumerate(V):
+            #     for j, V_ij in enumerate(V_i):
+            #         V_np[i, j] = to_np(V_ij)
+            # memory_sim_g[i_s] = np.mean([
+            #     spatial.distance.cosine(V_np[i, 0], V_np[i, 1])
+            #     for i in range(n_trials)
+            # ])
 
             '''plot target/lure activation for all conditions - horizontal'''
             ylim_bonds = {'LCA': None, 'cosine': None}
@@ -603,7 +600,6 @@ for penalty_train in penaltys_train:
             '''use CURRENT uncertainty to predict memory activation'''
             n_se = 1
             cond_name = 'DM'
-            np.shape(avg_ma[cond_name]['targ'][:, T_part + pad_len_test:])
             targ_act_cond_p2_stats = sep_by_qsource(
                 avg_ma[cond_name]['targ'][:, T_part + pad_len_test:],
                 q_source[cond_name],
@@ -615,14 +611,10 @@ for penalty_train in penaltys_train:
                 q_source[cond_name],
                 n_se=n_se
             )
-            tt_norms_cond_p2_stats = sep_by_qsource(
-                tt_norms[cond_ids[cond_name]], q_source[cond_name], n_se=n_se
-            )
 
             for qs in DM_qsources:
                 tma_dm_p2_dict_bq[qs][i_s] = targ_act_cond_p2_stats[qs][0]
                 ig_dm_p2_dict_bq[qs][i_s] = ig_cond_p2_stats[qs][0]
-                ttn_dm_p2_dict_bq[qs][i_s] = tt_norms_cond_p2_stats[qs][0]
 
             f, ax = plt.subplots(1, 1, figsize=(6, 4))
             for key, [mu_, er_] in targ_act_cond_p2_stats.items():
@@ -702,6 +694,41 @@ for penalty_train in penaltys_train:
             fig_path = os.path.join(fig_dir, f'ms-dist-t-peak.png')
             f.savefig(fig_path, dpi=100, bbox_to_anchor='tight')
 
+            # '''time cells?'''
+            # np.shape(CM_p1)
+            # np.shape(CM_p2)
+            # np.shape()
+            #
+            # avg_tv_mat = np.mean(CM_p1, axis=0)
+            # f, ax = plt.subplots(1, 1, figsize=(7, 4))
+            # # sns.heatmap(np.abs(avg_tv_mat).T, cmap='RdBu', ax=ax, center=0)
+            # sns.heatmap(avg_tv_mat.T, cmap='RdBu', ax=ax, center=0)
+            # ax.set_title('Activation')
+            # ax.set_xlabel('Time')
+            # ax.set_ylabel('Units')
+            #
+            # from sklearn.cluster import KMeans
+            # kmks = [2**k for k in np.arange(1, 5)]
+            # for kmk in kmks:
+            #     kmeans = KMeans(n_clusters=kmk).fit(avg_tv_mat.T)
+            #     f, ax = plt.subplots(1, 1, figsize=(7, 4))
+            #     for kmk_i in range(kmk):
+            #         mu_, se_ = compute_stats(
+            #             avg_tv_mat[:, kmeans.labels_ == kmk_i], axis=1)
+            #         ax.errorbar(range(n_param), mu_, se_, linewidth=np.sum(
+            #             kmeans.labels_ == kmk_i) / 5)
+            #         ax.set_xlabel('Time')
+            #         ax.set_title(
+            #             f'activation for each unit cluster (k means with k = {kmk})\nlinewitdh prop to # units in the cluster')
+            #         ax.set_ylabel('abs(activation)')
+            #         sns.despine()
+            #
+            # plt.imshow(np.mean(CM_p1[:, :, :], axis=0))
+            # plt.imshow(CM_p1[:, :, i], aspect='auto')
+            # plt.imshow(CM_p2[:, :, i], aspect='auto')
+            #
+            # np.shape(CM_p2)
+
             # '''pca the deicison activity'''
             # n_pcs = 8
             # data = DA
@@ -769,6 +796,10 @@ for penalty_train in penaltys_train:
             'def_path_int_g': def_path_int_g,
             'def_tps_g': def_tps_g
         }
+        # fname = 'p%d-%d.pkl' % (penalty_train, penalty_test)
+        # dir_all_subjs = os.path.dirname(log_path)
+        # pickle_save_dict(gdata_dict, os.path.join(dir_all_subjs, fname))
+
         fname = 'p%d-%d' % (penalty_train, penalty_test)
         dir_all_subjs = os.path.dirname(log_path)
         if enc_size_test != enc_size:
@@ -800,10 +831,6 @@ for penalty_train in penaltys_train:
             axes[i].set_ylim([0, 1.05])
             axes[i].set_xlabel('Time (part 2)')
             axes[0].set_ylabel('Probability')
-            # print out mean % dk and mistake over time
-            prop_dks = np.mean(dk_gmu_[T_part:])
-            prop_mis = np.mean(1 - dk_gmu_[T_part:] - acc_gmu_[T_part:])
-            print('%%dk = %.4f, %%mistake = %.4f' % (prop_dks, prop_mis))
         fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-acc.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
@@ -838,10 +865,7 @@ for penalty_train in penaltys_train:
                 x=np.arange(T_part) - pad_len_test, y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
             )
         ax.legend()
-        # familiarity-signal
-        ax.set_ylim([-.05, .9])
-        # normal
-        # ax.set_ylim([-.05, .7])
+        ax.set_ylim([-.05, .7])
         ax.set_ylabel(lca_param_names[0])
         ax.set_xlabel('Time (part 2)')
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
@@ -854,40 +878,40 @@ for penalty_train in penaltys_train:
         fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        # n_se = 1
-        # f, ax = plt.subplots(1, 1, figsize=(
-        #     5 * (pad_len_test / n_param + 1), 4))
-        # for i, cn in enumerate(['RM', 'DM']):
-        #     p_dict = lca_param_dicts[0]
-        #     p_dict_ = remove_none(p_dict[cn]['mu'])
-        #     mu_, er_ = compute_stats(p_dict_, n_se=n_se, axis=0)
-        #     ax.errorbar(
-        #         x=np.arange(T_part) - pad_len_test, y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
-        #     )
-        # ax.legend()
-        # ax.set_ylim([-.05, .6])
-        # ax.set_ylabel(lca_param_names[0])
-        # ax.set_xlabel('Time (part 2)')
-        # ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
-        # ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-        # ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-        # if pad_len_test > 0:
-        #     ax.axvline(0, color='grey', linestyle='--')
-        # sns.despine()
-        # f.tight_layout()
-        # fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig-nonm.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+        n_se = 1
+        f, ax = plt.subplots(1, 1, figsize=(
+            5 * (pad_len_test / n_param + 1), 4))
+        for i, cn in enumerate(['RM', 'DM']):
+            p_dict = lca_param_dicts[0]
+            p_dict_ = remove_none(p_dict[cn]['mu'])
+            mu_, er_ = compute_stats(p_dict_, n_se=n_se, axis=0)
+            ax.errorbar(
+                x=np.arange(T_part) - pad_len_test, y=mu_[T_part:], yerr=er_[T_part:], label=f'{cn}'
+            )
+        ax.legend()
+        ax.set_ylim([-.05, .9])
+        ax.set_ylabel(lca_param_names[0])
+        ax.set_xlabel('Time (part 2)')
+        ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        if pad_len_test > 0:
+            ax.axvline(0, color='grey', linestyle='--')
+        sns.despine()
+        f.tight_layout()
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ig-nonm.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''activation per memory - bar'''
-        
+
         def compute_act_per_mem(sim_lca_dict_):
             ma_by_mem_rm_ = np.mean(np.hstack(
                 [np.mean(sim_lca_dict_['RM']['targ'][:, n_param:, :], axis=0),
-                  np.mean(sim_lca_dict_['RM']['lure'][:, n_param:, :], axis=0)]
+                 np.mean(sim_lca_dict_['RM']['lure'][:, n_param:, :], axis=0)]
             ), axis=0)
             ma_by_mem_dm_ = np.mean(np.hstack(
                 [np.mean(sim_lca_dict_['DM']['targ'][:, n_param:, :], axis=0),
-                  np.mean(sim_lca_dict_['DM']['lure'][:, n_param:, :], axis=0)]
+                 np.mean(sim_lca_dict_['DM']['lure'][:, n_param:, :], axis=0)]
             ), axis=0)
             ma_by_mem_nm_ = np.mean(
                 np.mean(sim_lca_dict['NM']['lure']
@@ -895,10 +919,50 @@ for penalty_train in penaltys_train:
                 axis=0
             )
             return np.vstack([ma_by_mem_rm_, ma_by_mem_dm_, ma_by_mem_nm_])
+
+        # mbm = np.array(
+        #     [compute_act_per_mem(ma_raw_list[i_s])
+        #      for i_s in range(n_subjs)]
+        # )
+        # mbm_mu, mbm_er = compute_stats(mbm, axis=0)
+
+        # for i, cond in enumerate(all_conds):
+        #     # f, ax = plt.subplots(1, 1, figsize=(3.5, 4.5), sharey=True)
+        #     f, ax = plt.subplots(1, 1, figsize=(6, 4.5), sharey=True)
+        #     if cond == 'NM':
+        #         ax.bar(
+        #             x=range(dict_len), height=mbm_mu[i], yerr=mbm_er[i],
+        #             color=gr_pal[1]
+        #         )
+        #     else:
+        #         ax.bar(
+        #             x=range(0, n_targ), height=mbm_mu[i, :n_targ],
+        #             yerr=mbm_er[i, :n_targ], color=gr_pal[0], width=.8)
+        #         ax.bar(
+        #             x=range(n_targ, dict_len), height=mbm_mu[i, -n_lure:],
+        #             yerr=mbm_er[i, -n_lure:], color=gr_pal[1], width=.8
+        #         )
+        #     ax.set_ylabel('Sum memory activation')
+        #     ax.set_xticks(range(dict_len))
+        #     if dict_len == 2:
+        #         ax.set_xticklabels(['boundary', 'boundary'], rotation=20)
+        #     elif dict_len == 4:
+        #         ax.set_xticklabels(
+        #             ['midway', 'boundary', 'midway', 'boundary'], rotation=20)
+        #     else:
+        #         raise ValueError('dict_len not 2 or 4')
+        #     # ax.set_xticklabels(['bound', 'bound'])
+        #     # ax.set_xticklabels(['mid', 'bound', 'mid', 'bound'])
+        #     # ax.set_title(cond)
+        #     ax.set_ylim([0, None])
+        #     sns.despine()
+        #     f.tight_layout()
+        #     fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-allbar-{cond}.png'
+        #     f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
         
         mbm = np.array(
-            [compute_act_per_mem(ma_raw_list[i_s])
-              for i_s in range(n_subjs)]
+            [compute_act_per_mem(ma_raw_list[i_s]) for i_s in range(n_subjs)]
         )
         mbm_mu, mbm_er = compute_stats(mbm, axis=0)
         
@@ -934,8 +998,8 @@ for penalty_train in penaltys_train:
                 raise ValueError('dict_len not 2 or 4')
             # ax.set_ylim([0, None])
             # ax.set_ylim([0, .09])
-            ax.set_ylim([0, .1])            
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            ax.set_ylim([0, .008])            
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
             sns.despine()
             f.tight_layout()
             fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-allbar-{cond}.png'
@@ -944,30 +1008,30 @@ for penalty_train in penaltys_train:
         # sum_ma_lure_dm = np.sum(
         #     ma_raw_list[i_s]['DM']['targ'][:, n_param:, :], axis=1)
         # sum_ma_lure_dm_mu, sum_ma_lure_dm_se = compute_stats(sum_ma_lure_dm)
-
+        #
         # f, ax = plt.subplots(1, 1, figsize=(4, 4))
         # ax.bar(x=range(n_targ), height=sum_ma_lure_dm_mu,
-        #         yerr=sum_ma_lure_dm_se, color=gr_pal[0])
+        #        yerr=sum_ma_lure_dm_se, color=gr_pal[0])
         # ax.set_xticks(range(p.n_segments))
         # ax.set_ylabel('Sum memory activation')
         # ax.set_xticks([0, 1])
-        # ax.set_xticklabels(['midway', 'boundary'])
+        # ax.set_xticklabels(['mid', 'boundary'])
         # ax.set_ylim([0, .8])
         # f.tight_layout()
         # sns.despine()
-
+        #
         # sum_ma_lure_dm = np.sum(
         #     ma_raw_list[i_s]['DM']['lure'][:, n_param:, :], axis=1)
         # sum_ma_lure_dm_mu, sum_ma_lure_dm_se = compute_stats(sum_ma_lure_dm)
-
+        #
         # f, ax = plt.subplots(1, 1, figsize=(4, 4))
         # ax.bar(x=range(n_lure), height=sum_ma_lure_dm_mu,
-        #         yerr=sum_ma_lure_dm_se, color=gr_pal[1])
+        #        yerr=sum_ma_lure_dm_se, color=gr_pal[1])
         # ax.set_xticks(range(p.n_segments))
         # ax.set_ylabel('Sum memory activation')
         # # ax.set_title('DM')
         # ax.set_xticks([0, 1])
-        # ax.set_xticklabels(['midway', 'boundary'])
+        # ax.set_xticklabels(['mid', 'boundary'])
         # ax.set_ylim([0, .8])
         # f.tight_layout()
         # sns.despine()
@@ -993,8 +1057,7 @@ for penalty_train in penaltys_train:
                             y_list.append(
                                 ma_list_i_s[c_name][m_type]['mu'][T_part:]
                             )
-                    mu_, er_ = compute_stats(
-                        y_list, n_se=1, axis=0, omitnan=True)
+                    mu_, er_ = compute_stats(y_list, n_se=1, axis=0)
                     axes[i].errorbar(
                         x=range(T_part), y=mu_, yerr=er_,
                         label=f'{m_type}', color=color_
@@ -1013,15 +1076,11 @@ for penalty_train in penaltys_train:
                 ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 if metric_name == 'lca':
-                    # normal
-                    ax.set_yticks([0, .2, .4])
-                    ax.set_ylim([-.01, .5])
-                    # familiarity signal sim
-                    # ax.set_yticks([0, .3, .6])
-                    # ax.set_ylim([-.01, .7])
+                    ax.set_yticks([0, .1])
+                    ax.set_ylim([-.005, .1])
                 else:
-                    ax.set_yticks([0, .5, 1])
-                    ax.set_ylim([-.05, 1.05])
+                    ax.set_yticks([-.3, 0, .3])
+                    ax.set_ylim([-.4, .6])
 
             if pad_len_test > 0:
                 for ax in axes:
@@ -1032,41 +1091,41 @@ for penalty_train in penaltys_train:
             fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-{metric_name}-rs.png'
             f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        '''group level memory activation DM - bar plot'''
-        
-        # ma_dm_targ_sum = np.array(
-        #     [np.sum(ma_list[s_i]['DM']['targ']['mu'][n_param:])
-        #       for s_i in range(n_subjs)]
-        # )
-        # ma_dm_lure_sum = np.array(
-        #     [np.sum(ma_list[s_i]['DM']['lure']['mu'][n_param:])
-        #       for s_i in range(n_subjs)]
-        # )
-        # # x=1
-        # ma_dm_targ_sum_mu, ma_dm_targ_sum_se = compute_stats(
-        #     ma_dm_targ_sum)
-        # ma_dm_lure_sum_mu, ma_dm_lure_sum_se = compute_stats(
-        #     ma_dm_lure_sum)
-        # f, ax = plt.subplots(1, 1, figsize=(4, 4))
-        # ax.bar(x=0, height=ma_dm_targ_sum_mu,
-        #         yerr=ma_dm_targ_sum_se, color=gr_pal[0], label='targ')
-        # ax.bar(x=1, height=ma_dm_lure_sum_mu,
-        #         yerr=ma_dm_lure_sum_se, color=gr_pal[1], label='lure')
-        # ax.set_ylabel('Sum memory activation')
-        # ax.set_xticks([0, 1])
-        # ax.set_xticklabels(['boundary', 'boundary'])
-        # ax.set_ylim([0, .8])
-        # f.tight_layout()
-        # sns.despine()
-        # fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-bar.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-        
-        # f, ax = plt.subplots(1, 1, figsize=(4, 4))
-        # ax.bar(x=0, height=0, color=gr_pal[0], label='targ')
-        # ax.bar(x=1, height=0, color=gr_pal[1], label='lure')
-        # ax.legend()
-        # fname = f'../figs/{exp_name}/ma-legend.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+        '''group level memory activation by condition - bar plot'''
+
+        ma_dm_targ_sum = np.array(
+            [np.sum(ma_list[s_i]['DM']['targ']['mu'][n_param:])
+             for s_i in range(n_subjs)]
+        )
+        ma_dm_lure_sum = np.array(
+            [np.sum(ma_list[s_i]['DM']['lure']['mu'][n_param:])
+             for s_i in range(n_subjs)]
+        )
+        # x=1
+        ma_dm_targ_sum_mu, ma_dm_targ_sum_se = compute_stats(
+            ma_dm_targ_sum)
+        ma_dm_lure_sum_mu, ma_dm_lure_sum_se = compute_stats(
+            ma_dm_lure_sum)
+        f, ax = plt.subplots(1, 1, figsize=(4, 4))
+        ax.bar(x=0, height=ma_dm_targ_sum_mu,
+               yerr=ma_dm_targ_sum_se, color=gr_pal[0], label='targ')
+        ax.bar(x=1, height=ma_dm_lure_sum_mu,
+               yerr=ma_dm_lure_sum_se, color=gr_pal[1], label='lure')
+        ax.set_ylabel('Mean memory activation')
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(['bound', 'bound'])
+        ax.set_ylim([0, .8])
+        f.tight_layout()
+        sns.despine()
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-bar.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
+
+        f, ax = plt.subplots(1, 1, figsize=(4, 4))
+        ax.bar(x=0, height=0, color=gr_pal[0], label='targ')
+        ax.bar(x=1, height=0, color=gr_pal[1], label='lure')
+        ax.legend()
+        fname = f'../figs/{exp_name}/ma-legend.png'
+        f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''target memory activation by q source'''
         # make a no legend version
@@ -1074,8 +1133,7 @@ for penalty_train in penaltys_train:
         for qs in DM_qsources:
             # remove none
             tma_dm_p2_dict_bq_ = remove_none(tma_dm_p2_dict_bq[qs])
-            mu_, er_ = compute_stats(
-                tma_dm_p2_dict_bq_, n_se=n_se, axis=0, omitnan=True)
+            mu_, er_ = compute_stats(tma_dm_p2_dict_bq_, n_se=n_se, axis=0)
             ax.errorbar(
                 x=range(T_part), y=mu_, yerr=er_, label=qs
             )
@@ -1085,21 +1143,20 @@ for penalty_train in penaltys_train:
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-        # ax.set_yticks([0, .2, .4])
-        # ax.set_ylim([-.01, .45])
+        ax.set_yticks([0, .2, .4])
+        ax.set_ylim([-.01, .45])
         f.tight_layout()
         sns.despine()
         fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-rs-dm-byq-noleg.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        '''input gate by q source'''
+        '''target memory activation by q source'''
         n_se = 1
         f, ax = plt.subplots(1, 1, figsize=(5, 4))
         for qs in DM_qsources:
             # remove none
             ig_dm_p2_dict_bq_ = remove_none(ig_dm_p2_dict_bq[qs])
-            mu_, er_ = compute_stats(
-                ig_dm_p2_dict_bq_, n_se=n_se, axis=0, omitnan=True)
+            mu_, er_ = compute_stats(ig_dm_p2_dict_bq_, n_se=n_se, axis=0)
             ax.errorbar(
                 x=range(T_part), y=mu_, yerr=er_, label=qs
             )
@@ -1109,7 +1166,7 @@ for penalty_train in penaltys_train:
         ax.set_xticks(np.arange(0, p.env.n_param, p.env.n_param - 1))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-        # ax.set_yticks([0, .3, .6])
+        ax.set_yticks([0, .3, .6])
         ax.set_ylim([-.01, .7])
         f.tight_layout()
         sns.despine()
@@ -1124,50 +1181,26 @@ for penalty_train in penaltys_train:
         fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-observed-not-legend.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        '''input gate by q source'''
-        n_se = 1
+        pca_time_cumvar_mu, pca_time_cumvar_se = compute_stats(
+            np.array(pca_time_cumvar)[:, :50])
 
-        ttn_bar_mu, ttn_bar_se = np.zeros(2, ), np.zeros(2, )
-        for qi, qs in enumerate(DM_qsources):
-            # remove none
-            ttn_dm_p2_dict_bq_ = remove_none(ttn_dm_p2_dict_bq[qs])
-            mu_, _ = compute_stats(
-                ttn_dm_p2_dict_bq_, n_se=n_se, axis=1, omitnan=True)
-            # print(ttn_dm_p2_dict_bq_)
-            # print(mu_)
-            ttn_bar_mu[qi], ttn_bar_se[qi] = compute_stats(mu_, n_se=n_se)
-
-        f, ax = plt.subplots(1, 1, figsize=(5, 4))
-        ax.bar(x=range(2), height=ttn_bar_mu, yerr=ttn_bar_se)
-        ax.set_ylim([0, 5])
-        ax.set_ylabel('Activity norm')
-        ax.set_xticks(range(2))
-        ax.set_xticklabels(['not ...', 'recently observed'], rotation=10)
+        f, ax = plt.subplots(1, 1, figsize=(6, 4))
+        ax.plot(
+            # x=range(len(pca_time_cumvar_mu)),
+            # y=pca_time_cumvar_mu, yerr=pca_time_cumvar_se,
+            pca_time_cumvar_mu
+        )
+        plt.fill_between(range(len(pca_time_cumvar_mu)),
+                         pca_time_cumvar_mu - pca_time_cumvar_se * 3,
+                         pca_time_cumvar_mu + pca_time_cumvar_se * 3,
+                         color='grey', alpha=0.2)
+        ax.set_ylabel('Cum. var. explained')
+        ax.set_xlabel('PC id')
+        ax.set_ylim([0, 1.05])
         f.tight_layout()
         sns.despine()
-        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ttn-dm-byq.png'
+        fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-timepca-var.png'
         f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-        # pca_time_cumvar_mu, pca_time_cumvar_se = compute_stats(
-        #     np.array(pca_time_cumvar)[:, :50])
-        #
-        # f, ax = plt.subplots(1, 1, figsize=(6, 4))
-        # ax.plot(
-        #     # x=range(len(pca_time_cumvar_mu)),
-        #     # y=pca_time_cumvar_mu, yerr=pca_time_cumvar_se,
-        #     pca_time_cumvar_mu
-        # )
-        # plt.fill_between(range(len(pca_time_cumvar_mu)),
-        #                  pca_time_cumvar_mu - pca_time_cumvar_se * 3,
-        #                  pca_time_cumvar_mu + pca_time_cumvar_se * 3,
-        #                  color='grey', alpha=0.2)
-        # ax.set_ylabel('Cum. var. explained')
-        # ax.set_xlabel('PC id')
-        # ax.set_ylim([0, 1.05])
-        # f.tight_layout()
-        # sns.despine()
-        # fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-timepca-var.png'
-        # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         # '''auc'''
         # ms_lure_list = remove_none(ms_lure_list)

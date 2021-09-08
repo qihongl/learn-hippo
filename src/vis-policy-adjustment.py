@@ -19,6 +19,8 @@ all_conds = list(TZ_COND_DICT.values())
 
 # the name of the experiemnt
 exp_name = 'vary-test-penalty'
+# exp_name = 'vary-test-penalty-after-ig.3'
+# exp_name = 'vary-test-penalty-ndk'
 penalty_train = 4
 penaltys_test = [0,  4]
 
@@ -28,7 +30,7 @@ subj_ids = np.arange(n_subjs)
 penalty_random = 1
 def_prob = .25
 n_def_tps = 0
-comp_val = .4
+comp_val = .8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3
@@ -93,8 +95,7 @@ for ptest in penaltys_test:
     for lca_pid, lca_pname in lca_pnames.items():
         for cond in all_conds:
             _, missing_ids_ = remove_none(
-                lca_param[ptest][lca_pid][cond]['mu'],
-                return_missing_idx=True
+                lca_param[ptest][lca_pid][cond]['mu'], return_missing_idx=True
             )
             missing_subjects.extend(missing_ids_)
 missing_subjects = np.unique(missing_subjects)
@@ -113,131 +114,24 @@ for i_ms in sorted(missing_subjects, reverse=True):
             del acc[ptest][cond]['er'][i_ms]
             del mis[ptest][cond]['er'][i_ms]
             del dk[ptest][cond]['er'][i_ms]
-            # del ma_lca_dm[ptest][i_ms]
             for lca_pid, lca_pname in lca_pnames.items():
                 del lca_param[ptest][lca_pid][cond]['mu'][i_ms]
                 del lca_param[ptest][lca_pid][cond]['er'][i_ms]
+        del ma_lca[ptest][i_ms]
 
 
 '''process the data: extract differences between the two penalty conds'''
 
-
-def extract_part2_diff(val, cond):
-    tmp = np.array(val[ptest2][cond]['mu']) - \
-        np.array(val[ptest1][cond]['mu'])
-    return tmp[:, n_param:]
-
-
-ptest1 = penaltys_test[0]
-ptest2 = penaltys_test[1]
-
-# extract differences
+# compute RT
 rt = {ptest: None for ptest in penaltys_test}
 time_vector = np.reshape(np.arange(n_param) + 1, (n_param, 1))
 for ptest in penaltys_test:
     ig_p2_ = np.array(lca_param[ptest][0]['DM']['mu'])[:, n_param:].T
     ig_p2_norm = ig_p2_ / np.sum(ig_p2_, axis=0)
-    # ig_p2_norm = ig_p2_
-    # np.mean(ig_p2_norm, axis=1)
-    # rt[ptest] = np.mean(ig_p2_ * time_vector, axis=0)
     rt[ptest] = np.reshape(np.dot(ig_p2_norm.T, time_vector), (-1,))
-    # rt[ptest] = np.mean(rt_all_subjs)
-
-
-lca_param_diff = {
-    lca_pname_: {
-        cond: np.zeros((n_subjs, n_param)) for cond in all_conds
-    }
-    for lca_pname_ in lca_pnames.values()
-}
-# auc_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
-acc_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
-mis_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
-dk_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
-
-auc_diff = np.array(auc[ptest2]) - np.array(auc[ptest1])
-for cond in all_conds:
-    acc_diff[cond] = extract_part2_diff(acc, cond)
-    mis_diff[cond] = extract_part2_diff(mis, cond)
-    dk_diff[cond] = extract_part2_diff(dk, cond)
-    for lca_pid, lca_pname in lca_pnames.items():
-        tmp = np.array(lca_param[ptest2][lca_pid][cond]['mu']) - \
-            np.array(lca_param[ptest1][lca_pid][cond]['mu'])
-        lca_param_diff[lca_pname][cond] = tmp[:, n_param:]
-
-rt_diff = rt[ptest2] - rt[ptest1]
-
-
-def compute_reward(ptest_):
-    cond = 'DM'
-    acc_mu_p2 = np.array(acc[ptest_][cond]['mu'])[:, n_param:]
-    mis_mu_p2 = np.array(mis[ptest_][cond]['mu'])[:, n_param:]
-    reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
-        np.sum(mis_mu_p2, axis=1) * ptest_
-    # reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
-    #     np.sum(mis_mu_p2, axis=1) * 2
-    return reward_ptest_
-
-
-reward = {ptest: compute_reward(ptest) for ptest in penaltys_test}
-reward_diff = reward[ptest2] - reward[ptest1]
-
-r_val, p_val = pearsonr(rt_diff, reward_diff)
-f, ax = plt.subplots(1, 1, figsize=(6, 5))
-sns.regplot(rt_diff, reward_diff)
-ax.set_ylabel(r'$\Delta$ Reward')
-ax.set_xlabel(r'$\Delta$ recall time')
-# ax.set_title('Effect of current penalty')
-ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
-    0.05, 0.05), xycoords='axes fraction')
-ax.axvline(0, color='grey', alpha=.3, linestyle='--')
-ax.axhline(0, color='grey', alpha=.3, linestyle='--')
-sns.despine()
-f.tight_layout()
-
-
-'''regression models'''
-# auc ~ recall time (center of mass of input gate)
-cond = 'DM'
-
-r_val, p_val = pearsonr(rt_diff, auc_diff)
-f, ax = plt.subplots(1, 1, figsize=(6, 5))
-sns.regplot(rt_diff, auc_diff)
-ax.set_ylabel(r'$\Delta$ AUC')
-ax.set_xlabel(r'$\Delta$ recall time')
-# ax.set_title('Effect of current penalty')
-ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
-    0.05, 0.05), xycoords='axes fraction')
-ax.axvline(0, color='grey', alpha=.3, linestyle='--')
-ax.axhline(0, color='grey', alpha=.3, linestyle='--')
-sns.despine()
-f.tight_layout()
-
-
-# mistakes ~ change in input gate and competition
-cond = 'DM'
-diff_data = {
-    'Accuracy': acc_diff, 'Mistakes': mis_diff, 'Don\'t know': dk_diff
-}
-color_pals = [sns.color_palette('colorblind')[0],
-              sns.color_palette('colorblind')[3], 'grey']
-
-f, axes = plt.subplots(3, 1, figsize=(6, 12))
-for i, (dv_name_i, dv_diff_i) in enumerate(diff_data.items()):
-    dv_diff_i_dm = np.mean(dv_diff_i['DM'], axis=1)
-    r_val, p_val = pearsonr(rt_diff, dv_diff_i_dm)
-    sns.regplot(rt_diff, dv_diff_i_dm, color=color_pals[i], ax=axes[i])
-    axes[i].annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val),
-                     xy=(0.05, 0.05), xycoords='axes fraction'
-                     )
-    axes[i].set_ylabel(r'$\Delta$ ' + f'{dv_name_i}')
-    axes[i].set_xlabel(r'$\Delta$ recall time')
-    axes[i].axvline(0, color='grey', alpha=.3, linestyle='--')
-sns.despine()
-f.tight_layout()
 
 '''slope graph'''
-data_dict = {'Penalty low': rt[0], 'Penalty high': rt[4]}
+data_dict = {'low': rt[0], 'high': rt[4]}
 df = pd.DataFrame(data_dict)
 df['ids'] = np.arange(n_subjs)
 df.head()
@@ -246,6 +140,143 @@ df.head()
 dabest_data = dabest.load(
     data=df, idx=list(data_dict.keys()), paired=True, id_col='ids'
 )
-dabest_data.mean_diff.plot(swarm_label='Recall time', fig_size=(11, 6))
+dabest_data.mean_diff.plot(
+    swarm_label='Recall time', fig_size=(8, 5),
+    swarm_ylim=[0, 6]
+)
 print(dabest_data.mean_diff)
 dabest_data.mean_diff.statistical_tests
+
+# '''compute average meory activation'''
+# type(ma_lca)
+# p_test = 0
+
+
+# len(ma_lca[p_test])
+# ma_dmp2, ma_dmp2_mu, ma_dmp2_se = defaultdict(), defaultdict(), defaultdict()
+
+# for p_test in penaltys_test:
+#     ma_dmp2[p_test] = np.array(
+#         [ma_lca[p_test][s]['DM']['targ']['mu'][n_param:] 
+#          for s in range(n_subjs)]
+#         )
+#     ma_dmp2_mu[p_test], ma_dmp2_se[p_test] = compute_stats(
+#         # ma_dmp2[p_test]
+#         np.sum(ma_dmp2[p_test],axis=1)
+#     )
+
+# f, ax = plt.subplots(1,1, figsize=(5,5))
+# # for p_test in penaltys_test:
+# ax.errorbar(
+#     x=range(len(penaltys_test)), 
+#     y=list(ma_dmp2_mu.values()), yerr=list(ma_dmp2_se.values())
+# )
+# ax.set_xticks(range(len(penaltys_test)))
+# ax.set_xticklabels(penaltys_test)
+# ax.set_xlabel('Penalty test')
+# ax.set_ylabel('Sum memory activation')
+# sns.despine()
+
+
+# def extract_part2_diff(val, cond):
+#     tmp = np.array(val[ptest2][cond]['mu']) - \
+#         np.array(val[ptest1][cond]['mu'])
+#     return tmp[:, n_param:]
+#
+#
+# ptest1 = penaltys_test[0]
+# ptest2 = penaltys_test[1]
+#
+# extract differences
+#
+#
+# lca_param_diff = {
+#     lca_pname_: {
+#         cond: np.zeros((n_subjs, n_param)) for cond in all_conds
+#     }
+#     for lca_pname_ in lca_pnames.values()
+# }
+# # auc_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
+# acc_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
+# mis_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
+# dk_diff = {cond: np.zeros((n_subjs, n_param)) for cond in all_conds}
+#
+# auc_diff = np.array(auc[ptest2]) - np.array(auc[ptest1])
+# for cond in all_conds:
+#     acc_diff[cond] = extract_part2_diff(acc, cond)
+#     mis_diff[cond] = extract_part2_diff(mis, cond)
+#     dk_diff[cond] = extract_part2_diff(dk, cond)
+#     for lca_pid, lca_pname in lca_pnames.items():
+#         tmp = np.array(lca_param[ptest2][lca_pid][cond]['mu']) - \
+#             np.array(lca_param[ptest1][lca_pid][cond]['mu'])
+#         lca_param_diff[lca_pname][cond] = tmp[:, n_param:]
+#
+# rt_diff = rt[ptest2] - rt[ptest1]
+
+
+# def compute_reward(ptest_):
+#     cond = 'DM'
+#     acc_mu_p2 = np.array(acc[ptest_][cond]['mu'])[:, n_param:]
+#     mis_mu_p2 = np.array(mis[ptest_][cond]['mu'])[:, n_param:]
+#     reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
+#         np.sum(mis_mu_p2, axis=1) * ptest_
+#     # reward_ptest_ = np.sum(acc_mu_p2, axis=1) - \
+#     #     np.sum(mis_mu_p2, axis=1) * 2
+#     return reward_ptest_
+
+# reward = {ptest: compute_reward(ptest) for ptest in penaltys_test}
+# reward_diff = reward[ptest2] - reward[ptest1]
+
+# r_val, p_val = pearsonr(rt_diff, reward_diff)
+# f, ax = plt.subplots(1, 1, figsize=(6, 5))
+# sns.regplot(rt_diff, reward_diff)
+# ax.set_ylabel(r'$\Delta$ Reward')
+# ax.set_xlabel(r'$\Delta$ recall time')
+# # ax.set_title('Effect of current penalty')
+# ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
+#     0.05, 0.05), xycoords='axes fraction')
+# ax.axvline(0, color='grey', alpha=.3, linestyle='--')
+# ax.axhline(0, color='grey', alpha=.3, linestyle='--')
+# sns.despine()
+# f.tight_layout()
+
+
+# '''regression models'''
+# # auc ~ recall time (center of mass of input gate)
+# cond = 'DM'
+#
+# r_val, p_val = pearsonr(rt_diff, auc_diff)
+# f, ax = plt.subplots(1, 1, figsize=(6, 5))
+# sns.regplot(rt_diff, auc_diff)
+# ax.set_ylabel(r'$\Delta$ AUC')
+# ax.set_xlabel(r'$\Delta$ recall time')
+# # ax.set_title('Effect of current penalty')
+# ax.annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val), xy=(
+#     0.05, 0.05), xycoords='axes fraction')
+# ax.axvline(0, color='grey', alpha=.3, linestyle='--')
+# ax.axhline(0, color='grey', alpha=.3, linestyle='--')
+# sns.despine()
+# f.tight_layout()
+
+
+# mistakes ~ change in input gate and competition
+# cond = 'DM'
+# diff_data = {
+#     'Accuracy': acc_diff, 'Mistakes': mis_diff, 'Don\'t know': dk_diff
+# }
+# color_pals = [sns.color_palette('colorblind')[0],
+#               sns.color_palette('colorblind')[3], 'grey']
+#
+# f, axes = plt.subplots(3, 1, figsize=(6, 12))
+# for i, (dv_name_i, dv_diff_i) in enumerate(diff_data.items()):
+#     dv_diff_i_dm = np.mean(dv_diff_i['DM'], axis=1)
+#     r_val, p_val = pearsonr(rt_diff, dv_diff_i_dm)
+#     sns.regplot(rt_diff, dv_diff_i_dm, color=color_pals[i], ax=axes[i])
+#     axes[i].annotate(r'$r \approx %.2f$, $p \approx %.2f$' % (r_val, p_val),
+#                      xy=(0.05, 0.05), xycoords='axes fraction'
+#                      )
+#     axes[i].set_ylabel(r'$\Delta$ ' + f'{dv_name_i}')
+#     axes[i].set_xlabel(r'$\Delta$ recall time')
+#     axes[i].axvline(0, color='grey', alpha=.3, linestyle='--')
+# sns.despine()
+# f.tight_layout()
