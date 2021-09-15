@@ -32,9 +32,24 @@ x, y = X[i], Y[i]
 cmap = 'bone'
 
 x_split = np.split(x, (n_param, n_param + n_branch), axis=1)
+episodic_sim = False
+if episodic_sim:
+    x_split[0][:n_param] = np.vstack(
+        [x_split[0][:n_param][0], np.eye(n_param, k=-1)[1:, :]]
+    )
+    x_split[0][n_param:] = np.vstack(
+        [x_split[0][n_param:][0], np.eye(n_param, k=-1)[1:, :]]
+    )
+    for t in range(n_param):
+        obs_feature_id_p1 = np.argmax(x_split[0][:n_param][t])
+        x_split[1][:n_param][t] = y[obs_feature_id_p1]
+        obs_feature_id_p2 = np.argmax(x_split[0][n_param:][t])
+        x_split[1][n_param:][t] = y[obs_feature_id_p2]
+
+
 mat_list = x_split + [y]
 f, axes = plt.subplots(
-    2, 4, figsize=(14, 11), sharey=True,
+    2, 4, figsize=(12, 9), sharey=True,
     gridspec_kw={
         'width_ratios': [n_param, n_branch, n_param, n_branch],
         'height_ratios': [n_param, n_param]

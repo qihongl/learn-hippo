@@ -38,7 +38,7 @@ def compute_matches(proba_, target_):
     return matches, match_rate
 
 
-exp_name = 'vary-training-penalty'
+exp_name = 'vary-test-penalty'
 def_prob = .25
 
 # exp_name = 'vary-schema-level'
@@ -62,7 +62,7 @@ p_rm_ob_enc_load = .3
 p_rm_ob_rcl_load = 0
 
 # testing params
-enc_size_test = 16
+enc_size_test = 8
 pad_len_test = 0
 p_test = 0
 p_rm_ob_enc_test = p_test
@@ -72,10 +72,10 @@ slience_recall_time = None
 similarity_max_test = .9
 similarity_min_test = 0
 n_examples_test = 256
-subj_ids = np.arange(15)
+subj_ids = np.arange(1)
 
 penalty_test = 2
-penalty_train = 2
+penalty_train = 4
 
 n_subjs = len(subj_ids)
 DM_qsources = ['EM only', 'both']
