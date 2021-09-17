@@ -18,8 +18,7 @@ all_conds = list(TZ_COND_DICT.values())
 T = 16
 
 exp_name = 'vary-training-penalty'
-# gdata_outdir = 'data/'
-# def_prob = .25
+gdata_outdir = 'data/'
 
 penaltys_train = [0, 4]
 penaltys_test = [0, 4]
@@ -28,10 +27,10 @@ penaltys_test = [0, 4]
 n_param = 16
 n_subjs = 15
 subj_ids = np.arange(n_subjs)
-penalty_random = 1
+penalty_random = 0
 def_prob = .25
 n_def_tps = 0
-comp_val = .4
+comp_val = .8
 # loading params
 pad_len_load = -1
 p_rm_ob_enc_load = .3

@@ -17,14 +17,14 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 # n_param = 16
 cpal = sns.color_palette()[:2]
-f, ax = plt.subplots(1,1, figsize=(6,5.5))
+f, ax = plt.subplots(1, 1, figsize=(6, 5.5))
 exp_names = ['low-similarity', 'high-similarity']
 
 for ei, exp_name in enumerate(exp_names):
     # exp_name = 'low-similarity'
     penalty_train = 4
     penaltys_test = [0, 2, 4]
-    
+
     n_param = 16
     n_subjs = 15
     subj_ids = np.arange(n_subjs)
@@ -47,7 +47,7 @@ for ei, exp_name in enumerate(exp_names):
     similarity_max_test = .9
     similarity_min_test = 0
     n_examples_test = 256
-    
+
     p = P(
         exp_name=exp_name, sup_epoch=supervised_epoch,
         n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
@@ -57,7 +57,7 @@ for ei, exp_name in enumerate(exp_names):
         p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
         cmpt=comp_val,
     )
-    
+
     '''load data'''
     lca_param = {ptest: None for ptest in penaltys_test}
     auc = {ptest: None for ptest in penaltys_test}
@@ -66,9 +66,9 @@ for ei, exp_name in enumerate(exp_names):
     dk = {ptest: None for ptest in penaltys_test}
     ma_lca = defaultdict()
     ma_cosine = defaultdict()
-    
+
     # for penalty_train in penaltys_train:
-    
+
     for ptest in penaltys_test:
         print(f'penalty_train={penalty_train}, ptest={ptest}')
         # create logging dirs
@@ -87,7 +87,7 @@ for ei, exp_name in enumerate(exp_names):
         dk[ptest] = data['dk_dict']
         ma_lca[ptest] = data['lca_ma_list']
         ma_cosine[ptest] = data['cosine_ma_list']
-    
+
     n_subjs_total = len(auc[ptest])
     # process the data - identify missing subjects
     missing_subjects = []
@@ -99,9 +99,9 @@ for ei, exp_name in enumerate(exp_names):
                 )
                 missing_subjects.extend(missing_ids_)
     missing_subjects = np.unique(missing_subjects)
-    
+
     n_subjs = n_subjs_total - len(missing_subjects)
-    
+
     # process the data - remove missing subjects for all data dicts
     for i_ms in sorted(missing_subjects, reverse=True):
         # print(i_ms)
@@ -118,30 +118,27 @@ for ei, exp_name in enumerate(exp_names):
                     del lca_param[ptest][lca_pid][cond]['mu'][i_ms]
                     del lca_param[ptest][lca_pid][cond]['er'][i_ms]
             del ma_lca[ptest][i_ms]
-    
-    
+
     '''compute average meory activation'''
     ma_dmp2, sum_ma_dmp2 = defaultdict(), defaultdict()
     ma_dmp2_mu, ma_dmp2_se = defaultdict(), defaultdict()
-    
+
     for p_test in penaltys_test:
         ma_dmp2[p_test] = np.array(
             [ma_lca[p_test][s]['DM']['targ']['mu'][n_param:]
-              for s in range(n_subjs)]
-            )
-        sum_ma_dmp2[p_test] = np.sum(ma_dmp2[p_test],axis=1)
+             for s in range(n_subjs)]
+        )
+        sum_ma_dmp2[p_test] = np.sum(ma_dmp2[p_test], axis=1)
         ma_dmp2_mu[p_test], ma_dmp2_se[p_test] = compute_stats(
             # ma_dmp2[p_test]
-            np.mean(ma_dmp2[p_test],axis=1)
+            np.mean(ma_dmp2[p_test], axis=1)
         )
-    
+
     ax.errorbar(
         x=range(len(penaltys_test)),
-        y=list(ma_dmp2_mu.values()), yerr=list(ma_dmp2_se.values()), 
-        label=exp_name, color = cpal[ei]
+        y=list(ma_dmp2_mu.values()), yerr=list(ma_dmp2_se.values()),
+        label=exp_name, color=cpal[ei]
     )
-    # for si in range(n_subjs):
-    #     ax.plot([sum_ma_dmp2[penaltys_test[0]][si], sum_ma_dmp2[penaltys_test[1]][si]], color = cpal[ei], alpha = .1)
 
     ax.set_xticks(range(len(penaltys_test)))
     ax.set_xticklabels(penaltys_test)
@@ -150,41 +147,3 @@ for ei, exp_name in enumerate(exp_names):
     ax.legend()
     sns.despine()
     f.tight_layout()
-
-
-    # ma_dmp2, sum_ma_dmp2 = defaultdict(), defaultdict()
-    # ma_dmp2_mu, ma_dmp2_se = defaultdict(), defaultdict()
-
-    # for p_test in penaltys_test:
-    #     ma_dmp2[p_test] = np.array(
-    #         [lca_param[p_test][0]['DM']['mu'][s][n_param:]
-    #           for s in range(n_subjs)]
-    #         )
-    #     sum_ma_dmp2[p_test] = np.sum(ma_dmp2[p_test], axis=1)
-
-    #     ma_dmp2_mu[p_test], ma_dmp2_se[p_test] = compute_stats(
-    #         # ma_dmp2[p_test]
-    #         np.mean(ma_dmp2[p_test],axis=1)
-    #     )
-    #     # print(p_test, np.mean(ma_dmp2[p_test],axis=0))
-    #     # plt.plot(np.sum(ma_dmp2[p_test], axis=0))
-
-
-    # ax.errorbar(
-    #     x=range(len(penaltys_test)),
-    #     y=list(ma_dmp2_mu.values()), yerr=list(ma_dmp2_se.values()), 
-    #     label=exp_name, color = cpal[ei]
-    # )
-
-    # # for si in range(n_subjs):
-    # #     ax.plot([sum_ma_dmp2[penaltys_test[0]][si], sum_ma_dmp2[penaltys_test[1]][si]], color = cpal[ei], alpha = .1)
-
-    # ax.set_xticks(range(len(penaltys_test)))
-    # ax.set_xticklabels(penaltys_test)
-    # ax.set_xlabel('Penalty, test')
-    # ax.set_ylabel('Average EM gate')
-    # ax.legend()
-    # sns.despine()
-    # f.tight_layout()
-
-

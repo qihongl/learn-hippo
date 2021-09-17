@@ -41,11 +41,8 @@ all_conds = TZ_COND_DICT.values()
 # for def_prob in def_prob_range:
 
 # the name of the experiemnt
-# exp_name = 'vary-test-penalty-after-ig.3'
 exp_name = 'vary-test-penalty-after-ig.3-enc8d4'
 # exp_name = 'vary-schema-level-after-ig.3'
-# exp_name = 'tune-cmpt'
-# exp_name = 'familiarity-signal'
 subj_ids = np.arange(14)
 penalty_random = 1
 def_prob = .25
@@ -960,18 +957,17 @@ for penalty_train in penaltys_train:
         #     fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-allbar-{cond}.png'
         #     f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
-        
         mbm = np.array(
             [compute_act_per_mem(ma_raw_list[i_s]) for i_s in range(n_subjs)]
         )
         mbm_mu, mbm_er = compute_stats(mbm, axis=0)
-        
+
         for i, cond in enumerate(all_conds):
             if dict_len == 2:
                 f, ax = plt.subplots(1, 1, figsize=(4, 5), sharey=True)
             elif dict_len == 4:
                 f, ax = plt.subplots(1, 1, figsize=(6.5, 5), sharey=True)
-        
+
             if cond == 'NM':
                 ax.bar(
                     x=range(dict_len), height=mbm_mu[i], yerr=mbm_er[i],
@@ -998,7 +994,7 @@ for penalty_train in penaltys_train:
                 raise ValueError('dict_len not 2 or 4')
             # ax.set_ylim([0, None])
             # ax.set_ylim([0, .09])
-            ax.set_ylim([0, .008])            
+            ax.set_ylim([0, .008])
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
             sns.despine()
             f.tight_layout()

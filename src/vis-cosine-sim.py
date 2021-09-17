@@ -29,8 +29,6 @@ memory_sim_se = np.zeros(len(penalty_test_list))
 for p_i, penalty_test in enumerate(penalty_test_list):
     fname = '%s-dp%.2f-p%d-%d.pkl' % (
         exp_name, def_prob, penalty_train, penalty_test)
-    # fname = '%s-dp%.2f-p%d-%d.pkl' % (
-    #     exp_name, def_prob, penalty_test, penalty_test)
 
     data = pickle_load_dict(os.path.join(gdata_outdir, fname))
     ma_cos_list = data['cosine_ma_list']

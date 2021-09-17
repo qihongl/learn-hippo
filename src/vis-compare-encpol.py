@@ -87,8 +87,6 @@ for ei, enc_size_test in enumerate(enc_size_tests):
         :, n_param:]
     # compute the cumulative return
     cumr = np.sum(acc_dm_mu_ - mis_dm_mu_ * penalty_test, axis=1)
-    # # compute the mean
-    # cumr_mu, cumr_se = compute_stats(cumr)
     # collect data
     cumr_dict[enc_pols[ei]] = cumr
 
@@ -101,22 +99,3 @@ dabest_data = dabest.load(
     data=df, idx=list(cumr_dict.keys()), paired=True, id_col='ids'
 )
 dabest_data.mean_diff.plot(swarm_label='Cumulative reward', fig_size=(8, 5))
-
-
-# f, ax = plt.subplots(1, 1, figsize=(2.7, 4))
-# ax.bar(x=0, height=cumr_mu, yerr=cumr_se, zorder=0, width=1,
-#        color=sns.color_palette('colorblind')[7])
-# ax.set_ylabel('Cumulative reward')
-# ax.set_ylim([0, 15])
-# ax.set_xticks([0])
-# ax.set_xticklabels([' '])
-# f.tight_layout()
-# sns.despine()
-# fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-cumr-bar.png'
-# f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-
-# data_dict = {
-#     cond: np.random.normal(loc=cond_means[cond], scale=scale, size=(n_data,))
-#     for cond in cond_means.keys()
-# }

@@ -34,10 +34,9 @@ gr_pal = sns.color_palette('colorblind')[2:4]
 log_root = '../log/'
 # log_root = '/tigress/qlu/logs/learn-hippocampus/log'
 all_conds = TZ_COND_DICT.values()
-# for cmpt in [.2, .4, .6, .8, 1.0]:
 
+# for cmpt in [.2, .4, .6, .8, 1.0]:
 # exp_name = 'vary-schema-level-prandom'
-# exp_name = 'vary-schema-level-prandom-ndk'
 
 def_prob = .25
 n_def_tps = 0
@@ -46,18 +45,7 @@ n_def_tps = 0
 # for def_prob in def_prob_range:
 
 # the name of the experiemnt
-# exp_name = 'vary-test-penalty'
-# exp_name = 'vary-test-penalty-after-ig.3-enc8d4'
-# exp_name = 'vary-test-penalty-after-ig.3'
-# exp_name = 'vary-schema-level'
-# exp_name = 'familiarity-signal'
-# exp_name = 'vary-test-penalty-noRL-highp'
-# exp_name = 'vary-test-penalty'
-# exp_name = 'vary-test-penalty-fixobs-rl'
-# exp_name = 'vary-training-penalty-norl'
-# exp_name = 'vary-training-penalty'
 exp_name = 'vary-test-penalty'
-# exp_name = 'low-similarity'
 subj_ids = np.arange(15)
 penalty_random = 1
 
@@ -76,7 +64,7 @@ leak_val = 0
 penaltys_train = [4]
 # penaltys_train = [0, 4]
 penaltys_test = np.array([0, 2, 4])
-penaltys_test = np.array([2])
+# penaltys_test = np.array([2])
 # penaltys_test = np.array([0, 4])
 
 enc_size = 16
@@ -879,15 +867,15 @@ for penalty_train in penaltys_train:
         # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''activation per memory - bar'''
-        
+
         def compute_act_per_mem(sim_lca_dict_):
             ma_by_mem_rm_ = np.mean(np.hstack(
                 [np.mean(sim_lca_dict_['RM']['targ'][:, n_param:, :], axis=0),
-                  np.mean(sim_lca_dict_['RM']['lure'][:, n_param:, :], axis=0)]
+                 np.mean(sim_lca_dict_['RM']['lure'][:, n_param:, :], axis=0)]
             ), axis=0)
             ma_by_mem_dm_ = np.mean(np.hstack(
                 [np.mean(sim_lca_dict_['DM']['targ'][:, n_param:, :], axis=0),
-                  np.mean(sim_lca_dict_['DM']['lure'][:, n_param:, :], axis=0)]
+                 np.mean(sim_lca_dict_['DM']['lure'][:, n_param:, :], axis=0)]
             ), axis=0)
             ma_by_mem_nm_ = np.mean(
                 np.mean(sim_lca_dict['NM']['lure']
@@ -895,19 +883,19 @@ for penalty_train in penaltys_train:
                 axis=0
             )
             return np.vstack([ma_by_mem_rm_, ma_by_mem_dm_, ma_by_mem_nm_])
-        
+
         mbm = np.array(
             [compute_act_per_mem(ma_raw_list[i_s])
-              for i_s in range(n_subjs)]
+             for i_s in range(n_subjs)]
         )
         mbm_mu, mbm_er = compute_stats(mbm, axis=0)
-        
+
         for i, cond in enumerate(all_conds):
             if dict_len == 2:
                 f, ax = plt.subplots(1, 1, figsize=(4, 5), sharey=True)
             elif dict_len == 4:
                 f, ax = plt.subplots(1, 1, figsize=(6.5, 5), sharey=True)
-        
+
             if cond == 'NM':
                 ax.bar(
                     x=range(dict_len), height=mbm_mu[i], yerr=mbm_er[i],
@@ -934,7 +922,7 @@ for penalty_train in penaltys_train:
                 raise ValueError('dict_len not 2 or 4')
             # ax.set_ylim([0, None])
             # ax.set_ylim([0, .09])
-            ax.set_ylim([0, .1])            
+            ax.set_ylim([0, .1])
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
             sns.despine()
             f.tight_layout()
@@ -1033,7 +1021,7 @@ for penalty_train in penaltys_train:
             f.savefig(fname, dpi=120, bbox_to_anchor='tight')
 
         '''group level memory activation DM - bar plot'''
-        
+
         # ma_dm_targ_sum = np.array(
         #     [np.sum(ma_list[s_i]['DM']['targ']['mu'][n_param:])
         #       for s_i in range(n_subjs)]
@@ -1060,7 +1048,7 @@ for penalty_train in penaltys_train:
         # sns.despine()
         # fname = f'../figs/{exp_name}/p{penalty_train}-{penalty_test}-ma-bar.png'
         # f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-        
+
         # f, ax = plt.subplots(1, 1, figsize=(4, 4))
         # ax.bar(x=0, height=0, color=gr_pal[0], label='targ')
         # ax.bar(x=1, height=0, color=gr_pal[1], label='lure')
