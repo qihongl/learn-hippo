@@ -19,20 +19,14 @@ lca_pnames = {0: 'input gate', 1: 'competition'}
 all_conds = list(TZ_COND_DICT.values())
 T = 16
 
-# exp_name = 'vary-schema-level-ig.3-pfixed'
-# exp_name = 'vary-schema-level-prandom'
-exp_name = 'vary-schema-level-prandom-ndk'
+exp_name = 'vary-schema-level-prandom'
+# exp_name = 'vary-schema-level-prandom-ndk'
 # exp_name = 'vary-schema-level-after-ig.3'
 clip_subj = 15
-
-# penalty_train = [0, 2, 4]
-# penaltys_test = [0, 2, 4]
-# penalty_test = 4
 comp_val = .8
 
 n_subjs = 15
 subj_ids = np.arange(n_subjs)
-# def_prob = .25
 n_def_tps = 8
 # loading params
 pad_len_load = -1

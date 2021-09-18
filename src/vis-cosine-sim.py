@@ -10,7 +10,7 @@ all_cond = TZ_COND_DICT.values()
 
 
 gdata_outdir = 'data/'
-exp_name = 'vary-test-penalty-p2'
+exp_name = 'vary-test-penalty'
 def_prob = .25
 penalty_train = 4
 penalty_test_list = [0, 2, 4]
