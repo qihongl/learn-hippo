@@ -1,6 +1,7 @@
 import os
 import torch
 import pickle
+import warnings
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -18,23 +19,24 @@ from utils.io import build_log_path, pickle_load_dict, get_test_data_fname, \
     pickle_save_dict, get_test_data_dir
 from analysis import compute_stats, compute_n_trials_to_skip, trim_data, \
     get_trial_cond_ids, process_cache
+warnings.filterwarnings("ignore")
 log_root = '../log'
+# fpath = 'data/decode-results.pkl'
 sns.set(style='white', palette='colorblind', context='poster')
-# cb_pal = sns.color_palette('colorblind')
-# alphas = [1 / 3, 2 / 3, 1]
 
 exp_name = 'vary-test-penalty'
 penalty_train = 4
-fix_penalty = 4
+fix_penalty = 2
 fix_cond = 'DM'
 epoch_load = 1000
 n_subjs = 15
 
 n_branch = 4
 n_param = 16
+T = n_param * 2
 enc_size = 16
 def_prob = None
-cmpt = .4
+cmpt = .8
 penalty_random = 1
 supervised_epoch = 600
 # loading params
@@ -57,7 +59,9 @@ p = P(
 # init a dummy task
 task = SequenceLearning(n_param=p.env.n_param, n_branch=p.env.n_branch)
 
-dacc = np.zeros((n_subjs, n_param))
+dacc = np.zeros((n_subjs, n_param, T))
+Yob_all, Yhat_all = [], []
+o_keys_p1_all, o_keys_p2_all = [], []
 for i_s in range(n_subjs):
     # create logging dirs
     np.random.seed(i_s)
@@ -72,7 +76,6 @@ for i_s in range(n_subjs):
     test_data_dict = pickle_load_dict(fpath)
     [dist_a_, Y_, log_cache_, log_cond_] = test_data_dict['results']
     [X_raw, Y_raw] = test_data_dict['XY']
-    T = np.shape(Y_raw)[1]
     [C, H, M, CM, DA, V], [inpt] = process_cache(log_cache_, T, p)
     n_examples_skip = compute_n_trials_to_skip(log_cond_, p)
     # trim data, wait until the model has 2EMs loaded
@@ -95,6 +98,8 @@ for i_s in range(n_subjs):
         o_keys[i], _, o_vals[i] = get_oq_keys(X_raw[i], task)
     o_keys_p1, o_keys_p2 = o_keys[:, :n_param], o_keys[:, n_param:]
     o_vals_p1, o_vals_p2 = o_vals[:, :n_param], o_vals[:, n_param:]
+    o_keys_p1_all.append(o_keys_p1)
+    o_keys_p2_all.append(o_keys_p2)
     Yob_p1 = build_yob(o_keys_p1, o_vals_p1)
     Yob_p2 = build_yob(o_keys_p2, o_vals_p2)
 
@@ -115,9 +120,12 @@ for i_s in range(n_subjs):
     lrc = np.logspace(-2, 10, num=6)
     cvids = build_cv_ids(n_trials, n_folds)
     scaler = StandardScaler()
+    ridge_reg = LogisticRegression(
+        penalty='l2', max_iter=1000, solver='lbfgs', multi_class='multinomial'
+    )
 
     # prealloc
-    Y_hat = np.zeros(np.shape(Yob))
+    Yhat = np.zeros(np.shape(Yob))
 
     for f in range(n_param):
         # choose the f-th feature
@@ -131,8 +139,7 @@ for i_s in range(n_subjs):
             # inner cv
             icvids = build_cv_ids(len(Y_tr), n_folds - 1)
             gscv = GridSearchCV(
-                LogisticRegression(penalty='l2', max_iter=1000),
-                param_grid={'C': lrc}, cv=PredefinedSplit(icvids),
+                ridge_reg, param_grid={'C': lrc}, cv=PredefinedSplit(icvids),
                 return_train_score=True, refit=True
             )
             # reshape X train, Y train
@@ -145,57 +152,108 @@ for i_s in range(n_subjs):
             X_te_rs = scaler.fit_transform(X_te_rs)
             # fit model
             gscv.fit(X_tr_rs, Y_tr_rs)
-            # plt.plot(gscv.cv_results_['mean_test_score'])
-            # print(gscv.cv_results_['mean_test_score'])
-            # print(np.mean(gscv.cv_results_['mean_test_score']))
             # predict on the test set
             Y_hat_te_rs = gscv.best_estimator_.predict(X_te_rs)
             # store in the yhat matrix
-            Y_hat[cvids == i, :, f] = np.reshape(Y_hat_te_rs, np.shape(Y_te))
+            Yhat[cvids == i, :, f] = np.reshape(Y_hat_te_rs, np.shape(Y_te))
+        # compute the decoding accuracy of feature f over time
+        dacc[i_s, f, :] = np.mean(Yhat[:, :, f] == Yf, axis=0)
+    Yob_all.append(Yob)
+    Yhat_all.append(Yhat)
 
-        dacc[i_s, f] = np.sum(Y_hat[:, :, f] == Yf) / np.size(Yf)
+'''data io'''
+# save data
+data_dict = {
+    'Yob_all': Yob_all, 'Yhat_all': Yhat_all,
+    'o_keys_p1_all': o_keys_p1_all, 'o_keys_p2_all': o_keys_p2_all,
+    # 'Yhat': Yhat, 'Yob': Yob
+}
+pickle_save_dict(data_dict, fpath)
+
+# load data
+data_dict = pickle_load_dict(fpath)
+Yhat_all = np.array(data_dict['Yhat_all'])
+Yob_all = np.array(data_dict['Yob_all'])
+o_keys_p1_all = data_dict['o_keys_p1_all']
+o_keys_p2_all = data_dict['o_keys_p2_all']
+len(o_keys_p1_all)
 
 '''visualize the results'''
-# compute the decoding accuracy
-dacc_mu, _ = compute_stats(dacc)
-dacc_mu, dacc_se = compute_stats(dacc_mu)
+# print(f'overall acc: {np.mean(Y_match)}')
+Y_match = Yhat_all == Yob_all
+Y_pred_match = np.logical_and(np.logical_and(
+    Yhat_all != -1, Yob_all != -1), Y_match)
+np.shape(Yhat_all)
 
-f, ax = plt.subplots(1, 1, figsize=(5, 3))
-ax.barh(y=range(1), height=1, width=dacc_mu, xerr=dacc_se)
-ax.set_xlabel('Decoding accuracy = %.2f' % (dacc_mu))
-ax.axvline(1, linestyle='--', color='grey')
-ax.set_yticks([])
+# compute the decoding accuracy OVER TIME, averaged across subjects
+match_ovt_mu, match_ovt_se = compute_stats(
+    np.mean(np.mean(Y_match, axis=1), axis=0), axis=1)
+pmatch_ovt_mu, pmatch_ovt_se = compute_stats(
+    np.mean(np.mean(Y_pred_match, axis=1), axis=0), axis=1)
+
+f, axes = plt.subplots(1, 2, figsize=(12, 5))
+axes[0].errorbar(
+    x=range(n_param), y=pmatch_ovt_mu[:n_param], xerr=pmatch_ovt_se[:n_param])
+axes[0].errorbar(
+    x=range(n_param), y=match_ovt_mu[:n_param], xerr=match_ovt_se[:n_param])
+axes[1].errorbar(
+    x=range(n_param), y=pmatch_ovt_mu[n_param:], xerr=pmatch_ovt_se[n_param:])
+axes[1].errorbar(
+    x=range(n_param), y=match_ovt_mu[n_param:], xerr=match_ovt_se[n_param:])
+
+axes[0].set_xlabel('Part 1')
+axes[1].set_xlabel('Part 2')
+axes[0].set_ylabel('% correct decoding')
+axes[1].legend(['event prediction only', 'including don\'t know'])
+for ax in axes:
+    ax.set_ylim([0, 1.05])
+    ax.set_xticks([0, n_param])
 sns.despine()
 f.tight_layout()
 
-f, ax = plt.subplots(1, 1, figsize=(3, 4))
-ax.bar(x=range(1), width=1, height=dacc_mu, yerr=dacc_se)
-ax.set_ylabel('MVPA Acc. = %.2f' % (dacc_mu))
-ax.axhline(1, linestyle='--', color='grey')
-ax.set_xticks([])
-sns.despine()
-f.tight_layout()
+# # compute the decoding accuracy, averaged across subjects
+# # horizontal plot
+# dacc_mu, dacc_se = compute_stats(np.mean(np.mean(dacc, axis=-1), axis=-1))
+# f, ax = plt.subplots(1, 1, figsize=(5, 3))
+# ax.barh(y=range(1), height=1, width=dacc_mu, xerr=dacc_se)
+# ax.set_xlabel('Decoding accuracy = %.2f' % (dacc_mu))
+# ax.axvline(1, linestyle='--', color='grey')
+# ax.set_yticks([])
+# sns.despine()
+# f.tight_layout()
+# # vertical plot
+# f, ax = plt.subplots(1, 1, figsize=(3, 4))
+# ax.bar(x=range(1), width=1, height=dacc_mu, yerr=dacc_se)
+# ax.set_ylabel('MVPA Acc. = %.2f' % (dacc_mu))
+# ax.axhline(1, linestyle='--', color='grey')
+# ax.set_xticks([])
+# sns.despine()
+# f.tight_layout()
 
-# make a decoding heatmap
-Y_match = Y_hat == Yob
-
+# make decoding heatmap for several trials
+i_s = 0
+i = 5
 for i in range(10):
-    decode_hmap = np.logical_and(Y_match[i], Y_hat[i] != -1)
+    decode_hmap = Y_pred_match[i_s][i].T
+    f, axes = plt.subplots(1, 2, figsize=(8, 5), sharey=True)
+    axes[0].imshow(decode_hmap[:, :n_param], cmap='bone')
+    axes[1].imshow(decode_hmap[:, n_param:], cmap='bone')
+    axes[0].set_xlabel('part 1')
+    axes[1].set_xlabel('part 2')
+    axes[0].set_ylabel('Feature')
 
-    f, ax = plt.subplots(1, 1, figsize=(7, 4))
-    ax.imshow(decode_hmap.T, cmap='bone')
-    ax.axvline(n_param - .5, linestyle='--', color='grey')
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Feature')
     for t, (f_p1, f_p2) in enumerate(zip(o_keys_p1[i], o_keys_p2[i])):
         rect = patches.Rectangle(
             (t - .5, f_p1 - .5), 1, 1,
             edgecolor='green', facecolor='none', linewidth=3
         )
-        ax.add_patch(rect)
+        axes[0].add_patch(rect)
         rect = patches.Rectangle(
-            (t - .5 + n_param, f_p2 - .5), 1, 1,
+            (t - .5, f_p2 - .5), 1, 1,
             edgecolor='green', facecolor='none', linewidth=3
         )
-        ax.add_patch(rect)
+        axes[1].add_patch(rect)
+    for ax in axes:
+        ax.set_xticks([0, 15])
+        ax.set_xticklabels([0, 15])
     f.tight_layout()

@@ -72,7 +72,7 @@ slience_recall_time = None
 similarity_max_test = .9
 similarity_min_test = 0
 n_examples_test = 256
-subj_ids = np.arange(1)
+subj_ids = np.arange(15)
 
 penalty_test = 2
 penalty_train = 4
