@@ -33,13 +33,13 @@ n_branch = 4
 n_param = 16
 enc_size = 16
 
-# enc_size_test = 16
-# dict_len_test = 2
-# rm_mid_targ = False
-
-enc_size_test = 8
-dict_len_test = 4
+enc_size_test = 16
+dict_len_test = 2
 rm_mid_targ = False
+
+# enc_size_test = 8
+# dict_len_test = 4
+# rm_mid_targ = False
 
 penalty_random = 1
 # testing param, ortho to the training directory
@@ -68,14 +68,14 @@ penaltys_train = [4]
 # penaltys_test = np.array([0, 2, 4])
 penaltys_test = np.array([2])
 
-# slience_recall_times = [range(n_param), None]
-slience_recall_times = [None]
+slience_recall_times = [range(n_param), None]
+# slience_recall_times = [None]
 # slience_recall_times = [range(n_param)]
-# all_conds = ['RM', 'DM', 'NM']
+all_conds = ['RM', 'DM', 'NM']
 # all_conds = ['DM']
-all_conds = [None]
-# scramble_options = [True, False]
-scramble_options = [False]
+# all_conds = [None]
+scramble_options = [True, False]
+# scramble_options = [False]
 
 for scramble in scramble_options:
     for slience_recall_time in slience_recall_times:
