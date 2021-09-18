@@ -18,8 +18,8 @@ log_root = '../log/'
 all_conds = TZ_COND_DICT.values()
 
 # the name of the experiemnt
-# exp_name = 'vary-test-penalty'
-exp_name = 'vary-test-penalty-after-ig.3'
+exp_name = 'vary-test-penalty'
+# exp_name = 'vary-test-penalty-after-ig.3'
 penalty_train = 4
 penalty_test = 2
 comp_val = .8
