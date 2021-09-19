@@ -11,13 +11,13 @@ sns.set(style='white', palette='colorblind', context='poster')
 '''study inter-event similarity as a function of n_branch, n_param'''
 n_param = 16
 n_branch = 4
-n_samples = 500
+n_samples = 5
 similarity_cap_lag = 2
 
 def_prob = .25
-similarity_pairs = [[0.0, .4], [0, .9], [.35, .9]]
+similarity_pairs = [[0, .125], [0.0, .4], [0, .9], [.35, .9]]
 
-similarity_labels = ['low', 'normal', 'high']
+similarity_labels = ['zero', 'low', 'normal', 'high']
 n_conditions = len(similarity_pairs)
 
 event_sims = np.zeros((n_conditions, n_samples - 1))
@@ -54,3 +54,9 @@ ax.set_title('Event similarity by condition')
 ax.set_xlabel('Event similarity')
 sns.despine()
 f.tight_layout()
+
+
+# x = [0, 1]
+# x.pop(0)
+# x.append(2)
+# x

@@ -1,7 +1,7 @@
 log/*/
 figs/*/
 figs/*.png
-old/
+old*/
 temp*/
 paper/
 src/data

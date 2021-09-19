@@ -4,6 +4,8 @@ import numpy as np
 
 from itertools import product
 from models import LCALSTM as Agent
+# from models import LCALSTM_after as Agent
+# from models import LCALSTM_after as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from utils.params import P
@@ -11,9 +13,17 @@ from utils.io import build_log_path, load_ckpt, pickle_save_dict, \
     get_test_data_dir, get_test_data_fname, load_env_metadata
 log_root = '../log/'
 
+# exp_name = 'vary-test-penalty'
+# exp_name = 'vary-test-penalty-after-ig.3'
+# exp_name = 'vary-test-penalty-after-ig.3-enc8d4'
+# exp_name = 'familiarity-signal'
+# exp_name = 'vary-test-penalty-fixobs-rl'
 exp_name = 'vary-test-penalty'
-def_prob = None
+# def_prob = None
 n_def_tps = 0
+
+def_prob = .25
+# n_def_tps = 8
 
 seed = 0
 supervised_epoch = 600
@@ -22,9 +32,14 @@ epoch_load = 1000
 n_branch = 4
 n_param = 16
 enc_size = 16
+
+enc_size_test = 16
+dict_len_test = 2
+rm_mid_targ = False
+
 # enc_size_test = 8
-enc_size_test = enc_size
-n_event_remember = 2
+# dict_len_test = 4
+# rm_mid_targ = False
 
 penalty_random = 1
 # testing param, ortho to the training directory
@@ -44,16 +59,23 @@ n_examples_test = 256
 similarity_max_test = .9
 similarity_min_test = 0
 
-'''loop over conditions for testing'''
-slience_recall_times = [range(n_param), None]
+permute_observations = True
 
+'''loop over conditions for testing'''
 subj_ids = np.arange(15)
 
 penaltys_train = [4]
+# penaltys_test = np.array([0, 2, 4])
 penaltys_test = np.array([2])
 
+slience_recall_times = [range(n_param), None]
+# slience_recall_times = [None]
+# slience_recall_times = [range(n_param)]
 all_conds = ['RM', 'DM', 'NM']
+# all_conds = ['DM']
+# all_conds = [None]
 scramble_options = [True, False]
+# scramble_options = [False]
 
 for scramble in scramble_options:
     for slience_recall_time in slience_recall_times:
@@ -69,8 +91,7 @@ for scramble in scramble_options:
                 p = P(
                     exp_name=exp_name, sup_epoch=supervised_epoch,
                     n_param=n_param, n_branch=n_branch, pad_len=pad_len_load,
-                    def_prob=def_prob, n_def_tps=n_def_tps,
-                    enc_size=enc_size, n_event_remember=n_event_remember,
+                    def_prob=def_prob, n_def_tps=n_def_tps, enc_size=enc_size,
                     penalty=penalty_train, penalty_random=penalty_random,
                     attach_cond=attach_cond,
                     p_rm_ob_enc=p_rm_ob_enc_load, p_rm_ob_rcl=p_rm_ob_rcl_load,
@@ -79,7 +100,6 @@ for scramble in scramble_options:
                 log_path, log_subpath = build_log_path(
                     subj_id, p, log_root=log_root, mkdir=False, verbose=False
                 )
-
                 # init env
                 env_data = load_env_metadata(log_subpath)
                 def_path = env_data['def_path']
@@ -90,16 +110,15 @@ for scramble in scramble_options:
                     n_param=p.env.n_param, n_branch=p.env.n_branch, pad_len=pad_len_test,
                     p_rm_ob_enc=p_rm_ob_enc_test, p_rm_ob_rcl=p_rm_ob_rcl_test,
                     similarity_max=similarity_max_test, similarity_min=similarity_min_test,
-                    similarity_cap_lag=p.n_event_remember,
+                    similarity_cap_lag=p.n_event_remember, permute_observations=permute_observations
                 )
+                # load the agent back
                 x_dim = task.x_dim
                 if attach_cond != 0:
                     x_dim += 1
-                # load the agent back
                 agent = Agent(
-                    input_dim=x_dim, output_dim=p.a_dim,
-                    rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
-                    dict_len=p.net.dict_len
+                    input_dim=x_dim, output_dim=p.a_dim, rnn_hidden_dim=p.net.n_hidden,
+                    dec_hidden_dim=p.net.n_hidden_dec, dict_len=dict_len_test
                 )
 
                 agent, optimizer = load_ckpt(
@@ -117,7 +136,8 @@ for scramble in scramble_options:
                     agent, optimizer, task, p, n_examples_test,
                     supervised=False, learning=False, get_data=True,
                     fix_cond=fix_cond, fix_penalty=fix_penalty,
-                    slience_recall_time=slience_recall_time, scramble=scramble
+                    slience_recall_time=slience_recall_time, scramble=scramble,
+                    rm_mid_targ=rm_mid_targ
                 )
 
                 # save the data

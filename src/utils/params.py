@@ -8,10 +8,10 @@ from utils.constants import ALL_ENC_MODE
 class P():
     def __init__(
         self,
-        exp_name='rnr',
+        exp_name='test',
         subj_id=0,
-        n_param=10,
-        n_branch=3,
+        n_param=16,
+        n_branch=4,
         pad_len=0,
         def_path=None,
         def_prob=None,
@@ -34,6 +34,7 @@ class P():
         enc_mode='cum',
         noisy_encoding=0,
         n_event_remember=2,
+        dict_len=None,
         recall_func='LCA',
         kernel='cosine',
         n_hidden=194,
@@ -54,7 +55,8 @@ class P():
         assert n_param % enc_size == 0
         self.n_event_remember = n_event_remember
         self.n_segments = n_param // enc_size
-        dict_len = self.n_event_remember * self.n_segments
+        if dict_len == None:
+            dict_len = self.n_event_remember * self.n_segments
 
         if def_path is None:
             def_path = sample_rand_path(n_branch, n_param)
@@ -78,7 +80,9 @@ class P():
         self.x_dim, self.y_dim, self.a_dim = _infer_data_dims(
             n_param, n_branch)
         self.dk_id = self.a_dim - 1
-
+        # if the condition label (familiarity) is attached to the input...
+        # if attach_cond != 0:
+        #     self.x_dim += 1
         # init param classes
         self.env = env(
             exp_name, n_param, n_branch, pad_len,

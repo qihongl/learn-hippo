@@ -17,19 +17,16 @@ vector_signal_names = ['f', 'i', 'o']
 sigmoid = nn.Sigmoid()
 
 
-class LCALSTM(nn.Module):
+class LCALSTM_after(nn.Module):
 
     def __init__(
             self, input_dim, output_dim, rnn_hidden_dim, dec_hidden_dim,
-            kernel='cosine', dict_len=2, weight_init_scheme='ortho', cmpt=.8,
-            add_penalty_dim=True
+            kernel='cosine', dict_len=2, weight_init_scheme='ortho',
+            cmpt=.8,
     ):
-        super(LCALSTM, self).__init__()
+        super(LCALSTM_after, self).__init__()
         self.cmpt = cmpt
-        if add_penalty_dim:
-            self.input_dim = input_dim + 1
-        else:
-            self.input_dim = input_dim
+        self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
@@ -40,7 +37,9 @@ class LCALSTM(nn.Module):
         self.actor = nn.Linear(dec_hidden_dim, output_dim)
         self.critic = nn.Linear(dec_hidden_dim, 1)
         # memory
-        self.hpc = nn.Linear(rnn_hidden_dim + dec_hidden_dim, N_SSIG)
+        self.hpc = nn.Linear(
+            rnn_hidden_dim + rnn_hidden_dim + dec_hidden_dim, N_SSIG
+        )
         self.em = EM(dict_len, rnn_hidden_dim, kernel)
         # the RL mechanism
         self.weight_init_scheme = weight_init_scheme
@@ -54,15 +53,6 @@ class LCALSTM(nn.Module):
         self.ssig_names = scalar_signal_names
         # init params
         initialize_weights(self, self.weight_init_scheme)
-
-    # def init_init_states(self):
-    #     scale = 1 / self.rnn_hidden_dim
-    #     self.h_0 = torch.nn.Parameter(
-    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-    #     )
-    #     self.c_0 = torch.nn.Parameter(
-    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-    #     )
 
     def get_init_states(self, scale=.1, device='cpu'):
         h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
@@ -90,11 +80,13 @@ class LCALSTM(nn.Module):
         h_t = torch.mul(o_t, c_t.tanh())
         dec_act_t = F.relu(self.ih(h_t))
         # recall / encode
-        hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
-        inps_t = sigmoid(self.hpc(hpc_input_t))
+        # hpc_input_t = torch.cat([c_t, dec_act_t], dim=1)
+        # inps_t = sigmoid(self.hpc(hpc_input_t))
         # [inps_t, comp_t] = torch.squeeze(phi_t)
-        m_t = self.recall(c_t, inps_t)
-        cm_t = c_t + m_t
+        m_t = self.recall(c_t, .3)
+        hpc_input_t = torch.cat([m_t, c_t, dec_act_t], dim=1)
+        em_g_t = sigmoid(self.hpc(hpc_input_t))
+        cm_t = c_t + m_t * em_g_t
         self.encode(cm_t)
         # make final dec
         h_t = torch.mul(o_t, cm_t.tanh())
@@ -105,7 +97,7 @@ class LCALSTM(nn.Module):
         h_t = h_t.view(1, h_t.size(0), -1)
         cm_t = cm_t.view(1, cm_t.size(0), -1)
         # scache results
-        scalar_signal = [inps_t, 0, 0]
+        scalar_signal = [em_g_t, 0, 0]
         vector_signal = [f_t, i_t, o_t]
         misc = [h_t, m_t, cm_t, dec_act_t, self.em.get_vals()]
         cache = [vector_signal, scalar_signal, misc]

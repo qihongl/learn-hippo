@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from models import LCALSTM as Agent
+from models import LCALSTM_after as Agent
 from task import SequenceLearning
 from exp_tz import run_tz
 from analysis import compute_behav_metrics, compute_acc, compute_dk
@@ -39,7 +39,6 @@ parser.add_argument('--p_rm_ob_enc', default=0.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=.9, type=float)
 parser.add_argument('--similarity_min', default=0, type=float)
-parser.add_argument('--noRL', default=0, type=float)
 parser.add_argument('--n_hidden', default=194, type=int)
 parser.add_argument('--n_hidden_dec', default=128, type=int)
 parser.add_argument('--lr', default=7e-4, type=float)
@@ -73,7 +72,6 @@ p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
 similarity_min = args.similarity_min
-noRL = bool(args.noRL)
 n_hidden = args.n_hidden
 n_hidden_dec = args.n_hidden_dec
 learning_rate = args.lr
@@ -87,7 +85,7 @@ log_root = args.log_root
 
 
 '''init'''
-seed_val = subj_id + 777
+seed_val = subj_id
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
 
@@ -112,13 +110,9 @@ task = SequenceLearning(
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
 )
-
-x_dim = task.x_dim
-if attach_cond != 0:
-    x_dim += 1
 # init agent
 agent = Agent(
-    input_dim=x_dim, output_dim=p.a_dim,
+    input_dim=task.x_dim, output_dim=p.a_dim,
     rnn_hidden_dim=p.net.n_hidden, dec_hidden_dim=p.net.n_hidden_dec,
     dict_len=p.net.dict_len, cmpt=p.net.cmpt
 )
@@ -164,8 +158,8 @@ for epoch_id in np.arange(epoch_id, n_epoch):
         optimizer = optimizer_rl
 
     [results, metrics] = run_tz(
-        agent, optimizer, task, p, n_examples, fix_cond=None, learning=True,
-        get_cache=False, supervised=supervised, noRL=noRL,
+        agent, optimizer, task, p, n_examples,
+        supervised=supervised, fix_cond=None, learning=True, get_cache=False,
     )
 
     [dist_a, targ_a, _, Log_cond[epoch_id]] = results
@@ -287,7 +281,7 @@ for fix_penalty in np.arange(0, penalty + 1, 2):
         agent, optimizer, task, p, n_examples_test,
         supervised=False, learning=False, get_data=True,
         fix_cond=fix_cond, fix_penalty=fix_penalty,
-        slience_recall_time=slience_recall_time, scramble=scramble,
+        slience_recall_time=slience_recall_time, scramble=scramble
     )
     # save the data
     test_params = [fix_penalty, pad_len_test, slience_recall_time]

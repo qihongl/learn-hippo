@@ -3,7 +3,7 @@ import numpy as np
 from scipy.stats import sem
 
 
-def compute_stats(matrix, axis=0, n_se=2):
+def compute_stats(matrix, axis=0, n_se=2, omitnan=False):
     """compute mean and errorbar w.r.t to SE
 
     Parameters
@@ -21,8 +21,12 @@ def compute_stats(matrix, axis=0, n_se=2):
         Description of returned object.
 
     """
-    mu_ = np.mean(matrix, axis=axis)
-    er_ = sem(matrix, axis=axis) * n_se
+    if omitnan:
+        mu_ = np.nanmean(matrix, axis=axis)
+        er_ = sem(matrix, nan_policy='omit', axis=axis) * n_se
+    else:
+        mu_ = np.mean(matrix, axis=axis)
+        er_ = sem(matrix, axis=axis) * n_se
     return mu_, er_
 
 
