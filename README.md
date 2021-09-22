@@ -94,12 +94,20 @@ Here's the structure of this repo
     ├── demo.py                                 # a demo for Code Ocean
     ├── eval-group.py                           # evaluate a group of models 
     ├── exp_tz.py                               # definition of the Twilight Zone experiment by Chen et al. 2016
-    ├── train-sl.py                             # train the model 
-    ├── vis-data.py                             # visualize some basic results  
+    ├── train-sl.py                             # train the model on the event prediction task 
+    ├── train-sl-after.py                       # train the postgating model on the event prediction task 
+    ├── train-spa2-pe.py                        # train the model on the paired associate learning task 
+    ├── vis-compare-encpol.py                   # compute the performance of different encoding policies 
+    ├── vis-cosine-sim.py                       # visualize the cosine similarity between cell state and memories over time 
+    ├── vis-data.py                             # visualize the basic results  
+    ├── vis-data-after.py                       # visualize the basic results for the postgating model
     ├── vis-inpt-by-schematicity.py             # visualize the effect of schema level on input gate values (see simulation 9)
     ├── vis-isc.py                              # visualize the ISC analysis
     ├── vis-policy-adjustment.py                # visualize the how the model adjusts its policy according to the penalty level 
-    └── vis-policy-diff.py                      # visualize the how the model models trained in different penalty levels respond differently
+    ├── vis-policy-diff.py                      # visualize the how the model models trained in different penalty levels respond differently
+    ├── vis-policy-adj-similarity.py    
+    └──vis-spa2.py
+    
 ```    
 
 ## Replicate the simulation results - general guidelines
