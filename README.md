@@ -42,6 +42,7 @@ Here's the structure of this repo
     │   ├── neural.py
     │   ├── preprocessing.py
     │   ├── task.py
+    │   ├── spa.py    
     │   └── utils.py
     ├── examples        # some simple demos 
     │   ├── event-empirical-similarity.py
@@ -53,18 +54,20 @@ Here's the structure of this repo
     │   ├── true-uncertainty.py
     │   └── zuo-2019-control-patient-isc-logic.py
     ├── models         # the components of the model 
-    │   ├── A2C.py             # the standard actor-critic algorithm 
-    │   ├── EM.py              # the episodic memory module
-    │   ├── LCALSTM.py         # the model 
-    │   ├── LCA_pytorch.py     # a pytorch implementation of leaky competing accumulator model
-    │   ├── _rl_helpers.py     # some RL helpers 
-    │   ├── initializer.py     # weight initializer
-    │   ├── metrics.py         # some helper functions for metrics 
+    │   ├── A2C.py                          # the standard actor-critic algorithm 
+    │   ├── EM.py                           # the episodic memory module
+    │   ├── LCALSTM.py                      # the model 
+    │   ├── LCALSTM-after.py                # the postgating model     
+    │   ├── LCA_pytorch.py                  # a pytorch implementation of leaky competing accumulator model
+    │   ├── _rl_helpers.py                  # some RL helpers 
+    │   ├── initializer.py                  # weight initializer
+    │   ├── metrics.py                      # some helper functions for metrics 
     │   ├── __init__.py    
     ├── task            # the definition of the task 
     │   ├── Schema.py           
-    │   ├── SequenceLearning.py
     │   ├── StimSampler.py
+    │   ├── SequenceLearning.py    
+    │   ├── SimplePairedAssociate2
     │   ├── utils.py
     │   └── __init__.py
     ├── utils           # general utility functions
@@ -77,31 +80,26 @@ Here's the structure of this repo
     │   ├── _utils.py
     │   ├── _vis.py
     │   └── __init__.py    
-    ├── submit-sim1.sh              # the script for submitting jobs for simulation 1, triggers train-model.sh
-    ├── submit-sim2.sh              # the script for submitting jobs for simulation 2, triggers train-model.sh
-    ├── submit-sim3-1.sh            # the script for submitting jobs for simulation 3 (part one), triggers train-model.sh
-    ├── submit-sim3-2.sh            # the script for submitting jobs for simulation 3 (part two), triggers train-model.sh
-    ├── submit-sim4.sh              # the script for submitting jobs for simulation 4, triggers train-model.sh
-    ├── submit-sim8.sh              # the script for submitting jobs for simulation 8, triggers train-model-aba.sh
-    ├── submit-sim9.sh              # the script for submitting jobs for simulation 9, triggers train-model.sh
-    ├── train-model-aba.sh          # submit a python job to train a model on the ABA experiment by Chang et al. 2020
-    ├── train-model.sh              # submit a python job to train a model for the Twilight Zone experiment by Chen et al. 2016
-    ├── demo.py                     # a demo for Code Ocean
-    ├── eval-group.py               # evaluate a group of models 
-    ├── exp_aba.py                  # definition of the ABA experiment by Chang et al. 2020
-    ├── exp_tz.py                   # definition of the Twilight Zone experiment by Chen et al. 2016
-    ├── mvpa-aba.py                 # run MVPA analysis on the ABA experiment 
-    ├── mvpa-plot.py                # plot MVPA results from mvpa-run.py
-    ├── mvpa-run.py                 # run MVPA analysis (mainly for simulation 9, but useful for other simulations except for simulation 8)
-    ├── train-aba.py                # train the model for simulation 8
-    ├── train-sl.py                 # train the model (except for simulation 8)
-    ├── vis-aba.py                  # visualize the data for simulation 8
-    ├── vis-data.py                 # visualize some basic results  
-    ├── vis-inpt-by-schematicity.py # visualize the effect of schema level on input gate values (see simulation 9)
-    ├── vis-isc.py                  # visualize the ISC analysis (see simulation 6)
-    ├── vis-policy-adjustment.py    # visualize the how the model adjusts its policy according to the penalty level 
-    ├── vis-policy-diff.py          # visualize the how the model models trained in different penalty levels respond differently
-    └── vis-zuo-scramble.py         # visualize the results for the scrambling analysis (see simulation 7)
+    ├── submit-vary-train-penalty.sh            # train models with fixed penalty level, triggers train-model.sh
+    ├── submit-vary-test-penalty.sh             # train models with varying penalty level, triggers train-model.sh
+    ├── submit-vary-test-penalty-postgate.sh    # train postgating models with varying penalty level, triggers train-model-after.sh
+    ├── submit-vary-test-penalty-fixobs.sh      # train models with varying penalty level and fix the observation order, triggers train-model.sh
+    ├── submit-familiarity.sh                   # train models with familiarity signal, triggers train-model.sh
+    ├── submit-similarity-high.sh               # train models in a high similarity env, part of similarity x penalty experiment, triggers train-model.sh
+    ├── submit-similarity-low.sh                # train models in a low similarity env, part of similarity x penalty experiment, triggers train-model.sh
+    ├── submit-vary-schema-level.sh             # train models with varying schema level, triggers train-model.sh
+    ├── submit-vary-schema-level-postgate.sh    # train postgating models with varying schema level, triggers train-model-after.sh
+    ├── train-model.sh                          # submit a python job to train a model
+    ├── train-model-after.sh                    # submit a python job to train a postgating model    
+    ├── demo.py                                 # a demo for Code Ocean
+    ├── eval-group.py                           # evaluate a group of models 
+    ├── exp_tz.py                               # definition of the Twilight Zone experiment by Chen et al. 2016
+    ├── train-sl.py                             # train the model 
+    ├── vis-data.py                             # visualize some basic results  
+    ├── vis-inpt-by-schematicity.py             # visualize the effect of schema level on input gate values (see simulation 9)
+    ├── vis-isc.py                              # visualize the ISC analysis
+    ├── vis-policy-adjustment.py                # visualize the how the model adjusts its policy according to the penalty level 
+    └── vis-policy-diff.py                      # visualize the how the model models trained in different penalty levels respond differently
 ```    
 
 ## Replicate the simulation results - general guidelines
