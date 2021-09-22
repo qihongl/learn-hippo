@@ -121,7 +121,7 @@ git clone https://https://github.com/qihongl/learn-hippo
 ```
 ### 1. Model training 
 I provided job submission files for all simulations: `src/submit-sim*.sh`. 
-For example, [src/submit-sim2.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-sim2.sh) is the job submission file for simulation 2. Executing this file will train 15 models in parallel with the specified simulation parameters. Note that the job of `submit-sim*.sh` is to specify simulation parameters and trigger 
+For example, [src/submit-vary-test-penalty.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-vary-test-penalty.sh) is the job submission file to train models with varying penalty level at test. Executing this file will train 15 models in parallel with the specified simulation parameters. Note that the job of `submit-*.sh` is to specify simulation parameters and trigger 
 [train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh). 
 Then `train-model.sh` takes those simulation parameters and runs a python program that trains the model, which is general across simulations. 
 
@@ -134,20 +134,20 @@ Several things to check before you run this script.
 To train models for simulation 2, simply go to the `src/` folder and type the following: 
 
 ```sh
-./submit-sim2.sh
+./submit-vary-test-penalty.sh
 ```
 
-This will trigger `train-mode.sh` and it will submit a python job with the following command with the specified simulation parameters: 
+This will trigger `train-model.sh` and it will submit a python job with the following command with the specified simulation parameters: 
 
 ```sh
 srun python -u train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${3}  \
-    --n_epoch ${4} --sup_epoch ${5} --p_rm_ob_enc ${6} --p_rm_ob_rcl ${7} \
-    --similarity_max ${8} --similarity_min ${9} --penalty_random ${10} \
-    --def_prob ${11} --n_def_tps ${12} --attach_cond ${13} \
+    --n_epoch ${4} --sup_epoch ${5} --similarity_max ${6} --similarity_min ${7} \
+    --penalty_random ${8} --def_prob ${9} --n_def_tps ${10} --cmpt ${11} --attach_cond ${12} \
+    --enc_size ${13} --dict_len ${14} --noRL ${15} \
     --log_root $DATADIR
 ```
 
-The code above clarifies how to train a model on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuration `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `attach_cond = {13}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --attach_cond ${13}`. This works on your laptop too. 
+The code above clarifies how to train a model on any platform with any parameter configuration. Suppose you want to train the model with some parameter configuration `exp_name = {1}`, `subj_id = {2}`, `penalty = {4}`... `noRL = {15}`, simply run `python train-sl.py --exp_name ${1} --subj_id ${2} --penalty ${4} ... --noRL = {15}`. Though this works on your laptop too, it is gonna be tedious and error prone. That why I wrote the `submit-*.sh` to do this systematically. 
 
 Here's a brief summary of what these parameters mean: 
 
@@ -175,7 +175,13 @@ Here's a brief summary of what these parameters mean:
 
 `n_def_tps` - the number of time points with a prototypical event
 
+`cmpt` - the level of competition 
+
 `attach_cond` - if 1 (true), attach the familiarity signal to the input; if (0) false, doesn't affect the input at all
+
+`enc_size` - defines the frequency of episodic encoding. e.g. if it is the same as `n_param`, then the model selectively encodes at event boundaries. if it is `n_param/2` then it also encodes midway
+
+`dict_len` - the size of the episodic memory buffer. since the buffer is a queue, when there is an overflow, the earliest memory will be removed
 
 
 ### 2. Model evaluation 
