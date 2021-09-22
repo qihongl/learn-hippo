@@ -210,87 +210,89 @@ Note that this script will use the input simulation parameters to locate the dat
 
 This section lists the scripts you need to replicate every simulation in the paper. Note that when you use the python scripts to visualize the data (e.g. `vis-*.py`), the input parameters must match the parameters used in the training scripts. This enables the python script to find the location of the saved data. 
 
-### Simulation 1 
+### Simulation 1 - recall policy 
 
 First, train the models 
 ```sh
-./submit-sim1.sh
+./submit-vary-test-penalty.sh
 ```
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim1.sh`)
+Visualize the data (make sure the input parameters in this python script match what's used in `submit-vary-test-penalty.sh`)
 ```sh
 python vis-data.py
 ```
 
+#### Simulation 1 - variants
 
-### Simulation 2
-
-First, train the models
+1. to train the model on a fixed the penalty level, which means the level of penalty is fixed to be the same for both training and testing (instead of varying the penalty at test), train the models with ... 
 ```sh
-./submit-sim2.sh
+./submit-vary-train-penalty.sh
 ```
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim2.sh`)
+And then visualize the data with `vis-data.py`
 
+2. to train the postgaing model with varying test penalty, train the models with ... 
 ```sh
-python vis-data.py
+./submit-vary-train-penalty.sh
 ```
+And then visualize the data with `vis-data.py`
 
-
-### Simulation 3 
-
-First, train the models for in the high event similarity environment: 
+3. to explore the interaction between the level of event similarity and penalty level, train the model with 
 ```sh
-./submit-sim3-1.sh
+./submit-similarity-low.sh
+./submit-similarity-high.sh
 ```
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim3-1.sh`)
+And then visualize the data with `vis-data.py`
 
+4. to explore effect of the familiarity signal, train the model with 
 ```sh
-python vis-data.py
+./submit-familiarity.sh
 ```
-
-Then train the models in the low event similarity environment: 
-```sh
-./submit-sim3-2.sh
-```
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim3-2.sh`)
-
-```sh
-python vis-data.py
-```
-
-### Simulation 4
-
-First, train the models whlie providing the familiarity signal
-```sh
-./submit-sim4.sh
-```
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim4.sh`)
-```sh
-python vis-data.py
-```
-
-Compare these results to what you got from simulation 2 to see the effect of having the familiarity signal. 
+Then visualize the data with `vis-data.py`. 
 
 To reverse the familiarity signal, open `eval-group.py`, change the variable `attach_cond` to `-1`. Then run 
 ```sh
 python eval-group.py
 ```
-
 and visualize the data again. 
 
 
-### Simulation 5 
 
-This simulation re-uses the models trained in simulation 2. First, re-evaluate the model by setting the `enc_size` to `8`, which will let the model to encode episodic memories midway through an event sequence. 
+5. To vary the schema level, run 
+```sh
+./submit-vary-schema-level.sh
+```
+
+Visualize the data: 
+```sh
+python vis-data.py
+```
+
+
+6. To perform the intersubject correlation analysis (appendix). First, you need to re-evaluate the model on RM, DM, NM condition separately. The simulation parameters in `eval-group.py` are configured to do this, so simply run
 ```sh
 python eval-group.py
 ```
+
+Then run the following code to run the inter-subject analysis: 
+```sh
+python vis-isc.py
+```
+
+
+### Simulation 2 - selective encoding at event boundaries 
+
+This simulation re-uses the models trained in simulation 1. First, re-evaluate the model by setting the `enc_size` to `8` and run ... 
+```sh
+python eval-group.py
+```
+... which will let the model to encode episodic memories midway through an event sequence. 
 
 Then you can visualize the data: 
 ```sh
 python vis-data.py
 ```
+This gives you Figure 4B-E. And after that, you can run `vis-compare-encpol.py` to get Figure 4A. 
 
-### Simulation 6
+### Simulation 3 - selectively encode item with high PE in the paired associate learning task
 
 This simulation re-uses the models trained in simulation 2. First, you need to re-evaluate the model on RM, DM, NM condition separately. The simulation parameters in `eval-group.py` are configured to do this, so simply run
 ```sh
@@ -302,55 +304,6 @@ Then run the following code to run the inter-subject analysis:
 python vis-isc.py
 ```
 
-
-### Simulation 7 
-
-This simulation re-use the models trained in simulation 2. First, you need re-evaluate the model on temporally scrambled stimuli while having their hippocampus turned off, The simulation parameters in `eval-group.py` are configured to do this, so simply run 
-```sh
-python eval-group.py
-```
-Then run the following code to run the inter-subject analysis: 
-```sh
-python vis-zuo-scramble.py
-```
-
-### Simulation 8
-
-In this simulation, we need to train the models in simulation 2 further on a new task (make sure the input parameters in this python script match what's used in `submit-sim2.sh`)
-
-```sh
-./submit-sim8.sh
-```
-
-Then visualize the data (make sure the input parameters in this python script match what's used in `submit-sim2.sh`) 
-```sh
-python vis-aba.py
-```
-
-This script performs MVPA, you need to evaluate the model on a larger dataset with `eval-group-aba.py` and then run `mvpa-aba.py` to plot the result
-```sh
-python eval-group-aba.py
-python mvpa-aba.py
-```
-
-
-### Simulation 9 
-
-For this simulation, train the model and visualize the data
-```sh
-./submit-sim9.sh
-```
-
-Visualize the data (make sure the input parameters in this python script match what's used in `submit-sim9.sh`)
-```sh
-python vis-data.py
-```
-
-To perform MVPA and visualize the data 
-```sh
-python mvpa-run.py
-python mvpa-plot.py
-```
 
 
 ### Contact
