@@ -28,39 +28,29 @@ fig_log_dir = '../figs'
 # fig_log_dir = '../../results'
 
 '''change parameters here'''
+# simulation 1 - an example model trained with vary test penalty
+# simulation 2 - the same model when it has midway encoded episodic memory
 simulation_id = 1
 
 if simulation_id == 1:
-    exp_name = 'vary-training-penalty'
-    attach_cond = 0
-    enc_size_test = 16
-    penalty_train = penalty_test = 4
-    # penalty_train = penalty_test = 0
-elif simulation_id == 2:
-    exp_name = 'vary-test-penalty'
     attach_cond = 0
     enc_size_test = 16
     penalty_train = 4
-    penalty_test = 4
-    # penalty_test = 2
+    # penalty_test = 4
+    penalty_test = 2
     # penalty_test = 0
-elif simulation_id == 4:
-    exp_name = 'familiarity-signal'
-    attach_cond = 1
-    enc_size_test = 16
-    penalty_train = 4
-    penalty_test = 4
-elif simulation_id == 5:
-    exp_name = 'vary-test-penalty'
+elif simulation_id == 2:
+
     attach_cond = 0
     enc_size_test = 8
     penalty_train = 4
-    penalty_test = 4
+    penalty_test = 2
 else:
     raise ValueError(
-        'This demo only support simulation 1, 2, 4, and 5. Simulation {simulation_id} is not available.'
+        'Unrecognizable experiment name: {exp_name}.'
     )
 
+exp_name = 'vary-test-penalty'
 # default params
 supervised_epoch = 600
 epoch_load = 1000
@@ -316,118 +306,3 @@ f.tight_layout()
 sns.despine()
 fname = os.path.join(fig_log_dir, 'dm-input-gate-uncertainty.png')
 f.savefig(fname, dpi=120, bbox_to_anchor='tight')
-
-
-'''load back pretrained MVPA classifier'''
-mvpa_data_dict_fname = f'mvpa-{exp_name}-p{penalty_train}-{penalty_test}-%.2f.pkl' % def_prob
-if not os.path.isfile(os.path.join(log_root, mvpa_data_dict_fname)):
-    sys.exit('No pre-trained classifier for this config')
-mvpa_results = pickle_load_dict(os.path.join(log_root, mvpa_data_dict_fname))
-clfs = mvpa_results['classifier_g'][subj_id]
-
-'''organize the data for MVPA analysis'''
-corrects_p2 = corrects[:, T_part:]
-mistakes_p1 = mistakes[:, :T_part]
-mistakes_p2 = mistakes[:, T_part:]
-targets_p1, targets_p2 = targets[:, :T_part], targets[:, T_part:]
-actions_p1, actions_p2 = actions[:, :T_part], actions[:, T_part:]
-
-# pre-extract p2 data for the DM condition
-corrects_dmp2 = corrects_p2[cond_ids['DM']]
-mistakes_dmp2 = mistakes_p2[cond_ids['DM']]
-mistakes_dmp1 = mistakes_p1[cond_ids['DM']]
-
-targets_dmp2 = targets_p2[cond_ids['DM'], :]
-actions_dmp2 = actions_p2[cond_ids['DM']]
-targets_dmp1 = targets_p1[cond_ids['DM'], :]
-actions_dmp1 = actions_p1[cond_ids['DM']]
-
-# get observation key and values for p1 p2
-o_keys = np.zeros((n_trials, T_total))
-for i in trial_id:
-    o_keys[i], _, _ = get_oq_keys(X_raw[i], task)
-o_keys_p1, o_keys_p2 = o_keys[:, :T_part], o_keys[:, T_part:]
-o_keys_dmp1 = o_keys_p1[cond_ids['DM']]
-o_keys_dmp2 = o_keys_p2[cond_ids['DM']]
-
-# precompute mistakes-related variables
-has_mistake = np.sum(mistakes_dmp2, axis=1) > 0
-# split trials w/ vs. w/o mistakes
-actions_dmp1hm = actions_dmp1[has_mistake, :]
-targets_dmp1hm = targets_dmp1[has_mistake, :]
-actions_dmp2hm = actions_dmp2[has_mistake, :]
-targets_dmp2hm = targets_dmp2[has_mistake, :]
-mistakes_dmp2hm = mistakes_dmp2[has_mistake, :]
-o_keys_dmp1hm = o_keys_dmp1[has_mistake, :]
-o_keys_dmp2hm = o_keys_dmp2[has_mistake, :]
-actions_dmp1nm = actions_dmp1[~has_mistake, :]
-targets_dmp1nm = targets_dmp1[~has_mistake, :]
-actions_dmp2nm = actions_dmp2[~has_mistake, :]
-targets_dmp2nm = targets_dmp2[~has_mistake, :]
-corrects_dmp2nm = corrects_dmp2[~has_mistake, :]
-o_keys_dmp1nm = o_keys_dmp1[~has_mistake, :]
-o_keys_dmp2nm = o_keys_dmp2[~has_mistake, :]
-
-o_keys_dmhm = np.hstack([o_keys_dmp1hm, o_keys_dmp2hm])
-actions_dmhm = np.hstack([actions_dmp1hm, actions_dmp2hm])
-targets_dmhm = np.hstack([targets_dmp1hm, targets_dmp2hm])
-o_keys_dmnm = np.hstack([o_keys_dmp1nm, o_keys_dmp2nm])
-actions_dmnm = np.hstack([actions_dmp1nm, actions_dmp2nm])
-targets_dmnm = np.hstack([targets_dmp1nm, targets_dmp2nm])
-
-actions_dmnm[actions_dmnm == n_branch] = -1
-actions_dmhm[actions_dmhm == n_branch] = -1
-actions_dmhm += 1
-actions_dmnm += 1
-targets_dmhm += 1
-targets_dmnm += 1
-
-'''apply the classifier and plot the decoding result for 2 trials'''
-Yob_proba = np.zeros((n_trials, T_part, T_total, n_branch + 1))
-for t in range(n_param):
-    for i in range(n_trials):
-        Yob_proba[i, t] = clfs[t].predict_proba(CM[i])
-
-# get decoding heatmaps
-Yob_proba_dm = Yob_proba[cond_ids['DM']]
-Yob_proba_hm = Yob_proba_dm[has_mistake, :]
-Yob_proba_nm = Yob_proba_dm[~has_mistake, :]
-
-# show mistakes
-i, j = 1, 0
-# for the i-th mistakes trial, plot the j-th mistake
-# for i in range(np.shape(mistakes_dmp2hm)[0]):
-# when/what feature were mistaken
-mistake_feature_i = np.where(mistakes_dmp2hm[i, :])[0]
-# for j in range(len(mistake_feature_i)):
-decoded_feat_mat = Yob_proba_hm[i, mistake_feature_i[j]]
-feat_otimes = np.where(
-    o_keys_dmhm[i] == mistake_feature_i[j])[0]
-feat_qtimes = mistake_feature_i[j] + np.array([0, T_part])
-targets_dmnm_i = targets_dmhm[i, :]
-actions_dmnm_i = actions_dmhm[i, :]
-f, axes = imshow_decoding_heatmap(
-    decoded_feat_mat, feat_otimes, feat_qtimes,
-    targets_dmnm_i, actions_dmnm_i, n_param, n_branch
-)
-fname = os.path.join(fig_log_dir, f'mistake-{i}-{j}.png')
-f.savefig(fname, dpi=100, bbox_to_anchor='tight')
-
-# show correct trials
-i, j = 1, 2
-# for i in range(np.shape(corrects_dmp2nm)[0]):
-# when/what feature were mistaken
-correct_feature_i = np.where(corrects_dmp2nm[i, :])[0]
-# for j in range(len(correct_feature_i)):
-decoded_feat_mat = Yob_proba_nm[i, correct_feature_i[j]]
-feat_otimes = np.where(
-    o_keys_dmnm[i] == correct_feature_i[j])[0]
-feat_qtimes = correct_feature_i[j] + np.array([0, T_part])
-targets_dmnm_i = targets_dmnm[i, :]
-actions_dmnm_i = actions_dmnm[i, :]
-f, axes = imshow_decoding_heatmap(
-    decoded_feat_mat, feat_otimes, feat_qtimes,
-    targets_dmnm_i, actions_dmnm_i, n_param, n_branch
-)
-fname = os.path.join(fig_log_dir, f'correct-{i}-{j}.png')
-f.savefig(fname, dpi=100, bbox_to_anchor='tight')
