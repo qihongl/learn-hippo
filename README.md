@@ -20,7 +20,7 @@ The code should work as long as the versions of your packages are close to what 
 
 I used a cluster to parallelize model training, so that most simulations took less than a day. The cluster I used at Princeton uses [Slurm](https://slurm.schedmd.com/documentation.html). So depends on where you are, the job submission files 
 (e.g. 
-[src/submit-sim1.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-sim1.sh)
+[src/submit-vary-test-penalty.sh](https://github.com/qihongl/learn-hippo/blob/master/src/submit-vary-test-penalty.sh)
 [src/train-model.sh](https://github.com/qihongl/learn-hippo/blob/master/src/train-model.sh)
 )
 I wrote might not work for you. 
