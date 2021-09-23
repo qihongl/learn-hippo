@@ -21,7 +21,7 @@ from analysis import compute_stats, compute_n_trials_to_skip, trim_data, \
     get_trial_cond_ids, process_cache
 warnings.filterwarnings("ignore")
 log_root = '../log'
-# fpath = 'data/decode-results.pkl'
+fpath = 'data/decode-results.pkl'
 sns.set(style='white', palette='colorblind', context='poster')
 
 exp_name = 'vary-test-penalty'
@@ -29,7 +29,7 @@ penalty_train = 4
 fix_penalty = 2
 fix_cond = 'DM'
 epoch_load = 1000
-n_subjs = 15
+n_subjs = 14
 
 n_branch = 4
 n_param = 16
@@ -176,7 +176,6 @@ Yhat_all = np.array(data_dict['Yhat_all'])
 Yob_all = np.array(data_dict['Yob_all'])
 o_keys_p1_all = data_dict['o_keys_p1_all']
 o_keys_p2_all = data_dict['o_keys_p2_all']
-len(o_keys_p1_all)
 
 '''visualize the results'''
 # print(f'overall acc: {np.mean(Y_match)}')
@@ -211,28 +210,22 @@ for ax in axes:
 sns.despine()
 f.tight_layout()
 
-# # compute the decoding accuracy, averaged across subjects
-# # horizontal plot
-# dacc_mu, dacc_se = compute_stats(np.mean(np.mean(dacc, axis=-1), axis=-1))
-# f, ax = plt.subplots(1, 1, figsize=(5, 3))
-# ax.barh(y=range(1), height=1, width=dacc_mu, xerr=dacc_se)
-# ax.set_xlabel('Decoding accuracy = %.2f' % (dacc_mu))
-# ax.axvline(1, linestyle='--', color='grey')
-# ax.set_yticks([])
-# sns.despine()
-# f.tight_layout()
-# # vertical plot
-# f, ax = plt.subplots(1, 1, figsize=(3, 4))
-# ax.bar(x=range(1), width=1, height=dacc_mu, yerr=dacc_se)
-# ax.set_ylabel('MVPA Acc. = %.2f' % (dacc_mu))
-# ax.axhline(1, linestyle='--', color='grey')
-# ax.set_xticks([])
-# sns.despine()
-# f.tight_layout()
+# compute the decoding accuracy, averaged across subjects
+dacc_mu, dacc_se = compute_stats(np.mean(np.mean(dacc, axis=-1), axis=-1))
+
+# vertical plot
+f, ax = plt.subplots(1, 1, figsize=(3, 4))
+ax.bar(x=range(1), width=1, height=dacc_mu, yerr=dacc_se)
+ax.set_ylabel('MVPA Acc. = %.2f' % (dacc_mu))
+ax.axhline(1, linestyle='--', color='grey')
+ax.set_xticks([])
+sns.despine()
+f.tight_layout()
 
 # make decoding heatmap for several trials
 i_s = 0
 i = 5
+o_keys_p1, o_keys_p2 = o_keys_p1_all[i_s], o_keys_p2_all[i_s]
 for i in range(10):
     decode_hmap = Y_pred_match[i_s][i].T
     f, axes = plt.subplots(1, 2, figsize=(8, 5), sharey=True)
