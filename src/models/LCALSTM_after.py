@@ -22,11 +22,15 @@ class LCALSTM_after(nn.Module):
     def __init__(
             self, input_dim, output_dim, rnn_hidden_dim, dec_hidden_dim,
             kernel='cosine', dict_len=2, weight_init_scheme='ortho',
-            cmpt=.8,
+            cmpt=.8, add_penalty_dim=True
     ):
         super(LCALSTM_after, self).__init__()
         self.cmpt = cmpt
-        self.input_dim = input_dim + 1
+        if add_penalty_dim:
+            self.input_dim = input_dim + 1
+        else:
+            self.input_dim = input_dim
+        # self.input_dim = input_dim + 1
         self.rnn_hidden_dim = rnn_hidden_dim
         self.n_hidden_total = (N_VSIG + 1) * rnn_hidden_dim + N_SSIG
         # rnn module
