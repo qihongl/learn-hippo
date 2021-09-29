@@ -55,14 +55,6 @@ class LCALSTM(nn.Module):
         # init params
         initialize_weights(self, self.weight_init_scheme)
 
-    # def init_init_states(self):
-    #     scale = 1 / self.rnn_hidden_dim
-    #     self.h_0 = torch.nn.Parameter(
-    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-    #     )
-    #     self.c_0 = torch.nn.Parameter(
-    #         sample_random_vector(self.rnn_hidden_dim, scale), requires_grad=True
-    #     )
 
     def get_init_states(self, scale=.1, device='cpu'):
         h_0_ = sample_random_vector(self.rnn_hidden_dim, scale)
