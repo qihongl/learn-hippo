@@ -42,7 +42,6 @@ Here's the structure of this repo
     │   ├── neural.py
     │   ├── preprocessing.py
     │   ├── task.py
-    │   ├── spa.py    
     │   └── utils.py
     ├── examples        # some simple demos 
     │   ├── event-empirical-similarity.py
@@ -67,7 +66,6 @@ Here's the structure of this repo
     │   ├── Schema.py           
     │   ├── StimSampler.py
     │   ├── SequenceLearning.py    
-    │   ├── SimplePairedAssociate2
     │   ├── utils.py
     │   └── __init__.py
     ├── utils           # general utility functions
@@ -96,7 +94,6 @@ Here's the structure of this repo
     ├── exp_tz.py                               # definition of the Twilight Zone experiment by Chen et al. 2016
     ├── train-sl.py                             # train the model on the event prediction task 
     ├── train-sl-after.py                       # train the postgating model on the event prediction task 
-    ├── train-spa2-pe.py                        # train the model on the paired associate learning task 
     ├── vis-compare-encpol.py                   # compute the performance of different encoding policies 
     ├── vis-cosine-sim.py                       # visualize the cosine similarity between cell state and memories over time 
     ├── vis-data.py                             # visualize the basic results  
@@ -105,8 +102,7 @@ Here's the structure of this repo
     ├── vis-isc.py                              # visualize the ISC analysis
     ├── vis-policy-adjustment.py                # visualize the how the model adjusts its policy according to the penalty level 
     ├── vis-policy-diff.py                      # visualize the how the model models trained in different penalty levels respond differently
-    ├── vis-policy-adj-similarity.py    
-    └──vis-spa2.py
+    └── vis-policy-adj-similarity.py    
     
 ```    
 
@@ -291,18 +287,6 @@ Then you can visualize the data:
 python vis-data.py
 ```
 This gives you Figure 4B-E. And after that, you can run `vis-compare-encpol.py` to get Figure 4A. 
-
-### Simulation 3 - selectively encode item with high PE in the paired associate learning task
-
-This simulation re-uses the models trained in simulation 2. First, you need to re-evaluate the model on RM, DM, NM condition separately. The simulation parameters in `eval-group.py` are configured to do this, so simply run
-```sh
-python eval-group.py
-```
-
-Then run the following code to run the inter-subject analysis: 
-```sh
-python vis-isc.py
-```
 
 
 
