@@ -1,2 +1,1 @@
 from .SequenceLearning import SequenceLearning
-from .SimplePairedAssociate2 import SimplePairedAssociate2
