@@ -2,7 +2,7 @@
 
 This repo hosts the python code for the following paper: 
 
-[Lu, Q., Hasson, U., & Norman, K. A. (2020). When to retrieve and encode episodic memories: a neural network model of hippocampal-cortical interaction. bioRxiv](https://www.biorxiv.org/content/10.1101/2020.12.15.422882v2)
+[Lu, Q., Hasson, U., & Norman, K. A. (2021). When to retrieve and encode episodic memories: a neural network model of hippocampal-cortical interaction. bioRxiv](https://www.biorxiv.org/content/10.1101/2020.12.15.422882v2)
 
 If you have access to a cluster, most simulations can be replicated in a day. 
 
