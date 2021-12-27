@@ -23,6 +23,7 @@ class P():
         penalty_onehot=0,
         normalize_return=1,
         attach_cond=0,
+        repeat_query=False,
         rm_ob_probabilistic=False,
         p_rm_ob_rcl=0,
         p_rm_ob_enc=0,
@@ -88,7 +89,7 @@ class P():
             exp_name, n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return, attach_cond,
+            normalize_return, attach_cond,repeat_query,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -133,7 +134,7 @@ class env():
             n_param, n_branch, pad_len,
             def_path, def_prob, def_tps,
             penalty, penalty_random, penalty_discrete, penalty_onehot,
-            normalize_return, attach_cond,
+            normalize_return, attach_cond, repeat_query,
             rm_ob_probabilistic,
             p_rm_ob_rcl, p_rm_ob_enc,
             mode_rm_ob_rcl, mode_rm_ob_enc,
@@ -161,9 +162,9 @@ class env():
         self.normalize_return = _zero_one_to_true_false(normalize_return)
         # self.attach_cond = True if attach_cond == 1 else False
         self.attach_cond = attach_cond
+        self.repeat_query = repeat_query
         #
         self.chance = 1 / n_branch
-
         self.validate_args()
 
     def validate_args(self):

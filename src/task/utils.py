@@ -166,3 +166,38 @@ def scramble_array_list(array_list, nchunks=4):
 #             nCk //= n
 #         n -= 1
 #         yield n
+
+
+def get_botvinick_query(n_param, n_events=1, n_parts=2):
+    """get botvinick stimuli - repeat query for 1st vs. 2nd half of the event
+
+    Parameters
+    ----------
+    n_param : int
+        Description of parameter `n_param`.
+    n_events : int
+        Description of parameter `n_events`.
+    n_parts : int
+        Description of parameter `n_parts`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+
+    return np.hstack([
+        np.vstack([np.eye(n_param // 2) for _ in range(n_parts * n_events)]),
+        np.vstack([np.zeros((n_param // 2, n_param // 2))
+        for _ in range(n_parts * n_events)])
+    ])
+
+
+if __name__ == "__main__":
+    '''show how to use get_botvinick_query'''
+    import matplotlib.pyplot as plt
+    n_param = 16
+    n_parts = 2
+    bquery = get_botvinick_query(n_param, n_events=1)
+    plt.imshow(bquery)

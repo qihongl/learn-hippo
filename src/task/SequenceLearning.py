@@ -34,7 +34,8 @@ class SequenceLearning():
             permute_queries=False,
             permute_observations=True,
             key_rep_type='time',
-            sampling_mode='enumerative'
+            sampling_mode='enumerative',
+            repeat_query=False,
     ):
         # build a sampler
         self.stim_sampler = StimSampler(
@@ -48,6 +49,7 @@ class SequenceLearning():
             key_rep_type=key_rep_type,
             n_rm_fixed=n_rm_fixed,
             sampling_mode=sampling_mode,
+            repeat_query=repeat_query,
         )
         # graph param
         self.n_param = n_param

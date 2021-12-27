@@ -1,5 +1,6 @@
 import numpy as np
 from task.Schema import Schema
+from task.utils import get_botvinick_query
 
 # import pdb
 
@@ -24,7 +25,8 @@ class StimSampler():
             context_dim=1,
             context_drift=False,
             n_rm_fixed=False,
-            sampling_mode='enumerative'
+            sampling_mode='enumerative',
+            repeat_query=False,
     ):
         self.n_param = n_param
         self.n_branch = n_branch
@@ -45,6 +47,8 @@ class StimSampler():
         #
         self.rm_kv = rm_kv
         self.n_rm_fixed = n_rm_fixed
+        #
+        self.repeat_query=repeat_query
         #
         self.reset_schema()
 
@@ -116,24 +120,14 @@ class StimSampler():
             keys_vec_, vals_vec_, n_parts, permute_observations)
         q_keys_vec, q_vals_vec = self._sample_permutations_sup(
             keys_vec_, vals_vec_, n_parts, permute_queries)
-        # if permute_observations:
-        #     o_keys_vec, o_vals_vec = self._sample_permutations(
-        #         keys_vec_, vals_vec_, n_parts)
-        # else:
-        #     o_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
-        #     o_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
-        # # sample for the query phase
-        # if permute_queries:
-        #     q_keys_vec, q_vals_vec = self._sample_permutations(
-        #         keys_vec_, vals_vec_, n_parts)
-        # else:
-        #     q_keys_vec = np.stack([keys_vec_ for _ in range(n_parts)])
-        #     q_vals_vec = np.stack([vals_vec_ for _ in range(n_parts)])
         # corrupt input during encoding
         o_keys_vec, o_vals_vec = self._corrupt_observations(
             o_keys_vec, o_vals_vec, p_rm_ob_enc, p_rm_ob_rcl)
         # context are assumed to repeat across the two phases
         o_ctxs_vec = q_ctxs_vec = ctxs_vec_
+        # whether to repeat query
+        if self.repeat_query:
+            q_keys_vec = [get_botvinick_query(self.n_param) for _ in range(n_parts)]
         # pack sample
         o_sample_ = [o_keys_vec, o_vals_vec, o_ctxs_vec]
         q_sample_ = [q_keys_vec, q_vals_vec, q_ctxs_vec]
@@ -236,7 +230,6 @@ class StimSampler():
         """
         if self.pad_len == 0 or self.max_pad_len == 0:
             return o_sample_, q_sample_
-
         # uniformly sample a padding length
         if self.pad_len == 'random':
             # high is exclusive so need to add 1
@@ -341,7 +334,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # from task.utils import sample_rand_path,sample_def_tps
     # init a graph
-    n_param, n_branch = 10, 2
+    n_param, n_branch = 16, 4
     n_parts = 2
     pad_len = 0
     # def_tps = np.array([1, 0] * 5)
@@ -351,7 +344,7 @@ if __name__ == "__main__":
     def_tps = np.array([0, 1] * (n_param // 2))
     # def_path = np.tile(np.array([[1, 0], [0, 1]]), (1, 5)).T
     # def_path = np.tile(np.array([[1, 0], [0, 1]]), (1, n_param // 2)).T
-    def_path = np.vstack([[1, 0] for i in range(10)])
+    def_path = np.vstack([[1, 0] for i in range(n_param)])
     def_prob = .9
     # pad_len = 'random'
     p_rm_ob_enc, p_rm_ob_rcl = .5, .5

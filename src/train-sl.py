@@ -35,6 +35,7 @@ parser.add_argument('--penalty_discrete', default=1, type=int)
 parser.add_argument('--penalty_onehot', default=0, type=int)
 parser.add_argument('--normalize_return', default=1, type=int)
 parser.add_argument('--attach_cond', default=0, type=int)
+parser.add_argument('--repeat_query', default=0, type=int)
 parser.add_argument('--p_rm_ob_enc', default=0.3, type=float)
 parser.add_argument('--p_rm_ob_rcl', default=0, type=float)
 parser.add_argument('--similarity_max', default=.9, type=float)
@@ -69,6 +70,7 @@ penalty_discrete = args.penalty_discrete
 penalty_onehot = args.penalty_onehot
 normalize_return = args.normalize_return
 attach_cond = args.attach_cond
+repeat_query = bool(args.repeat_query)
 p_rm_ob_enc = args.p_rm_ob_enc
 p_rm_ob_rcl = args.p_rm_ob_rcl
 similarity_max = args.similarity_max
@@ -102,7 +104,7 @@ p = P(
     normalize_return=normalize_return, attach_cond=attach_cond,
     p_rm_ob_enc=p_rm_ob_enc, p_rm_ob_rcl=p_rm_ob_rcl,
     n_hidden=n_hidden, n_hidden_dec=n_hidden_dec,
-    lr=learning_rate, eta=eta, cmpt=cmpt,
+    lr=learning_rate, eta=eta, cmpt=cmpt, repeat_query=repeat_query
 )
 # init env
 task = SequenceLearning(
@@ -111,6 +113,7 @@ task = SequenceLearning(
     def_path=p.env.def_path, def_prob=p.env.def_prob, def_tps=p.env.def_tps,
     similarity_cap_lag=p.n_event_remember,
     similarity_max=similarity_max, similarity_min=similarity_min,
+    repeat_query=repeat_query,
 )
 
 x_dim = task.x_dim
@@ -280,6 +283,7 @@ task = SequenceLearning(
     pad_len=pad_len_test, p_rm_ob_enc=p_rm_ob, p_rm_ob_rcl=p_rm_ob,
     similarity_max=similarity_max, similarity_min=similarity_min,
     similarity_cap_lag=p.n_event_remember,
+    repeat_query=repeat_query,
 )
 
 for fix_penalty in np.arange(0, penalty + 1, 2):

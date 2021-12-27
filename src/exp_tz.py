@@ -31,10 +31,8 @@ def run_tz(
         cond_i = pick_condition(p, rm_only=supervised, fix_cond=fix_cond)
         # get the example for this trial
         X_i, Y_i = X[i], Y[i]
-
         if scramble:
             X_i, Y_i = time_scramble(X_i, Y_i, task)
-
         # get time info
         T_total = np.shape(X_i)[0]
         T_part, pad_len, event_ends, event_bonds = task.get_time_param(T_total)
