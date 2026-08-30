@@ -1,0 +1,10 @@
+[
+  {
+    "id": "fig_01_task_architecture",
+    "path_pdf": "fig_01_task_architecture.pdf",
+    "path_svg": "fig_01_task_architecture.svg",
+    "path_png": "fig_01_task_architecture.png",
+    "caption": "Controlled synthetic task and computational flow. A partial event cue retrieves differentiable episodic values; a Bernoulli actor learns whether to store each study state from delayed prediction reward. The policy receives an accumulated feature mask but no explicit boundary bit.",
+    "section": "method"
+  }
+]
