@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import statistics
 import subprocess
@@ -81,6 +82,9 @@ def aggregate_paper_policy(
     config_hashes = {result["provenance"]["config_sha256"] for result in seed_results}
     if len(config_hashes) != 1:
         raise ValueError("seed files used different configurations")
+    current_config_hash = hashlib.sha256(config_path.read_bytes()).hexdigest()
+    if config_hashes != {current_config_hash}:
+        raise ValueError("seed files do not match the current configuration")
 
     bootstrap_seed = 20_260_830
     audit_metrics = {
