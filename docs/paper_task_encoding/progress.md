@@ -45,3 +45,7 @@
   configurations plus a runner that freezes each trained model, evaluates new
   mappings in RM/DM/NM, pairs retrieval-on and retrieval-off actions, retains all
   forced baselines, and writes provenance-rich machine-readable results.
+- 2026-08-31: aggregated every declared seed, added forced-schedule and causal-memory
+  ablations, and completed a self-contained paper-style HTML report with four
+  reproducible explanatory and measured-data figures. The report preserves the
+  negative policy result and separates it from successful memory use.
