@@ -25,3 +25,8 @@
   isolate encoding-policy learning. On new DM trials its fixed endpoint schedule
   beats midpoint, midpoint-plus-endpoint, dense, and no-encoding alternatives when
   the same schedule controls both distracting and target events.
+- 2026-08-30: corrected the free-policy objective so the learned policy controls both
+  distracting and target events. A regression test verifies that both sampled action
+  sequences produce the corresponding memory traces. The corrected discrete
+  actor-critic learned higher endpoint than nonendpoint probability in one diagnostic
+  seed, but encoded too densely and performed below the no-encoding baseline.

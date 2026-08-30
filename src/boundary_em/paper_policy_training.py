@@ -51,12 +51,15 @@ class EncodingStageConfig:
 class EncodingEpisode:
     """Encoding actions and their delayed prediction consequence."""
 
+    a1_actions: Tensor
+    b1_actions: Tensor
     actions: Tensor
     probabilities: Tensor
     values: Tensor
     log_probabilities: Tensor
     entropy: Tensor
     reward: Tensor
+    memory_labels: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -105,7 +108,7 @@ def train_encoding_stage(
                 evaluation=False,
             )
             episodes.append(
-                _sample_encoding_episode(
+                sample_encoding_episode(
                     model,
                     trial,
                     action_generator=action_generator,
@@ -157,18 +160,44 @@ def train_encoding_stage(
                     float(episode.reward.detach().item()) for episode in episodes
                 )
                 / len(episodes),
-                "mean_encodings": sum(
+                "mean_encodings_per_event": sum(
                     float(episode.actions.to(torch.float32).sum().item())
                     for episode in episodes
                 )
-                / len(episodes),
+                / (2 * len(episodes)),
                 "endpoint_probability": sum(
-                    float(episode.probabilities[-1].detach().item())
+                    float(
+                        torch.stack(
+                            [
+                                episode.probabilities[
+                                    len(episode.a1_actions) - 1
+                                ],
+                                episode.probabilities[-1],
+                            ]
+                        )
+                        .mean()
+                        .detach()
+                        .item()
+                    )
                     for episode in episodes
                 )
                 / len(episodes),
                 "nonendpoint_probability": sum(
-                    float(episode.probabilities[:-1].detach().mean().item())
+                    float(
+                        torch.cat(
+                            [
+                                episode.probabilities[
+                                    : len(episode.a1_actions) - 1
+                                ],
+                                episode.probabilities[
+                                    len(episode.a1_actions) : -1
+                                ],
+                            ]
+                        )
+                        .mean()
+                        .detach()
+                        .item()
+                    )
                     for episode in episodes
                 )
                 / len(episodes),
@@ -198,7 +227,7 @@ def _freeze_prediction_system(
     return actor_parameters, critic_parameters
 
 
-def _sample_encoding_episode(
+def sample_encoding_episode(
     model: EpisodicPredictionModel,
     trial: PaperTrial,
     *,
@@ -206,16 +235,23 @@ def _sample_encoding_episode(
     memory_capacity: int,
     forced_exploration: bool,
 ) -> EncodingEpisode:
+    """Sample one shared encoding policy in the distracting and target events."""
+
     probe = rollout_trial(
         model,
         trial,
+        a1_encoding_actions=forced_schedule(trial.a1, "never"),
         b1_encoding_actions=forced_schedule(trial.b1, "never"),
         memory_capacity=memory_capacity,
         retrieval_enabled=False,
     )
-    policy_outputs = [
+    a1_policy_outputs = [
+        model.encoding_policy(state.detach()) for state in probe.a1.states
+    ]
+    b1_policy_outputs = [
         model.encoding_policy(state.detach()) for state in probe.b1.states
     ]
+    policy_outputs = a1_policy_outputs + b1_policy_outputs
     probabilities = torch.stack([output.probability for output in policy_outputs])
     values = torch.stack([output.value for output in policy_outputs])
     epsilon = torch.finfo(probabilities.dtype).eps
@@ -225,6 +261,8 @@ def _sample_encoding_episode(
         actions = uniforms < 0.5
     else:
         actions = uniforms < probabilities.detach()
+    a1_actions = actions[: len(a1_policy_outputs)]
+    b1_actions = actions[len(a1_policy_outputs) :]
     log_probabilities = torch.where(
         actions,
         torch.log(probabilities),
@@ -238,7 +276,8 @@ def _sample_encoding_episode(
     computation = rollout_trial(
         model,
         trial,
-        b1_encoding_actions=actions,
+        a1_encoding_actions=a1_actions,
+        b1_encoding_actions=b1_actions,
         memory_capacity=memory_capacity,
         retrieval_enabled=True,
     )
@@ -249,10 +288,13 @@ def _sample_encoding_episode(
         trial.b2.inputs[valid, -1],
     )
     return EncodingEpisode(
+        a1_actions=a1_actions,
+        b1_actions=b1_actions,
         actions=actions,
         probabilities=probabilities,
         values=values,
         log_probabilities=log_probabilities,
         entropy=entropy,
         reward=rewards.mean(),
+        memory_labels=computation.memory_labels,
     )

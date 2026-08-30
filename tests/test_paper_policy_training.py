@@ -3,9 +3,10 @@ import torch
 from boundary_em.paper_model import EpisodicPredictionModel
 from boundary_em.paper_policy_training import (
     EncodingStageConfig,
+    sample_encoding_episode,
     train_encoding_stage,
 )
-from boundary_em.paper_task import PaperTaskConfig
+from boundary_em.paper_task import PaperTaskConfig, generate_trial
 
 
 def _model() -> EpisodicPredictionModel:
@@ -100,3 +101,31 @@ def test_free_encoding_stage_updates_actor_but_keeps_prediction_system_frozen() 
         for name, parameter in model.named_parameters()
         if name in prediction_before
     )
+
+
+def test_shared_policy_controls_encoding_in_distractor_and_target_events() -> None:
+    model = _model()
+    with torch.no_grad():
+        for parameter in model.encoding_actor_encoder.parameters():
+            parameter.zero_()
+        model.encoding_actor.weight.zero_()
+        model.encoding_actor.bias.fill_(20.0)
+    trial = generate_trial(
+        PaperTaskConfig(),
+        seed=91,
+        condition="DM",
+        evaluation=True,
+    )
+
+    episode = sample_encoding_episode(
+        model,
+        trial,
+        action_generator=torch.Generator().manual_seed(92),
+        memory_capacity=40,
+        forced_exploration=False,
+    )
+
+    assert episode.a1_actions.all()
+    assert episode.b1_actions.all()
+    assert episode.memory_labels.count("lure_a1") == len(episode.a1_actions)
+    assert episode.memory_labels.count("target_b1") == len(episode.b1_actions)

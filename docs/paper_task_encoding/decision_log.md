@@ -53,3 +53,18 @@
 - Before optimizing the encoding policy, fixed endpoint encoding was verified to beat
   fixed midpoint, midpoint-plus-endpoint, and dense encoding when each schedule was
   applied identically to distracting and target events on new DM trials.
+
+## 2026-08-30 — Shared-policy correction
+
+- The first exploratory free-policy run incorrectly optimized encoding only in the
+  target event while forcing endpoint encoding in the distracting event. This made
+  dense late target memories artificially useful and is not evidence about the
+  proposed shared encoding policy.
+- The corrected objective applies one shared encoding network independently to every
+  time point in both events. Both sets of sampled actions receive the same delayed
+  prediction outcome, and both distracting and target traces enter retrieval.
+- With this correction, a 1,000-update single-seed diagnostic showed partial temporal
+  sensitivity but not successful selective encoding: endpoint probability was 0.864,
+  mean nonendpoint probability was 0.667, the model encoded 10.90 times per event,
+  and held-out expected reward was 0.394 versus approximately 0.493 for no encoding.
+  This run is a failure under the preregistered prediction-benefit criterion.
