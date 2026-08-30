@@ -19,3 +19,4 @@ def test_confirmatory_config_has_fifteen_new_model_seeds_and_frozen_criteria():
     assert reported["experiment"]["status"] == "confirmatory"
     assert reported["success_criteria"]["minimum_gap_closure"] == 0.8
     assert reported["evaluation"]["split_label"] == "confirmatory_test"
+    assert reported["evaluation"]["save_episode_records"] is False

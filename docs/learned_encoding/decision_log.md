@@ -73,3 +73,7 @@
   interventions are declared before confirmatory execution.
 - Bootstrap seed, sample count, and all quantitative success thresholds are stored
   directly in the configuration.
+- Before confirmatory execution, episode-record persistence was disabled for the
+  reported configuration to avoid committing large redundant arrays. All training
+  curves and every model-seed aggregate remain stored; the model seed is the
+  preregistered inferential unit. No scientific setting changed.

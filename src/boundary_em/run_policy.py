@@ -247,7 +247,14 @@ def run_policy_config(
                 for name, evaluation in interventions.items()
             },
         },
-        "evaluation_records": {
+        "checkpoint": _display_path(checkpoint_path, repository),
+        "notes": (
+            "Measured synthetic-task run. Model weights were frozen for both "
+            "held-out evaluations; checkpoint files are excluded from Git."
+        ),
+    }
+    if evaluation_config.get("save_episode_records", True):
+        results["evaluation_records"] = {
             "stochastic": _evaluation_dict(stochastic)["per_episode"],
             "deterministic": _evaluation_dict(deterministic)["per_episode"],
             "ood_stochastic": _evaluation_dict(ood_stochastic)["per_episode"],
@@ -256,13 +263,7 @@ def run_policy_config(
                 name: _evaluation_dict(evaluation)["per_episode"]
                 for name, evaluation in interventions.items()
             },
-        },
-        "checkpoint": _display_path(checkpoint_path, repository),
-        "notes": (
-            "Measured synthetic-task run. Model weights were frozen for both "
-            "held-out evaluations; checkpoint files are excluded from Git."
-        ),
-    }
+        }
     output_path.write_text(json.dumps(results, indent=2) + "\n")
     return results
 
