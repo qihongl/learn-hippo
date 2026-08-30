@@ -20,3 +20,8 @@
   exploration stage and a free Bernoulli actor-critic stage. Tests verify that the
   forced stage leaves the actor unchanged and both stages freeze the complete
   prediction and retrieval system.
+- 2026-08-30: the recurrent predictor failed the fixed-schedule precondition in an
+  exploratory high-budget run. Added a boundary-blind structured situation model to
+  isolate encoding-policy learning. On new DM trials its fixed endpoint schedule
+  beats midpoint, midpoint-plus-endpoint, dense, and no-encoding alternatives when
+  the same schedule controls both distracting and target events.

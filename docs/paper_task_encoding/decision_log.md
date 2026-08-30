@@ -34,3 +34,22 @@
 - The primary faithful condition has no encoding cost and enough capacity to retain
   all eligible traces from two events. Historical and fixed-capacity conventions are
   reported as sensitivity analyses.
+
+## 2026-08-30 — Prediction-model precondition and simplification
+
+- An exploratory recurrent-model run did not satisfy the preregistered precondition:
+  after 1,000 prediction updates and 1,000 forced-retrieval updates, endpoint-only
+  encoding reached expected reward -0.635 on 128 new DM trials, compared with -0.625
+  for dense encoding and -0.682 for no encoding. These are diagnostic, not final,
+  results.
+- The main obstacle was prediction and retrieval quality, not evidence about a learned
+  encoding policy. We therefore introduced a structured situation model that directly
+  accumulates the feature-value observations already present in the original
+  37-dimensional input. It receives no boundary label, completion indicator,
+  countdown, or condition label.
+- This simplification isolates the stated question: whether delayed prediction reward
+  can train an encoding policy when the prediction and retrieval system is already
+  competent. The recurrent model remains a documented negative comparison.
+- Before optimizing the encoding policy, fixed endpoint encoding was verified to beat
+  fixed midpoint, midpoint-plus-endpoint, and dense encoding when each schedule was
+  applied identically to distracting and target events on new DM trials.
