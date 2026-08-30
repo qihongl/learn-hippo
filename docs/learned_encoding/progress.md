@@ -11,3 +11,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: added a versioned oracle configuration and an auditable JSON runner
   that records synthetic-data provenance, package version, Git revision, all 16
   schedules, named baselines, and both capacity conventions.
+- 2026-08-30: executed the 256-episode exhaustive oracle audit from `d59be78`.
+  Endpoint-only was uniquely optimal under both capacity conventions; fixed
+  four-slot capacity was selected before policy learning.

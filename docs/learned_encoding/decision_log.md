@@ -37,3 +37,12 @@
 - Moving learned endpoint writes to mid-event positions reduces held-out reward.
 - Failure to meet any criterion is reported with a staged diagnosis rather than
   hidden by changing the task after confirmatory evaluation.
+
+## 2026-08-30 — Capacity convention selected after oracle audit
+
+- The fixed four-slot and historical schedule-scaled conventions produced identical
+  rankings and rewards in the one-event oracle audit because neither evicted an
+  eligible trace.
+- Fixed four-slot capacity is selected for learned-policy training because it gives
+  every policy the same physical resource and is simpler to vectorize.
+- This choice was made at commit `d59be78`, before any learned write policy was run.
