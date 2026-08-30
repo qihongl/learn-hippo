@@ -7,3 +7,6 @@
 - 2026-08-30: added the modern exact-task generator and five deterministic behavior
   tests covering the 37-dimensional input, source profiles, RM/DM/NM situation
   relationships, and boundary-blind deterministic sampling.
+- 2026-08-30: added the recurrent situation model, five-response prediction head,
+  differentiable competitive episodic retrieval, and an encoding actor that receives
+  only the recurrent situation model. Three model behavior tests pass.
