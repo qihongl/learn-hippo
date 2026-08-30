@@ -14,5 +14,13 @@
     "path_png": "fig_02_learning_dynamics.png",
     "caption": "Confirmatory learning dynamics and learned write timing. The left panel shows the unsmoothed minibatch reward mean and one standard deviation across all 15 preregistered seeds. The right panel shows each seed's write probability by semantic progress; colored points are the across-seed mean with bootstrap 95% confidence intervals.",
     "section": "results"
+  },
+  {
+    "id": "fig_03_confirmatory_evidence",
+    "path_pdf": "fig_03_confirmatory_evidence.pdf",
+    "path_svg": "fig_03_confirmatory_evidence.svg",
+    "path_png": "fig_03_confirmatory_evidence.png",
+    "caption": "Confirmatory held-out evidence across 15 model seeds. The learned stochastic gate nearly reaches the endpoint oracle and outperforms matched and dense-writing baselines. Displacing the deterministic learned write from the endpoint to the midpoint eliminates reward. Gap closure is defined relative to the endpoint oracle and matched random one-write policy; all seeds exceed the preregistered 0.80 group threshold.",
+    "section": "results"
   }
 ]
