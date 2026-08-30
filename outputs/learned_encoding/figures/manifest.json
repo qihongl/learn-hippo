@@ -22,5 +22,13 @@
     "path_png": "fig_03_confirmatory_evidence.png",
     "caption": "Confirmatory held-out evidence across 15 model seeds. The learned stochastic gate nearly reaches the endpoint oracle and outperforms matched and dense-writing baselines. Displacing the deterministic learned write from the endpoint to the midpoint eliminates reward. Gap closure is defined relative to the endpoint oracle and matched random one-write policy; all seeds exceed the preregistered 0.80 group threshold.",
     "section": "results"
+  },
+  {
+    "id": "fig_04_robustness_mechanism",
+    "path_pdf": "fig_04_robustness_mechanism.pdf",
+    "path_svg": "fig_04_robustness_mechanism.svg",
+    "path_png": "fig_04_robustness_mechanism.png",
+    "caption": "Robustness and post-confirmatory mechanism checks. Frozen policies retain high reward when three null states lengthen the episode. Input ablations show that the explicit accumulated observation mask is sufficient for the gate. Temperature and latest-trace retrieval analyses show that selective writing is advantageous because competitive soft retrieval allows incomplete traces to interfere; with latest-trace retrieval, always-writing also reaches reward 1.0.",
+    "section": "analysis"
   }
 ]
