@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 import yaml
 
@@ -91,6 +92,7 @@ def run_mechanism_config(
     checkpoint_name = str(config["output"]["checkpoint_name"])
     bootstrap_seed = int(analysis_config["bootstrap_seed"])
     bootstrap_samples = int(analysis_config["bootstrap_samples"])
+    np.random.seed(bootstrap_seed)
 
     input_results: dict[str, list[dict[str, Any]]] = {
         mode: [] for mode in analysis_config["input_ablations"]
