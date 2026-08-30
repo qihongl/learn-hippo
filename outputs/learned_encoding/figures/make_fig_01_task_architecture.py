@@ -67,15 +67,15 @@ def arrow(ax, start, end, *, color=MUTED, dashed=False, curve=0.0, label=None):
 
 def panel_label(ax, label, title):
     ax.text(0.0, 1.02, label, transform=ax.transAxes, fontsize=11, fontweight="bold")
-    ax.text(0.09, 1.02, title, transform=ax.transAxes, fontsize=10, fontweight="bold")
+    ax.text(0.13, 1.02, title, transform=ax.transAxes, fontsize=10, fontweight="bold")
 
 
 def draw_representation(ax):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    panel_label(ax, "(a)", "Event representation becomes complete")
-    box(ax, (0.03, 0.73), 0.18, 0.15, "random\nevent cue", face=PALE_BLUE, edge=BLUE)
+    panel_label(ax, "(a)", "A situation model becomes complete")
+    box(ax, (0.03, 0.73), 0.18, 0.15, "event cue\n(context)", face=PALE_BLUE, edge=BLUE)
     ax.text(0.27, 0.86, "feature slots", fontsize=8, color=MUTED)
     headers = ["F1", "F2", "F3", "F4"]
     for index, header in enumerate(headers):
@@ -83,21 +83,45 @@ def draw_representation(ax):
         ax.text(x + 0.055, 0.79, header, ha="center", fontsize=8, fontweight="bold")
 
     rows = [
-        (0.56, "mid-event", ["+1", "−1", "?", "?"], PALE_YELLOW, YELLOW),
-        (0.24, "boundary", ["+1", "−1", "+1", "+1"], PALE_AQUA, AQUA),
+        (
+            0.54,
+            "mid-event",
+            ["+1", "−1", "·", "·"],
+            ["1", "1", "0", "0"],
+            PALE_YELLOW,
+            YELLOW,
+        ),
+        (
+            0.21,
+            "boundary\n(complete)",
+            ["+1", "−1", "+1", "+1"],
+            ["1", "1", "1", "1"],
+            PALE_AQUA,
+            AQUA,
+        ),
     ]
-    for y, label, values, face, edge in rows:
-        ax.text(0.03, y + 0.075, label, va="center", fontsize=8, fontweight="bold")
+    for y, label, values, mask, face, edge in rows:
+        ax.text(0.01, y + 0.075, label, va="center", fontsize=7.5, fontweight="bold")
         for index, value in enumerate(values):
             x = 0.28 + index * 0.16
-            value_face = face if value != "?" else "#f2f0ec"
+            value_face = face if value != "·" else "#f2f0ec"
             box(ax, (x, y), 0.11, 0.15, value, face=value_face, edge=edge, size=9)
-    ax.text(0.28, 0.10, "mask", fontsize=7, color=MUTED)
-    ax.text(0.40, 0.10, "1  1  1  1", fontsize=8, color=AQUA, fontweight="bold")
+        ax.text(0.20, y - 0.09, "mask", fontsize=7, color=MUTED)
+        for index, bit in enumerate(mask):
+            x = 0.28 + index * 0.16
+            ax.text(
+                x + 0.055,
+                y - 0.09,
+                bit,
+                ha="center",
+                fontsize=8,
+                color=edge,
+                fontweight="bold",
+            )
     ax.text(
         0.03,
         0.01,
-        "The gate sees cue + accumulated values + mask, but no boundary bit.",
+        "Mask: 1 = observed, 0 = not yet observed. All ones reveals completion.",
         fontsize=7.5,
         color=MUTED,
     )
@@ -107,18 +131,18 @@ def draw_trial(ax):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    panel_label(ax, "(b)", "One study–test episode")
+    panel_label(ax, "(b)", "Delayed event reconstruction")
     boxes = [
         (
             0.02,
-            "STUDY + WRITE\nreveal one feature;\nsample gate after each state",
+            "EVENT OBSERVATION\nreveal one feature;\nchoose encode or skip",
             PALE_YELLOW,
             YELLOW,
         ),
-        (0.38, "RESET\ncontroller\ncleared", "#f2f0ec", MUTED),
+        (0.38, "DELAY\ntransient state\ncleared", "#f2f0ec", MUTED),
         (
             0.65,
-            "DELAYED TEST\npartial query and read\npredict missing features",
+            "DELAYED QUERY\nretrieve from memory;\npredict missing features",
             PALE_AQUA,
             AQUA,
         ),
@@ -141,7 +165,7 @@ def draw_trial(ax):
     ax.text(
         0.37,
         0.32,
-        "episodic memory persists",
+        "episodic memories persist",
         ha="center",
         fontsize=7.5,
         color=AQUA,
@@ -152,25 +176,33 @@ def draw_trial(ax):
         (0.76, 0.10),
         0.20,
         0.16,
-        "reward = 1 − MSE",
+        "reward = 1 − error",
         face=PALE_RED,
         edge=RED,
         size=8,
     )
     arrow(ax, (0.87, 0.47), (0.87, 0.27), color=RED)
+    ax.text(
+        0.03,
+        0.20,
+        "Goal after the delay: reconstruct missing\n"
+        "situation features from episodic memory.",
+        fontsize=7.4,
+        color=MUTED,
+    )
 
 
 def draw_architecture(ax):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    panel_label(ax, "(c)", "Differentiable read, discrete learned write")
+    panel_label(ax, "(c)", "Differentiable retrieval and learned encoding")
     box(
         ax,
         (0.02, 0.62),
         0.19,
         0.18,
-        "partial event state\ncue + values + mask",
+        "current situation model\ncue + values + mask",
         face=PALE_BLUE,
         edge=BLUE,
     )
@@ -179,7 +211,7 @@ def draw_architecture(ax):
         (0.28, 0.70),
         0.16,
         0.14,
-        "write actor\np(write)",
+        "encoding actor\np(encode)",
         face=PALE_YELLOW,
         edge=YELLOW,
         weight="bold",
@@ -198,13 +230,13 @@ def draw_architecture(ax):
         (0.52, 0.66),
         0.18,
         0.20,
-        "episodic slots\nkey: partial state\nvalue: feature state",
+        "episodic memories\nkey: situation model\nvalue: feature values",
         face=PALE_AQUA,
         edge=AQUA,
     )
     arrow(ax, (0.21, 0.72), (0.28, 0.77), color=BLUE)
     arrow(ax, (0.21, 0.69), (0.28, 0.55), color=MUTED)
-    arrow(ax, (0.44, 0.77), (0.52, 0.77), color=YELLOW, label="sample 0/1")
+    arrow(ax, (0.44, 0.77), (0.52, 0.77), color=YELLOW)
 
     box(
         ax,
@@ -229,7 +261,7 @@ def draw_architecture(ax):
         (0.54, 0.17),
         0.14,
         0.18,
-        "memory read\nweighted value",
+        "episodic retrieval\nweighted content",
         face=PALE_AQUA,
         edge=AQUA,
     )
@@ -258,7 +290,7 @@ def draw_architecture(ax):
     ax.text(
         0.74,
         0.77,
-        "Incomplete traces can win\nattention and block the endpoint.",
+        "An incomplete memory can dominate\nretrieval and block the endpoint memory.",
         fontsize=7.5,
         color=MUTED,
         va="center",
@@ -267,13 +299,24 @@ def draw_architecture(ax):
 
 def main():
     apply_style()
-    fig = plt.figure(figsize=(7.2, 5.3), constrained_layout=True)
-    grid = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.25], hspace=0.22, wspace=0.18)
+    fig = plt.figure(figsize=(7.2, 5.3), constrained_layout=False)
+    grid = fig.add_gridspec(
+        2,
+        2,
+        height_ratios=[1.0, 1.25],
+        width_ratios=[1.0, 1.08],
+        left=0.04,
+        right=0.98,
+        bottom=0.05,
+        top=0.90,
+        hspace=0.38,
+        wspace=0.20,
+    )
     draw_representation(fig.add_subplot(grid[0, 0]))
     draw_trial(fig.add_subplot(grid[0, 1]))
     draw_architecture(fig.add_subplot(grid[1, :]))
     fig.suptitle(
-        "A controlled test of learned boundary-selective episodic writing",
+        "A controlled test of learned boundary-selective episodic encoding",
         x=0.02,
         ha="left",
         fontsize=12,

@@ -37,11 +37,19 @@ def values(summary: dict, method: str, metric: str = "reward") -> np.ndarray:
 
 def draw_baselines(ax, summary: dict) -> None:
     methods = [
-        ("intervention_endpoint_only", "Endpoint\noracle", BLUE),
-        ("learned_policy", "Learned\ngate", AQUA),
-        ("intervention_matched_random_one_write", "Random\none-write", YELLOW),
-        ("intervention_always_write", "Always\nwrite", ORANGE),
-        ("intervention_midpoint_plus_endpoint", "Midpoint\n+ endpoint", VIOLET),
+        ("intervention_endpoint_only", "Endpoint\nforced", BLUE),
+        ("learned_policy", "Stochastic\nlearned", AQUA),
+        (
+            "intervention_matched_random_one_write",
+            "Random one\nforced",
+            YELLOW,
+        ),
+        ("intervention_always_write", "Always\nforced", ORANGE),
+        (
+            "intervention_midpoint_plus_endpoint",
+            "Mid + end\nforced",
+            VIOLET,
+        ),
     ]
     rng = np.random.default_rng(20260830)
     for index, (method, _label, color) in enumerate(methods):
@@ -77,7 +85,7 @@ def draw_baselines(ax, summary: dict) -> None:
         xticks=np.arange(len(methods)),
         xticklabels=[method[1] for method in methods],
     )
-    ax.set_title("(a) Learned timing approaches the oracle", loc="left")
+    ax.set_title("(a) Learned versus forced policies", loc="left")
     ax.grid(axis="y", color=GRID, linewidth=0.6)
     ax.text(
         0.02,
@@ -110,7 +118,7 @@ def draw_displacement(ax, summary: dict) -> None:
         ylim=(-0.06, 1.06),
         xlim=(-0.35, 1.35),
         xticks=[0, 1],
-        xticklabels=["Learned\ntiming", "Same write\ndisplaced"],
+        xticklabels=["Endpoint\nlearned", "Midpoint\nforced"],
     )
     ax.set_title("(b) Timing is causal", loc="left")
     ax.grid(axis="y", color=GRID, linewidth=0.6)
@@ -148,7 +156,7 @@ def draw_gap_closure(ax, summary: dict) -> None:
         zorder=3,
     )
     ax.axhline(0.8, color=RED, linewidth=1.1, linestyle="--")
-    ax.text(0.10, 0.802, "preregistered threshold", color=RED, va="bottom", fontsize=7)
+    ax.text(0.10, 0.802, "predeclared threshold", color=RED, va="bottom", fontsize=7)
     ax.annotate(
         "mean 0.980",
         xy=(0, mean),
@@ -158,13 +166,13 @@ def draw_gap_closure(ax, summary: dict) -> None:
         fontweight="bold",
     )
     ax.set(
-        ylabel="Oracle gap closed",
+        ylabel="Forced-optimum gap closed",
         ylim=(0.76, 1.015),
         xlim=(-0.35, 0.55),
         xticks=[0],
         xticklabels=["15 model seeds"],
     )
-    ax.set_title("(c) Confirmatory criterion passes", loc="left")
+    ax.set_title("(c) Predeclared criterion passes", loc="left")
     ax.grid(axis="y", color=GRID, linewidth=0.6)
 
 

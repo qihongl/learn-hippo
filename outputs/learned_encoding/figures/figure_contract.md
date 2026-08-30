@@ -2,8 +2,9 @@
 
 ## Figure 1 — Task and computational flow
 
-- **Core conclusion:** A delayed prediction can credit an earlier discrete write
-  because the selected event snapshot is later read through differentiable memory.
+- **Core conclusion:** A delayed prediction can credit an earlier discrete encoding
+  action because the selected event snapshot is later reinstated through
+  differentiable episodic retrieval.
 - **Archetype:** schematic-led composite.
 - **Target:** self-contained HTML paper and full-width manuscript figure.
 - **Final size:** 7.2 × 5.3 inches; minimum text 8 pt.
@@ -18,11 +19,11 @@
 ## Figure 2 — Policy emergence
 
 - **Core conclusion:** Delayed actor-critic optimization changes an initially
-  indiscriminate gate into an almost endpoint-exclusive write policy.
+  indiscriminate gate into an almost endpoint-exclusive encoding policy.
 - **Archetype:** quantitative grid.
 - **Target:** full-width manuscript figure.
 - **Final size:** 7.2 × 3.0 inches; minimum text 8 pt.
-- **Panel map:** (a) unsmoothed mean training reward with model-seed SD, (b) write
+- **Panel map:** (a) unsmoothed mean training reward with model-seed SD, (b) encoding
   probability by semantic progress with bootstrap 95% intervals.
 - **Hero evidence:** probability jump at progress four.
 - **Statistics:** 15 independent model seeds; raw 300-update curves and fixed-seed
@@ -32,14 +33,15 @@
 
 ## Figure 3 — Confirmatory performance and causality
 
-- **Core conclusion:** The learned policy approaches the endpoint oracle and loses
-  its benefit when its endpoint write is moved to the midpoint.
+- **Core conclusion:** The learned policy approaches the forced endpoint-only policy
+  and loses its benefit when its endpoint encoding is moved to the midpoint.
 - **Archetype:** quantitative grid.
 - **Target:** full-width manuscript figure.
 - **Final size:** 7.2 × 3.2 inches; minimum text 8 pt.
 - **Panel map:** (a) all model-seed rewards for learned and baseline policies, (b)
   paired deterministic learned versus displaced reward, (c) per-seed gap closure.
-- **Hero evidence:** 15 paired learned-policy seeds and displacement intervention.
+- **Hero evidence:** 15 paired learned-policy seeds and a forced displacement
+  intervention.
 - **Statistics:** individual model-seed points, model-seed mean, bootstrap 95% CI.
 - **Reviewer risk:** baseline geometry is deliberately favorable to endpoint storage;
   the caption must state the task is controlled synthetic and theoretically audited.
@@ -47,8 +49,8 @@
 ## Figure 4 — Generalization and boundary conditions
 
 - **Core conclusion:** The policy transfers to longer event duration and depends on
-  the completion mask, while perfect latest-trace retrieval removes the need for
-  selective writing.
+  the completion mask, while forced latest-memory retrieval removes the need for
+  selective encoding.
 - **Archetype:** quantitative grid.
 - **Target:** full-width manuscript figure.
 - **Final size:** 7.2 × 3.2 inches; minimum text 8 pt.

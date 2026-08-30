@@ -1,4 +1,4 @@
-"""Generate confirmatory learning dynamics and learned write timing."""
+"""Generate confirmatory learning dynamics and learned encoding timing."""
 
 import json
 from pathlib import Path
@@ -38,14 +38,20 @@ def draw_training(ax, curves: np.ndarray) -> None:
     mean = curves.mean(axis=0)
     sd = curves.std(axis=0, ddof=1)
     ax.fill_between(updates, mean - sd, mean + sd, color=PALE_AQUA, linewidth=0)
-    ax.plot(updates, mean, color=AQUA, linewidth=1.7, label="learned gate")
-    ax.axhline(1.0, color=BLUE, linewidth=1.1, linestyle="--", label="endpoint oracle")
+    ax.plot(updates, mean, color=AQUA, linewidth=1.7, label="learned encoding gate")
+    ax.axhline(
+        1.0,
+        color=BLUE,
+        linewidth=1.1,
+        linestyle="--",
+        label="endpoint only (forced)",
+    )
     ax.axhline(
         0.371,
         color=YELLOW,
         linewidth=1.1,
         linestyle=":",
-        label="random one-write",
+        label="random one-encoding (forced)",
     )
     ax.set(
         xlabel="Training update",
@@ -67,7 +73,7 @@ def draw_training(ax, curves: np.ndarray) -> None:
     )
 
 
-def draw_write_timing(ax, mechanism: dict) -> None:
+def draw_encoding_timing(ax, mechanism: dict) -> None:
     summaries = mechanism["write_probability_by_progress"]
     progress = np.arange(1, 5)
     per_seed = np.asarray(
@@ -121,12 +127,12 @@ def draw_write_timing(ax, mechanism: dict) -> None:
     )
     ax.set(
         xlabel="Observed features / semantic progress",
-        ylabel="Probability of writing",
+        ylabel="Probability of encoding",
         xlim=(0.72, 4.28),
         ylim=(-0.03, 1.05),
         xticks=progress,
     )
-    ax.set_title("(b) The learned gate writes at completion", loc="left")
+    ax.set_title("(b) The learned gate encodes at completion", loc="left")
     ax.grid(axis="y", color=GRID, linewidth=0.6)
     ax.legend(frameon=False, loc="upper left", fontsize=7)
     ax.text(
@@ -144,9 +150,9 @@ def main() -> None:
     apply_style()
     fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.1), constrained_layout=True)
     draw_training(axes[0], curves)
-    draw_write_timing(axes[1], mechanism)
+    draw_encoding_timing(axes[1], mechanism)
     fig.suptitle(
-        "Learning dynamics reveal a boundary-selective write policy",
+        "Learning dynamics reveal a boundary-selective encoding policy",
         x=0.02,
         ha="left",
         fontsize=12,

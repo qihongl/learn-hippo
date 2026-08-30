@@ -4,7 +4,7 @@
     "path_pdf": "fig_01_task_architecture.pdf",
     "path_svg": "fig_01_task_architecture.svg",
     "path_png": "fig_01_task_architecture.png",
-    "caption": "Controlled synthetic task and computational flow. A partial event cue retrieves differentiable episodic values; a Bernoulli actor learns whether to store each study state from delayed prediction reward. The policy receives an accumulated feature mask but no explicit boundary bit.",
+    "caption": "Controlled delayed-reconstruction task and computational flow. Each mask bit states whether one situation feature has been observed; the all-ones mask therefore makes event completion explicit. A Bernoulli actor learns whether to encode each situation model, and a delayed partial query triggers differentiable episodic retrieval.",
     "section": "method"
   },
   {
@@ -12,7 +12,7 @@
     "path_pdf": "fig_02_learning_dynamics.pdf",
     "path_svg": "fig_02_learning_dynamics.svg",
     "path_png": "fig_02_learning_dynamics.png",
-    "caption": "Confirmatory learning dynamics and learned write timing. The left panel shows the unsmoothed minibatch reward mean and one standard deviation across all 15 preregistered seeds. The right panel shows each seed's write probability by semantic progress; colored points are the across-seed mean with bootstrap 95% confidence intervals.",
+    "caption": "Confirmatory learning dynamics and learned encoding timing. The left panel shows the unsmoothed minibatch reward mean and one standard deviation across all 15 preregistered seeds. The right panel shows each seed's encoding probability by semantic progress; colored points are the across-seed mean with bootstrap 95% confidence intervals.",
     "section": "results"
   },
   {
@@ -20,7 +20,7 @@
     "path_pdf": "fig_03_confirmatory_evidence.pdf",
     "path_svg": "fig_03_confirmatory_evidence.svg",
     "path_png": "fig_03_confirmatory_evidence.png",
-    "caption": "Confirmatory held-out evidence across 15 model seeds. The learned stochastic gate nearly reaches the endpoint oracle and outperforms matched and dense-writing baselines. Displacing the deterministic learned write from the endpoint to the midpoint eliminates reward. Gap closure is defined relative to the endpoint oracle and matched random one-write policy; all seeds exceed the preregistered 0.80 group threshold.",
+    "caption": "Confirmatory held-out evidence across 15 model seeds. The stochastic encoding gate is learned; endpoint-only, random one-encoding, always-encode, and midpoint-plus-endpoint schedules are forced comparison policies. Displacing the thresholded learned encoding from the endpoint to the midpoint eliminates reward. Gap closure is defined relative to the forced endpoint-only and matched-random policies.",
     "section": "results"
   },
   {
@@ -28,7 +28,7 @@
     "path_pdf": "fig_04_robustness_mechanism.pdf",
     "path_svg": "fig_04_robustness_mechanism.svg",
     "path_png": "fig_04_robustness_mechanism.png",
-    "caption": "Robustness and post-confirmatory mechanism checks. Frozen policies retain high reward when three null states lengthen the episode. Input ablations show that the explicit accumulated observation mask is sufficient for the gate. Temperature and latest-trace retrieval analyses show that selective writing is advantageous because competitive soft retrieval allows incomplete traces to interfere; with latest-trace retrieval, always-writing also reaches reward 1.0.",
+    "caption": "Robustness and post-confirmatory mechanism checks. Frozen learned policies retain high reward when three null states lengthen the episode. The explicit observation mask is sufficient for the encoding gate. Every curve in the retrieval panel is a forced encoding schedule; with forced latest-memory retrieval, always encoding also reaches reward 1.0.",
     "section": "analysis"
   }
 ]

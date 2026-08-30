@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="526.543219pt" height="389.99952pt" viewBox="0 0 526.543219 389.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="522.224462pt" height="369.288pt" viewBox="0 0 522.224462 369.288" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-30T10:48:14.141561</dc:date>
+    <dc:date>2026-08-30T12:43:28.368204</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.8, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -21,565 +21,591 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 389.99952 
-L 526.543219 389.99952 
-L 526.543219 0 
-L 0 0 
+   <path d="M 0 369.288
+L 522.224462 369.288
+L 522.224462 0
+L 0 0
 z
 " style="fill: #ffffff"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 14.623753 77.355798 
-L 47.930321 77.355798 
-Q 52.94637 77.355798 52.94637 74.17996 
-L 52.94637 56.903405 
-Q 52.94637 53.727567 47.930321 53.727567 
-L 14.623753 53.727567 
-Q 9.607704 53.727567 9.607704 56.903405 
-L 9.607704 74.17996 
-Q 9.607704 77.355798 14.623753 77.355798 
+    <path d="M 25.448224 72.617143
+L 60.802741 72.617143
+Q 66.127217 72.617143 66.127217 69.588571
+L 66.127217 53.113143
+Q 66.127217 50.084571 60.802741 50.084571
+L 25.448224 50.084571
+Q 20.123748 50.084571 20.123748 53.113143
+L 20.123748 69.588571
+Q 20.123748 72.617143 25.448224 72.617143
 z
-" clip-path="url(#p8437bc524f)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_3">
-    <path d="M 64.784247 98.951492 
-L 84.045876 98.951492 
-Q 89.061925 98.951492 89.061925 95.775654 
-L 89.061925 78.499099 
-Q 89.061925 75.323262 84.045876 75.323262 
-L 64.784247 75.323262 
-Q 59.768197 75.323262 59.768197 78.499099 
-L 59.768197 95.775654 
-Q 59.768197 98.951492 64.784247 98.951492 
+    <path d="M 78.692979 95.634286
+L 99.138965 95.634286
+Q 104.463441 95.634286 104.463441 92.605714
+L 104.463441 76.130286
+Q 104.463441 73.101714 99.138965 73.101714
+L 78.692979 73.101714
+Q 73.368503 73.101714 73.368503 76.130286
+L 73.368503 92.605714
+Q 73.368503 95.634286 78.692979 95.634286
 z
-" clip-path="url(#p8437bc524f)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_4">
-    <path d="M 96.886962 98.951492 
-L 116.148592 98.951492 
-Q 121.164641 98.951492 121.164641 95.775654 
-L 121.164641 78.499099 
-Q 121.164641 75.323262 116.148592 75.323262 
-L 96.886962 75.323262 
-Q 91.870913 75.323262 91.870913 78.499099 
-L 91.870913 95.775654 
-Q 91.870913 98.951492 96.886962 98.951492 
+    <path d="M 112.769622 95.634286
+L 133.215608 95.634286
+Q 138.540084 95.634286 138.540084 92.605714
+L 138.540084 76.130286
+Q 138.540084 73.101714 133.215608 73.101714
+L 112.769622 73.101714
+Q 107.445147 73.101714 107.445147 76.130286
+L 107.445147 92.605714
+Q 107.445147 95.634286 112.769622 95.634286
 z
-" clip-path="url(#p8437bc524f)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_5">
-    <path d="M 128.989678 98.951492 
-L 148.251308 98.951492 
-Q 153.267357 98.951492 153.267357 95.775654 
-L 153.267357 78.499099 
-Q 153.267357 75.323262 148.251308 75.323262 
-L 128.989678 75.323262 
-Q 123.973629 75.323262 123.973629 78.499099 
-L 123.973629 95.775654 
-Q 123.973629 98.951492 128.989678 98.951492 
+    <path d="M 146.846266 95.634286
+L 167.292252 95.634286
+Q 172.616727 95.634286 172.616727 92.605714
+L 172.616727 76.130286
+Q 172.616727 73.101714 167.292252 73.101714
+L 146.846266 73.101714
+Q 141.52179 73.101714 141.52179 76.130286
+L 141.52179 92.605714
+Q 141.52179 95.634286 146.846266 95.634286
 z
-" clip-path="url(#p8437bc524f)" style="fill: #f2f0ec; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #f2f0ec; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_6">
-    <path d="M 161.092394 98.951492 
-L 180.354024 98.951492 
-Q 185.370073 98.951492 185.370073 95.775654 
-L 185.370073 78.499099 
-Q 185.370073 75.323262 180.354024 75.323262 
-L 161.092394 75.323262 
-Q 156.076345 75.323262 156.076345 78.499099 
-L 156.076345 95.775654 
-Q 156.076345 98.951492 161.092394 98.951492 
+    <path d="M 180.922909 95.634286
+L 201.368895 95.634286
+Q 206.693371 95.634286 206.693371 92.605714
+L 206.693371 76.130286
+Q 206.693371 73.101714 201.368895 73.101714
+L 180.922909 73.101714
+Q 175.598434 73.101714 175.598434 76.130286
+L 175.598434 92.605714
+Q 175.598434 95.634286 180.922909 95.634286
 z
-" clip-path="url(#p8437bc524f)" style="fill: #f2f0ec; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #f2f0ec; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_7">
-    <path d="M 64.784247 139.602211 
-L 84.045876 139.602211 
-Q 89.061925 139.602211 89.061925 136.426373 
-L 89.061925 119.149818 
-Q 89.061925 115.97398 84.045876 115.97398 
-L 64.784247 115.97398 
-Q 59.768197 115.97398 59.768197 119.149818 
-L 59.768197 136.426373 
-Q 59.768197 139.602211 64.784247 139.602211 
+    <path d="M 78.692979 135.611429
+L 99.138965 135.611429
+Q 104.463441 135.611429 104.463441 132.582857
+L 104.463441 116.107429
+Q 104.463441 113.078857 99.138965 113.078857
+L 78.692979 113.078857
+Q 73.368503 113.078857 73.368503 116.107429
+L 73.368503 132.582857
+Q 73.368503 135.611429 78.692979 135.611429
 z
-" clip-path="url(#p8437bc524f)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_8">
-    <path d="M 96.886962 139.602211 
-L 116.148592 139.602211 
-Q 121.164641 139.602211 121.164641 136.426373 
-L 121.164641 119.149818 
-Q 121.164641 115.97398 116.148592 115.97398 
-L 96.886962 115.97398 
-Q 91.870913 115.97398 91.870913 119.149818 
-L 91.870913 136.426373 
-Q 91.870913 139.602211 96.886962 139.602211 
+    <path d="M 112.769622 135.611429
+L 133.215608 135.611429
+Q 138.540084 135.611429 138.540084 132.582857
+L 138.540084 116.107429
+Q 138.540084 113.078857 133.215608 113.078857
+L 112.769622 113.078857
+Q 107.445147 113.078857 107.445147 116.107429
+L 107.445147 132.582857
+Q 107.445147 135.611429 112.769622 135.611429
 z
-" clip-path="url(#p8437bc524f)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_9">
-    <path d="M 128.989678 139.602211 
-L 148.251308 139.602211 
-Q 153.267357 139.602211 153.267357 136.426373 
-L 153.267357 119.149818 
-Q 153.267357 115.97398 148.251308 115.97398 
-L 128.989678 115.97398 
-Q 123.973629 115.97398 123.973629 119.149818 
-L 123.973629 136.426373 
-Q 123.973629 139.602211 128.989678 139.602211 
+    <path d="M 146.846266 135.611429
+L 167.292252 135.611429
+Q 172.616727 135.611429 172.616727 132.582857
+L 172.616727 116.107429
+Q 172.616727 113.078857 167.292252 113.078857
+L 146.846266 113.078857
+Q 141.52179 113.078857 141.52179 116.107429
+L 141.52179 132.582857
+Q 141.52179 135.611429 146.846266 135.611429
 z
-" clip-path="url(#p8437bc524f)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_10">
-    <path d="M 161.092394 139.602211 
-L 180.354024 139.602211 
-Q 185.370073 139.602211 185.370073 136.426373 
-L 185.370073 119.149818 
-Q 185.370073 115.97398 180.354024 115.97398 
-L 161.092394 115.97398 
-Q 156.076345 115.97398 156.076345 119.149818 
-L 156.076345 136.426373 
-Q 156.076345 139.602211 161.092394 139.602211 
+    <path d="M 180.922909 135.611429
+L 201.368895 135.611429
+Q 206.693371 135.611429 206.693371 132.582857
+L 206.693371 116.107429
+Q 206.693371 113.078857 201.368895 113.078857
+L 180.922909 113.078857
+Q 175.598434 113.078857 175.598434 116.107429
+L 175.598434 132.582857
+Q 175.598434 135.611429 180.922909 135.611429
 z
-" clip-path="url(#p8437bc524f)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#p12d4a25fb7)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="7.2" y="38.229481" transform="rotate(-0 7.2 38.229481)">(a)</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="17.568" y="35.305143" transform="rotate(-0 17.568 35.305143)">(a)</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="25.257778" y="38.229481" transform="rotate(-0 25.257778 38.229481)">Event representation becomes complete</text>
+    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="45.255273" y="35.305143" transform="rotate(-0 45.255273 35.305143)">A situation model becomes complete</text>
    </g>
    <g id="text_3">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(17.493287 62.762182)">random</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(13.865162 73.778057)">event cue</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(25.713608 59.122357)">event cue</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(27.644858 67.715607)">(context)</text>
    </g>
    <g id="text_4">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="61.373333" y="58.55484" transform="rotate(-0 61.373333 58.55484)">feature slots</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="75.072336" y="54.688" transform="rotate(-0 75.072336 54.688)">feature slots</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="74.415061" y="67.447185" transform="rotate(-0 74.415061 67.447185)">F1</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="88.915972" y="63.168" transform="rotate(-0 88.915972 63.168)">F1</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="106.517777" y="67.447185" transform="rotate(-0 106.517777 67.447185)">F2</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="122.992615" y="63.168" transform="rotate(-0 122.992615 63.168)">F2</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="138.620493" y="67.447185" transform="rotate(-0 138.620493 67.447185)">F3</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="157.069259" y="63.168" transform="rotate(-0 157.069259 63.168)">F3</text>
    </g>
    <g id="text_8">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="170.723209" y="67.447185" transform="rotate(-0 170.723209 67.447185)">F4</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="191.145902" y="63.168" transform="rotate(-0 191.145902 63.168)">F4</text>
    </g>
    <g id="text_9">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="13.219259" y="90.169377" transform="rotate(-0 13.219259 90.169377)">mid-event</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="19.69779" y="86.306867" transform="rotate(-0 19.69779 86.306867)">mid-event</text>
    </g>
    <g id="text_10">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="74.415061" y="90.328158" transform="rotate(-0 74.415061 90.328158)">+1</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="88.915972" y="86.694641" transform="rotate(-0 88.915972 86.694641)">+1</text>
    </g>
    <g id="text_11">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="106.517777" y="90.328158" transform="rotate(-0 106.517777 90.328158)">−1</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="122.992615" y="86.694641" transform="rotate(-0 122.992615 86.694641)">−1</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="138.620493" y="90.426595" transform="rotate(-0 138.620493 90.426595)">?</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="157.069259" y="86.694641" transform="rotate(-0 157.069259 86.694641)">·</text>
    </g>
    <g id="text_13">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="170.723209" y="90.426595" transform="rotate(-0 170.723209 90.426595)">?</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="191.145902" y="86.694641" transform="rotate(-0 191.145902 86.694641)">·</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="13.219259" y="130.820096" transform="rotate(-0 13.219259 130.820096)">boundary</text>
+    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="60.163804" y="104.356571" transform="rotate(-0 60.163804 104.356571)">mask</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="74.415061" y="130.978877" transform="rotate(-0 74.415061 130.978877)">+1</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #eda100" x="88.915972" y="104.356571" transform="rotate(-0 88.915972 104.356571)">1</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="106.517777" y="130.978877" transform="rotate(-0 106.517777 130.978877)">−1</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #eda100" x="122.992615" y="104.356571" transform="rotate(-0 122.992615 104.356571)">1</text>
    </g>
    <g id="text_17">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="138.620493" y="130.978877" transform="rotate(-0 138.620493 130.978877)">+1</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #eda100" x="157.069259" y="104.356571" transform="rotate(-0 157.069259 104.356571)">0</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="170.723209" y="130.978877" transform="rotate(-0 170.723209 130.978877)">+1</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #eda100" x="191.145902" y="104.356571" transform="rotate(-0 191.145902 104.356571)">0</text>
    </g>
    <g id="text_19">
-    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="63.379753" y="155.100297" transform="rotate(-0 63.379753 155.100297)">mask</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(19.69779 122.218424)">boundary</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(19.69779 130.349596)">(complete)</text>
    </g>
    <g id="text_20">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #1baf7a" x="87.45679" y="155.100297" transform="rotate(-0 87.45679 155.100297)">1  1  1  1</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="88.915972" y="126.671783" transform="rotate(-0 88.915972 126.671783)">+1</text>
    </g>
    <g id="text_21">
-    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="13.219259" y="166.533312" transform="rotate(-0 13.219259 166.533312)">The gate sees cue + accumulated values + mask, but no boundary bit.</text>
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="122.992615" y="126.671783" transform="rotate(-0 122.992615 126.671783)">−1</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="157.069259" y="126.671783" transform="rotate(-0 157.069259 126.671783)">+1</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 9px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="191.145902" y="126.671783" transform="rotate(-0 191.145902 126.671783)">+1</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="60.163804" y="144.333714" transform="rotate(-0 60.163804 144.333714)">mask</text>
+   </g>
+   <g id="text_25">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="88.915972" y="144.333714" transform="rotate(-0 88.915972 144.333714)">1</text>
+   </g>
+   <g id="text_26">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="122.992615" y="144.333714" transform="rotate(-0 122.992615 144.333714)">1</text>
+   </g>
+   <g id="text_27">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="157.069259" y="144.333714" transform="rotate(-0 157.069259 144.333714)">1</text>
+   </g>
+   <g id="text_28">
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="191.145902" y="144.333714" transform="rotate(-0 191.145902 144.333714)">1</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #6f6a61" x="23.957371" y="157.659429" transform="rotate(-0 23.957371 157.659429)">Mask: 1 = observed, 0 = not yet observed. All ones reveals completion.</text>
    </g>
   </g>
   <g id="axes_2">
    <g id="patch_11">
-    <path d="M 319.997829 110.384507 
-L 373.368594 110.384507 
-Q 378.384644 110.384507 378.384644 107.208669 
-L 378.384644 73.417759 
-Q 378.384644 70.241922 373.368594 70.241922 
-L 319.997829 70.241922 
-Q 314.98178 70.241922 314.98178 73.417759 
-L 314.98178 107.208669 
-Q 314.98178 110.384507 319.997829 110.384507 
+    <path d="M 281.057126 104.114286
+L 342.241739 104.114286
+Q 347.992172 104.114286 347.992172 101.085714
+L 347.992172 68.861714
+Q 347.992172 65.833143 342.241739 65.833143
+L 281.057126 65.833143
+Q 275.306692 65.833143 275.306692 68.861714
+L 275.306692 101.085714
+Q 275.306692 104.114286 281.057126 104.114286
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pb758d5beea)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_12">
-    <path d="M 392.22894 110.384507 
-L 425.535508 110.384507 
-Q 430.551557 110.384507 430.551557 107.208669 
-L 430.551557 73.417759 
-Q 430.551557 70.241922 425.535508 70.241922 
-L 392.22894 70.241922 
-Q 387.212891 70.241922 387.212891 73.417759 
-L 387.212891 107.208669 
-Q 387.212891 110.384507 392.22894 110.384507 
+    <path d="M 363.863369 104.114286
+L 402.046248 104.114286
+Q 407.796681 104.114286 407.796681 101.085714
+L 407.796681 68.861714
+Q 407.796681 65.833143 402.046248 65.833143
+L 363.863369 65.833143
+Q 358.112935 65.833143 358.112935 68.861714
+L 358.112935 101.085714
+Q 358.112935 104.114286 363.863369 104.114286
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #f2f0ec; stroke: #6f6a61; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pb758d5beea)" style="fill: #f2f0ec; stroke: #6f6a61; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_13">
-    <path d="M 446.402273 110.384507 
-L 507.798717 110.384507 
-Q 512.814766 110.384507 512.814766 107.208669 
-L 512.814766 73.417759 
-Q 512.814766 70.241922 507.798717 70.241922 
-L 446.402273 70.241922 
-Q 441.386224 70.241922 441.386224 73.417759 
-L 441.386224 107.208669 
-Q 441.386224 110.384507 446.402273 110.384507 
+    <path d="M 425.968051 104.114286
+L 496.353358 104.114286
+Q 502.103792 104.114286 502.103792 101.085714
+L 502.103792 68.861714
+Q 502.103792 65.833143 496.353358 65.833143
+L 425.968051 65.833143
+Q 420.217618 65.833143 420.217618 68.861714
+L 420.217618 101.085714
+Q 420.217618 104.114286 425.968051 104.114286
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pb758d5beea)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_14">
-    <path d="M 376.775589 90.313214 
-Q 382.800203 90.313214 387.483176 90.313214 
-" clip-path="url(#p9cfdff799c)" style="fill: none; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 383.883176 88.513214 
-L 387.483176 90.313214 
-L 383.883176 92.113214 
+    <path d="M 345.851034 84.973714
+Q 353.053032 84.973714 358.913388 84.973714
+" clip-path="url(#pb758d5beea)" style="fill: none; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 355.313388 83.173714
+L 358.913388 84.973714
+L 355.313388 86.773714
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #eda100; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pb758d5beea)" style="fill: #eda100; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_15">
-    <path d="M 428.937114 90.313214 
-Q 435.965616 90.313214 441.652476 90.313214 
-" clip-path="url(#p9cfdff799c)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 438.052476 88.513214 
-L 441.652476 90.313214 
-L 438.052476 92.113214 
+    <path d="M 405.655263 84.973714
+Q 414.004342 84.973714 421.01178 84.973714
+" clip-path="url(#pb758d5beea)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 417.41178 83.173714
+L 421.01178 84.973714
+L 417.41178 86.773714
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pb758d5beea)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_16">
-    <path d="M 392.713057 110.033594 
-Q 434.967426 124.594329 475.953365 110.469524 
-" clip-path="url(#p9cfdff799c)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 471.963334 109.940699 
-L 475.953365 110.469524 
-L 473.136286 113.344253 
+    <path d="M 364.140389 103.811846
+Q 412.856471 120.695608 460.304882 104.251588
+" clip-path="url(#pb758d5beea)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 456.313941 103.729681
+L 460.304882 104.251588
+L 457.492792 107.131197
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pb758d5beea)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_17">
-    <path d="M 468.47289 157.3869 
-L 505.792297 157.3869 
-Q 510.808347 157.3869 510.808347 154.211063 
-L 510.808347 135.664172 
-Q 510.808347 132.488335 505.792297 132.488335 
-L 468.47289 132.488335 
-Q 463.456841 132.488335 463.456841 135.664172 
-L 463.456841 154.211063 
-Q 463.456841 157.3869 468.47289 157.3869 
+    <path d="M 451.269959 148.937143
+L 494.053185 148.937143
+Q 499.803618 148.937143 499.803618 145.908571
+L 499.803618 128.221714
+Q 499.803618 125.193143 494.053185 125.193143
+L 451.269959 125.193143
+Q 445.519526 125.193143 445.519526 128.221714
+L 445.519526 145.908571
+Q 445.519526 148.937143 451.269959 148.937143
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #fdeceb; stroke: #e34948; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pb758d5beea)" style="fill: #fdeceb; stroke: #e34948; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_18">
-    <path d="M 489.139013 110.098309 
-Q 489.139013 120.80286 489.139013 130.16577 
-" clip-path="url(#p9cfdff799c)" style="fill: none; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 490.939013 126.56577 
-L 489.139013 130.16577 
-L 487.339013 126.56577 
+    <path d="M 474.961745 103.936002
+Q 474.961745 114.049341 474.961745 122.821039
+" clip-path="url(#pb758d5beea)" style="fill: none; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 476.761745 119.221039
+L 474.961745 122.821039
+L 473.161745 119.221039
 z
-" clip-path="url(#p9cfdff799c)" style="fill: #e34948; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pb758d5beea)" style="fill: #e34948; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
-   <g id="text_22">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="314.580496" y="38.229481" transform="rotate(-0 314.580496 38.229481)">(b)</text>
+   <g id="text_30">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="274.846657" y="35.305143" transform="rotate(-0 274.846657 35.305143)">(b)</text>
    </g>
-   <g id="text_23">
-    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="332.638274" y="38.229481" transform="rotate(-0 332.638274 38.229481)">One study–test episode</text>
+   <g id="text_31">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="304.748912" y="35.305143" transform="rotate(-0 304.748912 35.305143)">Delayed event reconstruction</text>
    </g>
-   <g id="text_24">
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(318.657774 82.588334)">STUDY + WRITE</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(314.807462 92.289839)">reveal one feature;</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(297.688899 102.480719)">sample gate after each state</text>
+   <g id="text_32">
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(274.880495 79.246902)">EVENT OBSERVATION</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(281.974745 86.835027)">reveal one feature;</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(274.975557 94.423152)">choose encode or skip</text>
    </g>
-   <g id="text_25">
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(397.081536 82.588334)">RESET</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(392.354286 92.837152)">controller</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(396.151724 103.136032)">cleared</text>
+   <g id="text_33">
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(371.819558 79.246902)">DELAY</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(360.084121 86.835027)">transient state</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(371.151871 94.423152)">cleared</text>
    </g>
-   <g id="text_26">
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(450.296245 82.588334)">DELAYED TEST</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(439.501307 92.232464)">partial query and read</text>
-    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(435.645932 102.480719)">predict missing features</text>
+   <g id="text_34">
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(432.092392 79.098739)">DELAYED QUERY</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(425.812642 86.755714)">retrieve from memory;</text>
+    <text style="font-weight: 700; font-size: 7.2px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(422.680642 94.484689)">predict missing features</text>
    </g>
-   <g id="text_27">
-    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="388.818026" y="127.152928" transform="rotate(-0 388.818026 127.152928)">episodic memory persists</text>
+   <g id="text_35">
+    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #1baf7a" x="359.953074" y="120.105143" transform="rotate(-0 359.953074 120.105143)">episodic memories persist</text>
    </g>
-   <g id="text_28">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="487.132594" y="147.797617" transform="rotate(-0 487.132594 147.797617)">reward = 1 − MSE</text>
+   <g id="text_36">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #2a2723" x="472.661572" y="139.133268" transform="rotate(-0 472.661572 139.133268)">reward = 1 − error</text>
+   </g>
+   <g id="text_37">
+    <text style="font-size: 7.4px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(281.747178 126.683586)">Goal after the delay: reconstruct missing</text>
+    <text style="font-size: 7.4px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(281.747178 134.642286)">situation features from episodic memory.</text>
    </g>
   </g>
   <g id="axes_3">
    <g id="patch_19">
-    <path d="M 20.916607 287.206814 
-L 110.328561 287.206814 
-Q 123.029123 287.206814 123.029123 283.237017 
-L 123.029123 256.877567 
-Q 123.029123 252.90777 110.328561 252.90777 
-L 20.916607 252.90777 
-Q 8.216045 252.90777 8.216045 256.877567 
-L 8.216045 283.237017 
-Q 8.216045 287.206814 20.916607 287.206814 
+    <path d="M 30.724992 270.928
+L 116.489088 270.928
+Q 128.671488 270.928 128.671488 267.142286
+L 128.671488 242.005143
+Q 128.671488 238.219429 116.489088 238.219429
+L 30.724992 238.219429
+Q 18.542592 238.219429 18.542592 242.005143
+L 18.542592 267.142286
+Q 18.542592 270.928 30.724992 270.928
 z
-" clip-path="url(#p5635c07bae)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_20">
-    <path d="M 153.002449 274.503465 
-L 227.17373 274.503465 
-Q 239.874291 274.503465 239.874291 270.533668 
-L 239.874291 250.525892 
-Q 239.874291 246.556095 227.17373 246.556095 
-L 153.002449 246.556095 
-Q 140.301887 246.556095 140.301887 250.525892 
-L 140.301887 270.533668 
-Q 140.301887 274.503465 153.002449 274.503465 
+    <path d="M 157.421952 258.813714
+L 228.567168 258.813714
+Q 240.749568 258.813714 240.749568 255.028
+L 240.749568 235.948
+Q 240.749568 232.162286 228.567168 232.162286
+L 157.421952 232.162286
+Q 145.239552 232.162286 145.239552 235.948
+L 145.239552 255.028
+Q 145.239552 258.813714 157.421952 258.813714
 z
-" clip-path="url(#p5635c07bae)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #fff5d8; stroke: #eda100; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_21">
-    <path d="M 153.002449 309.437676 
-L 227.17373 309.437676 
-Q 239.874291 309.437676 239.874291 305.467879 
-L 239.874291 285.460104 
-Q 239.874291 281.490307 227.17373 281.490307 
-L 153.002449 281.490307 
-Q 140.301887 281.490307 140.301887 285.460104 
-L 140.301887 305.467879 
-Q 140.301887 309.437676 153.002449 309.437676 
+    <path d="M 157.421952 292.128
+L 228.567168 292.128
+Q 240.749568 292.128 240.749568 288.342286
+L 240.749568 269.262286
+Q 240.749568 265.476571 228.567168 265.476571
+L 157.421952 265.476571
+Q 145.239552 265.476571 145.239552 269.262286
+L 145.239552 288.342286
+Q 145.239552 292.128 157.421952 292.128
 z
-" clip-path="url(#p5635c07bae)" style="fill: #f2f0ec; stroke: #6f6a61; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #f2f0ec; stroke: #6f6a61; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_22">
-    <path d="M 274.927842 280.855139 
-L 359.259572 280.855139 
-Q 371.960133 280.855139 371.960133 276.885343 
-L 371.960133 247.350055 
-Q 371.960133 243.380258 359.259572 243.380258 
-L 274.927842 243.380258 
-Q 262.22728 243.380258 262.22728 247.350055 
-L 262.22728 276.885343 
-Q 262.22728 280.855139 274.927842 280.855139 
+    <path d="M 274.372992 264.870857
+L 355.264128 264.870857
+Q 367.446528 264.870857 367.446528 261.085143
+L 367.446528 232.919429
+Q 367.446528 229.133714 355.264128 229.133714
+L 274.372992 229.133714
+Q 262.190592 229.133714 262.190592 232.919429
+L 262.190592 261.085143
+Q 262.190592 264.870857 274.372992 264.870857
 z
-" clip-path="url(#p5635c07bae)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_23">
-    <path d="M 115.833833 268.034208 
-Q 131.66558 264.49956 146.187924 261.257254 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 142.282209 260.28494 
-L 146.187924 261.257254 
-L 143.066644 263.798437 
+    <path d="M 121.853032 252.625957
+Q 136.956465 249.273505 150.750134 246.211776
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 146.845624 245.234636
+L 150.750134 246.211776
+L 147.625716 248.7491
 z
-" clip-path="url(#p5635c07bae)" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_24">
-    <path d="M 115.579884 274.29284 
-Q 131.663534 284.347328 146.609545 293.690635 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #6f6a61; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 144.511088 290.256035 
-L 146.609545 293.690635 
-L 142.60279 293.308641 
+    <path d="M 121.59487 258.655557
+Q 136.954091 268.201398 151.173818 277.039036
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #6f6a61; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 149.066385 273.609936
+L 151.173818 277.039036
+L 147.166078 276.667522
 z
-" clip-path="url(#p5635c07bae)" style="fill: #6f6a61; stroke: #6f6a61; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #6f6a61; stroke: #6f6a61; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_25">
-    <path d="M 232.729233 260.52978 
-Q 251.052793 260.52978 268.034712 260.52978 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 264.434712 258.72978 
-L 268.034712 260.52978 
-L 264.434712 262.32978 
+    <path d="M 233.981674 245.488
+Q 251.471904 245.488 267.620493 245.488
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 264.020493 243.688
+L 267.620493 245.488
+L 264.020493 247.288
 z
-" clip-path="url(#p5635c07bae)" style="fill: #eda100; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #eda100; stroke: #eda100; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_26">
-    <path d="M 20.916607 357.075237 
-L 110.328561 357.075237 
-Q 123.029123 357.075237 123.029123 353.10544 
-L 123.029123 329.921827 
-Q 123.029123 325.95203 110.328561 325.95203 
-L 20.916607 325.95203 
-Q 8.216045 325.95203 8.216045 329.921827 
-L 8.216045 353.10544 
-Q 8.216045 357.075237 20.916607 357.075237 
+    <path d="M 30.724992 337.556571
+L 116.489088 337.556571
+Q 128.671488 337.556571 128.671488 333.770857
+L 128.671488 311.662286
+Q 128.671488 307.876571 116.489088 307.876571
+L 30.724992 307.876571
+Q 18.542592 307.876571 18.542592 311.662286
+L 18.542592 333.770857
+Q 18.542592 337.556571 30.724992 337.556571
 z
-" clip-path="url(#p5635c07bae)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #eaf3fd; stroke: #2a78d6; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_27">
-    <path d="M 158.082674 358.663156 
-L 237.334179 358.663156 
-Q 250.034741 358.663156 250.034741 354.693359 
-L 250.034741 328.333909 
-Q 250.034741 324.364112 237.334179 324.364112 
-L 158.082674 324.364112 
-Q 145.382112 324.364112 145.382112 328.333909 
-L 145.382112 354.693359 
-Q 145.382112 358.663156 158.082674 358.663156 
+    <path d="M 162.294912 339.070857
+L 238.313088 339.070857
+Q 250.495488 339.070857 250.495488 335.285143
+L 250.495488 310.148
+Q 250.495488 306.362286 238.313088 306.362286
+L 162.294912 306.362286
+Q 150.112512 306.362286 150.112512 310.148
+L 150.112512 335.285143
+Q 150.112512 339.070857 162.294912 339.070857
 z
-" clip-path="url(#p5635c07bae)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_28">
-    <path d="M 285.088291 358.663156 
-L 349.099122 358.663156 
-Q 361.799684 358.663156 361.799684 354.693359 
-L 361.799684 328.333909 
-Q 361.799684 324.364112 349.099122 324.364112 
-L 285.088291 324.364112 
-Q 272.387729 324.364112 272.387729 328.333909 
-L 272.387729 354.693359 
-Q 272.387729 358.663156 285.088291 358.663156 
+    <path d="M 284.118912 339.070857
+L 345.518208 339.070857
+Q 357.700608 339.070857 357.700608 335.285143
+L 357.700608 310.148
+Q 357.700608 306.362286 345.518208 306.362286
+L 284.118912 306.362286
+Q 271.936512 306.362286 271.936512 310.148
+L 271.936512 335.285143
+Q 271.936512 339.070857 284.118912 339.070857
 z
-" clip-path="url(#p5635c07bae)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #e7f7f1; stroke: #1baf7a; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_29">
-    <path d="M 396.853234 358.663156 
-L 491.345414 358.663156 
-Q 504.045976 358.663156 504.045976 354.693359 
-L 504.045976 328.333909 
-Q 504.045976 324.364112 491.345414 324.364112 
-L 396.853234 324.364112 
-Q 384.152673 324.364112 384.152673 328.333909 
-L 384.152673 354.693359 
-Q 384.152673 358.663156 396.853234 358.663156 
+    <path d="M 391.324032 339.070857
+L 481.961088 339.070857
+Q 494.143488 339.070857 494.143488 335.285143
+L 494.143488 310.148
+Q 494.143488 306.362286 481.961088 306.362286
+L 391.324032 306.362286
+Q 379.141632 306.362286 379.141632 310.148
+L 379.141632 335.285143
+Q 379.141632 339.070857 391.324032 339.070857
 z
-" clip-path="url(#p5635c07bae)" style="fill: #fdeceb; stroke: #e34948; stroke-width: 0.8; stroke-linejoin: miter"/>
+" clip-path="url(#pc43633ce10)" style="fill: #fdeceb; stroke: #e34948; stroke-width: 0.8; stroke-linejoin: miter"/>
    </g>
    <g id="patch_30">
-    <path d="M 115.884065 341.513634 
-Q 134.207625 341.513634 151.189544 341.513634 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 147.589544 339.713634 
-L 151.189544 341.513634 
-L 147.589544 343.313634 
+    <path d="M 121.903594 322.716571
+Q 139.393824 322.716571 155.542413 322.716571
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 151.942413 320.916571
+L 155.542413 322.716571
+L 151.942413 324.516571
 z
-" clip-path="url(#p5635c07bae)" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #2a78d6; stroke: #2a78d6; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_31">
-    <path d="M 315.311566 278.905742 
-Q 268.832468 302.609169 223.54856 325.703071 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 227.573355 325.671064 
-L 223.54856 325.703071 
-L 225.937832 322.464031 
+    <path d="M 313.035665 263.049102
+Q 268.5249 285.616845 225.210758 307.577879
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 229.235618 307.555346
+L 225.210758 307.577879
+L 227.607648 304.344472
 z
-" clip-path="url(#p5635c07bae)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_32">
-    <path d="M 242.889682 341.513634 
-Q 261.213242 341.513634 278.195161 341.513634 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 274.595161 339.713634 
-L 278.195161 341.513634 
-L 274.595161 343.313634 
+    <path d="M 243.727594 322.716571
+Q 261.217824 322.716571 277.366413 322.716571
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 273.766413 320.916571
+L 277.366413 322.716571
+L 273.766413 324.516571
 z
-" clip-path="url(#p5635c07bae)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_33">
-    <path d="M 354.654626 341.513634 
-Q 372.978186 341.513634 389.960105 341.513634 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 386.360105 339.713634 
-L 389.960105 341.513634 
-L 386.360105 343.313634 
+    <path d="M 350.932714 322.716571
+Q 368.422944 322.716571 384.571533 322.716571
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 380.971533 320.916571
+L 384.571533 322.716571
+L 380.971533 324.516571
 z
-" clip-path="url(#p5635c07bae)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
+" clip-path="url(#pc43633ce10)" style="fill: #1baf7a; stroke: #1baf7a; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="patch_34">
-    <path d="M 447.444653 324.631401 
-Q 334.295838 259.659356 213.529069 305.391607 
-" clip-path="url(#p5635c07bae)" style="fill: none; stroke-dasharray: 4.44,1.92; stroke-dashoffset: 0; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 217.533214 305.800046 
-L 213.529069 305.391607 
-L 216.258307 302.433354 
+    <path d="M 439.783749 306.573815
+Q 331.293967 244.378038 215.608489 288.212705
+" clip-path="url(#pc43633ce10)" style="fill: none; stroke-dasharray: 4.44,1.92; stroke-dashoffset: 0; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 219.612717 288.620338
+L 215.608489 288.212705
+L 218.337133 285.253903
 z
-" clip-path="url(#p5635c07bae)" style="fill: #e34948; stroke-dasharray: 4.44,1.92; stroke-dashoffset: 0; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
-   </g>
-   <g id="text_29">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="7.2" y="220.831812" transform="rotate(-0 7.2 220.831812)">(c)</text>
-   </g>
-   <g id="text_30">
-    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="52.922022" y="220.831812" transform="rotate(-0 52.922022 220.831812)">Differentiable read, discrete learned write</text>
-   </g>
-   <g id="text_31">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(33.766334 266.533417)">partial event state</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(28.810709 278.461792)">cue + values + mask</text>
-   </g>
-   <g id="text_32">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(169.426839 257.612555)">write actor</text>
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(175.728089 268.45138)">p(write)</text>
-   </g>
-   <g id="text_33">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(181.423714 292.684491)">critic</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(176.755589 303.191616)">V(state)</text>
-   </g>
-   <g id="text_34">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(292.424957 253.001824)">episodic slots</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(287.681207 264.145824)">key: partial state</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(283.161832 276.146074)">value: feature state</text>
-   </g>
-   <g id="text_35">
-    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #6f6a61" x="251.050786" y="257.558564" transform="rotate(-0 251.050786 257.558564)">sample 0/1</text>
-   </g>
-   <g id="text_36">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(28.210709 337.949759)">delayed partial query</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(35.318209 349.241259)">(same event cue)</text>
-   </g>
-   <g id="text_37">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(169.187801 337.949759)">cosine similarity</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(163.004676 349.950009)">+ softmax attention</text>
+" clip-path="url(#pc43633ce10)" style="fill: #e34948; stroke-dasharray: 4.44,1.92; stroke-dashoffset: 0; stroke: #e34948; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="text_38">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(293.453707 337.949759)">memory read</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(290.205582 349.125634)">weighted value</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="17.568" y="207.630857" transform="rotate(-0 17.568 207.630857)">(c)</text>
    </g>
    <g id="text_39">
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(401.347449 337.973509)">predict missing features</text>
-    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(407.723699 349.133759)">then delayed reward</text>
+    <text style="font-weight: 700; font-size: 10px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="80.91648" y="207.630857" transform="rotate(-0 80.91648 207.630857)">Differentiable retrieval and learned encoding</text>
    </g>
    <g id="text_40">
-    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #6f6a61" x="329.794268" y="313.135719" transform="rotate(-0 329.794268 313.135719)">delayed advantage</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(32.481415 252.426214)">current situation model</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(36.795165 260.857464)">cue + values + mask</text>
    </g>
    <g id="text_41">
-    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(383.136628 258.82728)">Incomplete traces can win</text>
-    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(383.136628 267.77478)">attention and block the endpoint.</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(166.10206 243.211375)">encoding actor</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(175.213935 251.900875)">p(encode)</text>
+   </g>
+   <g id="text_42">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(184.330185 276.573786)">critic</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(179.66206 285.167036)">V(state)</text>
+   </g>
+   <g id="text_43">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(280.957935 240.599161)">episodic memories</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(278.954185 249.030411)">key: situation model</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(278.292935 257.541661)">value: feature values</text>
+   </g>
+   <g id="text_44">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(36.195165 320.448071)">delayed partial query</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(43.302665 329.121321)">(same event cue)</text>
+   </g>
+   <g id="text_45">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(171.783375 320.529071)">cosine similarity</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(165.60025 329.040321)">+ softmax attention</text>
+   </g>
+   <g id="text_46">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(284.51981 320.520946)">episodic retrieval</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(283.77856 328.952196)">weighted content</text>
+   </g>
+   <g id="text_47">
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(393.886935 320.512821)">predict missing features</text>
+    <text style="font-size: 8px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #2a2723" transform="translate(400.263185 329.040321)">then delayed reward</text>
+   </g>
+   <g id="text_48">
+    <text style="font-size: 7px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: middle; fill: #6f6a61" x="327.00096" y="294.9555" transform="rotate(-0 327.00096 294.9555)">delayed advantage</text>
+   </g>
+   <g id="text_49">
+    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(378.16704 243.399719)">An incomplete memory can dominate</text>
+    <text style="font-size: 7.5px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; fill: #6f6a61" transform="translate(378.16704 251.379016)">retrieval and block the endpoint memory.</text>
    </g>
   </g>
-  <g id="text_42">
-   <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="14.56776" y="18.9" transform="rotate(-0 14.56776 18.9)">A controlled test of learned boundary-selective episodic writing</text>
+  <g id="text_50">
+   <text style="font-weight: 700; font-size: 12px; font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; text-anchor: start; fill: #2a2723" x="7.2" y="15.864375" transform="rotate(-0 7.2 15.864375)">A controlled test of learned boundary-selective episodic encoding</text>
   </g>
  </g>
  <defs>
-  <clipPath id="p8437bc524f">
-   <rect x="7.2" y="40.770151" width="200.641974" height="127.033496"/>
+  <clipPath id="p12d4a25fb7">
+   <rect x="17.568" y="37.728" width="212.979021" height="121.142857"/>
   </clipPath>
-  <clipPath id="p9cfdff799c">
-   <rect x="314.580496" y="40.770151" width="200.641974" height="127.033496"/>
+  <clipPath id="pb758d5beea">
+   <rect x="274.846657" y="37.728" width="230.017343" height="121.142857"/>
   </clipPath>
-  <clipPath id="p5635c07bae">
-   <rect x="7.2" y="224.00765" width="508.02247" height="158.79187"/>
+  <clipPath id="pc43633ce10">
+   <rect x="17.568" y="210.659429" width="487.296" height="151.428571"/>
   </clipPath>
  </defs>
 </svg>

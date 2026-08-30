@@ -32,6 +32,7 @@ def apply_style() -> None:
             "font.size": 9,
             "axes.labelsize": 9,
             "axes.titlesize": 10,
+            "axes.titleweight": "semibold",
             "xtick.labelsize": 8,
             "ytick.labelsize": 8,
             "legend.fontsize": 8,

@@ -135,21 +135,33 @@ def draw_retrieval(ax, mechanism: dict) -> None:
     endpoint = np.asarray([row["endpoint_only_reward"] for row in sweep])
     always = np.asarray([row["always_write_reward"] for row in sweep])
     midpoint = np.asarray([row["midpoint_plus_endpoint_reward"] for row in sweep])
-    ax.plot(temperature, endpoint, color=BLUE, marker="o", label="endpoint only")
-    ax.plot(temperature, always, color=ORANGE, marker="o", label="always write")
+    ax.plot(
+        temperature,
+        endpoint,
+        color=BLUE,
+        marker="o",
+        label="endpoint only (forced)",
+    )
+    ax.plot(
+        temperature,
+        always,
+        color=ORANGE,
+        marker="o",
+        label="always encode (forced)",
+    )
     ax.plot(
         temperature,
         midpoint,
         color=VIOLET,
         marker="o",
-        label="midpoint + endpoint",
+        label="midpoint + end (forced)",
     )
     ax.axvline(0.1, color=MUTED, linestyle=":", linewidth=1.0)
     ax.text(0.105, 0.04, "reported\ntemperature", fontsize=6.8, color=MUTED)
     ax.text(
         0.97,
         0.88,
-        "Latest-trace read:\nalways-write = 1.00",
+        "Latest-memory retrieval:\nalways encode (forced) = 1.00",
         transform=ax.transAxes,
         ha="right",
         va="top",
@@ -161,7 +173,7 @@ def draw_retrieval(ax, mechanism: dict) -> None:
     ax.set_xscale("log")
     ax.set(
         xlabel="Softmax retrieval temperature",
-        ylabel="Oracle reward",
+        ylabel="Reward under forced policy",
         ylim=(-0.04, 1.06),
     )
     ax.set_title("(c) Retrieval boundary condition", loc="left", fontsize=9)
