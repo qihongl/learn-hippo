@@ -74,7 +74,11 @@ class EpisodicPredictionModel(nn.Module):
         self.retrieval_gate_layer = nn.Linear(hidden_dim, 1)
         self.decision = nn.Linear(hidden_dim, decision_dim)
         self.response_head = nn.Linear(decision_dim, output_dim)
-        self.encoding_encoder = nn.Sequential(
+        self.encoding_actor_encoder = nn.Sequential(
+            nn.Linear(hidden_dim, decision_dim),
+            nn.Tanh(),
+        )
+        self.encoding_critic_encoder = nn.Sequential(
             nn.Linear(hidden_dim, decision_dim),
             nn.Tanh(),
         )
@@ -162,9 +166,10 @@ class EpisodicPredictionModel(nn.Module):
 
         if situation_model.shape != (self.hidden_dim,):
             raise ValueError("situation_model must have shape [hidden_dim]")
-        hidden = self.encoding_encoder(situation_model)
-        logit = self.encoding_actor(hidden).squeeze()
-        value = self.encoding_critic(hidden).squeeze()
+        actor_hidden = self.encoding_actor_encoder(situation_model)
+        critic_hidden = self.encoding_critic_encoder(situation_model)
+        logit = self.encoding_actor(actor_hidden).squeeze()
+        value = self.encoding_critic(critic_hidden).squeeze()
         return EncodingPolicyOutput(
             probability=torch.sigmoid(logit),
             value=value,

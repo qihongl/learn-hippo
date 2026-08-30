@@ -16,3 +16,7 @@
 - 2026-08-30: added supervised prediction/retrieval objectives and a reproducible
   training stage that can run with episodic memory absent or under a forced encoding
   schedule. A repeated exact trial is learnable in the training test.
+- 2026-08-30: added delayed encoding optimization with a separate critic-only forced
+  exploration stage and a free Bernoulli actor-critic stage. Tests verify that the
+  forced stage leaves the actor unchanged and both stages freeze the complete
+  prediction and retrieval system.
