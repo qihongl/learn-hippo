@@ -25,3 +25,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: added schema-compliant summaries, unseen-duration evaluation, forced
   and displacement interventions, and froze the 15-seed confirmatory configuration
   before examining its test episodes.
+- 2026-08-30: completed confirmatory seeds 100–104 from `8709328`; all five show
+  strong endpoint selectivity, high primary/OOD reward, and zero reward after the
+  preregistered deterministic write-displacement intervention.
