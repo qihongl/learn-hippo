@@ -108,3 +108,27 @@
 - A latest-trace retrieval oracle makes dense encoding optimal. Reports must state
   that selective encoding is architecture-dependent and is not necessary when the
   retriever can reliably ignore incomplete traces.
+
+## 2026-08-30 — Paper-style and terminology audit
+
+- The complete Lu, Hasson, and Norman (2022) article, including Methods and
+  appendices, was reread before revising the experiment report.
+- The report will use the article's cognitive terms: **episodic encoding** for
+  storing a snapshot, **episodic retrieval** for reinstating stored content,
+  **situation** for the event's ground-truth feature values, and **situation model**
+  for the currently available representation of those values. Implementation words
+  such as `write` and `read` will appear only when naming code-level interfaces.
+- The report will distinguish three mechanisms that the article keeps separate:
+  event prediction, episodic encoding, and episodic retrieval. It will also define
+  resource rationality as optimization relative to stated task and architectural
+  constraints rather than as a universal optimum.
+- Every policy in a result or figure will be labeled as **learned** or **forced**.
+  In particular, endpoint-only, always-encode, midpoint-plus-endpoint, and
+  latest-trace conditions are experimenter-imposed interventions. Only the
+  stochastic gate and its thresholded deterministic version were learned.
+- The new task will be described as delayed reconstruction of an incomplete
+  situation model. It is a minimal analogue of the original delayed event-prediction
+  problem, not the original temporally structured next-state prediction task.
+- The observation mask will be defined before use as one bit per situation feature
+  (1 = observed, 0 = not yet observed), and the report will state prominently that
+  its all-ones state makes event completion directly detectable.
