@@ -38,3 +38,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: aggregated all 15 confirmatory seeds with the frozen bootstrap. All
   four criteria passed; primary, OOD, baseline, and causal-displacement estimates
   are now recorded in `RESULTS.md` and the machine-readable summary.
+- 2026-08-30: declared and implemented secondary checkpoint analyses of gate input
+  signals, probability by semantic progress, retrieval temperature, and a
+  competition-free latest-trace oracle.

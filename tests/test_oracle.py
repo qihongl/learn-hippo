@@ -40,3 +40,25 @@ def test_matched_random_one_write_has_a_literal_expected_reward():
         one_write_rewards.append(result.mean_reward)
 
     assert sum(one_write_rewards) / len(one_write_rewards) == pytest.approx(0.375)
+
+
+def test_latest_trace_retrieval_removes_the_dense_encoding_disadvantage():
+    config = TaskConfig(n_features=4, cue_dim=6, query_features=2)
+    episodes = [generate_episode(config, seed=seed) for seed in range(8)]
+    always = (True, True, True, True)
+
+    competitive = evaluate_schedule(
+        episodes,
+        always,
+        temperature=0.1,
+        retrieval_mode="competitive",
+    )
+    latest = evaluate_schedule(
+        episodes,
+        always,
+        temperature=0.1,
+        retrieval_mode="latest",
+    )
+
+    assert competitive.mean_reward < 0.4
+    assert latest.mean_reward == pytest.approx(1.0)

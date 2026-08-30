@@ -89,3 +89,13 @@
   full original task or evidence about human encoding.
 - Secondary analyses and figures may describe the confirmed result but may not
   change the primary outcome, seed set, or thresholds.
+
+## 2026-08-30 — Secondary mechanism analyses declared
+
+- These analyses are explicitly post-confirmatory and exploratory.
+- The learned checkpoints will be tested with full, mask-only, state-only, and
+  cue-only policy inputs on new episode seeds beginning at 6,000,000.
+- Gate probabilities will be summarized by semantic completion level.
+- Fixed schedules will be reevaluated over a declared retrieval-temperature grid,
+  and dense writing will be paired with a latest-trace oracle to test whether
+  competitive retrieval is necessary for the dense-encoding disadvantage.

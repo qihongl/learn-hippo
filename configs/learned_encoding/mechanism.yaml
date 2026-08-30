@@ -1,0 +1,36 @@
+experiment:
+  name: boundary_policy_mechanism
+  status: secondary_exploratory
+  model_seeds: [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114]
+
+task:
+  n_features: 4
+  cue_dim: 6
+  query_features: 2
+
+memory:
+  temperature: 0.1
+  capacity: 4
+
+model:
+  hidden_dim: 32
+
+evaluation:
+  episode_seed_start: 6000000
+  n_episodes: 512
+  action_seed_offset: 7000000
+
+analysis:
+  input_ablations:
+    - full
+    - mask_only
+    - state_only
+    - cue_only
+  retrieval_temperatures: [0.03, 0.05, 0.1, 0.2, 0.5, 1.0]
+  bootstrap_seed: 20260831
+  bootstrap_samples: 10000
+
+output:
+  checkpoint_directory: outputs/checkpoints/learned_encoding/reported
+  checkpoint_name: boundary_policy_reported
+  path: outputs/learned_encoding/mechanism_results.json

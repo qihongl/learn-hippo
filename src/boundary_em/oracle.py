@@ -13,6 +13,7 @@ from boundary_em.memory import compose_key, differentiable_read
 from boundary_em.task import EventEpisode
 
 CapacityMode = Literal["fixed", "historical"]
+RetrievalMode = Literal["competitive", "latest"]
 Schedule = tuple[bool, ...]
 
 
@@ -33,6 +34,7 @@ def evaluate_schedule(
     temperature: float,
     capacity_mode: CapacityMode = "fixed",
     fixed_capacity: int | None = None,
+    retrieval_mode: RetrievalMode = "competitive",
 ) -> ScheduleResult:
     """Evaluate one schedule on paired synthetic episodes."""
 
@@ -42,6 +44,8 @@ def evaluate_schedule(
         raise ValueError("schedule length must match the study trajectory")
     if capacity_mode not in {"fixed", "historical"}:
         raise ValueError(f"unknown capacity mode: {capacity_mode}")
+    if retrieval_mode not in {"competitive", "latest"}:
+        raise ValueError(f"unknown retrieval mode: {retrieval_mode}")
 
     selected = [index for index, write in enumerate(schedule) if write]
     if capacity_mode == "historical":
@@ -56,7 +60,7 @@ def evaluate_schedule(
     losses: list[float] = []
     for episode in episodes:
         held_out = episode.query_mask == 0
-        if selected:
+        if selected and retrieval_mode == "competitive":
             all_keys = torch.stack(
                 [
                     compose_key(episode.cue, state, mask)
@@ -74,6 +78,8 @@ def evaluate_schedule(
                 episode.states[selected],
                 temperature=temperature,
             ).value
+        elif selected and retrieval_mode == "latest":
+            readout = episode.states[selected[-1]]
         else:
             readout = torch.zeros_like(episode.features)
 
@@ -96,6 +102,7 @@ def enumerate_schedules(
     temperature: float,
     capacity_mode: CapacityMode = "fixed",
     fixed_capacity: int | None = None,
+    retrieval_mode: RetrievalMode = "competitive",
 ) -> list[ScheduleResult]:
     """Evaluate all binary write schedules and rank them by mean reward."""
 
@@ -107,6 +114,7 @@ def enumerate_schedules(
             temperature=temperature,
             capacity_mode=capacity_mode,
             fixed_capacity=fixed_capacity,
+            retrieval_mode=retrieval_mode,
         )
         for schedule in product((False, True), repeat=n_steps)
     ]
