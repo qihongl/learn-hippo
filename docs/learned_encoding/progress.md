@@ -50,3 +50,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: drafted a self-contained experiment report that distinguishes the
   confirmatory result from exploratory analyses and records unexecuted scope from the
   broader preregistration rather than implying it was completed.
+- 2026-08-30: built a standalone HTML small paper from the audited report with
+  embedded vector figures, MathML equations, responsive/print CSS, and reproducible
+  build validation; desktop and mobile browser QA found no overflow or console errors.

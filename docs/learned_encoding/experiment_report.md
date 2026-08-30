@@ -2,11 +2,11 @@
 
 ## A controlled differentiable episodic-memory feasibility study
 
-**Report status:** complete measured synthetic experiment, 2026-08-30  
-**Implementation and report:** Codex, with scientific direction from Qihong Lu  
-**Review notice:** human review by a domain expert is strongly recommended before
-scientific publication. All numbers below are measured executions of the released
-synthetic task; they are not human data and are not hand-written illustrations.
+> **Report status:** complete measured synthetic experiment, 2026-08-30<br>
+> **Implementation and report:** Codex, with scientific direction from Qihong Lu<br>
+> **Review notice:** human review by a domain expert is strongly recommended before
+> scientific publication. All numbers below are measured executions of the released
+> synthetic task; they are not human data and are not hand-written illustrations.
 
 ## Abstract
 
