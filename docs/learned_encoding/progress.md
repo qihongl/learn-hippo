@@ -17,3 +17,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: implemented the boundary-blind Bernoulli actor-critic, discrete
   memory-controlled rollouts, delayed-reward objective, deterministic training, and
   frozen held-out evaluation. Fourteen tests cover the complete learning seam.
+- 2026-08-30: froze the three-seed exploratory smoke configuration and added a
+  per-seed runner with configuration hashes, complete training curves, paired
+  stochastic/deterministic evaluation records, and ignored checkpoints.

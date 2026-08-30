@@ -1,0 +1,33 @@
+experiment:
+  name: boundary_policy_smoke
+  status: exploratory
+  model_seeds: [0, 1, 2]
+
+task:
+  n_features: 4
+  cue_dim: 6
+  query_features: 2
+
+memory:
+  temperature: 0.1
+  capacity: 4
+
+model:
+  hidden_dim: 32
+
+training:
+  updates: 300
+  batch_size: 64
+  learning_rate: 0.003
+  critic_coefficient: 0.5
+  entropy_coefficient: 0.005
+  gradient_clip: 1.0
+
+evaluation:
+  validation_seed_start: 2000000
+  n_episodes: 256
+  action_seed_offset: 3000000
+
+output:
+  directory: outputs/learned_encoding/smoke
+  checkpoint_directory: outputs/checkpoints/learned_encoding/smoke
