@@ -1,0 +1,16 @@
+task:
+  n_features: 4
+  cue_dim: 6
+  query_features: 2
+
+oracle:
+  temperature: 0.1
+  episode_seed_start: 10000
+  n_episodes: 256
+  capacity_modes:
+    - fixed
+    - historical
+  fixed_capacity: 4
+
+output:
+  path: outputs/learned_encoding/oracle_results.json
