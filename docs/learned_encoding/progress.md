@@ -14,3 +14,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: executed the 256-episode exhaustive oracle audit from `d59be78`.
   Endpoint-only was uniquely optimal under both capacity conventions; fixed
   four-slot capacity was selected before policy learning.
+- 2026-08-30: implemented the boundary-blind Bernoulli actor-critic, discrete
+  memory-controlled rollouts, delayed-reward objective, deterministic training, and
+  frozen held-out evaluation. Fourteen tests cover the complete learning seam.
