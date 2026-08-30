@@ -23,7 +23,8 @@ the reproducible figure sources rather than the untouched legacy files.
 
 ## Reproduce the oracle precondition
 
-This evaluates every binary write schedule over the four semantic study states under
+This evaluates every binary encoding schedule over the four semantic observation
+states under
 both declared capacity conventions:
 
 ```sh
@@ -72,8 +73,9 @@ uv run python -m boundary_em.run_mechanism \
 ```
 
 It writes `outputs/learned_encoding/mechanism_results.json`. These analyses use new
-episode seeds and are exploratory: they test gate-input ablations, write probability
-by semantic progress, retrieval-temperature sensitivity, and a latest-trace oracle.
+episode seeds and are exploratory: they test gate-input ablations, encoding
+probability by semantic progress, retrieval-temperature sensitivity, and a forced
+latest-memory retrieval intervention.
 
 ## Rebuild figures and the standalone paper
 

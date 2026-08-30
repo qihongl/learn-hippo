@@ -11,9 +11,9 @@
 - **Machine-readable result:** `outputs/learned_encoding/oracle_results.json`
 - **Code revision used for execution:** `d59be7811fbb6687d4f9c640e526217d8cc8e198`
 - **Episodes:** 256 deterministic synthetic event seeds, 10000–10255
-- **Schedules:** all 16 binary write masks over four informative positions
+- **Schedules:** all 16 binary encoding schedules over four informative positions
 
-Endpoint-only writing (`0001`) was the unique optimal deterministic schedule. Its
+Endpoint-only encoding (`0001`) was the unique optimal deterministic schedule. Its
 mean delayed feature-prediction reward was 1.000. The second-ranked schedule was
 lower by 0.267. This ranking was identical under fixed four-slot capacity and the
 historical schedule-scaled capacity convention.
@@ -21,16 +21,16 @@ historical schedule-scaled capacity convention.
 | Fixed-capacity policy | Mean reward | SD across episode seeds |
 |---|---:|---:|
 | Endpoint only | 1.000 | 0.000 |
-| Matched random one-write | 0.375 | 0.415 |
-| Always write | 0.241 | < 0.001 |
+| Matched random one-encoding | 0.375 | 0.415 |
+| Always encode | 0.241 | < 0.001 |
 | Midpoint plus endpoint | 0.140 | < 0.001 |
 | Midpoint only | 0.000 | 0.000 |
-| Never write | 0.000 | 0.000 |
+| Never encode | 0.000 | 0.000 |
 
 The near-zero episode variance for deterministic schedules is expected: independent
 binary feature values change content but not the task's similarity geometry or the
 fraction of held-out features recovered. The matched-random value pools the four
-possible one-write positions across episodes, so its dispersion reflects schedule
+possible one-encoding positions across episodes, so its dispersion reflects schedule
 position rather than unstable event sampling.
 
 This stage establishes the required optimization target, not learning. The endpoint
@@ -53,11 +53,11 @@ retained as a documented oracle diagnostic.
 - **Held-out validation episodes:** 256 per model seed
 - **Status:** exploratory configuration check; not confirmatory evidence
 
-All three actor-critic seeds learned a highly selective write policy without a
-boundary label or write cost. Mean stochastic validation reward was 0.982 ± 0.012
-across the three model seeds. Endpoint-minus-nonendpoint write probability was
+All three actor-critic seeds learned a highly selective encoding policy without a
+boundary label or encoding cost. Mean stochastic validation reward was 0.982 ± 0.012
+across the three model seeds. Endpoint-minus-nonendpoint encoding probability was
 0.983 ± 0.008, and boundary AUC was 1.000 for every seed. The policy made 1.007 ±
-0.016 writes per event. Thresholded deterministic evaluation wrote once at the
+0.016 encodings per event. Thresholded deterministic evaluation encoded once at the
 endpoint and achieved reward 1.000 for all three seeds.
 
 These runs used validation seeds and were inspected before freezing the confirmatory
@@ -76,14 +76,14 @@ viable in the simplified task, but they are not counted toward the preregistered
 
 The learned stochastic policy achieved mean held-out reward 0.987 ± 0.004 across
 15 model seeds (fixed-seed bootstrap 95% interval [0.986, 0.989]). Mean
-endpoint-minus-nonendpoint write probability was 0.985 ± 0.006, interval [0.982,
+endpoint-minus-nonendpoint encoding probability was 0.985 ± 0.006, interval [0.982,
 0.988]. All 15 seeds had positive endpoint selectivity, exceeding the preregistered
-requirement of 12. Thresholding write probability at 0.5 produced exactly one
-endpoint write and reward 1.000 for every seed.
+requirement of 12. Thresholding encoding probability at 0.5 produced exactly one
+endpoint encoding and reward 1.000 for every seed.
 
-Relative to the paired matched-random one-write baseline, the stochastic policy
+Relative to the paired matched-random one-encoding baseline, the stochastic policy
 closed 0.980 of the reward gap to the endpoint oracle, interval [0.977, 0.983],
-exceeding the required 0.80. Moving the deterministic learned endpoint write to the
+exceeding the required 0.80. Moving the deterministic learned endpoint encoding to the
 midpoint reduced reward from 1.000 to 0.000 for every seed; the paired displacement
 loss was therefore 1.000, interval [1.000, 1.000]. All four confirmatory criteria
 passed under the analysis frozen before test execution.
@@ -93,10 +93,10 @@ passed under the analysis frozen before test execution.
 | Learned stochastic policy | 0.987 | 0.004 |
 | Learned deterministic policy | 1.000 | 0.000 |
 | Endpoint-only oracle | 1.000 | 0.000 |
-| Matched random one-write | 0.371 | 0.015 |
-| Always write | 0.241 | 0.000 |
+| Matched random one-encoding | 0.371 | 0.015 |
+| Always encode | 0.241 | 0.000 |
 | Midpoint plus endpoint | 0.140 | 0.000 |
-| Displaced learned write | 0.000 | 0.000 |
+| Displaced learned encoding | 0.000 | 0.000 |
 
 ### Duration generalization
 
@@ -104,16 +104,16 @@ Training events had four informative states. The OOD test inserted three randoml
 placed null states, increasing duration to seven while preserving the semantic rule
 that the endpoint is the first state with all four features accumulated. The policy
 was not retrained. OOD stochastic reward was 0.982 ± 0.009, interval [0.978, 0.986],
-and endpoint selectivity was 0.986 ± 0.005. Thus the policy did not merely write at
+and endpoint selectivity was 0.986 ± 0.005. Thus the policy did not merely encode at
 the fourth physical timestep; it generalized using the accumulated state available
 to the gate.
 
 ### Interpretation boundary
 
 This is positive evidence for computational feasibility in the simplified task:
-delayed prediction reward trained a discrete write gate to use a differentiable
-content-addressable memory selectively at semantic completion. The memory read is
-differentiable, but the discrete write action is trained with actor-critic rather
+delayed prediction reward trained a discrete encoding gate to use a differentiable
+content-addressable memory selectively at semantic completion. Episodic retrieval is
+differentiable, but the discrete encoding action is trained with actor-critic rather
 than by ordinary backpropagation through a fractional memory update.
 
 The task was deliberately constructed so an exact partial-state memory competes
@@ -132,16 +132,16 @@ They use new episode seeds beginning at 6,000,000 and do not modify the primary
 success audit. Machine-readable results are in
 `outputs/learned_encoding/mechanism_results.json`.
 
-### What signal controls writing?
+### What signal controls encoding?
 
-Mean learned write probability was 0.000005 after one observed feature, 0.000049
+Mean learned encoding probability was 0.000005 after one observed feature, 0.000049
 after two, 0.028 after three, and 0.994 after all four features. The increase is
 therefore abrupt at semantic completion rather than a smooth preference for later
 physical time.
 
 Keeping only the observation mask while zeroing event cue and feature values
 preserved reward at 0.992 ± 0.005 and endpoint selectivity at 0.991 ± 0.005 across
-model seeds. Keeping only feature values produced no deterministic writes and reward
+model seeds. Keeping only feature values produced no deterministic encodings and reward
 0.000; cue-only input also produced reward 0.000. The learned gate therefore relies
 primarily on the explicit accumulated observation mask.
 
@@ -153,13 +153,13 @@ latent event boundaries from an unsegmented stream.
 ### Is competitive retrieval necessary?
 
 Endpoint-only reward remained 1.000 for every tested softmax temperature. Always-
-write reward increased from 0.006 at temperature 0.03 to 0.241 at 0.10 and 0.563 at
+encoding reward increased from 0.006 at temperature 0.03 to 0.241 at 0.10 and 0.563 at
 1.00 as attention became less dominated by the exact incomplete cue. Midpoint-plus-
 endpoint reward similarly ranged from approximately 0.000 to 0.683. It never matched
 endpoint-only storage in the declared grid.
 
 When competitive content retrieval was replaced by an oracle that always selected
-the latest stored trace, always-write reward became 1.000. Selective encoding is
+the latest encoded memory, always-encode reward became 1.000. Selective encoding is
 therefore useful here because the retriever is vulnerable to an incomplete but
 more cue-similar trace. A retrieval architecture that reliably prioritizes the most
 complete trace removes the selective-encoding advantage.
