@@ -4,3 +4,6 @@
   contract, and exposed two paper/code differences in delay and feature removal.
 - 2026-08-30: froze the data contract, success criteria, staged optimization,
   baselines, causal tests, and failure interpretations before implementation.
+- 2026-08-30: added the modern exact-task generator and five deterministic behavior
+  tests covering the 37-dimensional input, source profiles, RM/DM/NM situation
+  relationships, and boundary-blind deterministic sampling.
