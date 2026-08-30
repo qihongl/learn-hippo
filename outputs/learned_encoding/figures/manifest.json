@@ -6,5 +6,13 @@
     "path_png": "fig_01_task_architecture.png",
     "caption": "Controlled synthetic task and computational flow. A partial event cue retrieves differentiable episodic values; a Bernoulli actor learns whether to store each study state from delayed prediction reward. The policy receives an accumulated feature mask but no explicit boundary bit.",
     "section": "method"
+  },
+  {
+    "id": "fig_02_learning_dynamics",
+    "path_pdf": "fig_02_learning_dynamics.pdf",
+    "path_svg": "fig_02_learning_dynamics.svg",
+    "path_png": "fig_02_learning_dynamics.png",
+    "caption": "Confirmatory learning dynamics and learned write timing. The left panel shows the unsmoothed minibatch reward mean and one standard deviation across all 15 preregistered seeds. The right panel shows each seed's write probability by semantic progress; colored points are the across-seed mean with bootstrap 95% confidence intervals.",
+    "section": "results"
   }
 ]
