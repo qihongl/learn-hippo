@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 
+from boundary_em.aggregate_paper_policy import aggregate_paper_policy
 from boundary_em.run_paper_policy import run_paper_policy_config
 
 
@@ -35,3 +36,19 @@ def test_smoke_config_writes_reproducible_seed_result(tmp_path: Path) -> None:
     assert result["configuration"]["task"]["profile"] == "released_code"
     assert set(result["evaluation"]) == {"RM", "DM", "NM"}
     assert result["provenance"]["mode"] == "measured"
+
+
+def test_reported_aggregation_retains_failed_selectivity_audit(
+    tmp_path: Path,
+) -> None:
+    repository = Path(__file__).parents[1]
+    aggregate = aggregate_paper_policy(
+        repository / "configs/paper_task_encoding/reported_failure.yaml",
+        input_directory=repository / "outputs/paper_task_encoding/reported",
+        output_path=tmp_path / "summary.json",
+    )
+
+    assert len(aggregate["model_seeds"]) == 10
+    assert aggregate["success_audit"]["checks"]["endpoint_selectivity"] is False
+    assert aggregate["success_audit"]["checks"]["dm_prediction_benefit"] is True
+    assert aggregate["success_audit"]["all_criteria_passed"] is False
