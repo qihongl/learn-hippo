@@ -99,3 +99,12 @@
 - Fixed schedules will be reevaluated over a declared retrieval-temperature grid,
   and dense writing will be paired with a latest-trace oracle to test whether
   competitive retrieval is necessary for the dense-encoding disadvantage.
+
+## 2026-08-30 — Secondary mechanism outcome
+
+- Mask-only inputs preserve the learned policy, whereas state-only and cue-only
+  inputs do not. Reports must state that the policy exploits an explicit feature-
+  completion mask rather than discovering latent boundaries.
+- A latest-trace retrieval oracle makes dense encoding optimal. Reports must state
+  that selective encoding is architecture-dependent and is not necessary when the
+  retriever can reliably ignore incomplete traces.

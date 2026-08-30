@@ -41,3 +41,5 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: declared and implemented secondary checkpoint analyses of gate input
   signals, probability by semantic progress, retrieval temperature, and a
   competition-free latest-trace oracle.
+- 2026-08-30: executed the secondary mechanism configuration from `7639ddc` and
+  recorded the mask dependence and retrieval-competition boundary conditions.

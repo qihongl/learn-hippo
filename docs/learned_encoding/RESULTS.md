@@ -124,3 +124,42 @@ The event representation and observation mask are explicit, the task contains on
 event at a time, and the primary retriever has no learned key projection. These
 simplifications make the credit-assignment claim identifiable but limit direct
 comparison with the original multi-event LSTM simulations and with human cognition.
+
+## Secondary mechanism analyses
+
+These analyses were declared after the confirmatory result and are exploratory.
+They use new episode seeds beginning at 6,000,000 and do not modify the primary
+success audit. Machine-readable results are in
+`outputs/learned_encoding/mechanism_results.json`.
+
+### What signal controls writing?
+
+Mean learned write probability was 0.000005 after one observed feature, 0.000049
+after two, 0.028 after three, and 0.994 after all four features. The increase is
+therefore abrupt at semantic completion rather than a smooth preference for later
+physical time.
+
+Keeping only the observation mask while zeroing event cue and feature values
+preserved reward at 0.992 ± 0.005 and endpoint selectivity at 0.991 ± 0.005 across
+model seeds. Keeping only feature values produced no deterministic writes and reward
+0.000; cue-only input also produced reward 0.000. The learned gate therefore relies
+primarily on the explicit accumulated observation mask.
+
+This result narrows the claim. The policy receives no `is_boundary` bit, but an
+all-ones mask is a transparent signal that every required feature has arrived. The
+model learned that storing on this completion state is valuable; it did not discover
+latent event boundaries from an unsegmented stream.
+
+### Is competitive retrieval necessary?
+
+Endpoint-only reward remained 1.000 for every tested softmax temperature. Always-
+write reward increased from 0.006 at temperature 0.03 to 0.241 at 0.10 and 0.563 at
+1.00 as attention became less dominated by the exact incomplete cue. Midpoint-plus-
+endpoint reward similarly ranged from approximately 0.000 to 0.683. It never matched
+endpoint-only storage in the declared grid.
+
+When competitive content retrieval was replaced by an oracle that always selected
+the latest stored trace, always-write reward became 1.000. Selective encoding is
+therefore useful here because the retriever is vulnerable to an incomplete but
+more cue-similar trace. A retrieval architecture that reliably prioritizes the most
+complete trace removes the selective-encoding advantage.
