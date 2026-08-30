@@ -8,7 +8,7 @@ def test_confirmatory_aggregation_uses_all_declared_seeds_and_frozen_rules(tmp_p
 
     result = aggregate_reported(
         repository / "configs/learned_encoding/reported.yaml",
-        input_directory=repository / "outputs/learned_encoding/reported",
+        input_directory=Path("outputs/learned_encoding/reported"),
         output_path=tmp_path / "summary.json",
     )
 

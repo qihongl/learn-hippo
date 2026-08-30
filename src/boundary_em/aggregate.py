@@ -96,6 +96,9 @@ def aggregate_reported(
     expected_seeds = list(config["experiment"]["model_seeds"])
     experiment_name = str(config["experiment"]["name"])
     input_directory = Path(input_directory)
+    if not input_directory.is_absolute():
+        input_directory = repository / input_directory
+    input_directory = input_directory.resolve()
     seed_results: list[dict[str, Any]] = []
     input_files: list[str] = []
     for seed in expected_seeds:
@@ -258,6 +261,8 @@ def aggregate_reported(
         ),
     }
     output_path = Path(output_path)
+    if not output_path.is_absolute():
+        output_path = repository / output_path
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result, indent=2) + "\n")
     return result
