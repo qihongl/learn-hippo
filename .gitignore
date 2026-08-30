@@ -56,6 +56,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.ruff_cache/
 
 # Translations
 *.mo
@@ -94,6 +95,7 @@ celerybeat-schedule
 # Environments
 .env
 .venv
+.venv/
 env/
 venv/
 ENV/
@@ -115,3 +117,7 @@ venv.bak/
 src/scratch.py
 src/vis-group.py
 src/task/EpisodicBandit.py
+
+# Learned-boundary experiment artifacts
+checkpoints/
+outputs/checkpoints/
