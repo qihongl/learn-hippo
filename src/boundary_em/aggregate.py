@@ -35,6 +35,7 @@ def bootstrap_mean_ci(
 
     if not values:
         raise ValueError("bootstrap requires at least one value")
+    np.random.seed(seed)
     generator = np.random.default_rng(seed)
     array = np.asarray(values, dtype=float)
     indices = generator.integers(0, len(array), size=(n_samples, len(array)))
