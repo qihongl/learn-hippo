@@ -44,3 +44,23 @@ eviction.
 Fixed four-slot capacity is used for subsequent policy experiments because it keeps
 physical memory resources identical across policies. The historical convention is
 retained as a documented oracle diagnostic.
+
+## Exploratory actor-critic smoke test
+
+- **Configuration:** `configs/learned_encoding/smoke.yaml`
+- **Code revision:** `d6ad84833e52b276c93c9f976905844ac099f2e2`
+- **Model seeds:** 0, 1, and 2
+- **Held-out validation episodes:** 256 per model seed
+- **Status:** exploratory configuration check; not confirmatory evidence
+
+All three actor-critic seeds learned a highly selective write policy without a
+boundary label or write cost. Mean stochastic validation reward was 0.982 ± 0.012
+across the three model seeds. Endpoint-minus-nonendpoint write probability was
+0.983 ± 0.008, and boundary AUC was 1.000 for every seed. The policy made 1.007 ±
+0.016 writes per event. Thresholded deterministic evaluation wrote once at the
+endpoint and achieved reward 1.000 for all three seeds.
+
+These runs used validation seeds and were inspected before freezing the confirmatory
+configuration. They establish that the plain delayed actor-critic optimization is
+viable in the simplified task, but they are not counted toward the preregistered
+15-seed success criterion.

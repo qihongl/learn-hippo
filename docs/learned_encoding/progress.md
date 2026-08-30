@@ -20,3 +20,5 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: froze the three-seed exploratory smoke configuration and added a
   per-seed runner with configuration hashes, complete training curves, paired
   stochastic/deterministic evaluation records, and ignored checkpoints.
+- 2026-08-30: executed and preserved exploratory seeds 0–2 from `d6ad848`; all
+  learned near-exclusive endpoint writing on unseen validation episodes.

@@ -46,3 +46,14 @@
 - Fixed four-slot capacity is selected for learned-policy training because it gives
   every policy the same physical resource and is simpler to vectorize.
 - This choice was made at commit `d59be78`, before any learned write policy was run.
+
+## 2026-08-30 — Exploratory policy configuration
+
+- Three validation-only seeds were run from `d6ad848` with 300 updates, batch size
+  64, learning rate 0.003, critic coefficient 0.5, entropy coefficient 0.005, and
+  gradient clipping at 1.0.
+- All three met the qualitative learning target. These seeds are exploratory and
+  excluded from the confirmatory 15-seed criterion.
+- The same hyperparameters will be frozen for confirmatory model seeds 100–114.
+- The per-seed output schema will gain a top-level aggregate-shaped `summary` before
+  confirmatory execution; raw smoke records are preserved as originally written.
