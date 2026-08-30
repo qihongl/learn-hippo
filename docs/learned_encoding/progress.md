@@ -43,3 +43,5 @@ decisions belong in `decision_log.md`.
   competition-free latest-trace oracle.
 - 2026-08-30: executed the secondary mechanism configuration from `7639ddc` and
   recorded the mask dependence and retrieval-competition boundary conditions.
+- 2026-08-30: froze contracts for four paper figures, including their claims,
+  panel evidence, statistical units, final sizes, and reviewer risks, before plotting.
