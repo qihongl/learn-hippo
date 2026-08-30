@@ -30,3 +30,5 @@ decisions belong in `decision_log.md`.
   preregistered deterministic write-displacement intervention.
 - 2026-08-30: completed confirmatory seeds 105–109 with the same frozen source and
   configuration; seed 108 is the weakest observed seed and remains preserved.
+- 2026-08-30: completed confirmatory seeds 110–114. All 15 declared model seeds now
+  have seed-specific measured outputs; aggregation has not yet been run.
