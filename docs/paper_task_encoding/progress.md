@@ -13,3 +13,6 @@
 - 2026-08-30: implemented complete `a1`–`b1`–`b2` rollouts, forced encoding
   schedules, exact expected task reward, RM/DM/NM working-memory resets, and
   profile-specific lure availability. Five rollout behavior tests pass.
+- 2026-08-30: added supervised prediction/retrieval objectives and a reproducible
+  training stage that can run with episodic memory absent or under a forced encoding
+  schedule. A repeated exact trial is learnable in the training test.
