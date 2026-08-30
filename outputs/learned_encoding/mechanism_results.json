@@ -32,8 +32,8 @@
     "source": "measured post-confirmatory checkpoint analysis",
     "config": "configs/learned_encoding/mechanism.yaml",
     "config_sha256": "e9159b8743f5337ed3ad68729604911e5413e9b3d01cad19dcc9eee27a49533d",
-    "timestamp": "2026-08-30T02:42:44.741869+00:00",
-    "git_sha": "7639ddc7548932d3e56913876eaa34b1fa421457",
+    "timestamp": "2026-08-30T02:43:58.626674+00:00",
+    "git_sha": "43ba0b59aff923b198d8e5e2b4a302839aecf255",
     "checkpoint_git_shas": [
       "8709328309d81da656e4402b85fbc00b3d16e62b",
       "957524f70d9a6e011504d565cc781e2b57ea3b4a",
