@@ -28,3 +28,5 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: completed confirmatory seeds 100–104 from `8709328`; all five show
   strong endpoint selectivity, high primary/OOD reward, and zero reward after the
   preregistered deterministic write-displacement intervention.
+- 2026-08-30: completed confirmatory seeds 105–109 with the same frozen source and
+  configuration; seed 108 is the weakest observed seed and remains preserved.
