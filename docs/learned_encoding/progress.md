@@ -35,3 +35,6 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: added a tested confirmatory aggregator that requires all declared
   seeds, identical configuration hashes, fixed-seed bootstrap intervals, and the
   preregistered success audit.
+- 2026-08-30: aggregated all 15 confirmatory seeds with the frozen bootstrap. All
+  four criteria passed; primary, OOD, baseline, and causal-displacement estimates
+  are now recorded in `RESULTS.md` and the machine-readable summary.

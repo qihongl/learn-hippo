@@ -77,3 +77,15 @@
   reported configuration to avoid committing large redundant arrays. All training
   curves and every model-seed aggregate remain stored; the model seed is the
   preregistered inferential unit. No scientific setting changed.
+
+## 2026-08-30 — Confirmatory outcome
+
+- All 15 declared seed files were present and shared one configuration hash.
+- Batch-wise output commits changed no source or reported-configuration files from
+  the first execution revision `8709328`; this was verified with path-restricted Git
+  diffs.
+- All four preregistered success checks passed. The primary claim is therefore
+  recorded as simplified-task computational feasibility, not a reproduction of the
+  full original task or evidence about human encoding.
+- Secondary analyses and figures may describe the confirmed result but may not
+  change the primary outcome, seed set, or thresholds.
