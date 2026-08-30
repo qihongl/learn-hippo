@@ -1,280 +1,473 @@
-# Can Optimization Discover Event-Boundary Encoding?
+# Learning When to Encode an Episodic Memory at an Event Boundary
 
-## A controlled differentiable episodic-memory feasibility study
+## A controlled test of the open learning problem in Lu, Hasson, and Norman (2022)
 
 > **Report status:** complete measured synthetic experiment, 2026-08-30<br>
 > **Implementation and report:** Codex, with scientific direction from Qihong Lu<br>
 > **Review notice:** human review by a domain expert is strongly recommended before
-> scientific publication. All numbers below are measured executions of the released
-> synthetic task; they are not human data and are not hand-written illustrations.
+> scientific publication. Every number below comes from an executed synthetic
+> simulation; none is human data or a hand-written illustration.
 
 ## Abstract
 
-Lu, Hasson, and Norman (2022) argued that selective episodic encoding at event
-boundaries can be resource-rational because it reduces interference from incomplete
-memories. Their encoding schedules were imposed rather than learned. We test the
-stronger computational claim that delayed reward can teach a model when to write to
-episodic memory. Each synthetic event reveals four independent binary features in a
-random order. A write gate observes the random event cue, accumulated feature values,
-and their observation mask, but no explicit boundary label or remaining-time input.
-At delayed test, a partial query retrieves a softmax-weighted mixture from a
-content-addressable memory and reward is one minus reconstruction error for missing
-features. Exact enumeration first established that endpoint-only writing is the
-unique optimum. A Bernoulli actor–critic then learned from delayed reward alone. In a
-frozen 15-seed confirmatory evaluation, the stochastic policy achieved reward
-0.987 ± 0.004 and endpoint selectivity 0.985 ± 0.006; all 15 seeds were selective.
-It closed 0.980 [0.977, 0.983] of the matched-random-to-oracle reward gap, and
-displacing its deterministic endpoint write to the midpoint reduced reward from
-1.000 to 0.000 in every seed. The result demonstrates computational feasibility in
-this controlled task. Mechanism analyses also sharply limit the claim: the gate can
-solve the task from the explicit completion mask alone, and latest-trace retrieval
-removes the advantage of selective encoding.
+When should an intelligent agent encode an episodic memory? Lu, Hasson, and Norman
+(2022) argued that encoding selectively at the end of an event—its
+**event boundary**—can improve later prediction by preventing incomplete memories
+from interfering at retrieval. Their model learned when to retrieve episodic
+memories, but its encoding times were imposed by the experimenter. We test whether
+optimization can learn the missing encoding policy. The new task is a deliberately
+small analogue of the original task: four features of one situation are revealed
+sequentially, active maintenance is cleared after a delay, and a partial cue must be
+completed by episodic retrieval. An **observation mask** states which features have
+already been seen. It does not reveal their values or forbid any action, but an
+all-ones mask makes event completion directly detectable. A binary stochastic
+encoding gate
+learns from delayed reward, while a fixed, differentiable retrieval operation
+reinstates a similarity-weighted mixture of episodic memories. Exact enumeration
+showed that forced endpoint-only encoding was the unique best of all 16 deterministic
+encoding schedules. Across 15 independently trained models, the learned stochastic
+gate achieved held-out reward 0.987 ± 0.004 and endpoint-minus-nonendpoint encoding
+probability 0.985 ± 0.006 (mean ± standard deviation across models); all 15 models
+were selective. The positive result is narrow but unambiguous: the
+encoding gate learned to encode at completion; the endpoint-only comparison policy
+was not trained. The same analyses also expose the limits of the result. The learned
+gate can solve the task from the explicit mask alone, and forced retrieval of the
+most recent memory eliminates the advantage of selective encoding. The original
+temporally structured event-prediction setting remains feasible, but it will require
+longer credit assignment and coordinated learning of encoding and retrieval.
 
-## 1. Question and relation to the original model
+## 1. From the original claim to the present question
 
-The original [eLife article](https://doi.org/10.7554/eLife.74445) developed a
-resource-rational account of episodic-memory control. Its retrieval gate was learned,
-whereas its encoding analysis compared experimenter-specified policies. The article
-explicitly identified learned encoding as future work: selective storage should in
-principle be learnable, but credit must span the delay between storage and later
-retrieval, and encoding can interact with retrieval quality. The accompanying
-[learn-hippo repository](https://github.com/qihongl/learn-hippo) operationalized
-boundary encoding with an encoding interval and showed that adding a mid-event trace
-could impair later prediction.
+The [original eLife article](https://doi.org/10.7554/eLife.74445) asks when episodic
+memories should be encoded and retrieved during ongoing event understanding. It
+formalizes an **event** as a sequence of states generated by an event schema—a graph
+describing which state transitions are possible. A
+**situation** is the ground-truth collection of feature values for the current event;
+these values determine how the event unfolds. The model observes situation features
+in a random order and predicts upcoming states. Its recurrent neural activity
+maintains a **situation model**—the currently available representation of the
+situation—in working memory.
 
-This study isolates that unresolved learning question. It is not a reimplementation
-of the full multi-event LSTM. Instead, it asks whether an optimizer can discover one
-specific policy when the environment is constructed so that this policy is known to
-be useful. The simplification is deliberate: a negative result would implicate
-delayed credit assignment rather than uncertainty about task structure, and a
-positive result establishes only feasibility, not generality or psychological
-identity.
+The original simulations contain a delay manipulation. In the distant-memory
+condition, the model's working-memory state is cleared between two related events.
+Accurate prediction in the second event can then depend on retrieving an episodic
+memory encoded during the first event. The model learned a gate controlling when
+episodic retrieval occurred. By contrast, the encoding policy was imposed by hand:
+the model was instructed to encode a snapshot at the end of each event. The paper
+then showed that forced endpoint-only encoding outperformed forced encoding both
+mid-event and at the endpoint. Thus, the original result established the value of
+the policy but not that optimization could discover it.
+
+The present study targets that missing step. A **policy** is a rule that maps the
+model's current state to an action, such as encode or skip. **Resource rationality**
+here means that a memory policy is useful relative to specified computational
+constraints and task demands; it does not mean that the same policy is optimal for
+every memory architecture. We therefore begin with a controlled task in which
+endpoint encoding can be proven optimal, and ask whether delayed reward teaches a
+model to select that time without endpoint labels.
+
+::: {.concept-table}
+| Design element | Original simulation | Present controlled simulation |
+|---|---|---|
+| What an event is | A temporally structured sequence of states | One situation with four features revealed sequentially |
+| What must be predicted | The upcoming state in the event sequence | Two missing situation features after a delay |
+| Why memory is needed | Earlier situation information controls later state transitions | Active maintenance is cleared before the incomplete situation is completed |
+| Episodic encoding | Timing forced by the experimenter | Timing learned from delayed reward |
+| Episodic retrieval | Competitive retrieval with a learned gate | Fixed cosine-similarity retrieval with soft competition |
+| What the task simulates | Online event prediction with interruptions | Delayed reconstruction of an incomplete situation model |
+:::
+
+The present task therefore does **not** reproduce the original next-state prediction
+problem. It simulates a narrower dependency: after an interruption has removed
+actively maintained information, episodic retrieval must restore missing parts of a
+previously observed situation. This isolates the temporal credit problem—whether a
+later reconstruction benefit can reinforce an earlier encoding choice—while omitting
+the original event schema and long state sequence.
 
 ![Task representation, episode sequence, and model architecture.](../../outputs/learned_encoding/figures/fig_01_task_architecture.svg)
 
-**Figure 1. Controlled task and computational flow.** During study, one feature is
-revealed at each semantic step and the gate may store the current partial state. The
-controller is reset before a delayed partial query. The memory read is differentiable;
-the write is a discrete Bernoulli action trained from delayed advantage. This is a
-measured synthetic-task schematic, not a diagram of a biological circuit.
+**Figure 1. Task and computational flow.** A situation consists of four binary
+features and a continuous event cue that identifies its context. During event
+observation, one feature is revealed at each step. Each observation-mask bit equals
+1 if its feature has been observed and 0 otherwise; the mask is part of both the
+encoding-policy input and the episodic retrieval key. After active maintenance is
+cleared, a partial query triggers episodic retrieval and the model predicts the two
+missing features. Retrieval is differentiable, whereas the encode-or-skip action is
+discrete and learned with an actor–critic objective, in which an actor chooses an
+action and a critic estimates its future reward. Error is mean squared error on the
+two missing features.
 
-## 2. Task design
+## 2. Task: delayed reconstruction of a situation
 
-An event contains a normalized six-dimensional random cue and four independently
-sampled features in \(\{-1,+1\}\). A random permutation determines reveal order.
-After each reveal, the observable state contains the accumulated feature vector
-\(x_t\), with zero in unrevealed locations, and a binary mask \(m_t\). The policy input
-is
+Each synthetic event has a normalized six-dimensional cue $c$ and four independent
+situation features. Each feature is either $-1$ or $+1$. A new cue, new feature
+values, and a new reveal order are sampled for every episode. The cue identifies the
+current event but contains no information about its feature values.
 
-\[
-s_t=[c;x_t;m_t],
-\]
+At each observation step, one feature is revealed. The current situation model is
+represented by two four-dimensional vectors:
 
-where \(c\) is the event cue. There is no `is_boundary` bit, absolute timestep,
-remaining-time variable, or access to withheld feature values. The semantic endpoint
-is simply the first state for which all entries of \(m_t\) equal one.
+- $x_t$, the accumulated feature values, with 0 in locations not yet observed;
+- $m_t$, the observation mask, with 1 for observed locations and 0 otherwise.
 
-At delayed test, transient controller state is cleared. The query contains the same
-cue and the state after the first two reveals. The other two features are targets.
-This geometry makes selective writing theoretically useful. If the exact two-feature
-study state was stored, it is more similar to the delayed query than the complete
-endpoint is, but it does not contain either target feature. Soft competitive retrieval
-can therefore favor an incomplete trace and suppress the useful endpoint. Storing
-only the endpoint avoids this interference without relying on a write penalty or
-capacity eviction.
+Because true feature values are always $-1$ or $+1$, a zero in $x_t$ is an
+unambiguous placeholder for an unknown value. The mask nevertheless serves two
+computational roles: it tells the encoding gate which locations are known, and it
+contributes to the similarity key used during retrieval. It is **not** an action
+mask: it neither forces nor prevents encoding. It also does not reveal any missing
+feature value.
 
-The primary task has four informative study states. The duration-generalization test
-inserts three null states at reproducibly sampled positions before semantic
-completion, making seven physical states while leaving the completion rule intact.
-Training, exploratory validation, confirmatory evaluation, and mechanism analysis
-use disjoint seed namespaces. Every test episode resamples cue, feature values, reveal
-order, and null-state positions where applicable.
+For example, suppose the complete situation is
 
-## 3. Memory and policy
-
-Each selected study state creates a distinct key–value trace. A key concatenates the
-event cue, accumulated values, and mask; the value is the accumulated feature state.
-For query \(q\), key \(k_i\), and temperature \(\tau\), the differentiable read is
 
 \[
-a_i=\frac{\exp(\cos(q,k_i)/\tau)}{\sum_j\exp(\cos(q,k_j)/\tau)},
-\qquad r=\sum_i a_i v_i.
+x^*=(-1,+1,+1,-1),
 \]
 
-Here \(a_i\) is attention to trace \(i\), \(v_i\) is that trace's value, and \(r\)
-is the retrieved feature vector. The reported condition fixes \(\tau=0.1\) and a
-four-slot capacity, sufficient to retain every possible trace. If no trace exists,
-the read is the declared zero vector. Reward is
+and the reveal order is feature 3, feature 1, feature 4, then feature 2. The trial
+develops as follows.
+
+::: {.concept-table}
+| Observation step | Accumulated values $x_t$ | Mask $m_t$ | Interpretation |
+|---:|---|---|---|
+| 1 | $(0,0,+1,0)$ | $(0,0,1,0)$ | One feature is known |
+| 2 | $(-1,0,+1,0)$ | $(1,0,1,0)$ | This state later becomes the partial query |
+| 3 | $(-1,0,+1,-1)$ | $(1,0,1,1)$ | The situation is still incomplete |
+| 4 | $(-1,+1,+1,-1)$ | $(1,1,1,1)$ | All features are known: the event boundary |
+:::
+
+After every row, the policy may encode the current situation model as an episodic
+memory or skip encoding. There is no separate `is_boundary` input, timestep, or
+remaining-time input. However, the final all-ones mask is a transparent completion
+cue. The model is learning what action to take at detectable completion; it is not
+inferring a latent event boundary from an unsegmented sensory stream.
+
+After the fourth observation, transient controller state is cleared to simulate a
+delay or interruption. Episodic memories persist. The delayed query contains the
+same event cue and the situation model after the first two reveals. The model must
+predict the two feature values that were not present in that partial query.
+
+This construction makes an incomplete memory actively harmful. If the model encoded
+the exact two-feature state, that memory is the closest match to the delayed query,
+but it contains neither target value. It can therefore dominate competitive
+retrieval and block the less similar but complete endpoint memory. Encoding only the
+complete endpoint avoids this interference. There is no encoding cost, and the
+four-slot capacity can retain all four possible memories; selectivity is useful
+because of retrieval competition, not because sparse encoding saves space.
+
+## 3. Model: learned encoding and differentiable retrieval
+
+### 3.1 Encoding policy
+
+The policy input after observation step $t$ is
 
 \[
-R=1-\frac{1}{|H|}\sum_{j\in H}(r_j-x_j^*)^2,
+s_t=[c;x_t;m_t].
 \]
 
-where \(H\) is the set of two withheld features and \(x^*\) is the complete event.
+A two-layer feedforward neural network, with 32 hyperbolic-tangent units in each
+layer, produces an encoding probability $p_t$ and a predicted future reward. The
+**actor** samples a binary encode-or-skip action $z_t$ from a Bernoulli distribution,
+which returns encode with probability $p_t$. The **critic** estimates the
+reward expected from the current state. Actor–critic learning increases the
+probability of actions whose delayed reward is better than the critic expected and
+decreases the probability of actions whose reward is worse. This policy-gradient
+method supplies credit to each earlier encoding choice after the delayed query has
+been answered.
 
-The trainable write controller is a two-layer multilayer perceptron with 32 tanh
-units per layer, followed by a Bernoulli actor and scalar critic head. At each study
-state, it samples \(z_t\sim\mathrm{Bernoulli}(p_t)\). If \(z_t=1\), the state is
-appended to episodic memory. A shared delayed return trains all study actions. With
-critic estimate \(V(s_t)\), the policy term is
+### 3.2 Episodic encoding and retrieval
+
+When $z_t=1$, the model encodes one episodic memory. Its key is the event cue,
+accumulated values, and mask; its stored content is the accumulated feature vector.
+For delayed query $q$, memory key $k_i$, stored content $v_i$, and retrieval
+temperature $\tau$, the retrieval weight is
 
 \[
-L_{actor}=-\frac{1}{T}\sum_t \log p(z_t\mid s_t)
-\left(R-V(s_t)\right),
+a_i=\frac{\exp(\cos(q,k_i)/\tau)}
+{\sum_j\exp(\cos(q,k_j)/\tau)},
+\qquad
+r=\sum_i a_i v_i.
 \]
 
-combined with a half-squared critic loss and an entropy bonus. Thus the read is
-differentiable, but the distinct write decision is optimized with policy gradients,
-not ordinary backpropagation through a fractional write.
+Here $\cos(q,k_i)$ is cosine similarity, a normalized measure of vector alignment;
+$a_i$ is the attention assigned to memory $i$, and $r$ is the retrieved feature
+vector. The reported model uses $\tau=0.1$. Lower temperature produces sharper
+competition, so the most similar memory dominates more strongly. If no memory was
+encoded, $r$ is the zero vector.
 
-One architectural fact is essential for interpretation: the retriever has no
-learned key projection or trainable parameters. The staged “supervised retrieval”
-and joint retrieval/write phases in the broader research plan collapse here to
-deterministic validation of the cosine-softmax operator. Likewise, no supervised
-endpoint labels enter RL training. A supervised gate and straight-through fractional
-write were retained as possible diagnostics but were not needed to establish the
-primary delayed-reward result and are not reported as evidence.
+The retrieval operation is **differentiable**: small changes to a query, key, or
+stored content produce smooth changes in the retrieved vector, and gradients can
+pass through this computation. The encoding action itself is a distinct binary
+decision, so it is not trained by ordinary backpropagation through a fractional
+memory. It is trained by the actor–critic policy gradient. Thus, “differentiable
+episodic memory” describes the retrieval path precisely; it does not imply that
+every component of the model is continuous.
+
+Reward measures reconstruction of the two held-out features $H$:
+
+\[
+R=1-\frac{1}{|H|}\sum_{j\in H}(r_j-x_j^*)^2.
+\]
+
+A perfect reconstruction receives reward 1. The shared delayed reward trains all
+four encode-or-skip decisions.
+
+### 3.3 Which policies were learned and which were forced?
+
+A **learned policy** obtains its encoding probabilities from optimized network
+weights. A **forced policy** is an experimenter-imposed schedule used as a baseline
+or causal intervention. An **oracle** here means the best forced schedule identified
+by enumerating all possible schedules before training the learned policy.
+
+::: {.concept-table}
+| Report label | Learned? | What happened |
+|---|:---:|---|
+| Learned stochastic gate | Yes | The trained gate sampled encode or skip from its learned probability |
+| Learned deterministic gate | Derived from learned gate | The trained probability was thresholded at 0.5; it was not separately trained |
+| Endpoint only | No—forced | Encoding occurred only after all four features were observed |
+| Random one-encoding | No—forced | One of the four positions was sampled uniformly and encoded |
+| Always encode | No—forced | All four situation models were encoded |
+| Midpoint plus endpoint | No—forced | The two-feature state and complete state were encoded |
+| Displaced learned encoding | No—forced intervention | The learned deterministic endpoint action was moved to the midpoint |
+| Latest-memory retrieval | No—forced retrieval intervention | Retrieval returned the most recently encoded memory instead of using similarity competition |
+:::
+
+This distinction is crucial for Figure 4c: **the endpoint-only curve was forced.**
+It does not show another model that learned endpoint encoding. The stochastic gate
+in Figures 2 and 3 is the learned encoding policy; its thresholded deterministic
+version is used only to describe and manipulate what that trained gate learned.
 
 ## 4. Experimental protocol
 
-The experiment proceeded in an order that prevented a favorable learned result from
-defining the task. First, all \(2^4=16\) deterministic write schedules were evaluated
-on 256 paired episodes under both fixed-capacity and the historical schedule-scaled
-capacity convention. Only after the endpoint policy was verified as the unique
-optimum was actor–critic learning run. Three model seeds (0–2) were used for
-exploratory configuration selection. The confirmatory YAML then froze the unchanged
-training settings and model seeds 100–114 before their test episodes were examined.
+The optimization target was validated before the learned gate was trained. All
+(2^4=16) binary encoding schedules were evaluated on the same 256 episodes. This
+exact enumeration established whether endpoint-only encoding was actually optimal
+under the declared retriever and task.
 
-Each confirmatory model received 300 updates with 64 episodes per update, learning
-rate 0.003, critic coefficient 0.5, entropy coefficient 0.005, and gradient-norm
-clipping at 1.0. Frozen weights were evaluated on 1,024 unseen episodes per seed.
-The model seed—not the episode—is the inferential unit. The same episode banks were
-used for paired baselines. Fixed-seed percentile bootstrap intervals use 10,000
-resamples and seed 20260830. The preregistered criteria required at least 12 of 15
-positive-selectivity seeds, a selectivity interval above zero, at least 0.80 closure
-of the random-to-oracle gap, and a displacement-loss interval above zero.
+Three independently initialized models were then used only to select a viable
+training configuration. The final configuration was frozen before the confirmatory
+episode results were inspected. Fifteen new **model seeds**—independent network
+initializations and training random streams, numbered 100–114—were retained without
+selection. Each model received 300 updates of 64 episodes. Frozen network weights
+were then evaluated on 1,024 unseen episodes per model seed; only episodic memories
+formed within an episode were allowed to change.
 
-The run executed with PyTorch 2.13.0 on macOS 26.6.2 arm64. Configuration hashes,
-execution commits, all seed-level aggregate metrics, and complete training curves
-are stored with the results. Checkpoints are intentionally excluded from Git, while
-compact JSON evidence is versioned.
+Reported uncertainty is variation across the 15 trained models, not variation across
+individual episodes. “±” denotes one standard deviation across model seeds. A 95%
+bootstrap interval was computed by resampling the 15 seeds 10,000 times with a fixed
+random seed. Four success criteria were declared before the confirmatory evaluation:
+positive endpoint selectivity in at least 12 of 15 models, a selectivity interval
+above zero, at least 0.80 closure of the random-policy-to-forced-optimum reward gap,
+and a positive loss when learned endpoint encoding was displaced to the midpoint.
 
 ## 5. Results
 
-### 5.1 The task has the intended optimum
+### 5.1 Endpoint-only encoding is the forced optimum
 
-Endpoint-only writing (`0001`) was the unique best schedule, with reward 1.000 and a
-0.267 margin over the next deterministic schedule. Matched random one-write achieved
-0.375 in the oracle audit; always-write achieved 0.241; midpoint-plus-endpoint
-achieved 0.140; midpoint-only and never-write achieved 0.000. Both capacity
-conventions produced the same ranking because no eligible trace was evicted. This
-validates the theoretical precondition, but it is not evidence of policy learning.
+Forced endpoint-only encoding, represented by schedule `0001`, was the unique best
+of all 16 deterministic schedules. Its reward was 1.000, with a 0.267 margin over the
+second-best schedule. Forced random one-encoding achieved 0.375 in the oracle audit;
+always-encode achieved 0.241; midpoint-plus-endpoint achieved 0.140; midpoint-only
+and never-encode achieved 0.000. The result was unchanged under the historical
+capacity convention because no eligible memory was evicted.
 
-![Across-seed learning curve and write probability at each semantic progress step.](../../outputs/learned_encoding/figures/fig_02_learning_dynamics.svg)
+This result establishes the task's optimization target. It is not evidence of
+learning because every schedule in this analysis was imposed by the experimenter.
 
-**Figure 2. Optimization trajectory and learned timing.** The left panel shows raw,
-unsmoothed minibatch rewards, summarized as mean ± one standard deviation over all
-15 confirmatory seeds. The right panel shows each model's write probability, with
-bootstrap 95% intervals over model seeds. All values are measured synthetic results.
+![Across-seed learning curve and encoding probability at each semantic progress step.](../../outputs/learned_encoding/figures/fig_02_learning_dynamics.svg)
 
-### 5.2 Delayed reward teaches selective endpoint writing
+**Figure 2. A boundary-selective encoding policy emerges during optimization.**
+Panel a shows raw, unsmoothed training-batch reward, summarized as the mean and one
+standard deviation across all 15 confirmatory model seeds. The horizontal comparison
+lines are forced policies. Panel b evaluates the trained stochastic gate on new
+episodes and shows its encoding probability after one, two, three, or four observed
+features. Gray lines are individual models; colored points are the across-model mean
+with 95% bootstrap intervals. All values are measured synthetic results.
 
-Across the 15 confirmatory seeds, stochastic held-out reward was 0.987 ± 0.004,
-95% interval [0.986, 0.989]. Endpoint-minus-nonendpoint write probability was
-0.985 ± 0.006, interval [0.982, 0.988], and boundary AUC was 1.000 for every seed.
-All 15 seeds had positive selectivity. Thresholding at 0.5 produced exactly one
-endpoint write and reward 1.000 for every model.
+### 5.2 The gate learned to encode at event completion
 
-The learned stochastic policy closed 0.980 of the paired gap between matched random
-one-write and the endpoint oracle, interval [0.977, 0.983], exceeding the frozen 0.80
-criterion. The learned policy was not merely sparse: moving the deterministic write
-from endpoint to midpoint while holding count fixed reduced reward from 1.000 to
-0.000 in every seed. All four preregistered checks passed.
+Across the 15 confirmatory models, stochastic held-out reward was 0.987 ± 0.004,
+with 95% bootstrap interval [0.986, 0.989]. Endpoint selectivity—the endpoint
+encoding probability minus the mean encoding probability at the other three
+positions—was 0.985 ± 0.006, interval [0.982, 0.988]. Every model assigned a higher
+probability to the endpoint than to every nonendpoint state. Thresholding each
+trained gate at probability 0.5 produced exactly one endpoint encoding and reward
+1.000 for every model.
 
-| Method or intervention | Reward mean | SD over model seeds |
-|---|---:|---:|
-| Endpoint-only oracle | 1.000 | 0.000 |
-| Learned deterministic gate | 1.000 | 0.000 |
-| Learned stochastic gate | 0.987 | 0.004 |
-| Matched random one-write | 0.371 | 0.015 |
-| Always write | 0.241 | 0.000 |
-| Midpoint + endpoint | 0.140 | 0.000 |
-| Displaced learned write | 0.000 | 0.000 |
+The stochastic learned policy closed 0.980 of the paired reward gap between forced
+random one-encoding and the forced endpoint optimum, interval [0.977, 0.983]. Moving
+the learned deterministic endpoint action to the midpoint while holding the number
+of encoded memories fixed reduced reward from 1.000 to 0.000 in every model. All four
+predeclared success criteria passed.
+
+| Policy or intervention | Status | Reward mean | Standard deviation across models |
+|---|---|---:|---:|
+| Endpoint only | Forced optimum | 1.000 | 0.000 |
+| Learned deterministic gate | Thresholded learned policy | 1.000 | 0.000 |
+| Learned stochastic gate | Learned policy | 0.987 | 0.004 |
+| Random one-encoding | Forced baseline | 0.371 | 0.015 |
+| Always encode | Forced baseline | 0.241 | 0.000 |
+| Midpoint plus endpoint | Forced baseline | 0.140 | 0.000 |
+| Displaced learned encoding | Forced causal intervention | 0.000 | 0.000 |
 
 ![Confirmatory baselines, causal displacement, and gap closure.](../../outputs/learned_encoding/figures/fig_03_confirmatory_evidence.svg)
 
-**Figure 3. Confirmatory evidence across all model seeds.** Open markers show seeds;
-solid markers show means with bootstrap 95% intervals. The causal intervention uses
-the deterministic learned action and displaces its single write. All values are
-measured synthetic results.
+**Figure 3. Confirmatory evidence across all 15 model seeds.** The stochastic gate
+is learned; all schedules labeled “forced” are experimenter-imposed comparisons.
+Open markers in panel a are model seeds and solid markers are means with 95%
+bootstrap intervals. Panel b applies a forced causal intervention to the thresholded
+learned policy: its single endpoint encoding is moved to the midpoint. Panel c shows
+the fraction of the forced-optimum reward gap closed relative to forced random
+one-encoding. All values are measured synthetic results.
 
-### 5.3 The gate generalizes by semantic progress
+### 5.3 The policy follows completion rather than physical time
 
-Without retraining, adding three null states yielded stochastic reward 0.982 ± 0.009,
-interval [0.978, 0.986], and endpoint selectivity 0.986 ± 0.005. Because the endpoint
-now occurs at different physical positions, this rules out a policy that simply
-counts to four. It does not rule out detection through the observation mask.
+Training events contained four informative states. A duration-generalization test
+inserted three **null states**, during which no new feature was revealed, at randomly
+sampled positions. This increased physical duration from four to seven steps while
+leaving the semantic boundary at the first all-ones mask. Without retraining,
+stochastic reward was 0.982 ± 0.009, interval [0.978, 0.986], and endpoint
+selectivity was 0.986 ± 0.005. The policy therefore did not simply encode on the
+fourth physical timestep.
 
-## 6. What behavior did optimization actually discover?
+### 5.4 The mask supplies the decisive completion cue
 
-Post-confirmatory analyses used new episode seeds and did not change the success
-audit. Mean write probability was 0.000005 after one observed feature, 0.000049 after
-two, 0.028 after three, and 0.994 after all four. The transition is therefore tied to
-semantic completion rather than gradually increasing elapsed time.
+Mean learned encoding probability was 0.000005 after one observed feature, 0.000049
+after two, 0.028 after three, and 0.994 after all four. The change was abrupt at
+completion.
 
-The most diagnostic input ablation is also the strongest limitation. With cue and
-feature values zeroed, mask-only input preserved reward at 0.992 ± 0.005 and
-selectivity at 0.991 ± 0.005. Values-only and cue-only inputs produced no
-deterministic writes and reward 0.000. The network learned that an all-ones mask is
-the profitable write state. It received no explicit boundary label, but it did not
-infer latent boundaries from an unsegmented sensory stream.
+Input ablations—tests that remove selected inputs from frozen models—identify the
+controlling signal. With cue and feature values set to zero, mask-only input preserved
+reward at 0.992 ± 0.005 and selectivity at 0.991 ± 0.005. Values-only and cue-only
+input produced no deterministic encodings and reward 0.000. Optimization therefore
+learned the useful action associated with the all-ones completion mask. It did not
+learn event segmentation—the inference of where events begin and end.
 
-Retrieval ablations locate why the policy helps. Endpoint-only reward remained 1.000
-at every softmax temperature. Always-write reward increased from 0.006 at
-\(\tau=0.03\) to 0.563 at \(\tau=1.0\), while midpoint-plus-endpoint increased from
-approximately 0.000 to 0.683. Replacing competitive soft retrieval with a
-latest-trace oracle made always-write reward 1.000. The selective policy is therefore
-optimal for this retriever because incomplete traces interfere; it is not universally
-optimal across memory architectures.
+### 5.5 Selectivity depends on the retrieval mechanism
+
+The retrieval temperature controls how sharply similar memories compete. Forced
+endpoint-only reward remained 1.000 at every tested temperature. Forced
+always-encode reward increased from 0.006 at temperature 0.03 to 0.563 at
+temperature 1.0; midpoint-plus-endpoint increased from approximately 0.000 to 0.683.
+When similarity competition was replaced by forced latest-memory retrieval,
+always-encode reward became 1.000.
 
 ![Duration generalization, gate-input ablations, and retrieval boundary conditions.](../../outputs/learned_encoding/figures/fig_04_robustness_mechanism.svg)
 
-**Figure 4. Robustness and mechanism boundaries.** The duration panel pairs the same
-frozen model across original and longer episodes. Input ablations and retrieval
-manipulations are explicitly post-confirmatory. All plotted values are measured
-synthetic results.
+**Figure 4. Robustness and mechanism boundaries.** Panel a evaluates the same
+frozen learned models on longer trials. Panel b removes parts of the learned gate's
+input and shows that the mask alone is sufficient. Panel c contains only forced
+encoding schedules; endpoint-only was never learned in this panel. The red annotation
+is a separate forced retrieval intervention that returns the latest memory. These
+post-confirmatory analyses use new episodes and are exploratory. All plotted values
+are measured synthetic results.
 
-## 7. Conclusions and limits
+## 6. What did optimization discover?
 
-The narrow research question has a positive answer: in a short environment where
-endpoint-only storage is independently proven optimal, a discrete episodic write
-gate can learn that policy from delayed prediction reward across unseen event cues,
-feature mappings, reveal orders, and longer durations. The result closes the exact
-technical gap highlighted in the 2022 article at a minimal scale: the encoding
-schedule need not be supplied by the experimenter.
+The narrow answer is positive: delayed reconstruction reward taught a discrete
+encoding gate to encode an episodic memory when the situation became complete. This
+was not achieved by supervising the gate with boundary labels, and the learned
+stochastic policy generalized to unseen event cues, feature values, reveal orders,
+and longer physical durations.
 
-Several stronger claims do not follow. The task has one event at a time, a transparent
-completion mask, independent binary features, and a fixed nonparametric retriever.
-It does not test latent event segmentation, multi-event credit assignment, learned
-retrieval/encoding coordination, arbitrary memory capacity, a full recurrent event
-model, or human behavior. Model attention is only an analogue of reinstatement, not
-human gaze or hippocampal retrieval. The result also depends on retrieval competition;
-another retriever can make dense writing equally good.
+The stronger answer is more qualified. The gate did not infer where one latent event
+ended and another began. Instead, it learned that the explicit all-ones mask marks a
+state at which encoding is valuable. Furthermore, endpoint selectivity was optimal
+because this particular similarity-based retriever allowed an incomplete but highly
+matching memory to interfere. A retriever that always selected the latest memory
+made dense encoding equally successful. The result is therefore a computational
+feasibility demonstration under stated constraints, not evidence that endpoint
+encoding is universally optimal or that a human hippocampus uses the same mechanism.
 
-The next decisive study should remove the explicit completion mask and introduce
-multiple variable-length events with learned latent state, while retaining an oracle
-audit that proves boundary storage is useful. A second step should add trainable
-retrieval so encoding and retrieval must co-adapt. Those extensions would test the
-broader resource-rational claim rather than the present proof of feasibility.
+## 7. Can the original simulation setting be used?
 
-## 8. Reproduction and evidence map
+Yes. There is no conceptual obstacle to learning an encoding policy in the original
+16-step, situation-dependent event-prediction task, and the released code already
+contains the event generator, working-memory model, episodic retrieval mechanism,
+and forced encoding schedules. The scientific difficulty is larger than the
+engineering difficulty for two reasons.
 
-- Environment and memory: `src/boundary_em/task.py`, `memory.py`, and `oracle.py`.
-- Policy and training: `src/boundary_em/policy.py`, `training.py`, and
+First, the reward consequence of encoding can occur many time steps or even an event
+later. The learning algorithm must assign that delayed consequence to a specific
+earlier encode-or-skip action. Second, a useful encoding policy may receive little
+reward while retrieval is poor, and a useful retrieval policy may be difficult to
+learn when the memory contains unhelpful snapshots. Encoding and retrieval must
+therefore become coordinated without collapsing to “encode everything” or “encode
+nothing.” These are the same challenges identified in the original paper.
+
+A practical staged experiment would preserve the original task rather than change
+its invariants:
+
+1. Reproduce the original forced endpoint-only advantage on current saved model
+   weights,
+   all three memory conditions, and unseen situations. This verifies that the target
+   policy remains beneficial before learning begins.
+2. Freeze the trained next-state predictor and the existing retrieval policy. Add a
+   binary episodic-encoding gate that observes the same internal recurrent state
+   available at each time point. Train only this gate with forced exploration—
+   occasionally requiring both encode and skip actions—so both action consequences
+   are observed.
+3. Evaluate frozen weights on new event sequences using all model seeds, compare the
+   learned gate with forced schedules, and causally displace learned boundary
+   encodings to mid-event positions.
+4. Once encoding alone is stable, allow encoding and retrieval to co-adapt using
+   alternating updates or slower updates for one policy. Compare the present discrete
+   policy gradient with continuous relaxations, while ensuring that an “encoded
+   memory” remains a distinct episodic snapshot.
+5. Test whether the learned policy survives the original 16-step horizon; the
+   recent-memory condition (active state preserved), distant-memory condition
+   (active state cleared but a relevant episodic memory available), and no-memory
+   condition (no relevant past event); competing memories from other events, called
+   lures; different penalties for incorrect predictions; event similarities;
+   retrieval competition; and capacity limits.
+
+This route is technically feasible, but a positive outcome is not guaranteed. The
+present result removes one basic uncertainty—delayed reward can train the encoding
+choice in a short controlled task—without yet solving long-horizon credit assignment
+or joint encoding–retrieval coordination in the original model.
+
+## 8. Limitations and next experiments
+
+::: {.concept-table .limitations-table}
+| Limitation | What it means | Why it matters | Proposed next step |
+|---|---|---|---|
+| Explicit observation mask | The all-ones pattern directly signals that all required features have arrived. | The model learns an action at detectable completion; it does not discover latent event boundaries. | Remove the mask from the policy, use variable and uncertain feature arrival, and infer completion from a recurrent latent situation model. |
+| Delayed reconstruction instead of next-state prediction | The target is two missing features, not the next state in a temporally structured event. | The result does not yet show that learned encoding improves online event prediction, which was the original scientific setting. | Restore the original event graph, situation-controlled transitions, and upcoming-state queries. |
+| One short event per episode | Only four informative encoding choices precede one delayed outcome. | Credit assignment is much easier than across multiple 16-step events and long interruptions. | Increase event length, include multiple related and lure events, and delay reward across event boundaries. |
+| Independent binary features and explicit event cue | Features have no schema, and the stable cue identifies the event context. | The task omits schema-based prediction, contextual ambiguity, and learned event segmentation. | Use the original structured situations, corrupt or learn contextual cues, and test multiple schemas. |
+| Fixed retrieval mechanism | Cosine-softmax retrieval has no learned key projection or retrieval gate. | Encoding never has to coordinate with a changing retrieval policy. | First freeze the original learned retrieval gate while training encoding; then jointly fine-tune both policies by alternating updates or updating one policy more slowly than the other. |
+| Discrete policy-gradient encoding | Retrieval is differentiable, but the binary encoding action is learned through delayed reward rather than direct backpropagation. | This is not a fully continuous end-to-end memory system, and policy gradients can have high variance on longer tasks. | Compare actor–critic learning with approximations that pass gradients through the binary choice and with continuous gates, while preserving discrete snapshots at evaluation. |
+| Task designed for endpoint interference | The partial query exactly matches an incomplete memory, making endpoint-only encoding uniquely useful for this retriever. | The experiment proves learnability in one favorable regime, not a universal principle of episodic encoding. | Map the policy across query similarity, retrieval competition, cue noise, memory capacity, and prediction penalties; report where endpoint selectivity ceases to be optimal. |
+| Capacity is nonbinding and encoding is free | Four slots hold every possible memory and no reward is charged for encoding. | Selectivity arises only from retrieval interference, so the study does not test storage scarcity or effort. | Keep the no-cost condition as the primary comparison, then vary capacity and encoding cost as separate sensitivity analyses. |
+| Synthetic model behavior only | Retrieval attention is an analogue of episodic reinstatement—the reactivation of stored event information—not a measurement of human gaze or hippocampal activity. | A model can establish feasibility and differentiating predictions but cannot establish the human mechanism. | Derive behavioral and neural predictions that distinguish completion-mask, surprise-driven, and latent-boundary accounts, then test them empirically. |
+:::
+
+## 9. Conclusion
+
+The original paper showed, with forced schedules, why endpoint-only episodic encoding
+can improve later prediction. The present controlled experiment adds the missing
+learning result: a trained encoding gate discovered that policy from delayed reward,
+and its behavior generalized across unseen situations and longer trial durations.
+The forced endpoint-only curves in Figures 2–4 are comparison policies, not learned
+models.
+
+The result should be read as a successful minimal proof, not as completion of the
+original research program. The model exploits an explicit completion mask, solves
+delayed reconstruction rather than full event prediction, and relies on a fixed
+retriever whose interference makes selective encoding valuable. The next decisive
+test is to transfer the learned encoding gate to the original event-prediction
+simulation, first with prediction and retrieval frozen and then with encoding and
+retrieval allowed to co-adapt.
+
+## 10. Reproduction and evidence map
+
+- Environment and episodic memory: `src/boundary_em/task.py`, `memory.py`, and
+  `oracle.py`.
+- Encoding policy and training: `src/boundary_em/policy.py`, `training.py`, and
   `policy_training.py`.
 - Frozen confirmatory configuration: `configs/learned_encoding/reported.yaml`.
-- Oracle result: `outputs/learned_encoding/oracle_results.json`.
-- Fifteen seed files: `outputs/learned_encoding/reported/`.
+- Exhaustive forced-policy result: `outputs/learned_encoding/oracle_results.json`.
+- Fifteen model-seed files: `outputs/learned_encoding/reported/`.
 - Confirmatory aggregate: `outputs/learned_encoding/reported_summary.json`.
 - Post-confirmatory mechanisms: `outputs/learned_encoding/mechanism_results.json`.
 - Figure sources and vector exports: `outputs/learned_encoding/figures/`.

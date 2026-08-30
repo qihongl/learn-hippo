@@ -206,6 +206,21 @@ tbody tr:nth-child(even) {
   background: #faf8f4;
 }
 
+.concept-table th,
+.concept-table td {
+  vertical-align: top;
+  text-align: left;
+}
+
+.concept-table table {
+  font-size: 0.78rem;
+}
+
+.limitations-table table {
+  font-size: 0.73rem;
+  line-height: 1.38;
+}
+
 code {
   padding: 0.08em 0.3em;
   border: 1px solid #e1ddd5;
