@@ -60,6 +60,7 @@ rather than silently reconciled.
 |---|---|---|---|
 | Training delay | Prediction queries delayed by a uniformly sampled 0–3 time points. | With 16 features, `max_pad_len = n_param // 3 - 1 = 4`; inclusive integer sampling therefore gives 0–4. | `released_code` is the primary executable profile; `paper_text` with 0–3 is a sensitivity analysis. |
 | Missing observations in `b1` | Each observation independently has 0.30 probability of removal, so 70% are expected to remain. | With `n_rm_fixed=False`, the code samples and rounds one uniform removal count between 0 and 4.8. This removes about 2.40 of 16 observations on average, or about 15%, and does not use independent Bernoulli removal. | Preserve the released behavior in `released_code`; implement independent 0.30 removal in `paper_text`. |
+| NM traces | Endpoint traces are formed for all three unrelated events, so `b1` is another lure for `b2`. | Encoding is disabled for the current `b1` whenever the sampled condition is NM; an older unrelated `a1` trace remains. | Preserve one lure in `released_code` and both unrelated traces in `paper_text`; neither profile contains a relevant target. |
 
 There are also training-description differences that do not change the task itself:
 the paper describes cross-entropy supervised initialization, whereas the released

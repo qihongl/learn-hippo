@@ -10,3 +10,6 @@
 - 2026-08-30: added the recurrent situation model, five-response prediction head,
   differentiable competitive episodic retrieval, and an encoding actor that receives
   only the recurrent situation model. Three model behavior tests pass.
+- 2026-08-30: implemented complete `a1`–`b1`–`b2` rollouts, forced encoding
+  schedules, exact expected task reward, RM/DM/NM working-memory resets, and
+  profile-specific lure availability. Five rollout behavior tests pass.

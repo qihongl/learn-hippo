@@ -92,6 +92,7 @@ class PaperTrial:
     b2: EventSequence
     reset_working_memory_before_b2: bool
     target_memory_available: bool
+    b1_encoding_allowed: bool
 
 
 def sample_delay(*, max_delay: int, rng: np.random.RandomState) -> int:
@@ -190,6 +191,9 @@ def generate_trial(
         b2=b2,
         reset_working_memory_before_b2=condition != "RM",
         target_memory_available=condition != "NM",
+        b1_encoding_allowed=(
+            condition != "NM" or config.profile == "paper_text"
+        ),
     )
 
 
