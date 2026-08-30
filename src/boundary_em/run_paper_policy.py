@@ -84,6 +84,12 @@ def _evaluate_condition(
     encodings_per_event: list[float] = []
     time_probabilities: list[list[float]] = [[] for _ in range(16)]
     forced_rewards = {name: [] for name in FORCED_SCHEDULES}
+    forced_rewards["matched_random_one"] = []
+    ablation_rewards = {
+        "target_memory_removed": [],
+        "lure_memory_removed": [],
+        "content_gate_off": [],
+    }
 
     with torch.no_grad():
         for trial_index in range(n_trials):
@@ -154,6 +160,42 @@ def _evaluate_condition(
             retrieval_off_reward.append(
                 _trial_reward(retrieval_off.b2.probabilities, trial)
             )
+            no_target = rollout_trial(
+                model,
+                trial,
+                a1_encoding_actions=episode.a1_actions,
+                b1_encoding_actions=torch.zeros_like(episode.b1_actions),
+                memory_capacity=memory_capacity,
+                retrieval_enabled=True,
+            )
+            ablation_rewards["target_memory_removed"].append(
+                _trial_reward(no_target.b2.probabilities, trial)
+            )
+            no_lure = rollout_trial(
+                model,
+                trial,
+                a1_encoding_actions=torch.zeros_like(episode.a1_actions),
+                b1_encoding_actions=episode.b1_actions,
+                memory_capacity=memory_capacity,
+                retrieval_enabled=True,
+            )
+            ablation_rewards["lure_memory_removed"].append(
+                _trial_reward(no_lure.b2.probabilities, trial)
+            )
+            original_threshold = model.content_match_threshold
+            model.content_match_threshold = -1.0
+            without_content_gate = rollout_trial(
+                model,
+                trial,
+                a1_encoding_actions=episode.a1_actions,
+                b1_encoding_actions=episode.b1_actions,
+                memory_capacity=memory_capacity,
+                retrieval_enabled=True,
+            )
+            model.content_match_threshold = original_threshold
+            ablation_rewards["content_gate_off"].append(
+                _trial_reward(without_content_gate.b2.probabilities, trial)
+            )
             for schedule in FORCED_SCHEDULES:
                 forced = rollout_trial(
                     model,
@@ -166,6 +208,28 @@ def _evaluate_condition(
                 forced_rewards[schedule].append(
                     _trial_reward(forced.b2.probabilities, trial)
                 )
+            random_generator = torch.Generator().manual_seed(
+                action_seed_start + 10_000_000 + trial_index
+            )
+            random_a1 = torch.zeros(len(trial.a1.inputs), dtype=torch.bool)
+            random_b1 = torch.zeros(len(trial.b1.inputs), dtype=torch.bool)
+            random_a1[
+                torch.randint(len(random_a1), (1,), generator=random_generator)
+            ] = True
+            random_b1[
+                torch.randint(len(random_b1), (1,), generator=random_generator)
+            ] = True
+            matched_random = rollout_trial(
+                model,
+                trial,
+                a1_encoding_actions=random_a1,
+                b1_encoding_actions=random_b1,
+                memory_capacity=memory_capacity,
+                retrieval_enabled=True,
+            )
+            forced_rewards["matched_random_one"].append(
+                _trial_reward(matched_random.b2.probabilities, trial)
+            )
 
     return {
         "learned": {
@@ -181,6 +245,9 @@ def _evaluate_condition(
         "forced": {
             schedule: {"reward": _cell(values)}
             for schedule, values in forced_rewards.items()
+        },
+        "ablations": {
+            name: {"reward": _cell(values)} for name, values in ablation_rewards.items()
         },
     }
 

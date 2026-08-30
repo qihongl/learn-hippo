@@ -39,6 +39,8 @@ evaluation:
   trials_per_condition: 256
   action_seed_start: 31000000
   conditions: [RM, DM, NM]
+  forced_baselines: [endpoint_only, midpoint_only, midpoint_plus_endpoint, dense, never, matched_random_one]
+  ablations: [retrieval_off, target_memory_removed, lure_memory_removed, content_gate_off]
 
 success_criteria:
   required_model_seeds: 10

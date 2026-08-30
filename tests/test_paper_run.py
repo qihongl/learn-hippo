@@ -35,6 +35,12 @@ def test_smoke_config_writes_reproducible_seed_result(tmp_path: Path) -> None:
     assert json.loads(output_path.read_text())["seed"] == 0
     assert result["configuration"]["task"]["profile"] == "released_code"
     assert set(result["evaluation"]) == {"RM", "DM", "NM"}
+    assert set(result["evaluation"]["DM"]["ablations"]) == {
+        "target_memory_removed",
+        "lure_memory_removed",
+        "content_gate_off",
+    }
+    assert "matched_random_one" in result["evaluation"]["DM"]["forced"]
     assert result["provenance"]["mode"] == "measured"
 
 

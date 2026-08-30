@@ -97,6 +97,9 @@ def aggregate_paper_policy(
     }
     conditions: dict[str, Any] = {}
     for condition in config["evaluation"]["conditions"]:
+        ablation_names = seed_results[0]["evaluation"][condition].get(
+            "ablations", {}
+        )
         conditions[condition] = {
             "learned": {
                 metric: _summary_cell(
@@ -139,6 +142,20 @@ def aggregate_paper_policy(
                     bootstrap_seed=bootstrap_seed,
                 )
                 for schedule in seed_results[0]["evaluation"][condition]["forced"]
+            },
+            "ablation_reward": {
+                ablation: _summary_cell(
+                    [
+                        float(
+                            result["evaluation"][condition]["ablations"][ablation][
+                                "reward"
+                            ]["mean"]
+                        )
+                        for result in seed_results
+                    ],
+                    bootstrap_seed=bootstrap_seed,
+                )
+                for ablation in ablation_names
             },
             "time_probabilities": [
                 _summary_cell(
