@@ -45,3 +45,8 @@ decisions belong in `decision_log.md`.
   recorded the mask dependence and retrieval-competition boundary conditions.
 - 2026-08-30: froze contracts for four paper figures, including their claims,
   panel evidence, statistical units, final sizes, and reviewer risks, before plotting.
+- 2026-08-30: generated and visually inspected four reproducible publication figures:
+  task/architecture, learning dynamics, confirmatory evidence, and mechanism limits.
+- 2026-08-30: drafted a self-contained experiment report that distinguishes the
+  confirmatory result from exploratory analyses and records unexecuted scope from the
+  broader preregistration rather than implying it was completed.
