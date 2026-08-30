@@ -36,3 +36,8 @@
   deeper cause: with unconditional retrieval on the full released training mixture,
   no encoding strongly outperforms endpoint encoding because irrelevant memories are
   damaging in NM trials.
+- 2026-08-30: added content-based retrieval suppression without exposing the hidden
+  memory condition. Conservative retrieval made endpoint-only the best declared
+  fixed schedule, but a sparse shared actor again learned an early encoding band and
+  no held-out DM benefit. This satisfies the stopping condition with a replicated
+  task-identification and optimization diagnosis rather than a positive result.

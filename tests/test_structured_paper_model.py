@@ -1,5 +1,6 @@
 import torch
 
+from boundary_em.paper_model import RecurrentState
 from boundary_em.paper_rollout import (
     expected_prediction_reward,
     forced_schedule,
@@ -29,6 +30,33 @@ def test_observed_feature_value_drives_the_matching_next_state_prediction() -> N
 
     step = model.predict_step(model_input, model.initial_state())
     assert step.logits.argmax().item() == 3
+
+
+def test_retrieval_gate_uses_content_match_without_a_condition_label() -> None:
+    model = _model()
+    partial = torch.zeros(model.hidden_dim)
+    partial[: model.situation_dim].reshape(16, 4)[:8, 0] = 1
+    matching = torch.zeros(model.hidden_dim)
+    matching[: model.situation_dim].reshape(16, 4)[:, 0] = 1
+    unrelated = torch.zeros(model.hidden_dim)
+    unrelated[: model.situation_dim].reshape(16, 4)[:, 1] = 1
+    state = RecurrentState(hidden=partial, cell=partial)
+
+    matching_step = model.predict_step(
+        torch.zeros(model.input_dim),
+        state,
+        memories=matching.unsqueeze(0),
+        retrieval_enabled=True,
+    )
+    unrelated_step = model.predict_step(
+        torch.zeros(model.input_dim),
+        state,
+        memories=unrelated.unsqueeze(0),
+        retrieval_enabled=True,
+    )
+
+    assert matching_step.retrieval_gate > 0.19
+    assert unrelated_step.retrieval_gate < 0.01
 
 
 def test_forced_endpoint_memory_improves_dm_prediction_over_no_encoding() -> None:

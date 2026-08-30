@@ -94,3 +94,26 @@
   similarity between the current partial event and stored situations, but not the
   latent RM/DM/NM condition. If this does not make endpoint encoding beneficial under
   the original mixture, the result will be treated as a task-identification failure.
+
+## 2026-08-30 — Content-gated retrieval and stopping diagnosis
+
+- A content-based retrieval gate now compares the partial current situation with
+  stored situations. It receives no condition label. Exploratory fixed-schedule
+  sweeps selected a conservative match threshold of 0.60, sharpness 30, and retrieval
+  strength 0.20 before the final policy diagnostic.
+- On 768 exploratory released-profile training trials, endpoint-only expected reward
+  was 0.711, compared with 0.693 for midpoint-only, 0.698 for
+  midpoint-plus-endpoint, 0.687 for dense, and 0.687 for never encoding. Thus the
+  retriever can make the endpoint schedule useful without changing the task.
+- A shared discrete actor initialized uniformly at 0.02 encoding probability was then
+  trained for 1,500 free-selection updates after 100 critic-only updates. It converged
+  from the opposite starting point to the same qualitative failure: endpoint
+  probability 0.0015, nonendpoint probability about 0.079, and an early encoding band
+  over observations 1–7. Held-out DM reward was 0.488, indistinguishable in practical
+  terms from retrieval disabled/no encoding.
+- The stopping diagnosis is therefore not merely high-variance policy gradients or an
+  overly dense initialization. Under the exact task, a shared online policy receives
+  no prospective signal that distinguishes a future target event from a distractor,
+  and multiple nonboundary schedules lie in easier local optima. The published task
+  supports endpoint superiority among selected fixed schedules, but does not uniquely
+  identify endpoint encoding as the globally learnable unconstrained policy.

@@ -27,6 +27,8 @@ class StructuredEpisodicPredictionModel(nn.Module):
         policy_hidden_dim: int,
         retrieval_temperature: float,
         temporal_context_scale: float,
+        content_match_threshold: float = 0.6,
+        content_match_sharpness: float = 30.0,
     ) -> None:
         super().__init__()
         if n_features != 16 or n_values != 4:
@@ -35,6 +37,10 @@ class StructuredEpisodicPredictionModel(nn.Module):
             raise ValueError("policy_hidden_dim must be positive")
         if retrieval_temperature <= 0 or temporal_context_scale <= 0:
             raise ValueError("retrieval settings must be positive")
+        if not 0 <= content_match_threshold <= 1:
+            raise ValueError("content_match_threshold must fall in [0, 1]")
+        if content_match_sharpness <= 0:
+            raise ValueError("content_match_sharpness must be positive")
 
         self.n_features = n_features
         self.n_values = n_values
@@ -44,11 +50,15 @@ class StructuredEpisodicPredictionModel(nn.Module):
         self.output_dim = n_values + 1
         self.retrieval_temperature = retrieval_temperature
         self.temporal_context_scale = temporal_context_scale
+        self.content_match_threshold = content_match_threshold
+        self.content_match_sharpness = content_match_sharpness
 
         self.logit_scale_log = nn.Parameter(torch.tensor(math.log(8.0)))
         self.dont_know_bias = nn.Parameter(torch.tensor(4.0))
         self.dont_know_suppression_log = nn.Parameter(torch.tensor(math.log(8.0)))
-        self.retrieval_strength_logit = nn.Parameter(torch.tensor(0.0))
+        self.retrieval_strength_logit = nn.Parameter(
+            torch.tensor(math.log(0.1 / 0.9))
+        )
 
         self.encoding_actor_encoder = nn.Sequential(
             nn.Linear(self.hidden_dim, policy_hidden_dim),
@@ -129,9 +139,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         if model_input.shape != (self.input_dim,):
             raise ValueError("model_input must have shape [input_dim]")
         observed_key = model_input[: self.n_features]
-        observed_value = model_input[
-            self.n_features : self.n_features + self.n_values
-        ]
+        observed_value = model_input[self.n_features : self.n_features + self.n_values]
         query_start = self.n_features + self.n_values
         query_key = model_input[query_start : query_start + self.n_features]
 
@@ -152,7 +160,18 @@ class StructuredEpisodicPredictionModel(nn.Module):
         retrieval_gate = torch.zeros((), device=cell.device, dtype=cell.dtype)
         if retrieval_enabled and memories is not None and memories.shape[0] > 0:
             retrieval = self.retrieve(cell, memories, encoding_strengths)
-            retrieval_gate = 2.0 * torch.sigmoid(self.retrieval_strength_logit)
+            content_similarities = torch.nn.functional.cosine_similarity(
+                cell[: self.situation_dim].unsqueeze(0),
+                memories[:, : self.situation_dim],
+                dim=1,
+            )
+            content_match = torch.sigmoid(
+                self.content_match_sharpness
+                * (content_similarities.max() - self.content_match_threshold)
+            )
+            retrieval_gate = (
+                2.0 * torch.sigmoid(self.retrieval_strength_logit) * content_match
+            )
             cell = cell + retrieval_gate * retrieval.value
             attention = retrieval.attention
 
@@ -164,9 +183,10 @@ class StructuredEpisodicPredictionModel(nn.Module):
         logit_scale = torch.exp(self.logit_scale_log)
         specific_logits = queried_values * logit_scale
         known_strength = queried_values.sum()
-        dont_know_logit = self.dont_know_bias - torch.exp(
-            self.dont_know_suppression_log
-        ) * known_strength
+        dont_know_logit = (
+            self.dont_know_bias
+            - torch.exp(self.dont_know_suppression_log) * known_strength
+        )
         logits = torch.cat([specific_logits, dont_know_logit.view(1)])
         return PredictionStep(
             logits=logits,
