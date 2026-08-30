@@ -41,3 +41,7 @@
   fixed schedule, but a sparse shared actor again learned an early encoding band and
   no held-out DM benefit. This satisfies the stopping condition with a replicated
   task-identification and optimization diagnosis rather than a positive result.
+- 2026-08-30: added versioned smoke and 10-seed diagnostic-replication
+  configurations plus a runner that freezes each trained model, evaluates new
+  mappings in RM/DM/NM, pairs retrieval-on and retrieval-off actions, retains all
+  forced baselines, and writes provenance-rich machine-readable results.

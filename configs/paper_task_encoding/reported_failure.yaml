@@ -1,0 +1,51 @@
+experiment:
+  name: exact_paper_task_diagnostic
+  status: diagnostic_replication
+  model_seeds: [300, 301, 302, 303, 304, 305, 306, 307, 308, 309]
+
+task:
+  profile: released_code
+
+model:
+  policy_hidden_dim: 32
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+  initial_encoding_probability: 0.02
+
+training:
+  conditions: [RM, DM, NM, NM]
+  forced_value:
+    updates: 50
+    batch_size: 16
+    learning_rate: 0.003
+    critic_coefficient: 0.5
+    entropy_coefficient: 0.002
+    gradient_clip: 1.0
+    memory_capacity: 40
+  free_policy:
+    updates: 600
+    batch_size: 16
+    learning_rate: 0.003
+    critic_coefficient: 0.5
+    entropy_coefficient: 0.002
+    gradient_clip: 1.0
+    memory_capacity: 40
+
+evaluation:
+  trial_seed_start: 30000000
+  trials_per_condition: 256
+  action_seed_start: 31000000
+  conditions: [RM, DM, NM]
+
+success_criteria:
+  required_model_seeds: 10
+  require_endpoint_above_nonendpoint: true
+  require_dm_reward_above_never: true
+  require_retrieval_off_loss: true
+
+output:
+  directory: outputs/paper_task_encoding/reported
+  aggregate: outputs/paper_task_encoding/reported_summary.json

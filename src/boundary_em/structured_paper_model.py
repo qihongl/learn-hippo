@@ -29,6 +29,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         temporal_context_scale: float,
         content_match_threshold: float = 0.6,
         content_match_sharpness: float = 30.0,
+        retrieval_strength: float = 0.2,
     ) -> None:
         super().__init__()
         if n_features != 16 or n_values != 4:
@@ -41,6 +42,8 @@ class StructuredEpisodicPredictionModel(nn.Module):
             raise ValueError("content_match_threshold must fall in [0, 1]")
         if content_match_sharpness <= 0:
             raise ValueError("content_match_sharpness must be positive")
+        if not 0 < retrieval_strength < 2:
+            raise ValueError("retrieval_strength must fall between 0 and 2")
 
         self.n_features = n_features
         self.n_values = n_values
@@ -57,7 +60,9 @@ class StructuredEpisodicPredictionModel(nn.Module):
         self.dont_know_bias = nn.Parameter(torch.tensor(4.0))
         self.dont_know_suppression_log = nn.Parameter(torch.tensor(math.log(8.0)))
         self.retrieval_strength_logit = nn.Parameter(
-            torch.tensor(math.log(0.1 / 0.9))
+            torch.tensor(
+                math.log((retrieval_strength / 2) / (1 - retrieval_strength / 2))
+            )
         )
 
         self.encoding_actor_encoder = nn.Sequential(
