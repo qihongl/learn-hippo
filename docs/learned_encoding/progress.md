@@ -32,3 +32,6 @@ decisions belong in `decision_log.md`.
   configuration; seed 108 is the weakest observed seed and remains preserved.
 - 2026-08-30: completed confirmatory seeds 110–114. All 15 declared model seeds now
   have seed-specific measured outputs; aggregation has not yet been run.
+- 2026-08-30: added a tested confirmatory aggregator that requires all declared
+  seeds, identical configuration hashes, fixed-seed bootstrap intervals, and the
+  preregistered success audit.
