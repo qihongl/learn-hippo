@@ -4,6 +4,15 @@ This repo hosts the python code for the following paper:
 
 [Lu, Q., Hasson, U., & Norman, K. A. (2022). A neural network model of when to retrieve and encode episodic memories. eLife](https://elifesciences.org/articles/74445)
 
+## Learned event-boundary encoding follow-up
+
+The branch `codex/learned-encoding-policy` adds an isolated modern experiment testing
+whether delayed reward can teach a discrete episodic-memory write gate to encode at
+semantic event completion. Read the
+[self-contained HTML report](docs/learned_encoding/experiment_report.html) or the
+[reproduction guide](docs/learned_encoding/README.md). This controlled synthetic
+feasibility study is separate from the original legacy simulation stack below.
+
 If you have access to a cluster, most simulations can be replicated in a day. 
 
 Feel free to contact me if you have any questions / comments. Thank you very much in advance! 
@@ -294,5 +303,4 @@ This gives you Figure 4B-E. And after that, you can run `vis-compare-encpol.py` 
 ### Contact
 
 Qihong Lu (qlu@princeton.edu)
-
 

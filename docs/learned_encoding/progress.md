@@ -53,3 +53,5 @@ decisions belong in `decision_log.md`.
 - 2026-08-30: built a standalone HTML small paper from the audited report with
   embedded vector figures, MathML equations, responsive/print CSS, and reproducible
   build validation; desktop and mobile browser QA found no overflow or console errors.
+- 2026-08-30: added a command-oriented reproduction guide and linked the isolated
+  follow-up experiment from the legacy repository README.
