@@ -57,3 +57,19 @@
 - The same hyperparameters will be frozen for confirmatory model seeds 100–114.
 - The per-seed output schema will gain a top-level aggregate-shaped `summary` before
   confirmatory execution; raw smoke records are preserved as originally written.
+
+## 2026-08-30 — Confirmatory configuration frozen
+
+- `configs/learned_encoding/reported.yaml` freezes model seeds 100–114, which do not
+  overlap exploratory seeds 0–2.
+- Training hyperparameters are copied unchanged from the three-seed exploratory
+  configuration.
+- Confirmatory episode seeds begin at 4,000,000 and were not inspected during
+  configuration selection.
+- The primary evaluation uses the four informative states. An OOD evaluation adds
+  three reproducibly sampled null steps, making duration seven without adding a
+  boundary input.
+- Forced endpoint, midpoint, dense, random, never, and causal displacement
+  interventions are declared before confirmatory execution.
+- Bootstrap seed, sample count, and all quantitative success thresholds are stored
+  directly in the configuration.

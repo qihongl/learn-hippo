@@ -24,6 +24,13 @@ def test_policy_runner_persists_seed_level_provenance(tmp_path):
     assert result["provenance"]["mode"] == "measured"
     assert result["provenance"]["data_kind"] == "synthetic"
     assert result["experiment_status"] == "exploratory"
+    assert result["summary"]["learned_policy"]["reward"]["n_seeds"] == 1
     assert len(result["training_curves"]["mean_reward"]) == 1
     assert result["evaluation"]["stochastic"]["reward"]["n_episodes"] == 4
+    assert result["evaluation"]["ood_stochastic"]["reward"]["n_episodes"] == 4
+    assert result["configuration"]["evaluation"]["ood_null_steps"] == 3
+    assert result["evaluation"]["interventions"]["endpoint_only"]["reward"][
+        "mean"
+    ] == 1.0
+    assert "displaced_learned" in result["evaluation_records"]["interventions"]
     assert (tmp_path / "checkpoints/boundary_policy_smoke_seed9.pt").exists()

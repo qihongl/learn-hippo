@@ -22,3 +22,6 @@ decisions belong in `decision_log.md`.
   stochastic/deterministic evaluation records, and ignored checkpoints.
 - 2026-08-30: executed and preserved exploratory seeds 0–2 from `d6ad848`; all
   learned near-exclusive endpoint writing on unseen validation episodes.
+- 2026-08-30: added schema-compliant summaries, unseen-duration evaluation, forced
+  and displacement interventions, and froze the 15-seed confirmatory configuration
+  before examining its test episodes.

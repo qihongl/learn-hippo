@@ -1,0 +1,51 @@
+experiment:
+  name: boundary_policy_reported
+  status: confirmatory
+  model_seeds: [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114]
+
+task:
+  n_features: 4
+  cue_dim: 6
+  query_features: 2
+
+memory:
+  temperature: 0.1
+  capacity: 4
+
+model:
+  hidden_dim: 32
+
+training:
+  updates: 300
+  batch_size: 64
+  learning_rate: 0.003
+  critic_coefficient: 0.5
+  entropy_coefficient: 0.005
+  gradient_clip: 1.0
+
+evaluation:
+  validation_seed_start: 4000000
+  split_label: confirmatory_test
+  n_episodes: 1024
+  action_seed_offset: 5000000
+  ood_null_steps: 3
+  interventions:
+    - endpoint_only
+    - midpoint_only
+    - midpoint_plus_endpoint
+    - always_write
+    - never_write
+    - matched_random_one_write
+    - displaced_learned
+
+success_criteria:
+  minimum_positive_seeds: 12
+  minimum_gap_closure: 0.8
+  require_selectivity_ci_above_zero: true
+  require_displacement_loss_ci_above_zero: true
+  bootstrap_seed: 20260830
+  bootstrap_samples: 10000
+
+output:
+  directory: outputs/learned_encoding/reported
+  checkpoint_directory: outputs/checkpoints/learned_encoding/reported

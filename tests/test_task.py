@@ -2,7 +2,7 @@ from dataclasses import fields
 
 import torch
 
-from boundary_em.task import TaskConfig, generate_episode
+from boundary_em.task import TaskConfig, generate_episode, sample_null_steps
 
 
 def test_episode_generation_is_deterministic_complete_and_boundary_blind():
@@ -33,3 +33,14 @@ def test_null_steps_vary_duration_without_changing_semantic_completion():
     assert torch.equal(episode.states[3], episode.states[4])
     assert episode.masks[-1].sum().item() == 4
     assert episode.query_mask.sum().item() == 2
+
+
+def test_null_step_sampling_is_seeded_and_never_extends_past_completion():
+    config = TaskConfig(n_features=4, cue_dim=6, query_features=2)
+
+    first = sample_null_steps(config, seed=31, n_null_steps=3)
+    second = sample_null_steps(config, seed=31, n_null_steps=3)
+
+    assert first == second
+    assert len(first) == 3
+    assert all(0 <= progress < config.n_features for progress in first)

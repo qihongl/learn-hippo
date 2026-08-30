@@ -27,6 +27,15 @@ evaluation:
   validation_seed_start: 2000000
   n_episodes: 256
   action_seed_offset: 3000000
+  ood_null_steps: 3
+  interventions:
+    - endpoint_only
+    - midpoint_only
+    - midpoint_plus_endpoint
+    - always_write
+    - never_write
+    - matched_random_one_write
+    - displaced_learned
 
 output:
   directory: outputs/learned_encoding/smoke

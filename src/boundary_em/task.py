@@ -42,6 +42,26 @@ class EventEpisode:
     query_mask: Tensor
 
 
+def sample_null_steps(
+    config: TaskConfig,
+    *,
+    seed: int,
+    n_null_steps: int,
+) -> tuple[int, ...]:
+    """Sample reproducible no-op positions before semantic completion."""
+
+    if n_null_steps < 0:
+        raise ValueError("n_null_steps cannot be negative")
+    generator = torch.Generator().manual_seed(seed ^ 0x5DEECE66D)
+    positions = torch.randint(
+        0,
+        config.n_features,
+        (n_null_steps,),
+        generator=generator,
+    )
+    return tuple(sorted(int(position.item()) for position in positions))
+
+
 def generate_episode(
     config: TaskConfig,
     *,

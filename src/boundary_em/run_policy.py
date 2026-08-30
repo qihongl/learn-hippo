@@ -101,6 +101,40 @@ def run_policy_config(
         capacity=train_config.capacity,
         stochastic=False,
     )
+    ood_null_steps = int(evaluation_config.get("ood_null_steps", 0))
+    ood_stochastic = evaluate_policy(
+        run.model,
+        task_config,
+        episode_seeds=evaluation_seeds,
+        action_seed=action_seed + 10_000_000,
+        temperature=train_config.temperature,
+        capacity=train_config.capacity,
+        stochastic=True,
+        n_null_steps=ood_null_steps,
+    )
+    ood_deterministic = evaluate_policy(
+        run.model,
+        task_config,
+        episode_seeds=evaluation_seeds,
+        action_seed=action_seed + 10_000_000,
+        temperature=train_config.temperature,
+        capacity=train_config.capacity,
+        stochastic=False,
+        n_null_steps=ood_null_steps,
+    )
+    interventions = {
+        name: evaluate_policy(
+            run.model,
+            task_config,
+            episode_seeds=evaluation_seeds,
+            action_seed=action_seed + 20_000_000,
+            temperature=train_config.temperature,
+            capacity=train_config.capacity,
+            stochastic=False,
+            intervention=name,
+        )
+        for name in evaluation_config.get("interventions", [])
+    }
 
     output_root = (
         Path(output_directory)
@@ -163,6 +197,41 @@ def run_policy_config(
                 "n_episodes": n_evaluation_episodes,
             },
         },
+        "summary": {
+            "learned_policy": {
+                metric: {
+                    "mean": cell["mean"],
+                    "std": None,
+                    "n_seeds": 1,
+                    "episode_std": cell["std"],
+                    "n_episodes": cell["n_episodes"],
+                }
+                for metric, cell in stochastic.summary.items()
+            },
+            "learned_policy_ood_duration": {
+                metric: {
+                    "mean": cell["mean"],
+                    "std": None,
+                    "n_seeds": 1,
+                    "episode_std": cell["std"],
+                    "n_episodes": cell["n_episodes"],
+                }
+                for metric, cell in ood_stochastic.summary.items()
+            },
+            **{
+                f"intervention_{name}": {
+                    metric: {
+                        "mean": cell["mean"],
+                        "std": None,
+                        "n_seeds": 1,
+                        "episode_std": cell["std"],
+                        "n_episodes": cell["n_episodes"],
+                    }
+                    for metric, cell in evaluation.summary.items()
+                }
+                for name, evaluation in interventions.items()
+            },
+        },
         "training_curves": {
             key: [point[key] for point in run.history]
             for key in run.history[0]
@@ -171,10 +240,22 @@ def run_policy_config(
         "evaluation": {
             "stochastic": stochastic.summary,
             "deterministic": deterministic.summary,
+            "ood_stochastic": ood_stochastic.summary,
+            "ood_deterministic": ood_deterministic.summary,
+            "interventions": {
+                name: evaluation.summary
+                for name, evaluation in interventions.items()
+            },
         },
         "evaluation_records": {
             "stochastic": _evaluation_dict(stochastic)["per_episode"],
             "deterministic": _evaluation_dict(deterministic)["per_episode"],
+            "ood_stochastic": _evaluation_dict(ood_stochastic)["per_episode"],
+            "ood_deterministic": _evaluation_dict(ood_deterministic)["per_episode"],
+            "interventions": {
+                name: _evaluation_dict(evaluation)["per_episode"]
+                for name, evaluation in interventions.items()
+            },
         },
         "checkpoint": _display_path(checkpoint_path, repository),
         "notes": (

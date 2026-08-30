@@ -5,12 +5,23 @@ from __future__ import annotations
 import statistics
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Literal
 
 import torch
 
 from boundary_em.policy import WriteActorCritic
-from boundary_em.task import TaskConfig, generate_episode
+from boundary_em.task import TaskConfig, generate_episode, sample_null_steps
 from boundary_em.training import evaluate_actions
+
+Intervention = Literal[
+    "endpoint_only",
+    "midpoint_only",
+    "midpoint_plus_endpoint",
+    "always_write",
+    "never_write",
+    "matched_random_one_write",
+    "displaced_learned",
+]
 
 
 @dataclass(frozen=True)
@@ -38,6 +49,58 @@ def _auc(positives: list[float], negatives: list[float]) -> float:
     return statistics.fmean(comparisons)
 
 
+def _apply_intervention(
+    actions: torch.Tensor,
+    episode_masks: torch.Tensor,
+    *,
+    query_features: int,
+    intervention: Intervention,
+    generator: torch.Generator,
+) -> torch.Tensor:
+    intervened = actions.clone()
+    midpoint_candidates = torch.nonzero(
+        episode_masks.sum(dim=1) == query_features,
+        as_tuple=False,
+    ).flatten()
+    midpoint = int(midpoint_candidates[0].item())
+    endpoint = len(actions) - 1
+    if intervention == "endpoint_only":
+        intervened.zero_()
+        intervened[endpoint] = True
+    elif intervention == "midpoint_only":
+        intervened.zero_()
+        intervened[midpoint] = True
+    elif intervention == "midpoint_plus_endpoint":
+        intervened.zero_()
+        intervened[midpoint] = True
+        intervened[endpoint] = True
+    elif intervention == "always_write":
+        intervened.fill_(True)
+    elif intervention == "never_write":
+        intervened.zero_()
+    elif intervention == "matched_random_one_write":
+        intervened.zero_()
+        random_index = int(
+            torch.randint(len(actions), (1,), generator=generator).item()
+        )
+        intervened[random_index] = True
+    elif intervention == "displaced_learned":
+        if bool(intervened[endpoint]):
+            intervened[endpoint] = False
+            candidates = [midpoint] + [
+                index
+                for index in range(endpoint)
+                if index != midpoint
+            ]
+            for candidate in candidates:
+                if not bool(intervened[candidate]):
+                    intervened[candidate] = True
+                    break
+    else:
+        raise ValueError(f"unknown intervention: {intervention}")
+    return intervened
+
+
 def evaluate_policy(
     model: WriteActorCritic,
     task_config: TaskConfig,
@@ -47,6 +110,8 @@ def evaluate_policy(
     temperature: float,
     capacity: int,
     stochastic: bool,
+    n_null_steps: int = 0,
+    intervention: Intervention | None = None,
 ) -> PolicyEvaluation:
     """Evaluate a fixed model on unseen episodes without updating weights."""
 
@@ -62,13 +127,30 @@ def evaluate_policy(
 
     with torch.inference_mode():
         for seed in seeds:
-            episode = generate_episode(task_config, seed=seed)
+            null_steps = sample_null_steps(
+                task_config,
+                seed=seed,
+                n_null_steps=n_null_steps,
+            )
+            episode = generate_episode(
+                task_config,
+                seed=seed,
+                null_steps=null_steps,
+            )
             probabilities = model(episode.policy_inputs).probabilities
             if stochastic:
                 uniforms = torch.rand(probabilities.shape, generator=action_generator)
                 actions = uniforms < probabilities
             else:
                 actions = probabilities >= 0.5
+            if intervention is not None:
+                actions = _apply_intervention(
+                    actions,
+                    episode.masks,
+                    query_features=task_config.query_features,
+                    intervention=intervention,
+                    generator=action_generator,
+                )
             outcome = evaluate_actions(
                 episode,
                 actions,
