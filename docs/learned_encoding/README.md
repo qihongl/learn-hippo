@@ -13,11 +13,13 @@ From the repository root, install the modern environment and run its tests:
 ```sh
 uv sync --extra dev --extra report
 uv run pytest
-uv run ruff check src/boundary_em tests outputs/learned_encoding/figures
+uv run ruff check .
 ```
 
 The new package is isolated under `src/boundary_em`; the commands above do not run or
-modernize the historical Python stack used for the 2022 paper.
+modernize the historical Python stack used for the 2022 paper. The Ruff `include`
+contract in `pyproject.toml` therefore covers the isolated package, its tests, and
+the reproducible figure sources rather than the untouched legacy files.
 
 ## Reproduce the oracle precondition
 

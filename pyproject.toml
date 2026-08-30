@@ -34,6 +34,11 @@ addopts = "-ra"
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+include = [
+  "src/boundary_em/**/*.py",
+  "tests/**/*.py",
+  "outputs/learned_encoding/figures/*.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

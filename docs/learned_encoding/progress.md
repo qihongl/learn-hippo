@@ -55,3 +55,8 @@ decisions belong in `decision_log.md`.
   build validation; desktop and mobile browser QA found no overflow or console errors.
 - 2026-08-30: added a command-oriented reproduction guide and linked the isolated
   follow-up experiment from the legacy repository README.
+- 2026-08-30: completed the final quality audit: 23 tests pass, scoped repository
+  lint passes, all 15 seed files are finite and configuration-consistent, all figure
+  bundles exist, and the rebuilt standalone HTML passes resource checks. The new Ruff
+  scope explicitly excludes the untouched legacy stack, which has 279 pre-existing
+  findings under the modern ruleset.
