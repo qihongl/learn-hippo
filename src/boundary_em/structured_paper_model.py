@@ -90,7 +90,12 @@ class StructuredEpisodicPredictionModel(nn.Module):
         zeros = torch.zeros(self.hidden_dim, device=state_device, dtype=state_dtype)
         return RecurrentState(hidden=zeros, cell=zeros.clone())
 
-    def retrieve(self, query: Tensor, memories: Tensor) -> RetrievalOutput:
+    def retrieve(
+        self,
+        query: Tensor,
+        memories: Tensor,
+        encoding_strengths: Tensor | None = None,
+    ) -> RetrievalOutput:
         """Retrieve a differentiable competitive average of episodic traces."""
 
         if query.shape != (self.hidden_dim,):
@@ -102,6 +107,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
             memories,
             memories,
             temperature=self.retrieval_temperature,
+            encoding_strengths=encoding_strengths,
         )
         return RetrievalOutput(
             value=readout.value,
@@ -115,6 +121,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         state: RecurrentState,
         *,
         memories: Tensor | None = None,
+        encoding_strengths: Tensor | None = None,
         retrieval_enabled: bool = False,
     ) -> PredictionStep:
         """Accumulate observations, optionally reinstate memory, and predict."""
@@ -144,7 +151,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         attention = torch.empty(0, device=cell.device, dtype=cell.dtype)
         retrieval_gate = torch.zeros((), device=cell.device, dtype=cell.dtype)
         if retrieval_enabled and memories is not None and memories.shape[0] > 0:
-            retrieval = self.retrieve(cell, memories)
+            retrieval = self.retrieve(cell, memories, encoding_strengths)
             retrieval_gate = 2.0 * torch.sigmoid(self.retrieval_strength_logit)
             cell = cell + retrieval_gate * retrieval.value
             attention = retrieval.attention

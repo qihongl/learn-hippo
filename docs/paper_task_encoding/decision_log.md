@@ -68,3 +68,29 @@
   mean nonendpoint probability was 0.667, the model encoded 10.90 times per event,
   and held-out expected reward was 0.394 versus approximately 0.493 for no encoding.
   This run is a failure under the preregistered prediction-benefit criterion.
+
+## 2026-08-30 — Fully differentiable encoding diagnostic
+
+- To separate discrete-policy gradient variance from the scientific objective, each
+  memory was given a continuous encoding strength. The strength enters retrieval as
+  a differentiable prior, so delayed prediction reward can update the encoding
+  network directly. No task input or boundary cue was added.
+- A 500-update single-seed diagnostic also failed. It assigned its largest strength
+  to the first observation, with endpoint strength 0.009 and mean nonendpoint
+  strength 0.033 on new DM trials. Retrieval reduced expected reward from 0.488 when
+  disabled to 0.426 when enabled.
+- A gradient audit explained this local solution. Complete target memories become
+  more useful toward the endpoint, but complete distracting memories become almost
+  equally harmful. Because the shared policy sees statistically indistinguishable
+  first presentations, their boundary gradients nearly cancel.
+- More importantly, under 2,048 exploratory trials from the released meta-training
+  mixture, fixed no encoding achieved expected reward 0.695, compared with -0.097
+  for endpoint-only and 0.011 for dense encoding in the structured model. In the 50%
+  NM condition, unconditional retrieval of irrelevant memories drove endpoint reward
+  to -0.959. Therefore endpoint encoding is not globally optimal for a model that
+  retrieves unconditionally; the original endpoint-versus-midpoint comparison does
+  not establish otherwise.
+- The next architectural check is content-based retrieval suppression. It may use
+  similarity between the current partial event and stored situations, but not the
+  latent RM/DM/NM condition. If this does not make endpoint encoding beneficial under
+  the original mixture, the result will be treated as a task-identification failure.

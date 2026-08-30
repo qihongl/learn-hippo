@@ -30,3 +30,9 @@
   sequences produce the corresponding memory traces. The corrected discrete
   actor-critic learned higher endpoint than nonendpoint probability in one diagnostic
   seed, but encoded too densely and performed below the no-encoding baseline.
+- 2026-08-30: added continuous differentiable encoding strengths and verified that
+  delayed prediction reward has gradients to encoding in both events. This optimizer
+  also failed, favoring the first observation. A fixed-schedule audit exposed the
+  deeper cause: with unconditional retrieval on the full released training mixture,
+  no encoding strongly outperforms endpoint encoding because irrelevant memories are
+  damaging in NM trials.

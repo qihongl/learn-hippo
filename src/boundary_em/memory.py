@@ -32,8 +32,9 @@ def differentiable_read(
     values: Tensor,
     *,
     temperature: float,
+    encoding_strengths: Tensor | None = None,
 ) -> MemoryReadout:
-    """Read an attention-weighted value using cosine similarity."""
+    """Retrieve values using similarity and optional encoding strengths."""
 
     if temperature <= 0:
         raise ValueError("temperature must be positive")
@@ -43,8 +44,19 @@ def differentiable_read(
         raise ValueError("memory must contain matching, non-empty keys and values")
     if query.shape != keys.shape[1:]:
         raise ValueError("query width must match memory-key width")
+    if encoding_strengths is not None:
+        if encoding_strengths.shape != (keys.shape[0],):
+            raise ValueError("encoding strengths must match the number of memories")
+        if bool((encoding_strengths < 0).any()):
+            raise ValueError("encoding strengths cannot be negative")
 
     similarities = F.cosine_similarity(query.unsqueeze(0), keys, dim=1)
-    attention = torch.softmax(similarities / temperature, dim=0)
+    attention_logits = similarities / temperature
+    if encoding_strengths is not None:
+        minimum = torch.finfo(encoding_strengths.dtype).tiny
+        attention_logits = attention_logits + torch.log(
+            encoding_strengths.clamp_min(minimum)
+        )
+    attention = torch.softmax(attention_logits, dim=0)
     value = attention @ values
     return MemoryReadout(value=value, attention=attention, similarities=similarities)
