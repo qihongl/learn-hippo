@@ -1,0 +1,33 @@
+experiment:
+  name: temporal_hazard_audit
+  status: exploratory_optimizer_audit
+  model_seeds: [410, 411, 412]
+
+task:
+  profile: released_code
+  condition: DM
+  evaluation_mode: true
+
+model:
+  policy_hidden_dim: 8
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+
+counterfactual_banks:
+  training_trials: 32
+  evaluation_trials: 64
+  training_seed_start: 31000000
+  evaluation_seed_start: 32000000
+  memory_capacity: 2
+
+optimization:
+  n_steps: 16
+  initialization: uniform_time
+  updates: 1000
+  learning_rate: 0.05
+
+output:
+  directory: outputs/paper_task_encoding/temporal_hazard

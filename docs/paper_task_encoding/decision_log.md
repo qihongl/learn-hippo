@@ -146,3 +146,15 @@
 - Two requested independent reviews were launched but both agents lost their
   connections before returning findings. The same contract and code-quality checks
   were completed locally before the full test and lint gates.
+
+## 2026-08-31 — Temporal audit uses the task's 16-step evaluation form
+
+- Stage 1 uses the exact released-code evaluation generator: 16 observations,
+  zero added delay, no removed observations, and a fixed error penalty of two. This
+  makes the approved 16-hazard debugging model well-defined. It is not silently
+  treated as the final variable-delay training task.
+- The policy parameterizes the probability of first encoding at each time given that
+  it has not encoded earlier. The seventeenth outcome is never encoding. Its initial
+  distribution is uniform over these 17 outcomes, so no encoding time is favored.
+- Completed trial outcomes are used only to build an exact delayed-reward objective;
+  the optimizer receives no endpoint target. The same hazards govern both events.

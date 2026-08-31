@@ -58,3 +58,8 @@
   processed, contemporaneous training metrics, held-out schedule/ablation results,
   evaluation runtime, and optional weights; tests verify that evaluation does not
   change model parameters, mode, random streams, or the subsequent training result.
+- 2026-08-31: implemented the Stage 1 temporal-hazard audit. Sixteen online
+  first-encoding hazards are shared across the distracting and target events; a
+  17-by-17 reward table enumerates each pair of encoding times plus never encoding.
+  Unit tests verify the literal online distribution, reward gradients, endpoint
+  rollout equality, endpoint learnability, and reproducible result serialization.
