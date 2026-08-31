@@ -277,15 +277,22 @@ def train_sampled_hazard_stage(
             )
             optimizer.step()
 
-            all_distributions = torch.stack(
-                [
-                    distribution
-                    for episode in episodes
-                    for distribution in (
-                        episode.a1_distribution,
-                        episode.b1_distribution,
-                    )
-                ]
+            all_distributions = [
+                distribution
+                for episode in episodes
+                for distribution in (
+                    episode.a1_distribution,
+                    episode.b1_distribution,
+                )
+            ]
+            endpoint_probabilities = torch.stack(
+                [distribution[-2] for distribution in all_distributions]
+            )
+            nonendpoint_probabilities = torch.cat(
+                [distribution[:-2] for distribution in all_distributions]
+            )
+            never_probabilities = torch.stack(
+                [distribution[-1] for distribution in all_distributions]
             )
             completed_updates = update + 1
             update_record = {
@@ -316,13 +323,13 @@ def train_sampled_hazard_stage(
                     )
                     / (2 * len(episodes)),
                     "endpoint_probability": float(
-                        all_distributions[:, -2].mean().detach().item()
+                        endpoint_probabilities.mean().detach().item()
                     ),
                     "mean_nonendpoint_probability": float(
-                        all_distributions[:, :-2].mean().detach().item()
+                        nonendpoint_probabilities.mean().detach().item()
                     ),
                     "never_probability": float(
-                        all_distributions[:, -1].mean().detach().item()
+                        never_probabilities.mean().detach().item()
                     ),
                 }
             history.append(update_record)

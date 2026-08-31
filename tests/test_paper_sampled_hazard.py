@@ -92,3 +92,26 @@ def test_forced_value_stage_freezes_actor_and_free_stage_updates_it() -> None:
         for name, parameter in model.named_parameters()
         if name.startswith("encoding_actor")
     )
+
+
+def test_training_history_supports_mixed_variable_event_lengths() -> None:
+    stage = SampledHazardStageConfig(
+        **{
+            **_stage().__dict__,
+            "updates": 1,
+            "batch_size": 4,
+            "conditions": ("RM", "DM", "NM", "NM"),
+            "evaluation_mode": False,
+        }
+    )
+
+    result = train_sampled_hazard_stage(
+        _model(),
+        PaperTaskConfig(),
+        stage,
+        seed=710,
+        forced_exploration=True,
+    )
+
+    assert result.history[0]["sequences_processed"] == 4
+    assert 0 <= result.history[0]["endpoint_probability"] <= 1
