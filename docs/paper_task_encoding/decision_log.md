@@ -449,3 +449,19 @@
   unreserved policy, and required both results before recurrent state learning.
   Because the selected method failed, the unreserved actor, recurrent pretraining,
   and locked 20-seed confirmation are deferred rather than misreported as failed.
+
+## 2026-09-01 — Batch 32 advances from the optimizer-stability screen
+
+- The predeclared four-cell screen paired seeds 970--972 across constant versus
+  second-half cosine-decayed learning rates and batches of 16 versus 32. Every cell
+  used 400 policy epochs and exactly 102,400 fresh training sequences.
+- Only the constant-rate, batch-32 cell passed the strict rule in all three seeds.
+  Final endpoint probabilities were 0.9929, 0.9969, and 0.9965, and all three met
+  the final-five-checkpoint, event-specific, reward, and memory-removal criteria.
+- The result is not treated as convergence: two selected-cell seeds had large
+  earlier excursions, including a fall from 0.9405 to 0.0065 between epochs 230 and
+  240. Cosine decay failed one seed at each batch size, apparently preserving a
+  wrong basin rather than ensuring discovery.
+- Per the rule committed before outcomes were opened, the batch-32 cell advances to
+  ten fresh full-mixture seeds. No unreserved-memory or recurrent-model work begins
+  before that replication passes.

@@ -139,3 +139,26 @@ across twenty seeds. Conversely, a negative screen would not prove that all
 optimization methods must fail. It would show that these two targeted, predeclared
 variance controls do not solve the measured instability within the reference
 400-epoch budget.
+
+## 8. Outcome
+
+The constant-rate, batch-32 cell was the only cell to pass the frozen all-seed
+rule. Its seed-level final endpoint probabilities were 0.9929, 0.9969, and 0.9965;
+all three also passed the final-five-checkpoint, event-specific, reward, and memory-
+removal criteria. The constant-rate, batch-16 cell failed because one seed was not
+selective throughout the final five checkpoints, despite ending at 0.9500. Each
+cosine-decay cell failed one seed, with final endpoint probabilities of 0.00005 and
+0.0460. The deterministic rule therefore selects constant rate with batch 32.
+
+This is partial support for the optimization hypothesis. The larger batch improved
+the final window, whereas learning-rate decay could preserve a wrong basin. It did
+not eliminate policy excursions: selected-cell seed 970 dropped from 0.9405 at
+epoch 230 to 0.0065 at epoch 240 before recovering. Accordingly, the cell advances
+only to the planned ten-seed replication and is not described as converged or as a
+confirmed full-mixture result.
+
+The 12-task Della array used one CPU per task and at most 0.37 GB. Eleven tasks
+completed in 42:43--54:50. One task timed out under the predeclared 90-minute limit
+and was rerun unchanged with a two-hour limit, completing in 91:37. All 51 result,
+log, and environment files were fetched and checksum-verified; the original timeout
+was retained rather than overwritten.

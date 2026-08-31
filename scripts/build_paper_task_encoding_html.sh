@@ -41,7 +41,7 @@ class Validator(HTMLParser):
 path = Path(sys.argv[1])
 document = path.read_text()
 Validator().feed(document)
-assert document.count("<img ") == 4, "expected four embedded figures"
+assert document.count("<img ") == 5, "expected five embedded figures"
 assert document.count("<math") >= 6, "expected MathML equations"
 assert "data:image/svg+xml" in document, "figures were not embedded"
 assert not re.search(r'<(?:img|link|script)[^>]+(?:src|href)="(?!data:)', document), (
@@ -50,6 +50,6 @@ assert not re.search(r'<(?:img|link|script)[^>]+(?:src|href)="(?!data:)', docume
 assert "measured synthetic" in document.lower()
 assert "human review" in document.lower()
 assert "basic feasibility result is positive" in document.lower()
-assert "full-mixture claim remains unsupported" in document.lower()
+assert re.search(r"full-mixture\s+claim awaits", document.lower())
 print(f"Built {path} ({path.stat().st_size:,} bytes)")
 PY

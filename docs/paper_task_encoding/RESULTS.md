@@ -37,6 +37,16 @@ epoch 390 to effectively zero at epoch 400. The three-seed mean was 0.6657 (SD
 and random encoding, showing again that prediction performance alone does not
 establish a boundary policy.
 
+A subsequent predeclared optimizer-stability screen crossed constant versus
+second-half cosine-decayed learning rates with batches of 16 versus 32 while
+holding 400 epochs and 102,400 sequences fixed. Only constant rate with batch 32
+passed all three paired seeds. Final endpoint probabilities were 0.9929, 0.9969,
+and 0.9965; mean DM reward was 0.7328 versus 0.6072 for never and 0.6330 for random
+encoding, and target-memory removal reduced it to 0.6010. This is a positive
+three-seed development result, not confirmation. Two selected-cell trajectories
+had large earlier excursions, and each cosine cell retained a wrong solution in
+one seed. The selected cell therefore advances unchanged to ten fresh seeds.
+
 Constraining encoding probability to increase with accumulated observed-feature and
 query progress did not help. With the otherwise selected credit and curriculum
 settings, both paired seeds remained at endpoint probability 0.021 throughout the
@@ -54,11 +64,12 @@ itself escape the nonboundary solution.
 
 These are exploratory synthetic simulations. The fixed- and variable-duration DM
 results use ten seeds each; only the fixed-duration condition passes all criteria.
-The selected full-mixture method and the progress-policy screen failed. The memory
-store has two global slots, but the decision procedure permits only one trace per
-event, so unreserved-capacity training remains gated. Because the exact-state model
-did not pass the stable full-mixture gate, the recurrent extension was formally
-deferred. The result demonstrates basic computational feasibility, not a confirmed
-full-task effect or a human mechanism. Complete methods, learning curves,
-limitations, compute requirements, and next experiments are in
+The original selected full-mixture follow-up and the progress-policy screen failed.
+The batch-32 screen passed only three development seeds and still showed
+nonmonotonic trajectories. The memory store has two global slots, but the decision
+procedure permits only one trace per event, so unreserved-capacity training remains
+gated pending the ten-seed replication. The recurrent extension remains deferred.
+The result demonstrates basic computational feasibility and a candidate full-task
+optimizer, not a confirmed full-task effect or a human mechanism. Complete methods,
+learning curves, limitations, compute requirements, and next experiments are in
 [`experiment_report.html`](experiment_report.html).

@@ -143,5 +143,11 @@ Measured laptop costs replaced the advance estimates. The fixed ten-seed batch u
 (28.1 minutes per seed), and the selected full-mixture follow-up 1.22 hours (24.4
 minutes per seed). Processes used about 0.30--0.36 GB each. The workload fits the
 48 GB laptop; Della is useful only to reduce wall time for future locked seed arrays.
-No Della submission was attempted because the account-specific login, research
-group, NetID, and Python environment are not configured locally.
+
+After these eight gates, Della access was configured under the `knorman` account,
+with large artifacts below `/scratch/gpfs/KNORMAN/qlu`. A 12-task follow-up screen
+confirmed the throughput benefit but also showed substantial node-speed variation:
+eleven tasks completed in 42:43--54:50, while one unchanged seed required a
+successful 91:37 retry after the original 90-minute limit proved too short. Peak
+memory remained below 0.4 GB. The selected constant-rate, batch-32 cell now advances
+to ten fresh seeds; this does not retroactively change the eight-step outcomes.

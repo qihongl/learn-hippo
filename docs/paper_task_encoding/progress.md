@@ -181,3 +181,13 @@
 - 2026-08-31: rebuilt the paper-style report with multiseed learning curves,
   seed-level outcomes, the exact mixed-objective audit, the credit factorial, actual
   laptop runtimes, Della placement instructions, and explicit limitations.
+- 2026-09-01: completed the predeclared 12-run optimizer-stability screen on Della.
+  Constant learning rate with batch 32 was the only cell to pass all three paired
+  seeds, with final endpoint probabilities of 0.9929, 0.9969, and 0.9965. Constant
+  batch 16 failed final-window stability in one seed; each cosine cell retained a
+  nonboundary solution in one seed. Large earlier excursions remain visible.
+- 2026-09-01: preserved a timed-out 90-minute array task, reran only its unchanged
+  manifest index with a two-hour limit, fetched and checksum-verified all 51 files,
+  and registered both Slurm jobs in local provenance. The full raw run remains under
+  `/scratch/gpfs/KNORMAN/qlu`; compact summaries and every seed trajectory are
+  versioned for reporting.

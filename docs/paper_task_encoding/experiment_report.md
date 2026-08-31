@@ -3,7 +3,7 @@
 ## A differentiable episodic-memory study of the Lu--Hasson--Norman simulation
 
 > **Report status:** completed exploratory study with measured synthetic
-> simulations, 2026-08-31
+> simulations, updated 2026-09-01
 >
 > **Implementation and report:** Codex, with scientific direction from Qihong Lu
 >
@@ -46,11 +46,16 @@ DM, and 0.50 no-relevant-memory mixture, yet gradient optimization converged one
 two steps early. A bounded credit-assignment screen found a promising method, but a
 400-epoch follow-up was unstable: two of three fresh policies ended near 1.0
 endpoint probability, while the third collapsed from 0.999 at epoch 390 to nearly
-zero at epoch 400. A progress-constrained policy also failed. Forced endpoint
+zero at epoch 400. A predeclared optimizer screen then crossed constant versus
+decaying learning rates with batches of 16 versus 32 sequences. Only the constant-
+rate, batch-32 cell passed all three paired seeds; its final endpoint probabilities
+were 0.9929, 0.9969, and 0.9965. However, two seeds had large earlier excursions,
+and three exploratory seeds are insufficient for confirmation. Forced endpoint
 encoding still improved DM prediction, so the obstacle is reliable discovery and
 retention of the solution, not an absent endpoint advantage. Differentiable
 episodic memory can therefore learn selective boundary encoding in a favorable
-version of the original task, but the full-mixture claim remains unsupported.
+version of the original task and can reach a stable final window in the full
+mixture, but the full-mixture claim awaits a predeclared ten-seed replication.
 
 ## 1. Question, terminology, and answer
 
@@ -274,6 +279,7 @@ runs used repeated exposure to fixed synthetic banks and are labeled accordingly
 | Exact mixed temporal audit | fixed-duration RM/DM/NM mixture | 1,000 exact-reward updates | 5 | test the mixed objective and its accessibility |
 | Credit-assignment screen | released mixture; eight predeclared methods | 25 forced + 100 free epochs; fresh mappings | 2 paired per method | bounded method search |
 | Selected mixed method | released mixture; sampled reward | 25 forced + 400 free epochs; fresh mappings | 3 fresh | test stability at the reference budget |
+| Optimizer-stability screen | selected released-mixture method; constant/cosine rate × batch 16/32 | 25 forced + 400 free epochs; 102,400 fresh mappings in every cell | 3 paired per cell | test final-window retention without best-checkpoint selection |
 | Observable-progress policy | released mixture; sampled reward | 25 forced + 100 free epochs; fresh mappings | 2 paired | test a simple neural constraint |
 :::
 
@@ -373,7 +379,8 @@ below the 0.80 criterion. Mean reward was 0.7209 versus 0.6074 for never and 0.6
 for random encoding, and target-memory removal erased this benefit. The result is
 promising evidence that the credit intervention can discover boundary encoding, but
 it is not a stable full-task solution. Additional epochs at the same constant
-learning rate would not address the observed catastrophic transition.
+learning rate would not by itself address the observed catastrophic transition,
+motivating the bounded stability screen below.
 
 ![](../../outputs/paper_task_encoding/figures/fig_04_results.svg)
 
@@ -386,7 +393,43 @@ follow-up. Dots are seeds and black bars are means. “Centered” means retrosp
 condition-centered reward; “annealed” means gradual DM-to-mixture training. The
 selected method discovers the endpoint but does not retain it reliably.
 
-### 5.5 Progress, capacity, and recurrent-model gates
+### 5.5 A larger batch passes the exploratory final-window stability gate
+
+The predeclared stability screen changed neither task nor policy input. Every cell
+processed 102,400 free-policy sequences over 400 epochs. We crossed a constant
+0.001 learning rate with a rate that remained at 0.001 through epoch 200 and then
+decayed to 0.00005, and crossed batches of 16 with 32 sequences. Seeds 970--972
+were paired across all four cells. A cell advanced only if every seed met endpoint,
+event-specific, reward, retrieval-removal, and final-five-checkpoint criteria.
+
+Only constant learning rate with batch 32 passed. Its final endpoint probabilities
+were 0.9929, 0.9969, and 0.9965 (mean 0.9954, SD 0.0022); every seed remained above
+the selectivity thresholds for the final five evaluations. Mean DM reward was
+0.7328, compared with 0.6072 for never encoding and 0.6330 for one random encoding.
+Removing the target memory reduced reward to 0.6010, while removing the distracting
+memory left reward at 0.7455. The learned advantage therefore depended on the
+relevant episodic memory.
+
+The qualification is important. The passing cell did not learn monotonically:
+seed 970 fell from endpoint probability 0.9405 at epoch 230 to 0.0065 at epoch 240,
+then recovered; seed 971 also had a smaller late excursion. Batch 16 ended with
+three endpoint probabilities above 0.95 but failed because seed 971 did not satisfy
+the final-five rule. Cosine decay left one seed in a nonboundary solution in each
+batch cell, with final endpoints 0.00005 and 0.046. Thus the result favors reduced
+gradient variance over late learning-rate decay, but it establishes only a stable
+final window in three development seeds. It does not establish robust convergence.
+
+![](../../outputs/paper_task_encoding/figures/fig_05_stability.svg)
+
+**Figure 5. Predeclared full-mixture optimizer-stability screen.** **a**, Held-out
+endpoint probability for every seed at ten-epoch checkpoints. Thick lines are
+three-seed means; thin lines are individual seeds. All cells used the same 400
+epochs and 102,400 sequences. **b**, Final endpoint probabilities. Dots are seeds,
+black bars are means, and the dashed line is the 0.80 criterion. Only constant
+learning rate with batch 32 passed every seed and the final-five-checkpoint rule.
+Every mark is a measured synthetic simulation; no best checkpoint was selected.
+
+### 5.6 Progress, capacity, and recurrent-model gates
 
 A monotonic progress policy used two observable quantities already present in the
 situation state: the fraction of feature rows containing an observed value and the
@@ -411,6 +454,7 @@ situation model were formally deferred rather than treated as failed experiments
 | Variable-duration DM, sampled | 10 | 0.7055 (0.4346) | 0.7291 | 0.6097 / 0.6343 / 0.7307 | useful but unreliable |
 | Full mixture, exact temporal | 5 | 0.00015 (0.00018) | 0.6570 mixture reward | 0.6213 / 0.5973 / 0.6653 | endpoint optimum missed |
 | Selected full-mixture method | 3 | 0.6657 (0.5765) | 0.7209 | 0.6074 / 0.6288 / 0.7279 | two pass, one collapses |
+| Stability screen: constant rate, batch 32 | 3 | 0.9954 (0.0022) | 0.7328 | 0.6072 / 0.6330 / 0.7335 | passes exploratory all-seed rule |
 | Observable-progress policy | 2 | 0.0210 (0.00005) | 0.6089 | 0.5940 / 0.6147 / 0.7198 | fails |
 :::
 
@@ -429,8 +473,11 @@ credit. The shared policy must extract a sparse delayed advantage while easier
 never-encoding and broad late-encoding policies are available. Exact enumeration
 shows that the endpoint optimum exists but does not make its gradient basin easy to
 reach. Retrospective condition-centered credit and gradual mixture training can
-reach it, yet constant-rate sampled optimization can leave it abruptly. The present
-problem is therefore both discovery and optimization stability.
+reach it. Doubling the batch produced a stable final window in three new seeds, but
+large mid-training excursions remained and learning-rate decay sometimes preserved
+the wrong solution. The present problem is therefore both discovery and
+optimization stability; the batch-32 result is a candidate mechanism rather than a
+confirmed solution.
 
 Using the original simulation setting is therefore feasible and has already been
 done. The generator reproduces the original representation, sequence, memory
@@ -446,7 +493,7 @@ representation itself.
 | Exact situation recording | The model stores observed feature values perfectly instead of learning a recurrent representation from the 37-unit stream. | This isolates encoding-policy learning but overstates perceptual and relational competence. | Add a pretrained GRU or LSTM only after the full-mixture encoding objective is stable; require at least 99% decoding of observed values first. |
 | Functionally reserved traces | The store is global, but the decision procedure stops after one encoding in each event. | This assumes segmentation and prevents the policy from spending both slots within one event. | After a stable full-mixture result, repeat with two unreserved slots for the whole trial. |
 | DM-only reliability | All ten robust successes come from the condition where episodic memory is consistently useful. | This establishes feasibility but not reliable emergence under the original RM/DM/NM distribution. | Stabilize full-mixture learning without condition or future-target inputs. |
-| Unstable selected method | Two full-mixture seeds passed, but one changed from an endpoint to a late policy in the final ten epochs. | A useful policy that is not retained cannot support a reliable learning claim. | Predeclare a small optimizer-stability screen using learning-rate decay and larger batches; report final checkpoints only. |
+| Optimizer result has only three development seeds | Constant rate with batch 32 passed the final-five rule in all three paired seeds, but two trajectories had large earlier excursions. | A favorable final window can overstate convergence, and three seeds cannot support a reliability claim. | Run ten fresh seeds with the selected cell, unchanged final-checkpoint rules, and no method reselection. |
 | Retrospective condition-centered credit | The selected learner uses the realized trial condition after the outcome to center reward, although the policy never sees it while encoding. | This is scientifically cleaner than prospective leakage but is a stronger learning signal than a condition-blind biological learner may possess. | Compare it with baselines learned only from observable post-outcome variables. |
 | Exact credit is privileged | Some diagnostic runs enumerate outcomes for actions that were not taken. | It locates objective and optimizer failures but is not a plausible online learning rule. | Keep sampled delayed reward as the primary mechanism and exact credit only as an audit. |
 | Retrieval gate was selected exploratorily | A fixed content-similarity threshold suppresses irrelevant memories. | The gate changes which encoding schedules are useful and makes the study nonconfirmatory. | Freeze it before confirmation or learn it on a disjoint retrieval objective. |
@@ -462,10 +509,10 @@ not a limitation to eliminate.
 
 ## 8. Most promising next experiments
 
-1. **Stabilize the selected full-mixture method.** Cross a predeclared learning-rate
-   decay with a larger sampled batch while keeping the task, policy inputs, final
-   checkpoint rule, and 400-epoch exposure fixed. The aim is to prevent transitions
-   like seed 960's epoch-390 collapse, not to preserve a best checkpoint.
+1. **Replicate the selected optimizer cell.** Run constant learning rate with batch
+   32 on ten fresh full-mixture seeds, retaining all checkpoints and the same
+   all-seed criteria. This tests whether the three-seed final-window result is
+   reliable without another method choice.
 2. **Remove privileged retrospective labels.** If stability is achieved, replace
    the condition-centered baseline with a baseline computed from observable
    prediction outcomes and retrieval matches. This asks whether the improvement
@@ -497,20 +544,20 @@ processes shared the laptop with other experiments. Six to eight concurrent seed
 are a reasonable local setting; a complete 20-seed replication should take roughly
 one to two hours of wall time after the code is frozen.
 
-Della is useful for throughput, not necessity. The versioned Slurm array requests
-one CPU, 4 GB, and 90 minutes per seed, allows ten seeds at once, and writes each
-seed to a distinct directory. A submitted array would probably need two roughly
-30-minute compute waves for 20 seeds, plus an unpredictable queue delay. No Della
-job was submitted in this study because the local remote-compute configuration does
-not contain a Della login, research-group name, NetID, or Python environment; these
-account-specific values were not guessed.
+Della is useful for throughput, not necessity. The 12-task stability screen ran
+concurrently using one CPU and 4 GB per task. Eleven initial tasks completed in
+42:43--54:50 and used at most 0.37 GB; one slow-node task exceeded the original
+90-minute request and timed out at 95:12. Repeating that unchanged seed with a
+two-hour limit completed in 91:37 at 0.35 GB. The versioned script now requests two
+hours. Della therefore reduced parallel wall time, but per-core speed varied enough
+that 90 minutes was not a safe limit.
 
 The intended remote layout is:
 
 - repository and small environment files:
   `/home/<NetID>/learn-hippo`;
 - active raw runs:
-  `/scratch/gpfs/<ResearchGroup>/<NetID>/learn-hippo/runs/<date>-<git-sha>`;
+  `/scratch/gpfs/KNORMAN/qlu/learn-hippo/runs/<date>-<git-sha>`;
 - compact validated results: the research group's `/projects` space or TigerData,
   plus a fresh immutable local results directory.
 
