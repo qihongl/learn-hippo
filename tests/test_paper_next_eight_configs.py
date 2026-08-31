@@ -116,3 +116,19 @@ def test_progress_policy_screen_is_paired_to_the_selected_credit_cell() -> None:
         config["training"]["free_policy"]["condition_schedule"]
         == "dm_to_mixture"
     )
+
+
+def test_selected_credit_method_receives_full_budget_on_fresh_seeds() -> None:
+    config = _load("sampled_hazard_credit_selected_400.yaml")
+
+    assert config["experiment"]["model_seeds"] == [960, 961, 962]
+    assert config["policy"]["initial_probability"] == 0.05
+    assert config["training"]["free_policy"]["updates"] == 6_400
+    assert (
+        config["training"]["free_policy"]["advantage_mode"]
+        == "condition_centered"
+    )
+    assert (
+        config["training"]["free_policy"]["condition_schedule"]
+        == "dm_to_mixture"
+    )
