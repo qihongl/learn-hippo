@@ -83,3 +83,8 @@
   The last five checkpoints were stable, although an epoch-280 optimization
   excursion makes the learning path non-monotonic. This is the first positive basic
   feasibility result, not yet a multiseed or sampled-RL result.
+- 2026-08-31: implemented the stronger sampled-credit stage. Each policy decision is
+  made sequentially from the current situation state and stops after the first
+  encoding in an event. Tests verify the one-encoding constraint, valid encoding-time
+  distributions, actor freezing during forced value learning, actor updating during
+  free learning, high seed safety, and reproducible checkpoint records.

@@ -205,3 +205,17 @@
   Stage 2 debugging condition. The next decisive comparison is a fresh actor trained
   from sampled delayed rewards; after that come variable delay/removal, the full
   RM/DM/NM mixture, and two total memory slots.
+
+## 2026-08-31 — Sampled-credit development protocol
+
+- A fresh neural actor starts at an encoding hazard of 0.05. It may encode once per
+  event; after encoding, no further action is available in that event. This enforces
+  the same one-trace-per-event debugging convention as the exact-reward comparison.
+- The critic first receives 6,400 newly generated DM sequences under random forced
+  choices. The free actor then receives 102,400 newly generated DM sequences over
+  400 epochs. Only sampled delayed prediction rewards train the actor; exact
+  counterfactual outcomes are used on a fixed held-out bank for measurement.
+- The initial free-policy learning rate is 0.001, lower than the earlier 0.003
+  discrete-policy diagnostic because the exact-reward run showed occasional large
+  policy excursions. Entropy coefficient 0.001 preserves exploration without making
+  dense repeated encoding possible.

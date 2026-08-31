@@ -122,3 +122,4 @@ src/task/EpisodicBandit.py
 checkpoints/
 outputs/checkpoints/
 outputs/paper_task_encoding/neural_counterfactual/*.json
+outputs/paper_task_encoding/sampled_hazard/*.json
