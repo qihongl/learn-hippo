@@ -303,6 +303,27 @@ def aggregate_sampled_hazard_config(
                         start_epoch=200.0,
                     )
                 ),
+                "checkpoint_trajectory": [
+                    {
+                        "epoch": float(checkpoint["epoch"]),
+                        "learning_rate": (
+                            float(checkpoint["training"]["learning_rate"])
+                            if "learning_rate" in checkpoint.get("training", {})
+                            else None
+                        ),
+                        **{
+                            metric: float(
+                                _evaluation_at_checkpoint(checkpoint)[metric]
+                            )
+                            for metric in (
+                                "learned_expected_reward",
+                                "endpoint_probability",
+                                "endpoint_probability_gap",
+                            )
+                        },
+                    }
+                    for checkpoint in checkpoints
+                ],
                 "runtime_seconds": {
                     "evaluation_bank_generation": record[
                         "evaluation_bank_generation_runtime_seconds"

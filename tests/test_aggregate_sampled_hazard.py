@@ -33,6 +33,7 @@ def _write_record(
     checkpoints = [
         {
             "epoch": float(epoch),
+            "training": {"learning_rate": 0.001},
             "evaluation": evaluation,
             "evaluation_runtime_seconds": 0.01,
         }
@@ -90,6 +91,13 @@ def test_sampled_hazard_aggregation_retains_all_seeds_and_curves(
     assert result["summary"]["endpoint_probability"]["n_seeds"] == 3
     assert len(result["learning_curves"]) == 5
     assert len(result["runs"]) == 3
+    assert result["runs"][0]["checkpoint_trajectory"][0] == {
+        "epoch": 10.0,
+        "learning_rate": 0.001,
+        "learned_expected_reward": pytest.approx(0.7201),
+        "endpoint_probability": 0.92,
+        "endpoint_probability_gap": 0.90,
+    }
     assert result["success_audit"]["passed"] is True
     assert json.loads(output_path.read_text()) == result
 
