@@ -53,6 +53,27 @@ def test_dm_rollout_retains_lure_and_target_endpoint_memories() -> None:
     assert rollout.working_memory_was_reset is True
 
 
+def test_two_memory_slots_are_global_and_not_reserved_by_event() -> None:
+    trial = generate_trial(
+        PaperTaskConfig(), seed=6, condition="DM", evaluation=True
+    )
+    rollout = rollout_trial(
+        _model(),
+        trial,
+        a1_encoding_actions=forced_schedule(
+            trial.a1,
+            "midpoint_plus_endpoint",
+        ),
+        b1_encoding_actions=forced_schedule(trial.b1, "endpoint_only"),
+        memory_capacity=2,
+        retrieval_enabled=True,
+    )
+
+    assert len(rollout.a1.encoding_indices) == 2
+    assert rollout.b1.encoding_indices == (trial.b1.boundary_index,)
+    assert rollout.memory_labels == ("lure_a1", "target_b1")
+
+
 def test_nm_rollout_does_not_make_a_target_memory_available() -> None:
     trial = generate_trial(
         PaperTaskConfig(), seed=8, condition="NM", evaluation=True
