@@ -141,3 +141,9 @@
   epoch reference, shows checkpointed learning curves, and separates positive
   DM-only feasibility from the negative full-mixture diagnosis. Four publication-
   style figures are generated directly from versioned compact summaries.
+- 2026-08-31: executed five exact shared temporal-policy audits on the fixed-duration
+  RM/DM/NM mixture. The endpoint was the best deterministic shared time in every
+  held-out reward surface, but all five random starts converged one or two
+  observations early. Mean endpoint probability was 0.00015. This separates the
+  existence of an endpoint optimum from its accessibility under gradient
+  optimization and motivates only bounded credit/initialization interventions.

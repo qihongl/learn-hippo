@@ -1,0 +1,470 @@
+{
+  "task": "Lu-Hasson-Norman 2022 fixed-duration condition mixture",
+  "dataset": "controlled synthetic generator (released_code)",
+  "metrics": [
+    "learned_expected_reward",
+    "endpoint_probability",
+    "mean_nonendpoint_probability",
+    "never_probability",
+    "endpoint_probability_gap",
+    "endpoint_pair_reward",
+    "never_pair_reward",
+    "matched_random_one_reward"
+  ],
+  "seeds": [
+    930,
+    931,
+    932,
+    933,
+    934
+  ],
+  "experiment": "temporal_hazard_full_mixture",
+  "configuration": "configs/paper_task_encoding/temporal_hazard_full_mixture.yaml",
+  "configuration_sha256": "00482f201056f4687202522ac200b651476cd198b25560e4005324db3093d546",
+  "mixture_weights": {
+    "RM": 0.25,
+    "DM": 0.25,
+    "NM": 0.5
+  },
+  "provenance": {
+    "mode": "measured",
+    "source": "outputs/paper_task_encoding/temporal_hazard/temporal_hazard_full_mixture_seed<seed>.json",
+    "timestamp_utc": "2026-08-31T12:52:57.812261+00:00",
+    "git_shas": [
+      "3a4480b9f97db297dee41644edcbb296b75d335c"
+    ],
+    "note": "Measured synthetic simulations; exact reward objective audit."
+  },
+  "summary": {
+    "learned_expected_reward": {
+      "mean": 0.6570395112037659,
+      "std": 0.007072895154746651,
+      "n_seeds": 5
+    },
+    "endpoint_probability": {
+      "mean": 0.00015278265418601223,
+      "std": 0.00017516200747073042,
+      "n_seeds": 5
+    },
+    "mean_nonendpoint_probability": {
+      "mean": 0.06664977073669434,
+      "std": 1.7243103562862452e-05,
+      "n_seeds": 5
+    },
+    "never_probability": {
+      "mean": 0.00010064167217933573,
+      "std": 9.07244107680776e-05,
+      "n_seeds": 5
+    },
+    "endpoint_probability_gap": {
+      "mean": -0.06649698615074158,
+      "std": 0.00019218679879053454,
+      "n_seeds": 5
+    },
+    "endpoint_pair_reward": {
+      "mean": 0.6653416395187378,
+      "std": 0.005166190295421801,
+      "n_seeds": 5
+    },
+    "never_pair_reward": {
+      "mean": 0.6213419556617736,
+      "std": 0.004380240578617753,
+      "n_seeds": 5
+    },
+    "matched_random_one_reward": {
+      "mean": 0.5972719192504883,
+      "std": 0.004777429113763518,
+      "n_seeds": 5
+    }
+  },
+  "condition_summary": {
+    "RM": {
+      "learned_expected_reward": {
+        "mean": 0.9994583010673523,
+        "std": 0.00011475831803279822,
+        "n_seeds": 5
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.9999467968940735,
+        "std": 3.853614300547746e-07,
+        "n_seeds": 5
+      },
+      "never_pair_reward": {
+        "mean": 0.9969778060913086,
+        "std": 0.0,
+        "n_seeds": 5
+      }
+    },
+    "DM": {
+      "learned_expected_reward": {
+        "mean": 0.6352850437164307,
+        "std": 0.016122747133198594,
+        "n_seeds": 5
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.663824713230133,
+        "std": 0.012253388516424258,
+        "n_seeds": 5
+      },
+      "never_pair_reward": {
+        "mean": 0.4904930055141449,
+        "std": 0.014069584140230676,
+        "n_seeds": 5
+      }
+    },
+    "NM": {
+      "learned_expected_reward": {
+        "mean": 0.49670735001564026,
+        "std": 0.010344547984498334,
+        "n_seeds": 5
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.49879751801490785,
+        "std": 0.010688263382328863,
+        "n_seeds": 5
+      },
+      "never_pair_reward": {
+        "mean": 0.49894850254058837,
+        "std": 0.010840699113543555,
+        "n_seeds": 5
+      }
+    }
+  },
+  "training_curve": [
+    {
+      "update": 1,
+      "endpoint_probability": {
+        "mean": 0.05258295685052872,
+        "std": 0.01158950379973625,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.5957634806632995,
+        "std": 0.014998194427688277,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 10,
+      "endpoint_probability": {
+        "mean": 0.03104565739631653,
+        "std": 0.00608084127819882,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6076970577239991,
+        "std": 0.013782059181215594,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 25,
+      "endpoint_probability": {
+        "mean": 0.00939538488164544,
+        "std": 0.0020133936676715015,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6158913612365723,
+        "std": 0.01238974666605668,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 50,
+      "endpoint_probability": {
+        "mean": 0.002642745291814208,
+        "std": 0.001105078012176391,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6187868118286133,
+        "std": 0.011536406156199224,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 100,
+      "endpoint_probability": {
+        "mean": 0.0013095502683427185,
+        "std": 0.0008078669653254424,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6275520205497742,
+        "std": 0.013497697125197971,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 200,
+      "endpoint_probability": {
+        "mean": 0.00043085379074909725,
+        "std": 0.00033260235007898814,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6407799005508423,
+        "std": 0.012728268970662707,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 400,
+      "endpoint_probability": {
+        "mean": 0.00021923759341007097,
+        "std": 0.00021874049575560333,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6435949683189393,
+        "std": 0.012174241160118452,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 600,
+      "endpoint_probability": {
+        "mean": 0.00021574621787294744,
+        "std": 0.0003320654901385156,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6456187248229981,
+        "std": 0.010830327813456489,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 800,
+      "endpoint_probability": {
+        "mean": 0.00013034754738328047,
+        "std": 0.00017963625802492163,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6469667673110961,
+        "std": 0.010657567480968144,
+        "n_seeds": 5
+      }
+    },
+    {
+      "update": 1000,
+      "endpoint_probability": {
+        "mean": 0.00015278265418601223,
+        "std": 0.00017516200747073042,
+        "n_seeds": 5
+      },
+      "expected_reward": {
+        "mean": 0.6490308165550231,
+        "std": 0.01470478460973108,
+        "n_seeds": 5
+      }
+    }
+  ],
+  "runs": [
+    {
+      "seed": 930,
+      "learned_expected_reward": 0.6539536118507385,
+      "endpoint_probability": 5.8028872444992885e-05,
+      "mean_nonendpoint_probability": 0.06665957719087601,
+      "never_probability": 4.8321395297534764e-05,
+      "endpoint_probability_gap": -0.06660154461860657,
+      "endpoint_pair_reward": 0.6584147214889526,
+      "never_pair_reward": 0.6185939311981201,
+      "matched_random_one_reward": 0.5956258773803711,
+      "highest_probability_time": 14,
+      "highest_time_probability": 0.9966877698898315,
+      "best_shared_time": 15,
+      "encoding_time_probabilities": [
+        0.0002763883676379919,
+        0.0002569466596469283,
+        0.00014729077520314604,
+        0.00020705007773358375,
+        5.768727351096459e-05,
+        2.1534820916713215e-05,
+        3.7365927710197866e-05,
+        2.2786287445342168e-05,
+        1.1351146895322017e-05,
+        9.469091310165823e-06,
+        1.6871181287569925e-05,
+        0.00028249897877685726,
+        0.0005438676453195512,
+        0.0013147337595000863,
+        0.9966877698898315,
+        5.8028872444992885e-05,
+        4.8321395297534764e-05
+      ],
+      "runtime_seconds": {
+        "training": 52.138528833020246,
+        "evaluation": 107.16247495799325
+      },
+      "git_sha": "3a4480b9f97db297dee41644edcbb296b75d335c"
+    },
+    {
+      "seed": 931,
+      "learned_expected_reward": 0.654069721698761,
+      "endpoint_probability": 0.00035825229133479297,
+      "mean_nonendpoint_probability": 0.06662596017122269,
+      "never_probability": 0.00025227907462976873,
+      "endpoint_probability_gap": -0.0662677064538002,
+      "endpoint_pair_reward": 0.6652735471725464,
+      "never_pair_reward": 0.6233501434326172,
+      "matched_random_one_reward": 0.5953330397605896,
+      "highest_probability_time": 14,
+      "highest_time_probability": 0.9940502643585205,
+      "best_shared_time": 15,
+      "encoding_time_probabilities": [
+        0.0003769236209336668,
+        0.0003502149775158614,
+        0.0002952894428744912,
+        0.0003308437007945031,
+        4.7088069550227374e-05,
+        2.440485513943713e-05,
+        2.8205467970110476e-05,
+        2.086600761685986e-05,
+        1.2891065125586465e-05,
+        1.1852413990709465e-05,
+        2.267091258545406e-05,
+        0.00021782383555546403,
+        0.0002200375747634098,
+        0.0033800150267779827,
+        0.9940502643585205,
+        0.00035825229133479297,
+        0.00025227907462976873
+      ],
+      "runtime_seconds": {
+        "training": 52.14635679201456,
+        "evaluation": 106.65310237501399
+      },
+      "git_sha": "3a4480b9f97db297dee41644edcbb296b75d335c"
+    },
+    {
+      "seed": 932,
+      "learned_expected_reward": 0.6691195368766785,
+      "endpoint_probability": 0.0003278814547229558,
+      "mean_nonendpoint_probability": 0.06663691997528076,
+      "never_probability": 0.00011838434875244275,
+      "endpoint_probability_gap": -0.06630903482437134,
+      "endpoint_pair_reward": 0.6728734970092773,
+      "never_pair_reward": 0.6281063556671143,
+      "matched_random_one_reward": 0.604867696762085,
+      "highest_probability_time": 14,
+      "highest_time_probability": 0.9963715076446533,
+      "best_shared_time": 15,
+      "encoding_time_probabilities": [
+        0.0006555576110258698,
+        0.00039236058364622295,
+        0.0002927850291598588,
+        0.00013331625086721033,
+        0.00011419086513342336,
+        1.0586150892777368e-05,
+        4.219523907522671e-05,
+        2.3134949515224434e-05,
+        1.4465071217273362e-05,
+        3.5048474273935426e-06,
+        2.9051276214886457e-05,
+        0.0001526311825728044,
+        0.00022779674327466637,
+        0.0010906918905675411,
+        0.9963715076446533,
+        0.0003278814547229558,
+        0.00011838434875244275
+      ],
+      "runtime_seconds": {
+        "training": 52.2467899589974,
+        "evaluation": 107.46469945900026
+      },
+      "git_sha": "3a4480b9f97db297dee41644edcbb296b75d335c"
+    },
+    {
+      "seed": 933,
+      "learned_expected_reward": 0.6570011973381042,
+      "endpoint_probability": 1.349925878457725e-05,
+      "mean_nonendpoint_probability": 0.06666272133588791,
+      "never_probability": 4.5721510105067864e-05,
+      "endpoint_probability_gap": -0.06664922088384628,
+      "endpoint_pair_reward": 0.6660474538803101,
+      "never_pair_reward": 0.6191223859786987,
+      "matched_random_one_reward": 0.598355770111084,
+      "highest_probability_time": 13,
+      "highest_time_probability": 0.9949623346328735,
+      "best_shared_time": 15,
+      "encoding_time_probabilities": [
+        0.0004366593493614346,
+        0.00021101075981277972,
+        0.00043520008330233395,
+        0.00018254539463669062,
+        7.115214975783601e-05,
+        1.8281763914274052e-05,
+        3.0830924515612423e-05,
+        1.4308409845398273e-05,
+        1.71005776792299e-05,
+        1.7790815036278218e-05,
+        0.00010168472363147885,
+        0.0006227381527423859,
+        0.0028081934433430433,
+        0.9949623346328735,
+        1.1000561244145501e-05,
+        1.349925878457725e-05,
+        4.5721510105067864e-05
+      ],
+      "runtime_seconds": {
+        "training": 53.045769499993185,
+        "evaluation": 109.42851841601077
+      },
+      "git_sha": "3a4480b9f97db297dee41644edcbb296b75d335c"
+    },
+    {
+      "seed": 934,
+      "learned_expected_reward": 0.6510534882545471,
+      "endpoint_probability": 6.251393642742187e-06,
+      "mean_nonendpoint_probability": 0.06666367501020432,
+      "never_probability": 3.850203211186454e-05,
+      "endpoint_probability_gap": -0.0666574239730835,
+      "endpoint_pair_reward": 0.6640989780426025,
+      "never_pair_reward": 0.6175369620323181,
+      "matched_random_one_reward": 0.5921772122383118,
+      "highest_probability_time": 13,
+      "highest_time_probability": 0.9963948130607605,
+      "best_shared_time": 15,
+      "encoding_time_probabilities": [
+        0.0006063391920179129,
+        0.00041925953701138496,
+        0.0003741215041372925,
+        0.0003233790921512991,
+        0.00011303753854008391,
+        2.0288689484004863e-05,
+        2.5667613954283297e-05,
+        2.7534209948498756e-05,
+        1.1939207979594357e-05,
+        1.3277577636472415e-05,
+        0.00010041461791843176,
+        0.0011098480317741632,
+        0.00040597867337055504,
+        0.9963948130607605,
+        9.294185474573169e-06,
+        6.251393642742187e-06,
+        3.850203211186454e-05
+      ],
+      "runtime_seconds": {
+        "training": 53.287620957999025,
+        "evaluation": 109.84925158301485
+      },
+      "git_sha": "3a4480b9f97db297dee41644edcbb296b75d335c"
+    }
+  ],
+  "objective_audit": {
+    "endpoint_is_best_deterministic_time": true,
+    "interpretation": "This tests whether the endpoint is present on the reward surface separately from whether gradient optimization reaches it."
+  },
+  "success_audit": {
+    "criteria": {
+      "endpoint_is_best_deterministic_time": true,
+      "mean_endpoint_probability_at_least_0_80": false,
+      "mean_endpoint_gap_at_least_0_50": false,
+      "at_least_80_percent_positive_gap_starts": false
+    },
+    "passed": false
+  }
+}

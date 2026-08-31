@@ -331,3 +331,21 @@
   recurrent representation extension. This preserves the approved gate: do not add
   representation complexity while the exact observable state still fails the mixed
   objective.
+
+## 2026-08-31 — Exact temporal mixture audit finds a late-event basin
+
+- Five fresh exact-objective audits used the fixed 16-observation RM/DM/NM mixture,
+  the original 0.25/0.25/0.50 weights, independent reward banks, and random
+  perturbations of a time-uniform initial encoding distribution. The policy was
+  shared across conditions and events and received neither condition nor boundary.
+- In every seed, the endpoint was the best deterministic shared encoding time and
+  exceeded never encoding on the mixture reward surface. Nevertheless, none of the
+  five gradient runs reached it. Mean endpoint probability was 0.00015 and the mean
+  endpoint gap was -0.0665.
+- Three runs placed more than 0.994 probability on observation 15 of 16; two placed
+  more than 0.994 on observation 14. Mean learned reward was 0.6570, below the
+  deterministic endpoint value of 0.6653 but above never encoding at 0.6213.
+- The exact mixed objective therefore contains the desired solution but does not
+  make it a reliably reachable solution. The next intervention is restricted to
+  initialization, retrospective credit assignment, and curriculum order. No policy
+  input or task outcome will change.
