@@ -30,6 +30,12 @@ direct-mixture cell reached zero. No cell passed both seeds, so the screen is no
 positive full-task result; only the selected cell proceeds to the fixed 400-epoch
 budget.
 
+Constraining encoding probability to increase with accumulated observed-feature and
+query progress did not help. With the otherwise selected credit and curriculum
+settings, both paired seeds remained at endpoint probability 0.021 throughout the
+100-epoch screen. Observable progress is therefore not a sufficient replacement for
+the unconstrained situation-state policy.
+
 ## Diagnosis and scope
 
 Variable timing and missing observations are not the principal obstacle: DM-only
@@ -41,8 +47,9 @@ nonboundary solution.
 
 These are exploratory synthetic simulations. The fixed-duration DM result now uses
 ten seeds, but the variable-DM replication and selected 400-epoch full-mixture
-intervention remain in progress. The situation record is exact and one memory slot
-is reserved for each earlier event. The result demonstrates basic computational
-feasibility, not a confirmed full-task effect or a human mechanism. Complete
-methods, learning curves, limitations, and next experiments are in
+intervention remain in progress. The progress-policy screen failed. The situation
+record is exact and one memory slot is reserved for each earlier event. The result
+demonstrates basic computational feasibility, not a confirmed full-task effect or a
+human mechanism. Complete methods, learning curves, limitations, and next
+experiments are in
 [`experiment_report.html`](experiment_report.html).

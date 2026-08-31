@@ -383,3 +383,21 @@
   0.8094 at epoch 90 and 0.7869 at epoch 100. Because the favorable trend occurs at
   the end of the screen, only this cell receives a fresh 400-epoch exploratory run;
   the other seven cells stop.
+
+## 2026-08-31 — Observable progress is not a sufficient policy constraint
+
+- A paired screen replaced the unconstrained state multilayer perceptron with a
+  logistic policy whose encoding probability could only increase with the fraction
+  of observed feature rows and query rows accumulated in the existing situation
+  state. These quantities were computed from the state, not supplied as endpoint or
+  time inputs.
+- The screen used the same seeds, trials, low initialization, condition-centered
+  retrospective credit, gradual mixture schedule, and 100-epoch budget as the best
+  unconstrained factorial cell.
+- Both seeds remained at endpoint probability 0.021 throughout all ten held-out
+  checkpoints; the mean endpoint gap was -0.0116. The progress policy gained a small
+  DM reward over never encoding but remained below matched random and forced
+  endpoint encoding.
+- This failure is retained without tuning the progress definition or slope
+  initialization after observing the result. The unconstrained selected method
+  remains the only full-mixture candidate receiving 400 epochs.

@@ -158,3 +158,7 @@
   and gradual DM-to-mixture training was uniquely promising, reaching mean endpoint
   probability 0.7869 at epoch 100; its direct-mixture counterpart reached zero. The
   selected cell alone advances to the standard 400-epoch budget.
+- 2026-08-31: tested a paired monotonic observable-progress policy using the selected
+  credit and curriculum settings. Both seeds remained at endpoint probability 0.021
+  for all 100 epochs. The constraint did not improve delayed boundary credit and is
+  not tuned further.
