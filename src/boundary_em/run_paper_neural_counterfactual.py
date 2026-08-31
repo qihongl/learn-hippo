@@ -41,10 +41,11 @@ def _build_bank(
     model: StructuredEpisodicPredictionModel,
     task_config: PaperTaskConfig,
     *,
-    condition: Condition,
+    conditions: tuple[Condition, ...],
     seed_start: int,
     n_examples: int,
     memory_capacity: int,
+    evaluation_mode: bool,
 ) -> list[NeuralCounterfactualExample]:
     if n_examples < 1:
         raise ValueError("n_examples must be positive")
@@ -54,8 +55,8 @@ def _build_bank(
             generate_trial(
                 task_config,
                 seed=seed_start + index,
-                condition=condition,
-                evaluation=True,
+                condition=conditions[index % len(conditions)],
+                evaluation=evaluation_mode,
             ),
             memory_capacity=memory_capacity,
         )
@@ -80,9 +81,6 @@ def run_neural_counterfactual_config(
     raw = yaml.safe_load(config_bytes)
     if seed not in raw["experiment"]["model_seeds"]:
         raise ValueError(f"seed {seed} is not declared in the configuration")
-    if not bool(raw["task"]["evaluation_mode"]):
-        raise ValueError("this neural development stage requires evaluation_mode: true")
-
     torch.set_num_threads(1)
     torch.manual_seed(seed)
     task_config = PaperTaskConfig(profile=raw["task"]["profile"])
@@ -97,26 +95,46 @@ def run_neural_counterfactual_config(
     )
     bank_config = raw["counterfactual_banks"]
     seed_offset = seed * 100_000
+    task_conditions = tuple(
+        raw["task"].get("conditions", [raw["task"].get("condition", "DM")])
+    )
+    task_evaluation_mode = bool(raw["task"]["evaluation_mode"])
 
     bank_start = perf_counter()
     training_examples = _build_bank(
         model,
         task_config,
-        condition=raw["task"]["condition"],
+        conditions=task_conditions,
         seed_start=int(bank_config["training_seed_start"]) + seed_offset,
         n_examples=int(bank_config["training_examples"]),
         memory_capacity=int(bank_config["memory_capacity"]),
+        evaluation_mode=task_evaluation_mode,
     )
     training_bank_runtime = perf_counter() - bank_start
     bank_start = perf_counter()
-    evaluation_examples = _build_bank(
-        model,
-        task_config,
-        condition=raw["task"]["condition"],
-        seed_start=int(bank_config["evaluation_seed_start"]) + seed_offset,
-        n_examples=int(bank_config["evaluation_examples"]),
-        memory_capacity=int(bank_config["memory_capacity"]),
+    evaluation_conditions = tuple(
+        bank_config.get("evaluation_conditions", task_conditions)
     )
+    evaluation_examples_per_condition = int(
+        bank_config.get(
+            "evaluation_examples_per_condition",
+            bank_config.get("evaluation_examples", 0),
+        )
+    )
+    evaluation_examples = {
+        condition: _build_bank(
+            model,
+            task_config,
+            conditions=(condition,),
+            seed_start=int(bank_config["evaluation_seed_start"])
+            + seed_offset
+            + condition_index * evaluation_examples_per_condition,
+            n_examples=evaluation_examples_per_condition,
+            memory_capacity=int(bank_config["memory_capacity"]),
+            evaluation_mode=task_evaluation_mode,
+        )
+        for condition_index, condition in enumerate(evaluation_conditions)
+    }
     evaluation_bank_runtime = perf_counter() - bank_start
 
     optimization = raw["optimization"]
@@ -125,10 +143,13 @@ def run_neural_counterfactual_config(
         _completed_updates: int,
         checkpoint_model: StructuredEpisodicPredictionModel,
     ) -> dict[str, Any]:
-        return evaluate_neural_counterfactual(
-            checkpoint_model,
-            evaluation_examples,
-        )
+        by_condition = {
+            condition: evaluate_neural_counterfactual(checkpoint_model, examples)
+            for condition, examples in evaluation_examples.items()
+        }
+        if len(by_condition) == 1:
+            return next(iter(by_condition.values()))
+        return {"by_condition": by_condition}
 
     training_start = perf_counter()
     training_result = train_neural_counterfactual(
@@ -143,10 +164,17 @@ def run_neural_counterfactual_config(
         checkpoint_evaluator=checkpoint_evaluator,
     )
     training_runtime = perf_counter() - training_start
-    evaluation = evaluate_neural_counterfactual(model, evaluation_examples)
+    evaluation_by_condition = {
+        condition: evaluate_neural_counterfactual(model, examples)
+        for condition, examples in evaluation_examples.items()
+    }
+    primary_condition = (
+        "DM" if "DM" in evaluation_by_condition else evaluation_conditions[0]
+    )
+    evaluation = evaluation_by_condition[primary_condition]
 
     result: dict[str, Any] = {
-        "task": "Lu-Hasson-Norman 2022 event-prediction evaluation generator",
+        "task": "Lu-Hasson-Norman 2022 event-prediction generator",
         "data_kind": "measured synthetic simulation",
         "experiment": raw["experiment"],
         "seed": seed,
@@ -171,6 +199,7 @@ def run_neural_counterfactual_config(
             "checkpoints": training_result.checkpoints,
         },
         "evaluation": evaluation,
+        "evaluation_by_condition": evaluation_by_condition,
         "evaluation_bank_generation_runtime_seconds": evaluation_bank_runtime,
         "provenance": {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),

@@ -1,0 +1,36 @@
+experiment:
+  name: neural_counterfactual_full_mixture
+  status: exploratory_mixed_objective_diagnostic
+  model_seeds: [810]
+
+task:
+  profile: released_code
+  conditions: [RM, DM, NM, NM]
+  evaluation_mode: false
+
+model:
+  policy_hidden_dim: 32
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+
+counterfactual_banks:
+  training_examples: 256
+  evaluation_examples_per_condition: 64
+  evaluation_conditions: [RM, DM, NM]
+  training_seed_start: 82000000
+  evaluation_seed_start: 83000000
+  memory_capacity: 2
+
+optimization:
+  initial_probability: 0.05
+  updates: 1600
+  batch_size: 16
+  learning_rate: 0.003
+  gradient_clip: 10.0
+  checkpoint_interval: 160
+
+output:
+  directory: outputs/paper_task_encoding/neural_counterfactual

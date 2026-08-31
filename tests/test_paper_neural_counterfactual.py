@@ -95,6 +95,28 @@ def test_counterfactual_evaluation_supports_unequal_event_delays() -> None:
         str(len(trial.b1.inputs)),
     }
 
+    second_trial = generate_trial(
+        PaperTaskConfig(),
+        seed=81_005,
+        condition="NM",
+        evaluation=False,
+    )
+    second_example = build_counterfactual_example(
+        model,
+        second_trial,
+        memory_capacity=2,
+    )
+    result = train_neural_counterfactual(
+        model,
+        [example, second_example],
+        updates=1,
+        batch_size=2,
+        learning_rate=0.001,
+        gradient_clip=1.0,
+        seed=81_006,
+    )
+    assert result.history[0]["sequences_processed"] == 2
+
 
 def test_neural_policy_learns_observation_defined_endpoint_from_reward() -> None:
     model = _model()

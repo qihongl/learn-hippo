@@ -174,24 +174,16 @@ def train_neural_counterfactual(
                 generator=generator,
             ).tolist()
             selected = [examples[index] for index in indices]
-            a1_states = torch.stack([example.a1_states for example in selected])
-            b1_states = torch.stack([example.b1_states for example in selected])
-            a1_probabilities = _batched_hazard_encoding_distribution(
-                _actor_logits(model, a1_states)
-            )
-            b1_probabilities = _batched_hazard_encoding_distribution(
-                _actor_logits(model, b1_states)
-            )
-            reward_matrices = torch.stack(
-                [example.reward_matrix for example in selected]
-            )
-            expected_rewards = torch.einsum(
-                "bi,bij,bj->b",
-                a1_probabilities,
-                reward_matrices,
-                b1_probabilities,
-            )
-            expected_reward = expected_rewards.mean()
+            a1_probabilities = []
+            b1_probabilities = []
+            expected_rewards = []
+            for example in selected:
+                a1, b1 = neural_encoding_distributions(model, example)
+                a1_probabilities.append(a1)
+                b1_probabilities.append(b1)
+                expected_rewards.append(a1 @ example.reward_matrix @ b1)
+            expected_rewards_tensor = torch.stack(expected_rewards)
+            expected_reward = expected_rewards_tensor.mean()
             optimizer.zero_grad(set_to_none=True)
             (-expected_reward).backward()
             gradient_norm = nn.utils.clip_grad_norm_(
@@ -209,8 +201,12 @@ def train_neural_counterfactual(
                     "expected_reward": float(expected_reward.detach().item()),
                     "gradient_norm": float(gradient_norm.detach().item()),
                     "endpoint_probability": float(
-                        torch.cat(
-                            [a1_probabilities[:, -2], b1_probabilities[:, -2]]
+                        torch.stack(
+                            [
+                                probabilities[-2]
+                                for probabilities in a1_probabilities
+                                + b1_probabilities
+                            ]
                         )
                         .mean()
                         .detach()
@@ -219,8 +215,9 @@ def train_neural_counterfactual(
                     "mean_nonendpoint_probability": float(
                         torch.cat(
                             [
-                                a1_probabilities[:, :-2].flatten(),
-                                b1_probabilities[:, :-2].flatten(),
+                                probabilities[:-2]
+                                for probabilities in a1_probabilities
+                                + b1_probabilities
                             ]
                         )
                         .mean()
@@ -228,8 +225,12 @@ def train_neural_counterfactual(
                         .item()
                     ),
                     "never_probability": float(
-                        torch.cat(
-                            [a1_probabilities[:, -1], b1_probabilities[:, -1]]
+                        torch.stack(
+                            [
+                                probabilities[-1]
+                                for probabilities in a1_probabilities
+                                + b1_probabilities
+                            ]
                         )
                         .mean()
                         .detach()

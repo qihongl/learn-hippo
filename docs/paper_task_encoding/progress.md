@@ -112,3 +112,8 @@
   unstable. Conversely, the full mixture with fixed 16-step events moved toward
   never encoding (endpoint 0.003, never 0.940). Thus variable timing is learnable;
   the RM/NM mixture is sufficient to overwhelm sampled boundary credit.
+- 2026-08-31: extended exact counterfactual neural optimization to mixed variable-
+  length examples and condition-separated evaluation. The declared bounded test uses
+  the unchanged full training-mode mixture, 256 unique counterfactual examples, and
+  100 epochs; it distinguishes sampling variance from a mixed-objective or neural-
+  representation failure without adding any policy input.
