@@ -49,3 +49,7 @@
   ablations, and completed a self-contained paper-style HTML report with four
   reproducible explanatory and measured-data figures. The report preserves the
   negative policy result and separates it from successful memory use.
+- 2026-08-31: audited the original 600-epoch supervised and 400-epoch A2C budget,
+  documented which current learning curves can be reconstructed, and froze the
+  user-approved follow-up contract, success criteria, convergence rules, capacity
+  ladder, recurrent extension, and confirmatory split before new implementation.

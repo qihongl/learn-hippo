@@ -117,3 +117,18 @@
   and multiple nonboundary schedules lie in easier local optima. The published task
   supports endpoint superiority among selected fixed schedules, but does not uniquely
   identify endpoint encoding as the globally learnable unconstrained policy.
+
+## 2026-08-31 — Approved training-budget-matched follow-up
+
+- The user approved a new gated plan after auditing the original paper's 600
+  supervised and 400 A2C epochs, with 256 event sequences per epoch.
+- The earlier 600-update encoding run is retained as a limited-budget diagnostic.
+  The new primary policy budget is 400 epochs, 102,400 sequences, and 6,400
+  batch-level updates, with checkpointed held-out learning curves.
+- Future relevance remains naturally unobservable and is treated as a scientific
+  constraint, not a limitation to remove. No prospective target label will be added.
+- One trace per event and counterfactual reward enumeration are debugging stages.
+  The basic claim requires a neural actor using the exact accumulated state; the
+  stronger result requires sampled online learning and two total trace slots.
+- Only after exact-state success will a pretrained recurrent situation model replace
+  exact feature recording. Exploratory and locked confirmatory seeds remain separate.
