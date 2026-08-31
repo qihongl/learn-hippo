@@ -51,5 +51,9 @@ def test_sampled_hazard_runner_records_forced_and_free_stages(
     assert result["evaluation"]["trials"] == 1
     assert set(result["evaluation_by_condition"]) == {"DM"}
     assert result["scientific_guardrails"]["new_training_mapping_each_sequence"]
+    assert (
+        result["scientific_guardrails"]["learning_rate_schedule"]
+        == "constant"
+    )
     output_path = tmp_path / "results/sampled_hazard_smoke_seed0.json"
     assert json.loads(output_path.read_text()) == result

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
+from math import cos, pi
 from time import perf_counter
 from typing import Any, Literal
 
@@ -41,6 +42,10 @@ class SampledHazardStageConfig:
     evaluation_mode: bool
     advantage_mode: Literal["critic", "condition_centered"] = "critic"
     condition_schedule: Literal["fixed", "dm_to_mixture"] = "fixed"
+    learning_rate_schedule: Literal[
+        "constant", "cosine_second_half"
+    ] = "constant"
+    minimum_learning_rate_fraction: float = 0.05
 
     def __post_init__(self) -> None:
         if self.updates < 1 or self.batch_size < 1:
@@ -57,6 +62,15 @@ class SampledHazardStageConfig:
             raise ValueError(f"unknown advantage mode: {self.advantage_mode}")
         if self.condition_schedule not in ("fixed", "dm_to_mixture"):
             raise ValueError(f"unknown condition schedule: {self.condition_schedule}")
+        if self.learning_rate_schedule not in (
+            "constant",
+            "cosine_second_half",
+        ):
+            raise ValueError(
+                f"unknown learning-rate schedule: {self.learning_rate_schedule}"
+            )
+        if not 0 < self.minimum_learning_rate_fraction <= 1:
+            raise ValueError("minimum learning-rate fraction must be in (0, 1]")
 
 
 @dataclass(frozen=True)
@@ -238,6 +252,19 @@ def train_sampled_hazard_stage(
 
     try:
         for update in range(stage_config.updates):
+            if stage_config.learning_rate_schedule == "cosine_second_half":
+                decay_start = stage_config.updates // 2
+                decay_steps = max(1, stage_config.updates - decay_start - 1)
+                decay_progress = max(0.0, (update - decay_start) / decay_steps)
+                minimum_fraction = stage_config.minimum_learning_rate_fraction
+                learning_rate_fraction = minimum_fraction + (
+                    1.0
+                    - minimum_fraction
+                ) * 0.5 * (1.0 + cos(pi * decay_progress))
+                for parameter_group in optimizer.param_groups:
+                    parameter_group["lr"] = (
+                        stage_config.learning_rate * learning_rate_fraction
+                    )
             episodes = []
             for batch_index in range(stage_config.batch_size):
                 example_index = update * stage_config.batch_size + batch_index
@@ -354,6 +381,9 @@ def train_sampled_hazard_stage(
                     ),
                     "advantage_mode": stage_config.advantage_mode,
                     "condition_schedule": stage_config.condition_schedule,
+                    "learning_rate_schedule": (
+                        stage_config.learning_rate_schedule
+                    ),
                     "condition_counts": dict(
                         Counter(episode.condition for episode in episodes)
                     ),

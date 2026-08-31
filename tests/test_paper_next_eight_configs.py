@@ -137,3 +137,54 @@ def test_selected_credit_method_receives_full_budget_on_fresh_seeds() -> None:
         config["training"]["free_policy"]["condition_schedule"]
         == "dm_to_mixture"
     )
+
+
+def test_optimizer_stability_screen_crosses_schedule_and_batch_at_fixed_exposure(
+) -> None:
+    paths = sorted(CONFIG_DIRECTORY.glob("sampled_hazard_stability_*.yaml"))
+    configs = [yaml.safe_load(path.read_text()) for path in paths]
+
+    assert len(configs) == 4
+    assert all(
+        config["experiment"]["model_seeds"] == [970, 971, 972]
+        for config in configs
+    )
+    cells = {
+        (
+            config["training"]["free_policy"]["learning_rate_schedule"],
+            config["training"]["free_policy"]["batch_size"],
+        )
+        for config in configs
+    }
+    assert cells == {
+        (schedule, batch_size)
+        for schedule in ("constant", "cosine_second_half")
+        for batch_size in (16, 32)
+    }
+    for config in configs:
+        free = config["training"]["free_policy"]
+        assert free["updates"] * free["batch_size"] == 102_400
+        assert (
+            config["checkpoint_evaluation"]["interval_updates"]
+            * free["batch_size"]
+            == 2_560
+        )
+        assert free["advantage_mode"] == "condition_centered"
+        assert free["condition_schedule"] == "dm_to_mixture"
+
+
+def test_optimizer_stability_della_manifest_contains_every_paired_seed() -> None:
+    manifest = REPOSITORY / "scripts/della/optimizer_stability_array.tsv"
+    lines = manifest.read_text().strip().splitlines()
+    assert lines[0].split("\t") == ["experiment", "config", "seed"]
+    records = [line.split("\t") for line in lines[1:]]
+
+    expected = []
+    for path in sorted(CONFIG_DIRECTORY.glob("sampled_hazard_stability_*.yaml")):
+        config = yaml.safe_load(path.read_text())
+        expected.extend(
+            [config["experiment"]["name"], str(path.relative_to(REPOSITORY)), str(seed)]
+            for seed in config["experiment"]["model_seeds"]
+        )
+
+    assert records == expected

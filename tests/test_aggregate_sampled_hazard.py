@@ -116,3 +116,48 @@ def test_sampled_hazard_aggregation_rejects_a_configuration_mismatch(
             input_directory=tmp_path,
             output_path=tmp_path / "summary.json",
         )
+
+
+def test_sampled_hazard_aggregation_reports_late_checkpoint_collapse(
+    tmp_path: Path,
+) -> None:
+    experiment = "late-collapse"
+    config = {
+        "experiment": {"name": experiment, "model_seeds": [4]},
+        "task": {"profile": "released_code"},
+    }
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump(config))
+    config_hash = hashlib.sha256(config_path.read_bytes()).hexdigest()
+    _write_record(
+        tmp_path,
+        experiment=experiment,
+        seed=4,
+        config_hash=config_hash,
+    )
+    record_path = tmp_path / f"{experiment}_seed4.json"
+    record = json.loads(record_path.read_text())
+    endpoint_probabilities = [0.90, 0.95, 0.40, 0.80, 0.90]
+    for checkpoint, epoch, endpoint_probability in zip(
+        record["training"]["free_policy_checkpoints"],
+        (190, 200, 210, 220, 230),
+        endpoint_probabilities,
+        strict=True,
+    ):
+        checkpoint["epoch"] = float(epoch)
+        checkpoint["evaluation"] = {
+            **checkpoint["evaluation"],
+            "endpoint_probability": endpoint_probability,
+        }
+    record_path.write_text(json.dumps(record))
+
+    result = aggregate_sampled_hazard_config(
+        config_path,
+        input_directory=tmp_path,
+        output_path=tmp_path / "summary.json",
+        bootstrap_samples=1_000,
+    )
+
+    assert result["runs"][0]["largest_post_epoch_200_endpoint_drop"] == pytest.approx(
+        0.55
+    )

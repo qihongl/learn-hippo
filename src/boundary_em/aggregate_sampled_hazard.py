@@ -71,6 +71,28 @@ def _safe_remaining_fraction(
     return (removed - never) / benefit
 
 
+def _largest_endpoint_drop_after(
+    checkpoints: list[dict[str, Any]],
+    *,
+    start_epoch: float,
+) -> float:
+    evaluations = [
+        (float(checkpoint["epoch"]), _evaluation_at_checkpoint(checkpoint))
+        for checkpoint in checkpoints
+    ]
+    drops = [
+        float(previous[1]["endpoint_probability"])
+        - float(current[1]["endpoint_probability"])
+        for previous, current in zip(
+            evaluations,
+            evaluations[1:],
+            strict=False,
+        )
+        if previous[0] >= start_epoch
+    ]
+    return max([0.0, *drops])
+
+
 def aggregate_sampled_hazard_config(
     config_path: str | Path,
     *,
@@ -274,6 +296,12 @@ def aggregate_sampled_hazard_config(
                     point["endpoint_probability"] >= 0.80
                     and point["endpoint_probability_gap"] >= 0.50
                     for point in final_five
+                ),
+                "largest_post_epoch_200_endpoint_drop": (
+                    _largest_endpoint_drop_after(
+                        checkpoints,
+                        start_epoch=200.0,
+                    )
                 ),
                 "runtime_seconds": {
                     "evaluation_bank_generation": record[

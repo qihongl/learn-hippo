@@ -33,3 +33,18 @@ sbatch "$LEARN_HIPPO_REPO/scripts/della/run_paper_task_encoding_array.sbatch"
 Use `squeue -u "$USER"` to monitor the array and `jobstats <jobid>` after tasks have
 run long enough to estimate their actual CPU and memory use. The array currently has
 20 records and permits at most 10 simultaneous tasks.
+
+## Optimizer-stability screen
+
+The post-report stability experiment has its own 12-task manifest and submission
+script. It uses paired seeds across four cells and writes all large artifacts below
+the supplied scratch run root:
+
+```bash
+mkdir -p "$LEARN_HIPPO_RUN_ROOT/slurm-logs"
+sbatch --export=ALL,LEARN_HIPPO_REPO,LEARN_HIPPO_RUN_ROOT,LEARN_HIPPO_PYTHON \
+  "$LEARN_HIPPO_REPO/scripts/della/run_optimizer_stability_array.sbatch"
+```
+
+For the KNORMAN allocation, use a fresh directory below
+`/scratch/gpfs/KNORMAN/qlu/learn-hippo/runs/<date>-<git-sha>/optimizer-stability`.

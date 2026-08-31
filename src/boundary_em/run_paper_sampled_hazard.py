@@ -185,6 +185,12 @@ def run_sampled_hazard_config(
             "condition_schedule": stage_configs[
                 "free_policy"
             ].condition_schedule,
+            "learning_rate_schedule": stage_configs[
+                "free_policy"
+            ].learning_rate_schedule,
+            "minimum_learning_rate_fraction": stage_configs[
+                "free_policy"
+            ].minimum_learning_rate_fraction,
             "retrospective_condition_used_for_credit_only": (
                 stage_configs["free_policy"].advantage_mode
                 == "condition_centered"

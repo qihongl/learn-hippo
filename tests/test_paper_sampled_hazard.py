@@ -171,3 +171,27 @@ def test_dm_to_mixture_schedule_ends_on_the_declared_full_mixture() -> None:
         "DM": 1,
         "NM": 2,
     }
+
+
+def test_second_half_cosine_schedule_reaches_the_declared_final_rate() -> None:
+    stage = SampledHazardStageConfig(
+        **{
+            **_stage().__dict__,
+            "updates": 4,
+            "batch_size": 1,
+            "learning_rate_schedule": "cosine_second_half",
+            "minimum_learning_rate_fraction": 0.05,
+        }
+    )
+
+    result = train_sampled_hazard_stage(
+        _model(),
+        PaperTaskConfig(),
+        stage,
+        seed=970,
+        forced_exploration=False,
+    )
+
+    assert [row["learning_rate"] for row in result.history[:2]] == [0.01, 0.01]
+    assert result.history[-1]["learning_rate"] == 0.0005
+    assert result.history[-1]["learning_rate_schedule"] == "cosine_second_half"
