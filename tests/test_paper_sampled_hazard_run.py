@@ -1,9 +1,27 @@
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import yaml
 
 from boundary_em.run_paper_sampled_hazard import run_sampled_hazard_config
+
+
+def test_sampled_hazard_command_accepts_an_explicit_output_directory() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "boundary_em.run_paper_sampled_hazard",
+            "--help",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "--output-directory" in completed.stdout
 
 
 def test_sampled_hazard_runner_records_forced_and_free_stages(

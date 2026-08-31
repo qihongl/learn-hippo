@@ -212,8 +212,19 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("config")
     parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument(
+        "--output-directory",
+        help=(
+            "Write the seed-level JSON to this directory instead of the config "
+            "default."
+        ),
+    )
     arguments = parser.parse_args()
-    result = run_sampled_hazard_config(arguments.config, seed=arguments.seed)
+    result = run_sampled_hazard_config(
+        arguments.config,
+        seed=arguments.seed,
+        output_directory=arguments.output_directory,
+    )
     print(json.dumps(result["evaluation"], indent=2))
 
 
