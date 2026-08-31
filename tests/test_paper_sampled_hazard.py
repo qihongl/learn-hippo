@@ -115,3 +115,59 @@ def test_training_history_supports_mixed_variable_event_lengths() -> None:
 
     assert result.history[0]["sequences_processed"] == 4
     assert 0 <= result.history[0]["endpoint_probability"] <= 1
+
+
+def test_condition_centered_credit_is_retrospective_and_recorded() -> None:
+    stage = SampledHazardStageConfig(
+        **{
+            **_stage().__dict__,
+            "updates": 2,
+            "batch_size": 4,
+            "conditions": ("RM", "DM", "NM", "NM"),
+            "evaluation_mode": False,
+            "advantage_mode": "condition_centered",
+        }
+    )
+
+    result = train_sampled_hazard_stage(
+        _model(),
+        PaperTaskConfig(),
+        stage,
+        seed=940,
+        forced_exploration=False,
+    )
+
+    assert result.history[-1]["advantage_mode"] == "condition_centered"
+    assert set(result.history[-1]["condition_reward_baselines"]) == {
+        "RM",
+        "DM",
+        "NM",
+    }
+
+
+def test_dm_to_mixture_schedule_ends_on_the_declared_full_mixture() -> None:
+    stage = SampledHazardStageConfig(
+        **{
+            **_stage().__dict__,
+            "updates": 4,
+            "batch_size": 4,
+            "conditions": ("RM", "DM", "NM", "NM"),
+            "evaluation_mode": False,
+            "condition_schedule": "dm_to_mixture",
+        }
+    )
+
+    result = train_sampled_hazard_stage(
+        _model(),
+        PaperTaskConfig(),
+        stage,
+        seed=941,
+        forced_exploration=False,
+    )
+
+    assert result.history[0]["condition_counts"] == {"RM": 1, "DM": 3}
+    assert result.history[-1]["condition_counts"] == {
+        "RM": 1,
+        "DM": 1,
+        "NM": 2,
+    }

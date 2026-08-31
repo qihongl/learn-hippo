@@ -74,3 +74,29 @@ def test_temporal_mixture_audit_uses_five_new_random_initializations() -> None:
     assert config["task"]["conditions"] == ["RM", "DM", "NM", "NM"]
     assert config["task"]["evaluation_mode"] is True
     assert config["optimization"]["initialization"] == "random"
+
+
+def test_credit_factorial_is_paired_and_has_all_eight_cells() -> None:
+    paths = sorted(CONFIG_DIRECTORY.glob("sampled_hazard_credit_*.yaml"))
+    configs = [yaml.safe_load(path.read_text()) for path in paths]
+
+    assert len(configs) == 8
+    cells = {
+        (
+            config["policy"]["initial_probability"],
+            config["training"]["free_policy"]["advantage_mode"],
+            config["training"]["free_policy"]["condition_schedule"],
+        )
+        for config in configs
+    }
+    assert cells == {
+        (probability, advantage, schedule)
+        for probability in (0.05, 0.5)
+        for advantage in ("critic", "condition_centered")
+        for schedule in ("fixed", "dm_to_mixture")
+    }
+    assert all(config["experiment"]["model_seeds"] == [940, 941] for config in configs)
+    assert all(
+        config["training"]["free_policy"]["updates"] == 1_600
+        for config in configs
+    )

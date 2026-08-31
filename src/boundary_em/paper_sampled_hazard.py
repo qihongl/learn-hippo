@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any
+from typing import Any, Literal
 
 import torch
 from torch import Tensor, nn
@@ -38,6 +39,8 @@ class SampledHazardStageConfig:
     memory_capacity: int
     conditions: tuple[Condition, ...]
     evaluation_mode: bool
+    advantage_mode: Literal["critic", "condition_centered"] = "critic"
+    condition_schedule: Literal["fixed", "dm_to_mixture"] = "fixed"
 
     def __post_init__(self) -> None:
         if self.updates < 1 or self.batch_size < 1:
@@ -50,12 +53,17 @@ class SampledHazardStageConfig:
             raise ValueError("one encoding in each event requires capacity of two")
         if not self.conditions:
             raise ValueError("at least one condition is required")
+        if self.advantage_mode not in ("critic", "condition_centered"):
+            raise ValueError(f"unknown advantage mode: {self.advantage_mode}")
+        if self.condition_schedule not in ("fixed", "dm_to_mixture"):
+            raise ValueError(f"unknown condition schedule: {self.condition_schedule}")
 
 
 @dataclass(frozen=True)
 class SampledHazardEpisode:
     """Online encoding choices and their delayed prediction outcome."""
 
+    condition: Condition
     a1_actions: Tensor
     b1_actions: Tensor
     a1_distribution: Tensor
@@ -121,6 +129,7 @@ def sample_neural_hazard_episode(
         trial.b2.inputs[valid, -1],
     ).mean()
     return SampledHazardEpisode(
+        condition=trial.condition,
         a1_actions=a1[0],
         b1_actions=b1[0],
         a1_distribution=a1[1],
@@ -221,6 +230,9 @@ def train_sampled_hazard_stage(
     )
     optimizer = torch.optim.Adam(optimized_parameters, lr=stage_config.learning_rate)
     action_generator = torch.Generator().manual_seed(seed + 90_000_000)
+    condition_reward_baselines = {
+        condition: 0.5 for condition in dict.fromkeys(stage_config.conditions)
+    }
     history: list[dict[str, Any]] = []
     checkpoints: list[dict[str, Any]] = []
 
@@ -229,9 +241,25 @@ def train_sampled_hazard_stage(
             episodes = []
             for batch_index in range(stage_config.batch_size):
                 example_index = update * stage_config.batch_size + batch_index
-                condition = stage_config.conditions[
-                    example_index % len(stage_config.conditions)
-                ]
+                if stage_config.condition_schedule == "fixed":
+                    condition = stage_config.conditions[
+                        example_index % len(stage_config.conditions)
+                    ]
+                else:
+                    completed_updates = update + 1
+                    mixture_count = (
+                        completed_updates
+                        * stage_config.batch_size
+                        // stage_config.updates
+                    )
+                    dm_count = stage_config.batch_size - mixture_count
+                    if batch_index < dm_count:
+                        condition = "DM"
+                    else:
+                        mixture_index = batch_index - dm_count
+                        condition = stage_config.conditions[
+                            mixture_index % len(stage_config.conditions)
+                        ]
                 trial = generate_trial(
                     task_config,
                     seed=seed * 1_000_000 + example_index,
@@ -253,11 +281,18 @@ def train_sampled_hazard_stage(
             entropy_terms = []
             for episode in episodes:
                 target = episode.reward.detach().expand_as(episode.values)
-                advantage = target - episode.values
-                actor_terms.append(
-                    -(episode.log_probabilities * advantage.detach()).mean()
+                critic_advantage = target - episode.values
+                actor_advantage = (
+                    critic_advantage
+                    if stage_config.advantage_mode == "critic"
+                    else target - condition_reward_baselines[episode.condition]
                 )
-                critic_terms.append(0.5 * advantage.square().mean())
+                actor_terms.append(
+                    -(
+                        episode.log_probabilities * actor_advantage.detach()
+                    ).mean()
+                )
+                critic_terms.append(0.5 * critic_advantage.square().mean())
                 entropy_terms.append(episode.entropy.mean())
             actor_loss = torch.stack(actor_terms).mean()
             critic_loss = torch.stack(critic_terms).mean()
@@ -276,6 +311,18 @@ def train_sampled_hazard_stage(
                 stage_config.gradient_clip,
             )
             optimizer.step()
+
+            rewards_by_condition: dict[Condition, list[float]] = {}
+            for episode in episodes:
+                rewards_by_condition.setdefault(episode.condition, []).append(
+                    float(episode.reward.detach().item())
+                )
+            for condition, rewards in rewards_by_condition.items():
+                batch_mean = sum(rewards) / len(rewards)
+                condition_reward_baselines[condition] = (
+                    0.95 * condition_reward_baselines[condition]
+                    + 0.05 * batch_mean
+                )
 
             all_distributions = [
                 distribution
@@ -304,6 +351,14 @@ def train_sampled_hazard_stage(
                     "learning_rate": float(optimizer.param_groups[0]["lr"]),
                     "mode": (
                         "forced_value" if forced_exploration else "sampled_actor"
+                    ),
+                    "advantage_mode": stage_config.advantage_mode,
+                    "condition_schedule": stage_config.condition_schedule,
+                    "condition_counts": dict(
+                        Counter(episode.condition for episode in episodes)
+                    ),
+                    "condition_reward_baselines": dict(
+                        condition_reward_baselines
                     ),
                     "loss": float(loss.detach().item()),
                     "actor_loss": float(actor_loss.detach().item()),

@@ -179,6 +179,16 @@ def run_sampled_hazard_config(
             "sampled_delayed_reward_used_for_actor": True,
             "counterfactual_outcomes_used_for_actor": False,
             "counterfactual_outcomes_used_for_evaluation_only": True,
+            "actor_advantage_mode": stage_configs[
+                "free_policy"
+            ].advantage_mode,
+            "condition_schedule": stage_configs[
+                "free_policy"
+            ].condition_schedule,
+            "retrospective_condition_used_for_credit_only": (
+                stage_configs["free_policy"].advantage_mode
+                == "condition_centered"
+            ),
         },
         "training": {
             "forced_value_history": forced_result.history,

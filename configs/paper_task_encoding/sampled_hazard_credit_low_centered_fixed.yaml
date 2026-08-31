@@ -1,0 +1,50 @@
+experiment:
+  name: sampled_hazard_credit_low_centered_fixed
+  status: exploratory_credit_factorial
+  model_seeds: [940, 941]
+
+task:
+  profile: released_code
+  training_conditions: [RM, DM, NM, NM]
+  training_evaluation_mode: false
+
+model:
+  policy_hidden_dim: 32
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+
+policy:
+  initial_probability: 0.05
+
+training:
+  forced_value:
+    updates: 400
+    batch_size: 16
+    learning_rate: 0.003
+    critic_coefficient: 0.5
+    entropy_coefficient: 0.0
+    gradient_clip: 1.0
+    memory_capacity: 2
+  free_policy:
+    updates: 1600
+    batch_size: 16
+    learning_rate: 0.001
+    critic_coefficient: 0.5
+    entropy_coefficient: 0.001
+    gradient_clip: 1.0
+    memory_capacity: 2
+    advantage_mode: condition_centered
+    condition_schedule: fixed
+
+checkpoint_evaluation:
+  interval_updates: 160
+  trials: 64
+  trial_seed_start: 97000000
+  conditions: [RM, DM, NM]
+  evaluation_mode: false
+
+output:
+  directory: outputs/paper_task_encoding/sampled_hazard
