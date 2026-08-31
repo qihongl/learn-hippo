@@ -401,3 +401,20 @@
 - This failure is retained without tuning the progress definition or slope
   initialization after observing the result. The unconstrained selected method
   remains the only full-mixture candidate receiving 400 epochs.
+
+## 2026-08-31 — Variable-duration DM learning is feasible but unreliable
+
+- Ten fresh actors received the same 25 forced-exploration and 400 free-policy
+  epochs as the fixed-duration replication, with the released 0–4 delay and removed-
+  observation sampling restored during both training and held-out evaluation.
+- Mean endpoint probability was 0.7055 (SD 0.4346), below the declared 0.80
+  threshold. Seven seeds finished above 0.80, six met the last-five-checkpoint
+  stability rule, and three ended at 0.2111, 0.0464, or 0.0000. Mean endpoint
+  probability was similar in the two events (0.7074 for `a1`, 0.7037 for `b1`).
+- Mean reward was 0.7291 versus 0.6097 for never and 0.6343 for matched random.
+  Paired bootstrap intervals for both advantages were above zero, and target-memory
+  removal eliminated the benefit. Several failed endpoint seeds still used useful
+  late-event memories.
+- Variable duration therefore does not make boundary learning impossible, but the
+  sampled optimizer is not reliable enough for the declared claim. This negative
+  multiseed result replaces the earlier single-seed 100-epoch feasibility result.

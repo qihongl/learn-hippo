@@ -11,9 +11,12 @@ encoding and 0.5139 for one random encoding. Removing the target memory reduced
 reward to 0.4833. Bootstrap intervals for the endpoint gap and both reward
 advantages were above zero. The endpoint was not forced or supplied as a target.
 
-A variable-delay, missing-observation DM diagnostic also reached endpoint
-probability 0.8928 and reward 0.7404, close to the forced-endpoint value of 0.7425,
-but it had not met the five-checkpoint convergence rule.
+The ten-seed variable-delay, missing-observation DM replication did not pass the
+endpoint criterion. Mean endpoint probability was 0.7055 (SD 0.4346): seven seeds
+finished above 0.80, but only six met the five-checkpoint stability rule, while three
+ended at 0.211, 0.046, or 0.000. Mean reward was nevertheless 0.7291 versus 0.6097
+for never and 0.6343 for matched random encoding, with intervals above zero. Thus
+variable timing permits boundary learning but does not yield reliable discovery.
 
 The stronger full-task result is negative. From-scratch sampled learning on the
 released 0.25 RM / 0.25 DM / 0.50 NM mixture produced endpoint probability 0.0027,
@@ -38,18 +41,18 @@ the unconstrained situation-state policy.
 
 ## Diagnosis and scope
 
-Variable timing and missing observations are not the principal obstacle: DM-only
-learning succeeded with both. The full condition mixture is sufficient to block
-discovery, even with fixed duration. RM and NM comprise 75% of training and make
-episodic encoding unnecessary or slightly harmful, while the useful DM signal is
-sparse and delayed. Removing sampling variance does not by itself escape the
-nonboundary solution.
+Variable timing and missing observations are not an absolute obstacle: most DM-only
+seeds learned with both, but multiseed reliability was poor. The full condition
+mixture poses a stronger problem, even with fixed duration. RM and NM comprise 75%
+of training and make episodic encoding unnecessary or slightly harmful, while the
+useful DM signal is sparse and delayed. Removing sampling variance does not by
+itself escape the nonboundary solution.
 
-These are exploratory synthetic simulations. The fixed-duration DM result now uses
-ten seeds, but the variable-DM replication and selected 400-epoch full-mixture
-intervention remain in progress. The progress-policy screen failed. The situation
-record is exact and one memory slot is reserved for each earlier event. The result
-demonstrates basic computational feasibility, not a confirmed full-task effect or a
-human mechanism. Complete methods, learning curves, limitations, and next
-experiments are in
+These are exploratory synthetic simulations. The fixed- and variable-duration DM
+results now use ten seeds each; only the fixed-duration condition passes all
+criteria. The selected 400-epoch full-mixture intervention remains in progress, and
+the progress-policy screen failed. The situation record is exact and one memory
+slot is reserved for each earlier event. The result demonstrates basic computational
+feasibility, not a confirmed full-task effect or a human mechanism. Complete
+methods, learning curves, limitations, and next experiments are in
 [`experiment_report.html`](experiment_report.html).

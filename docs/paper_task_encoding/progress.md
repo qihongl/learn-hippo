@@ -162,3 +162,7 @@
   credit and curriculum settings. Both seeds remained at endpoint probability 0.021
   for all 100 epochs. The constraint did not improve delayed boundary credit and is
   not tuned further.
+- 2026-08-31: completed ten 400-epoch variable-duration DM replications. Mean
+  endpoint probability was 0.7055 with large between-seed variability; seven seeds
+  finished above 0.80 and six were stable over the last five checkpoints. All seeds
+  gained reward from episodic memory, but the full policy success audit failed.
