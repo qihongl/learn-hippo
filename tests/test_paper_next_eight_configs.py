@@ -188,3 +188,36 @@ def test_optimizer_stability_della_manifest_contains_every_paired_seed() -> None
         )
 
     assert records == expected
+
+
+def test_optimizer_replication_config_and_manifest_are_locked() -> None:
+    config_path = (
+        CONFIG_DIRECTORY / "sampled_hazard_stability_replication_b32.yaml"
+    )
+    config = yaml.safe_load(config_path.read_text())
+    assert config["experiment"] == {
+        "name": "sampled_hazard_stability_replication_b32",
+        "status": "locked_optimizer_replication",
+        "model_seeds": list(range(980, 990)),
+    }
+    free = config["training"]["free_policy"]
+    assert free["batch_size"] == 32
+    assert free["updates"] * free["batch_size"] == 102_400
+    assert free["learning_rate"] == 0.001
+    assert free["learning_rate_schedule"] == "constant"
+    assert free["advantage_mode"] == "condition_centered"
+    assert free["condition_schedule"] == "dm_to_mixture"
+    assert config["checkpoint_evaluation"]["trial_seed_start"] == 101_000_000
+
+    manifest = REPOSITORY / "scripts/della/optimizer_replication_array.tsv"
+    lines = manifest.read_text().strip().splitlines()
+    assert lines[0].split("\t") == ["experiment", "config", "seed"]
+    records = [line.split("\t") for line in lines[1:]]
+    assert records == [
+        [
+            config["experiment"]["name"],
+            str(config_path.relative_to(REPOSITORY)),
+            str(seed),
+        ]
+        for seed in config["experiment"]["model_seeds"]
+    ]

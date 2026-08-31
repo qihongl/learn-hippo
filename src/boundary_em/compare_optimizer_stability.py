@@ -11,7 +11,9 @@ from typing import Any
 import yaml
 
 
-def _run_passed(run: dict[str, Any]) -> bool:
+def run_passed_stability_criteria(run: dict[str, Any]) -> bool:
+    """Return whether one seed passes every frozen stability criterion."""
+
     learned = float(run["learned_expected_reward"])
     never = float(run["never_pair_reward"])
     benefit = learned - never
@@ -57,7 +59,9 @@ def compare_optimizer_stability_cells(
                     ],
                 },
                 "seeds": list(summary["seeds"]),
-                "screen_passed": all(_run_passed(run) for run in runs),
+                "screen_passed": all(
+                    run_passed_stability_criteria(run) for run in runs
+                ),
                 "minimum_final_endpoint_probability": min(
                     endpoint_probabilities
                 ),

@@ -52,3 +52,14 @@ The stability array requests two hours per task: the first Della run showed that
 identical CPU-only workloads can vary from about 43 minutes to more than 90 minutes
 across nodes, despite using less than 0.4 GB of memory. A timed-out task should be
 rerun with the same manifest index and configuration rather than changing its seed.
+
+The selected batch-32 cell has a separate locked ten-seed replication:
+
+```bash
+mkdir -p "$LEARN_HIPPO_RUN_ROOT/slurm-logs"
+sbatch --export=ALL,LEARN_HIPPO_REPO,LEARN_HIPPO_RUN_ROOT,LEARN_HIPPO_PYTHON \
+  "$LEARN_HIPPO_REPO/scripts/della/run_optimizer_replication_array.sbatch"
+```
+
+Its manifest contains seeds 980--989 and the script permits all ten CPU tasks to
+run concurrently with a two-hour limit.
