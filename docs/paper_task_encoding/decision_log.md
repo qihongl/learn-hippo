@@ -158,3 +158,18 @@
   distribution is uniform over these 17 outcomes, so no encoding time is favored.
 - Completed trial outcomes are used only to build an exact delayed-reward objective;
   the optimizer receives no endpoint target. The same hazards govern both events.
+
+## 2026-08-31 — Exact shared temporal objective passes
+
+- Across the three declared exploratory seeds, the exact optimizer assigned a mean
+  probability of 0.9979 to endpoint encoding on independent DM mappings. Learned
+  expected reward exceeded both never and matched-random-one encoding in every seed.
+- For every seed, endpoint was the best deterministic time when one time had to be
+  shared across events. Without the shared-policy constraint, the best pair was
+  never encoding in `a1` and endpoint encoding in `b1`. This is expected because the
+  former is a distractor and the latter is later relevant; the policy never receives
+  those identities prospectively.
+- The positive result is limited to a 16-parameter temporal schedule, one trace per
+  event, exact counterfactual credit, DM trials, and the zero-delay/no-removal
+  evaluation form. It diagnoses a valid objective and optimizer. It does not yet show
+  that a state-dependent neural policy can discover the rule.

@@ -63,3 +63,9 @@
   17-by-17 reward table enumerates each pair of encoding times plus never encoding.
   Unit tests verify the literal online distribution, reward gradients, endpoint
   rollout equality, endpoint learnability, and reproducible result serialization.
+- 2026-08-31: completed all three declared temporal-audit seeds. On 64 unseen DM
+  mappings per seed, mean endpoint encoding probability was 0.9979 and the endpoint
+  gap was 0.9977. Mean learned reward was 0.6551, compared with 0.4896 for never and
+  0.5145 for matched-random-one encoding. From update 800 to 1,000, endpoint
+  probability changed by 0.0010 and reward by 0.00011, indicating practical
+  convergence. The neural exact-state policy is therefore the next gate.

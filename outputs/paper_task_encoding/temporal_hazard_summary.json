@@ -1,0 +1,67 @@
+{
+  "experiment": "temporal_hazard_audit",
+  "status": "exploratory_optimizer_audit",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/temporal_hazard_audit.yaml",
+  "configuration_sha256": "6688d93c1c721b2dd8fb5ae2baa26031920b831ae69183281f1a8a49067435f9",
+  "git_sha": "3c6aa473dfe642b6754e9979de5a5a23fea53937",
+  "n_seeds": 3,
+  "training_trials_per_seed": 32,
+  "evaluation_trials_per_seed": 64,
+  "updates": 1000,
+  "mean": {
+    "endpoint_probability": 0.9978594382603964,
+    "mean_nonendpoint_probability": 0.0001402347261318937,
+    "endpoint_probability_gap": 0.9977192083994547,
+    "learned_expected_reward": 0.655135989189148,
+    "endpoint_pair_reward": 0.6553873419761658,
+    "never_pair_reward": 0.48964741826057434,
+    "matched_random_one_reward": 0.5144525070985159
+  },
+  "training_curve_mean": [
+    {"update": 1, "endpoint_probability": 0.06000759204228719, "expected_reward": 0.5145316322644552},
+    {"update": 10, "endpoint_probability": 0.06073389450709025, "expected_reward": 0.5306759675343832},
+    {"update": 25, "endpoint_probability": 0.043752131362756096, "expected_reward": 0.5593439737955729},
+    {"update": 50, "endpoint_probability": 0.048256648083527885, "expected_reward": 0.5929295221964518},
+    {"update": 100, "endpoint_probability": 0.3775448103745778, "expected_reward": 0.6289981007575989},
+    {"update": 200, "endpoint_probability": 0.9643563429514567, "expected_reward": 0.6501696904500326},
+    {"update": 400, "endpoint_probability": 0.9901178280512491, "expected_reward": 0.652706523736318},
+    {"update": 600, "endpoint_probability": 0.9949813286463419, "expected_reward": 0.653242290019989},
+    {"update": 800, "endpoint_probability": 0.9968868891398112, "expected_reward": 0.6534581581751505},
+    {"update": 1000, "endpoint_probability": 0.9978594382603964, "expected_reward": 0.6535695393880209}
+  ],
+  "seeds": [
+    {
+      "seed": 410,
+      "endpoint_probability": 0.997687578201294,
+      "endpoint_probability_gap": 0.9975360631942749,
+      "learned_expected_reward": 0.6552123427391052,
+      "never_pair_reward": 0.5055015087127686,
+      "matched_random_one_reward": 0.5266961455345154,
+      "unconstrained_best_pair": [16, 15],
+      "best_shared_time": 15
+    },
+    {
+      "seed": 411,
+      "endpoint_probability": 0.9980039000511169,
+      "endpoint_probability_gap": 0.9978731274604797,
+      "learned_expected_reward": 0.6460815072059631,
+      "never_pair_reward": 0.46850863099098206,
+      "matched_random_one_reward": 0.4972814619541168,
+      "unconstrained_best_pair": [16, 15],
+      "best_shared_time": 15
+    },
+    {
+      "seed": 412,
+      "endpoint_probability": 0.9978868365287781,
+      "endpoint_probability_gap": 0.9977484345436096,
+      "learned_expected_reward": 0.6641141176223755,
+      "never_pair_reward": 0.4949321150779724,
+      "matched_random_one_reward": 0.5193799138069153,
+      "unconstrained_best_pair": [16, 15],
+      "best_shared_time": 15
+    }
+  ],
+  "raw_records": "outputs/paper_task_encoding/temporal_hazard/temporal_hazard_audit_seed{410,411,412}.json (retained locally; ignored by Git because each is approximately 1 MB)",
+  "interpretation": "The exact shared temporal objective reliably learns endpoint encoding. This isolates the earlier failure to policy representation or sampled delayed credit rather than an absent endpoint optimum. The unconstrained oracle instead chooses never for a1 and endpoint for b1, so shared event identity remains scientifically consequential."
+}
