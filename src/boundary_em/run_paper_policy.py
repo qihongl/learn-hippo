@@ -252,6 +252,43 @@ def _evaluate_condition(
     }
 
 
+def evaluate_paper_model(
+    model: StructuredEpisodicPredictionModel,
+    task_config: PaperTaskConfig,
+    *,
+    conditions: tuple[Condition, ...],
+    trial_seed_start: int,
+    action_seed_start: int,
+    n_trials: int,
+    memory_capacity: int,
+) -> dict[Condition, dict[str, Any]]:
+    """Evaluate fixed trial banks without changing model or global random state."""
+
+    if n_trials < 1:
+        raise ValueError("n_trials must be positive")
+    random_state = torch.random.get_rng_state()
+    was_training = model.training
+    original_threshold = model.content_match_threshold
+    try:
+        model.eval()
+        return {
+            condition: _evaluate_condition(
+                model,
+                task_config,
+                condition=condition,
+                trial_seed_start=trial_seed_start + index * n_trials,
+                action_seed_start=action_seed_start + index * n_trials,
+                n_trials=n_trials,
+                memory_capacity=memory_capacity,
+            )
+            for index, condition in enumerate(conditions)
+        }
+    finally:
+        model.content_match_threshold = original_threshold
+        torch.random.set_rng_state(random_state)
+        model.train(was_training)
+
+
 def run_paper_policy_config(
     config_path: str | Path,
     *,
@@ -269,6 +306,11 @@ def run_paper_policy_config(
     raw = yaml.safe_load(config_bytes)
     if seed not in raw["experiment"]["model_seeds"]:
         raise ValueError(f"seed {seed} is not declared in the configuration")
+    output_root = (
+        Path(output_directory)
+        if output_directory is not None
+        else repository / raw["output"]["directory"]
+    )
 
     torch.set_num_threads(1)
     torch.manual_seed(seed)
@@ -303,32 +345,71 @@ def run_paper_policy_config(
         seed=seed,
         forced_exploration=True,
     )
+
+    checkpoint_config = raw.get("checkpoint_evaluation")
+    checkpoint_interval: int | None = None
+    checkpoint_evaluator = None
+    checkpoint_files: list[str] = []
+    if checkpoint_config is not None:
+        checkpoint_interval = int(checkpoint_config["interval_updates"])
+
+        def checkpoint_evaluator(
+            completed_updates: int,
+            checkpoint_model: StructuredEpisodicPredictionModel,
+        ) -> dict[Condition, dict[str, Any]]:
+            evaluation = evaluate_paper_model(
+                checkpoint_model,
+                task_config,
+                conditions=tuple(checkpoint_config["conditions"]),
+                trial_seed_start=int(checkpoint_config["trial_seed_start"]),
+                action_seed_start=int(checkpoint_config["action_seed_start"])
+                + seed * 10_000,
+                n_trials=int(checkpoint_config["trials_per_condition"]),
+                memory_capacity=stage_configs["free_policy"].memory_capacity,
+            )
+            if bool(checkpoint_config.get("save_weights", False)):
+                checkpoint_directory = output_root / "checkpoints"
+                checkpoint_directory.mkdir(parents=True, exist_ok=True)
+                checkpoint_path = checkpoint_directory / (
+                    f"{raw['experiment']['name']}_seed{seed}_"
+                    f"update{completed_updates}.pt"
+                )
+                torch.save(
+                    {
+                        "update": completed_updates,
+                        "model_state_dict": checkpoint_model.state_dict(),
+                    },
+                    checkpoint_path,
+                )
+                checkpoint_files.append(
+                    checkpoint_path.relative_to(output_root).as_posix()
+                )
+            return evaluation
+
     free_result = train_encoding_stage(
         model,
         task_config,
         stage_configs["free_policy"],
         seed=seed + 100,
         forced_exploration=False,
+        checkpoint_interval=checkpoint_interval,
+        checkpoint_evaluator=checkpoint_evaluator,
     )
 
     evaluation_config = raw["evaluation"]
     n_trials = int(
         evaluation_trials_override or evaluation_config["trials_per_condition"]
     )
-    evaluation: dict[str, Any] = {}
-    for condition_index, condition in enumerate(evaluation_config["conditions"]):
-        evaluation[condition] = _evaluate_condition(
-            model,
-            task_config,
-            condition=condition,
-            trial_seed_start=int(evaluation_config["trial_seed_start"])
-            + condition_index * n_trials,
-            action_seed_start=int(evaluation_config["action_seed_start"])
-            + seed * 10_000
-            + condition_index * n_trials,
-            n_trials=n_trials,
-            memory_capacity=stage_configs["free_policy"].memory_capacity,
-        )
+    evaluation = evaluate_paper_model(
+        model,
+        task_config,
+        conditions=tuple(evaluation_config["conditions"]),
+        trial_seed_start=int(evaluation_config["trial_seed_start"]),
+        action_seed_start=int(evaluation_config["action_seed_start"])
+        + seed * 10_000,
+        n_trials=n_trials,
+        memory_capacity=stage_configs["free_policy"].memory_capacity,
+    )
 
     dm = evaluation["DM"]
     endpoint_gap = (
@@ -364,6 +445,8 @@ def run_paper_policy_config(
             "trials_per_condition": n_trials,
         },
     }
+    if checkpoint_config is not None:
+        effective_configuration["checkpoint_evaluation"] = checkpoint_config
     result: dict[str, Any] = {
         "task": "exact Lu-Hasson-Norman 2022 event-prediction generator",
         "data_kind": "measured synthetic simulation",
@@ -384,6 +467,8 @@ def run_paper_policy_config(
         "training": {
             "forced_value_history": forced_result.history,
             "free_policy_history": free_result.history,
+            "free_policy_checkpoints": free_result.checkpoints,
+            "checkpoint_files": checkpoint_files,
         },
         "evaluation": evaluation,
         "seed_success_audit": {
@@ -404,11 +489,6 @@ def run_paper_policy_config(
             "after exploratory runs and is not labeled confirmatory."
         ),
     }
-    output_root = (
-        Path(output_directory)
-        if output_directory is not None
-        else repository / raw["output"]["directory"]
-    )
     output_root.mkdir(parents=True, exist_ok=True)
     output_path = output_root / f"{raw['experiment']['name']}_seed{seed}.json"
     output_path.write_text(json.dumps(result, indent=2) + "\n")

@@ -34,6 +34,14 @@ training:
     gradient_clip: 1.0
     memory_capacity: 40
 
+checkpoint_evaluation:
+  interval_updates: 1
+  trials_per_condition: 2
+  trial_seed_start: 27000000
+  action_seed_start: 28000000
+  conditions: [DM]
+  save_weights: true
+
 evaluation:
   trial_seed_start: 25000000
   trials_per_condition: 4

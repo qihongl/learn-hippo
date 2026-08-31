@@ -132,3 +132,17 @@
   stronger result requires sampled online learning and two total trace slots.
 - Only after exact-state success will a pretrained recurrent situation model replace
   exact feature recording. Exploratory and locked confirmatory seeds remain separate.
+
+## 2026-08-31 — Checkpoint measurement contract implemented
+
+- Fixed development trials can now be evaluated during free-policy training without
+  advancing the training random-number stream or changing the model's parameters or
+  training mode. The final update is always evaluated even when it is not an exact
+  multiple of the checkpoint interval.
+- A checkpoint row contains both its held-out results and the matching training row,
+  plus epoch, update, total sequences processed, and measured evaluation runtime.
+  Optional weight files are referenced by paths in the JSON and remain ignored by
+  Git.
+- Two requested independent reviews were launched but both agents lost their
+  connections before returning findings. The same contract and code-quality checks
+  were completed locally before the full test and lint gates.

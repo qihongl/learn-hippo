@@ -53,3 +53,8 @@
   documented which current learning curves can be reconstructed, and froze the
   user-approved follow-up contract, success criteria, convergence rules, capacity
   ladder, recurrent extension, and confirmatory split before new implementation.
+- 2026-08-31: implemented deterministic fixed-bank checkpoint evaluation and
+  complete per-update exposure records. Checkpoints retain epoch, update, sequences
+  processed, contemporaneous training metrics, held-out schedule/ablation results,
+  evaluation runtime, and optional weights; tests verify that evaluation does not
+  change model parameters, mode, random streams, or the subsequent training result.

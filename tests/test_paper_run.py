@@ -1,10 +1,23 @@
 import json
 from pathlib import Path
 
+import torch
 import yaml
 
 from boundary_em.aggregate_paper_policy import aggregate_paper_policy
-from boundary_em.run_paper_policy import run_paper_policy_config
+from boundary_em.paper_task import PaperTaskConfig
+from boundary_em.run_paper_policy import evaluate_paper_model, run_paper_policy_config
+from boundary_em.structured_paper_model import StructuredEpisodicPredictionModel
+
+
+def _structured_model() -> StructuredEpisodicPredictionModel:
+    return StructuredEpisodicPredictionModel(
+        n_features=16,
+        n_values=4,
+        policy_hidden_dim=8,
+        retrieval_temperature=0.05,
+        temporal_context_scale=2.0,
+    )
 
 
 def test_reported_exact_task_config_keeps_all_ten_declared_seeds() -> None:
@@ -17,6 +30,43 @@ def test_reported_exact_task_config_keeps_all_ten_declared_seeds() -> None:
     assert len(set(config["experiment"]["model_seeds"])) == 10
     assert config["training"]["conditions"] == ["RM", "DM", "NM", "NM"]
     assert config["experiment"]["status"] == "diagnostic_replication"
+
+
+def test_checkpoint_evaluation_is_deterministic_and_does_not_change_model() -> None:
+    model = _structured_model()
+    model.train()
+    parameters_before = {
+        name: parameter.detach().clone()
+        for name, parameter in model.named_parameters()
+    }
+    random_state_before = torch.random.get_rng_state().clone()
+
+    first = evaluate_paper_model(
+        model,
+        PaperTaskConfig(),
+        conditions=("DM",),
+        trial_seed_start=91_000,
+        action_seed_start=92_000,
+        n_trials=2,
+        memory_capacity=2,
+    )
+    second = evaluate_paper_model(
+        model,
+        PaperTaskConfig(),
+        conditions=("DM",),
+        trial_seed_start=91_000,
+        action_seed_start=92_000,
+        n_trials=2,
+        memory_capacity=2,
+    )
+
+    assert first == second
+    assert model.training is True
+    assert torch.equal(torch.random.get_rng_state(), random_state_before)
+    assert all(
+        torch.equal(parameters_before[name], parameter)
+        for name, parameter in model.named_parameters()
+    )
 
 
 def test_smoke_config_writes_reproducible_seed_result(tmp_path: Path) -> None:
@@ -42,6 +92,19 @@ def test_smoke_config_writes_reproducible_seed_result(tmp_path: Path) -> None:
     }
     assert "matched_random_one" in result["evaluation"]["DM"]["forced"]
     assert result["provenance"]["mode"] == "measured"
+    assert len(result["training"]["free_policy_checkpoints"]) == 1
+    checkpoint = result["training"]["free_policy_checkpoints"][0]
+    assert checkpoint["epoch"] == 1 / 256
+    assert checkpoint["update"] == 1
+    assert checkpoint["sequences_processed"] == 1
+    assert checkpoint["training"]["completed_updates"] == 1
+    assert set(checkpoint["evaluation"]) == {"DM"}
+    assert checkpoint["evaluation_runtime_seconds"] >= 0
+    checkpoint_files = result["training"]["checkpoint_files"]
+    assert checkpoint_files == ["checkpoints/exact_paper_task_smoke_seed0_update1.pt"]
+    saved = torch.load(tmp_path / checkpoint_files[0], weights_only=True)
+    assert saved["update"] == 1
+    assert saved["model_state_dict"]
 
 
 def test_reported_aggregation_retains_failed_selectivity_audit(

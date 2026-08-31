@@ -129,3 +129,75 @@ def test_shared_policy_controls_encoding_in_distractor_and_target_events() -> No
     assert episode.b1_actions.all()
     assert episode.memory_labels.count("lure_a1") == len(episode.a1_actions)
     assert episode.memory_labels.count("target_b1") == len(episode.b1_actions)
+
+
+def test_checkpoint_callbacks_record_final_state_without_changing_training() -> None:
+    reference = _model()
+    checkpointed = _model()
+    checkpointed.load_state_dict(reference.state_dict())
+    calls: list[int] = []
+
+    reference_result = train_encoding_stage(
+        reference,
+        PaperTaskConfig(),
+        EncodingStageConfig(
+            **{**_stage().__dict__, "updates": 3},
+        ),
+        seed=27,
+        forced_exploration=False,
+    )
+
+    def evaluate(
+        update: int,
+        model: EpisodicPredictionModel,
+    ) -> dict[str, float]:
+        calls.append(update)
+        model.eval()
+        return {"random_probe": float(torch.rand(()).item())}
+
+    checkpointed_result = train_encoding_stage(
+        checkpointed,
+        PaperTaskConfig(),
+        EncodingStageConfig(
+            **{**_stage().__dict__, "updates": 3},
+        ),
+        seed=27,
+        forced_exploration=False,
+        checkpoint_interval=2,
+        checkpoint_evaluator=evaluate,
+    )
+
+    assert calls == [2, 3]
+    assert [point["update"] for point in checkpointed_result.checkpoints] == [2, 3]
+    assert [point["epoch"] for point in checkpointed_result.checkpoints] == [
+        4 / 256,
+        6 / 256,
+    ]
+    assert [
+        point["sequences_processed"] for point in checkpointed_result.checkpoints
+    ] == [4, 6]
+    assert [
+        point["training"]["completed_updates"]
+        for point in checkpointed_result.checkpoints
+    ] == [2, 3]
+    assert all(
+        point["evaluation_runtime_seconds"] >= 0
+        for point in checkpointed_result.checkpoints
+    )
+    assert checkpointed_result.history == reference_result.history
+    assert [point["completed_updates"] for point in reference_result.history] == [
+        1,
+        2,
+        3,
+    ]
+    assert [point["sequences_processed"] for point in reference_result.history] == [
+        2,
+        4,
+        6,
+    ]
+    assert all(point["learning_rate"] == 0.01 for point in reference_result.history)
+    assert checkpointed.training is True
+    assert all(
+        torch.equal(reference.state_dict()[name], parameter)
+        for name, parameter in checkpointed.state_dict().items()
+    )

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from time import perf_counter
+from typing import Any
 
 import torch
 from torch import Tensor, nn
@@ -67,6 +70,7 @@ class EncodingTrainingResult:
     """Complete update history for one encoding optimization stage."""
 
     history: list[dict[str, float | int | str]]
+    checkpoints: list[dict[str, Any]]
 
 
 def train_encoding_stage(
@@ -76,8 +80,20 @@ def train_encoding_stage(
     *,
     seed: int,
     forced_exploration: bool,
+    checkpoint_interval: int | None = None,
+    checkpoint_evaluator: Callable[
+        [int, EpisodicPredictionModel], dict[str, Any]
+    ]
+    | None = None,
 ) -> EncodingTrainingResult:
     """Train only the critic under forced actions or actor-critic under free actions."""
+
+    if (checkpoint_interval is None) != (checkpoint_evaluator is None):
+        raise ValueError(
+            "checkpoint_interval and checkpoint_evaluator must be provided together"
+        )
+    if checkpoint_interval is not None and checkpoint_interval < 1:
+        raise ValueError("checkpoint_interval must be positive")
 
     torch.manual_seed(seed)
     action_generator = torch.Generator().manual_seed(seed + 90_000_000)
@@ -92,6 +108,7 @@ def train_encoding_stage(
         lr=stage_config.learning_rate,
     )
     history: list[dict[str, float | int | str]] = []
+    checkpoints: list[dict[str, Any]] = []
 
     for update in range(stage_config.updates):
         episodes: list[EncodingEpisode] = []
@@ -148,9 +165,12 @@ def train_encoding_stage(
             stage_config.gradient_clip,
         )
         optimizer.step()
-        history.append(
-            {
+        completed_updates = update + 1
+        update_record: dict[str, float | int | str] = {
                 "update": update,
+                "completed_updates": completed_updates,
+                "sequences_processed": completed_updates * stage_config.batch_size,
+                "learning_rate": float(optimizer.param_groups[0]["lr"]),
                 "mode": "forced_value" if forced_exploration else "free_actor",
                 "loss": float(loss.detach().item()),
                 "actor_loss": float(actor_loss.detach().item()),
@@ -203,11 +223,38 @@ def train_encoding_stage(
                 / len(episodes),
                 "gradient_norm": float(gradient_norm.detach().item()),
             }
+        history.append(update_record)
+
+        should_checkpoint = checkpoint_interval is not None and (
+            completed_updates % checkpoint_interval == 0
+            or completed_updates == stage_config.updates
         )
+        if should_checkpoint:
+            assert checkpoint_evaluator is not None
+            random_state = torch.random.get_rng_state()
+            was_training = model.training
+            try:
+                evaluation_start = perf_counter()
+                evaluation = checkpoint_evaluator(completed_updates, model)
+                evaluation_runtime_seconds = perf_counter() - evaluation_start
+            finally:
+                torch.random.set_rng_state(random_state)
+                model.train(was_training)
+            checkpoints.append(
+                {
+                    "epoch": completed_updates * stage_config.batch_size / 256,
+                    "update": completed_updates,
+                    "sequences_processed": completed_updates
+                    * stage_config.batch_size,
+                    "training": dict(update_record),
+                    "evaluation": evaluation,
+                    "evaluation_runtime_seconds": evaluation_runtime_seconds,
+                }
+            )
 
     for parameter in actor_parameters + critic_parameters:
         parameter.requires_grad_(True)
-    return EncodingTrainingResult(history=history)
+    return EncodingTrainingResult(history=history, checkpoints=checkpoints)
 
 
 def _freeze_prediction_system(
