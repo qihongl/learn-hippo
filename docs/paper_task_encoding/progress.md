@@ -123,3 +123,8 @@
   0.738. Endpoint selectivity was absent at all checkpoints. Sampling variance is
   therefore not the sole problem: the shared neural mixed objective has a strong
   nonboundary basin despite a better endpoint solution.
+- 2026-08-31: added an explicitly labeled two-stage exact-reward curriculum. The
+  shared actor first receives 100 epochs of DM-only experience, then 100 epochs of
+  the unchanged full mixture. Tests verify that curriculum and mixture histories and
+  held-out checkpoints remain separately serialized; no policy input or reward is
+  altered.

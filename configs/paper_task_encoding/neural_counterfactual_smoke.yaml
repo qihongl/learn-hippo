@@ -23,6 +23,16 @@ counterfactual_banks:
   evaluation_seed_start: 42000000
   memory_capacity: 2
 
+curriculum:
+  conditions: [DM]
+  training_examples: 1
+  training_seed_start: 40500000
+  updates: 1
+  batch_size: 1
+  learning_rate: 0.003
+  gradient_clip: 10.0
+  checkpoint_interval: 1
+
 optimization:
   initial_probability: 0.05
   updates: 2

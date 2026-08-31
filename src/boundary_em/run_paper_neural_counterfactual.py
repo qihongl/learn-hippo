@@ -151,6 +151,36 @@ def run_neural_counterfactual_config(
             return next(iter(by_condition.values()))
         return {"by_condition": by_condition}
 
+    curriculum_result = None
+    curriculum_bank_runtime = 0.0
+    curriculum_training_runtime = 0.0
+    curriculum_config = raw.get("curriculum")
+    if curriculum_config is not None:
+        curriculum_bank_start = perf_counter()
+        curriculum_examples = _build_bank(
+            model,
+            task_config,
+            conditions=tuple(curriculum_config["conditions"]),
+            seed_start=int(curriculum_config["training_seed_start"]) + seed_offset,
+            n_examples=int(curriculum_config["training_examples"]),
+            memory_capacity=int(bank_config["memory_capacity"]),
+            evaluation_mode=task_evaluation_mode,
+        )
+        curriculum_bank_runtime = perf_counter() - curriculum_bank_start
+        curriculum_start = perf_counter()
+        curriculum_result = train_neural_counterfactual(
+            model,
+            curriculum_examples,
+            updates=int(curriculum_config["updates"]),
+            batch_size=int(curriculum_config["batch_size"]),
+            learning_rate=float(curriculum_config["learning_rate"]),
+            gradient_clip=float(curriculum_config["gradient_clip"]),
+            seed=seed + 40_000_000,
+            checkpoint_interval=int(curriculum_config["checkpoint_interval"]),
+            checkpoint_evaluator=checkpoint_evaluator,
+        )
+        curriculum_training_runtime = perf_counter() - curriculum_start
+
     training_start = perf_counter()
     training_result = train_neural_counterfactual(
         model,
@@ -189,6 +219,7 @@ def run_neural_counterfactual_config(
             "one_encoding_maximum_per_event": True,
             "counterfactual_outcomes_used_during_training": True,
             "training_bank_reused_across_updates": True,
+            "dm_curriculum_used": curriculum_config is not None,
             "interpretation": "neural representation development, not final claim",
         },
         "training": {
@@ -208,6 +239,15 @@ def run_neural_counterfactual_config(
             "torch": torch.__version__,
         },
     }
+    if curriculum_result is not None:
+        result["training"]["curriculum_history"] = curriculum_result.history
+        result["training"]["curriculum_checkpoints"] = curriculum_result.checkpoints
+        result["training"]["curriculum_bank_generation_runtime_seconds"] = (
+            curriculum_bank_runtime
+        )
+        result["training"]["curriculum_optimization_runtime_seconds"] = (
+            curriculum_training_runtime
+        )
     output_root = (
         Path(output_directory)
         if output_directory is not None
