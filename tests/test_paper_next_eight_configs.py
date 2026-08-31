@@ -141,8 +141,12 @@ def test_selected_credit_method_receives_full_budget_on_fresh_seeds() -> None:
 
 def test_optimizer_stability_screen_crosses_schedule_and_batch_at_fixed_exposure(
 ) -> None:
-    paths = sorted(CONFIG_DIRECTORY.glob("sampled_hazard_stability_*.yaml"))
-    configs = [yaml.safe_load(path.read_text()) for path in paths]
+    configs = [
+        config
+        for path in sorted(CONFIG_DIRECTORY.glob("sampled_hazard_stability_*.yaml"))
+        if (config := yaml.safe_load(path.read_text()))["experiment"]["status"]
+        == "exploratory_optimizer_stability"
+    ]
 
     assert len(configs) == 4
     assert all(
@@ -182,6 +186,8 @@ def test_optimizer_stability_della_manifest_contains_every_paired_seed() -> None
     expected = []
     for path in sorted(CONFIG_DIRECTORY.glob("sampled_hazard_stability_*.yaml")):
         config = yaml.safe_load(path.read_text())
+        if config["experiment"]["status"] != "exploratory_optimizer_stability":
+            continue
         expected.extend(
             [config["experiment"]["name"], str(path.relative_to(REPOSITORY)), str(seed)]
             for seed in config["experiment"]["model_seeds"]
