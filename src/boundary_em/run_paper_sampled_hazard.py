@@ -95,21 +95,28 @@ def run_sampled_hazard_config(
 
     checkpoint_config = raw["checkpoint_evaluation"]
     evaluation_bank_start = perf_counter()
-    evaluation_examples = [
-        build_counterfactual_example(
-            model,
-            generate_trial(
-                task_config,
-                seed=int(checkpoint_config["trial_seed_start"])
-                + seed * 100_000
-                + index,
-                condition="DM",
-                evaluation=True,
-            ),
-            memory_capacity=stage_configs["free_policy"].memory_capacity,
-        )
-        for index in range(int(checkpoint_config["trials"]))
-    ]
+    evaluation_conditions = tuple(checkpoint_config.get("conditions", ["DM"]))
+    evaluation_trial_count = int(checkpoint_config["trials"])
+    evaluation_mode = bool(checkpoint_config.get("evaluation_mode", True))
+    evaluation_examples = {
+        condition: [
+            build_counterfactual_example(
+                model,
+                generate_trial(
+                    task_config,
+                    seed=int(checkpoint_config["trial_seed_start"])
+                    + seed * 100_000
+                    + condition_index * evaluation_trial_count
+                    + index,
+                    condition=condition,
+                    evaluation=evaluation_mode,
+                ),
+                memory_capacity=stage_configs["free_policy"].memory_capacity,
+            )
+            for index in range(evaluation_trial_count)
+        ]
+        for condition_index, condition in enumerate(evaluation_conditions)
+    }
     evaluation_bank_runtime = perf_counter() - evaluation_bank_start
 
     forced_start = perf_counter()
@@ -126,10 +133,13 @@ def run_sampled_hazard_config(
         _completed_updates: int,
         checkpoint_model: StructuredEpisodicPredictionModel,
     ) -> dict[str, Any]:
-        return evaluate_neural_counterfactual(
-            checkpoint_model,
-            evaluation_examples,
-        )
+        by_condition = {
+            condition: evaluate_neural_counterfactual(checkpoint_model, examples)
+            for condition, examples in evaluation_examples.items()
+        }
+        if len(by_condition) == 1:
+            return next(iter(by_condition.values()))
+        return {"by_condition": by_condition}
 
     free_start = perf_counter()
     free_result = train_sampled_hazard_stage(
@@ -142,7 +152,14 @@ def run_sampled_hazard_config(
         checkpoint_evaluator=checkpoint_evaluator,
     )
     free_runtime = perf_counter() - free_start
-    evaluation = evaluate_neural_counterfactual(model, evaluation_examples)
+    evaluation_by_condition = {
+        condition: evaluate_neural_counterfactual(model, examples)
+        for condition, examples in evaluation_examples.items()
+    }
+    primary_condition = (
+        "DM" if "DM" in evaluation_by_condition else evaluation_conditions[0]
+    )
+    evaluation = evaluation_by_condition[primary_condition]
 
     result: dict[str, Any] = {
         "task": "Lu-Hasson-Norman 2022 event-prediction generator",
@@ -171,6 +188,7 @@ def run_sampled_hazard_config(
             "free_policy_runtime_seconds": free_runtime,
         },
         "evaluation": evaluation,
+        "evaluation_by_condition": evaluation_by_condition,
         "evaluation_bank_generation_runtime_seconds": evaluation_bank_runtime,
         "provenance": {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),

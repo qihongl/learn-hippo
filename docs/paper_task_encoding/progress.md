@@ -94,3 +94,8 @@
   and 0.5129 for matched random; target-memory removal reduced it to 0.4831. The
   endpoint preference first exceeded 0.90 at epoch 30. Large temporary excursions at
   epochs 90 and 340 recovered, and the last five checkpoints all exceeded 0.99.
+- 2026-08-31: generalized counterfactual evaluation to rectangular reward surfaces
+  for unequal event delays and grouped time-resolved encoding probabilities by event
+  length. The next declared fresh actor restores training-mode delays, feature
+  removal, random penalties, and the full 0.25 RM / 0.25 DM / 0.50 NM mixture; held-
+  out banks retain these manipulations separately in all three conditions.

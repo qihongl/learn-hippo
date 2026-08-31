@@ -133,22 +133,21 @@ def counterfactual_reward_matrix(
 ) -> Tensor:
     """Enumerate prediction reward for every first-encoding-time pair."""
 
-    if len(trial.a1.inputs) != len(trial.b1.inputs):
-        raise ValueError("the temporal audit requires equal a1 and b1 lengths")
     if memory_capacity < 2:
         raise ValueError("two traces are required to encode once in each event")
 
-    event_length = len(trial.a1.inputs)
-    rewards = torch.empty(event_length + 1, event_length + 1)
+    a1_length = len(trial.a1.inputs)
+    b1_length = len(trial.b1.inputs)
+    rewards = torch.empty(a1_length + 1, b1_length + 1)
     original_mode = model.training
     context = torch.no_grad() if torch.is_grad_enabled() else nullcontext()
     try:
         model.eval()
         with context:
-            for a1_time in range(event_length + 1):
-                a1_actions = _single_encoding_actions(event_length, a1_time)
-                for b1_time in range(event_length + 1):
-                    b1_actions = _single_encoding_actions(event_length, b1_time)
+            for a1_time in range(a1_length + 1):
+                a1_actions = _single_encoding_actions(a1_length, a1_time)
+                for b1_time in range(b1_length + 1):
+                    b1_actions = _single_encoding_actions(b1_length, b1_time)
                     computation = rollout_trial(
                         model,
                         trial,

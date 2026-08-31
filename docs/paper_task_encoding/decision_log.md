@@ -237,3 +237,16 @@
 - This achieves the stronger Stage 2 goal in the simplified DM, zero-delay/no-removal,
   one-per-event condition. The next gate restores the released-code training delays,
   removed observations, and RM/DM/NM mixture while retaining the same online policy.
+
+## 2026-08-31 — Full released-task gate
+
+- The next fresh actor trains from scratch on the released 0.25 RM / 0.25 DM / 0.50
+  NM mixture. Training now samples the released 0–4 delays and feature-removal rule;
+  the policy still receives only its current accumulated situation state.
+- Held-out evaluation uses 64 new training-mode trials in each condition, preserving
+  variable and unequal event durations, removed features, and random penalties. A
+  generalized rectangular counterfactual evaluator supports unequal `a1` and `b1`
+  lengths without altering their online states.
+- This remains the one-trace-per-event capacity gate. It asks whether the successful
+  sampled learner survives the exact task distribution before removing the reserved
+  event slots.

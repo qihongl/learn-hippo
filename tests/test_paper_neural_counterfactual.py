@@ -72,6 +72,30 @@ def test_exact_delayed_reward_has_gradient_to_shared_neural_actor() -> None:
     )
 
 
+def test_counterfactual_evaluation_supports_unequal_event_delays() -> None:
+    model = _model()
+    trial = generate_trial(
+        PaperTaskConfig(),
+        seed=81_004,
+        condition="DM",
+        evaluation=False,
+    )
+    assert len(trial.a1.inputs) != len(trial.b1.inputs)
+    example = build_counterfactual_example(model, trial, memory_capacity=2)
+
+    evaluation = evaluate_neural_counterfactual(model, [example])
+
+    assert example.reward_matrix.shape == (
+        len(trial.a1.inputs) + 1,
+        len(trial.b1.inputs) + 1,
+    )
+    assert evaluation["trials"] == 1
+    assert set(evaluation["encoding_time_probabilities_by_event_length"]) == {
+        str(len(trial.a1.inputs)),
+        str(len(trial.b1.inputs)),
+    }
+
+
 def test_neural_policy_learns_observation_defined_endpoint_from_reward() -> None:
     model = _model()
     initialize_neural_hazard_policy(model, initial_probability=0.05)

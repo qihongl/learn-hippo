@@ -92,12 +92,17 @@ def neural_encoding_distributions(
 ) -> tuple[Tensor, Tensor]:
     """Return first-encoding-time distributions from observation-only states."""
 
-    logits = _actor_logits(
-        model,
-        torch.stack([example.a1_states, example.b1_states]),
+    if example.a1_states.shape == example.b1_states.shape:
+        logits = _actor_logits(
+            model,
+            torch.stack([example.a1_states, example.b1_states]),
+        )
+        distributions = _batched_hazard_encoding_distribution(logits)
+        return distributions[0], distributions[1]
+    return (
+        hazard_encoding_distribution(_actor_logits(model, example.a1_states)),
+        hazard_encoding_distribution(_actor_logits(model, example.b1_states)),
     )
-    distributions = _batched_hazard_encoding_distribution(logits)
-    return distributions[0], distributions[1]
 
 
 def neural_expected_reward(
@@ -281,73 +286,100 @@ def evaluate_neural_counterfactual(
     try:
         model.eval()
         with torch.no_grad():
-            a1_states = torch.stack([example.a1_states for example in examples])
-            b1_states = torch.stack([example.b1_states for example in examples])
-            a1_probabilities = _batched_hazard_encoding_distribution(
-                _actor_logits(model, a1_states)
+            a1_probabilities = []
+            b1_probabilities = []
+            learned_rewards = []
+            target_removed = []
+            distractor_removed = []
+            endpoint_pair_rewards = []
+            never_pair_rewards = []
+            matched_random_rewards = []
+            by_length: dict[int, list[Tensor]] = {}
+            for example in examples:
+                a1, b1 = neural_encoding_distributions(model, example)
+                rewards = example.reward_matrix
+                a1_probabilities.append(a1)
+                b1_probabilities.append(b1)
+                learned_rewards.append(a1 @ rewards @ b1)
+                target_removed.append(a1 @ rewards[:, -1])
+                distractor_removed.append(rewards[-1, :] @ b1)
+                endpoint_pair_rewards.append(rewards[-2, -2])
+                never_pair_rewards.append(rewards[-1, -1])
+                matched_random_rewards.append(rewards[:-1, :-1].mean())
+                by_length.setdefault(a1.numel() - 1, []).append(a1)
+                by_length.setdefault(b1.numel() - 1, []).append(b1)
+
+            all_endpoint = torch.stack(
+                [
+                    probabilities[-2]
+                    for probabilities in a1_probabilities + b1_probabilities
+                ]
             )
-            b1_probabilities = _batched_hazard_encoding_distribution(
-                _actor_logits(model, b1_states)
+            all_nonendpoint = torch.cat(
+                [
+                    probabilities[:-2]
+                    for probabilities in a1_probabilities + b1_probabilities
+                ]
             )
-            rewards = torch.stack([example.reward_matrix for example in examples])
-            learned_rewards = torch.einsum(
-                "bi,bij,bj->b",
-                a1_probabilities,
-                rewards,
-                b1_probabilities,
+            all_never = torch.stack(
+                [
+                    probabilities[-1]
+                    for probabilities in a1_probabilities + b1_probabilities
+                ]
             )
-            target_removed = torch.einsum(
-                "bi,bi->b",
-                a1_probabilities,
-                rewards[:, :, -1],
-            )
-            distractor_removed = torch.einsum(
-                "bi,bi->b",
-                b1_probabilities,
-                rewards[:, -1, :],
-            )
-            mean_rewards = rewards.mean(dim=0)
-            all_probabilities = torch.cat(
-                [a1_probabilities, b1_probabilities],
-                dim=0,
-            )
-            return {
+            time_probabilities = {
+                str(length): torch.stack(probabilities).mean(dim=0).tolist()
+                for length, probabilities in sorted(by_length.items())
+            }
+            result = {
                 "trials": len(examples),
-                "learned_expected_reward": float(learned_rewards.mean().item()),
-                "endpoint_probability": float(
-                    all_probabilities[:, -2].mean().item()
+                "learned_expected_reward": float(
+                    torch.stack(learned_rewards).mean().item()
                 ),
+                "endpoint_probability": float(all_endpoint.mean().item()),
                 "a1_endpoint_probability": float(
-                    a1_probabilities[:, -2].mean().item()
+                    torch.stack(
+                        [probabilities[-2] for probabilities in a1_probabilities]
+                    )
+                    .mean()
+                    .item()
                 ),
                 "b1_endpoint_probability": float(
-                    b1_probabilities[:, -2].mean().item()
+                    torch.stack(
+                        [probabilities[-2] for probabilities in b1_probabilities]
+                    )
+                    .mean()
+                    .item()
                 ),
                 "mean_nonendpoint_probability": float(
-                    all_probabilities[:, :-2].mean().item()
+                    all_nonendpoint.mean().item()
                 ),
-                "never_probability": float(
-                    all_probabilities[:, -1].mean().item()
-                ),
+                "never_probability": float(all_never.mean().item()),
                 "endpoint_probability_gap": float(
-                    (
-                        all_probabilities[:, -2].mean()
-                        - all_probabilities[:, :-2].mean()
-                    ).item()
+                    (all_endpoint.mean() - all_nonendpoint.mean()).item()
                 ),
-                "mean_encoding_time_probabilities": all_probabilities.mean(
-                    dim=0
-                ).tolist(),
-                "endpoint_pair_reward": float(mean_rewards[-2, -2].item()),
-                "never_pair_reward": float(mean_rewards[-1, -1].item()),
+                "encoding_time_probabilities_by_event_length": time_probabilities,
+                "endpoint_pair_reward": float(
+                    torch.stack(endpoint_pair_rewards).mean().item()
+                ),
+                "never_pair_reward": float(
+                    torch.stack(never_pair_rewards).mean().item()
+                ),
                 "matched_random_one_reward": float(
-                    mean_rewards[:-1, :-1].mean().item()
+                    torch.stack(matched_random_rewards).mean().item()
                 ),
-                "target_memory_removed_reward": float(target_removed.mean().item()),
+                "target_memory_removed_reward": float(
+                    torch.stack(target_removed).mean().item()
+                ),
                 "distractor_memory_removed_reward": float(
-                    distractor_removed.mean().item()
+                    torch.stack(distractor_removed).mean().item()
                 ),
             }
+            if len(time_probabilities) == 1:
+                result["mean_encoding_time_probabilities"] = next(
+                    iter(time_probabilities.values())
+                )
+            return result
     finally:
         torch.random.set_rng_state(random_state)
         model.train(original_mode)
