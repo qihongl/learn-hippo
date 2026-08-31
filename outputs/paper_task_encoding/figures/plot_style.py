@@ -41,6 +41,10 @@ LIGHT = "#eef2f6"
 def save_figure(fig: plt.Figure, stem: Path) -> None:
     """Save vector and preview versions of one figure."""
 
-    fig.savefig(stem.with_suffix(".svg"), bbox_inches="tight")
+    svg_path = stem.with_suffix(".svg")
+    fig.savefig(svg_path, bbox_inches="tight")
+    svg_text = svg_path.read_text()
+    clean_svg = "\n".join(line.rstrip() for line in svg_text.splitlines()) + "\n"
+    svg_path.write_text(clean_svg)
     fig.savefig(stem.with_suffix(".pdf"), bbox_inches="tight")
     fig.savefig(stem.with_suffix(".png"), dpi=220, bbox_inches="tight")

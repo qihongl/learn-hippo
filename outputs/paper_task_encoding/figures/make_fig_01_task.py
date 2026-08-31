@@ -45,7 +45,7 @@ ax.set_ylim(0, 1)
 ax.axis("off")
 ax.text(-0.02, 1.03, "a", fontweight="bold", fontsize=10, transform=ax.transAxes)
 ax.set_title(
-    "Stimulus and the original 37-dimensional input", loc="left", fontweight="bold"
+    "A situation is revealed one feature at a time", loc="left", fontweight="bold"
 )
 
 example_values = [2, 0, 3, 1, 1, 2, 0, 3, 2, 1, 3, 0, 1, 3, 2, 0]
@@ -118,8 +118,9 @@ for label, display_width, color in segments:
 ax.text(
     0.02,
     0.04,
-    "At every step the model predicts four possible values or ‘don’t know.’ "
-    "No boundary flag or completion mask is added.",
+    "At every step the model predicts four values or ‘don’t know.’ If an "
+    "observation is withheld, its four value units are zero. No boundary flag "
+    "is added.",
     fontsize=7,
     color=INK,
 )
@@ -137,7 +138,7 @@ box(
     0.54,
     0.19,
     0.28,
-    "a1: distracting event\nnew random situation\n16 + delay steps",
+    "a1: earlier event\nnew random situation\n16 + delay steps",
     face="#e8f1fb",
     edge=BLUE,
 )
@@ -147,7 +148,7 @@ box(
     0.54,
     0.19,
     0.28,
-    "b1: first target event\nnew random situation\n16 + delay steps",
+    "b1: later event\nnew random situation\n16 + delay steps",
     face="#e7f6f0",
     edge=AQUA,
 )
@@ -214,7 +215,8 @@ ax.text(
     0.02,
     0.01,
     "Observation order is random. Query order is fixed, begins after a delay "
-    "of 0–4 steps in meta-training, and has delay 0 in held-out evaluation.",
+    "of 0–4 steps in training, and has delay 0 in the fixed-duration evaluation. "
+    "The encoding policy is not told which event will matter later.",
     fontsize=7,
     color=INK,
 )

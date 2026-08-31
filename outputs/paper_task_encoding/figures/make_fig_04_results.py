@@ -1,129 +1,158 @@
-"""Generate forced-schedule and causal-ablation result panels."""
+"""Summarize boundary selectivity and reward across follow-up regimes."""
 
 import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from plot_style import AQUA, BLUE, INK, LIGHT, MUTED, ORANGE, RED, VIOLET, save_figure
+from plot_style import AQUA, BLUE, INK, MUTED, ORANGE, RED, save_figure
 
 HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parents[2]
-summary = json.loads(
-    (REPOSITORY / "outputs/paper_task_encoding/reported_summary.json").read_text()
-)
-seed_files = sorted(
-    (REPOSITORY / "outputs/paper_task_encoding/reported").glob("*.json")
-)
-seeds = [json.loads(path.read_text()) for path in seed_files]
+OUTPUT = REPOSITORY / "outputs/paper_task_encoding"
 
-fig, axes = plt.subplots(
-    1, 2, figsize=(7.2, 3.0), gridspec_kw={"width_ratios": [1.05, 1.0]}
+
+def load_summary(name: str) -> dict:
+    """Load one compact, versioned experiment summary."""
+
+    return json.loads((OUTPUT / name).read_text())
+
+
+temporal = load_summary("temporal_hazard_summary.json")
+exact_dm = load_summary("neural_counterfactual_summary.json")
+sampled_dm = load_summary("sampled_hazard_summary.json")
+factorial = load_summary("sampled_hazard_factorial_summary.json")
+sampled_full = load_summary("sampled_hazard_full_mixture_summary.json")
+exact_full = load_summary("neural_counterfactual_full_mixture_summary.json")
+curriculum = load_summary("neural_counterfactual_curriculum_summary.json")
+
+labels = [
+    "temporal audit\nDM, exact credit",
+    "neural policy\nDM, exact credit",
+    "neural policy\nDM, sampled reward",
+    "neural policy\nDM, variable timing",
+    "neural policy\nfull mix, sampled",
+    "neural policy\nfull mix, exact",
+    "DM curriculum\nthen full mix",
+]
+endpoint_gaps = np.asarray(
+    [
+        temporal["mean"]["endpoint_probability_gap"],
+        exact_dm["final_evaluation"]["endpoint_probability_gap"],
+        sampled_dm["final_evaluation"]["endpoint_probability_gap"],
+        factorial["dm_variable_delay_and_removal"]["endpoint_probability"]
+        - factorial["dm_variable_delay_and_removal"]["nonendpoint_probability"],
+        sampled_full["final_evaluation"]["DM"]["endpoint_probability_gap"],
+        exact_full["final_evaluation"]["DM"]["endpoint_probability_gap"],
+        curriculum["final_evaluation"]["DM"]["endpoint_probability"]
+        - curriculum["final_evaluation"]["DM"]["nonendpoint_probability"],
+    ]
 )
+
+reward_rows = [
+    (
+        exact_dm["final_evaluation"]["learned_expected_reward"],
+        exact_dm["final_evaluation"]["matched_random_one_reward"],
+        exact_dm["final_evaluation"]["never_pair_reward"],
+        exact_dm["final_evaluation"]["endpoint_pair_reward"],
+    ),
+    (
+        sampled_dm["final_evaluation"]["learned_expected_reward"],
+        sampled_dm["final_evaluation"]["matched_random_one_reward"],
+        sampled_dm["final_evaluation"]["never_pair_reward"],
+        sampled_dm["final_evaluation"]["endpoint_pair_reward"],
+    ),
+    (
+        factorial["dm_variable_delay_and_removal"]["learned_reward"],
+        factorial["dm_variable_delay_and_removal"]["matched_random_one_reward"],
+        factorial["dm_variable_delay_and_removal"]["never_reward"],
+        factorial["dm_variable_delay_and_removal"]["forced_endpoint_reward"],
+    ),
+    (
+        sampled_full["final_evaluation"]["DM"]["learned_reward"],
+        sampled_full["final_evaluation"]["DM"]["matched_random_one_reward"],
+        sampled_full["final_evaluation"]["DM"]["never_pair_reward"],
+        sampled_full["final_evaluation"]["DM"]["endpoint_pair_reward"],
+    ),
+    (
+        exact_full["final_evaluation"]["DM"]["learned_reward"],
+        exact_full["final_evaluation"]["DM"]["matched_random_one_reward"],
+        exact_full["final_evaluation"]["DM"]["never_pair_reward"],
+        exact_full["final_evaluation"]["DM"]["endpoint_pair_reward"],
+    ),
+    (
+        curriculum["final_evaluation"]["DM"]["learned_reward"],
+        curriculum["final_evaluation"]["DM"]["matched_random_one_reward"],
+        curriculum["final_evaluation"]["DM"]["never_reward"],
+        curriculum["final_evaluation"]["DM"]["forced_endpoint_reward"],
+    ),
+]
+reward_labels = labels[1:]
+learned_fraction = np.asarray(
+    [
+        (learned - never) / (endpoint - never)
+        for learned, _, never, endpoint in reward_rows
+    ]
+)
+random_fraction = np.asarray(
+    [
+        (random - never) / (endpoint - never)
+        for _, random, never, endpoint in reward_rows
+    ]
+)
+
+fig, axes = plt.subplots(1, 2, figsize=(7.5, 4.15), constrained_layout=True)
 
 ax = axes[0]
-ax.text(-0.18, 1.04, "a", fontweight="bold", fontsize=10, transform=ax.transAxes)
-schedule_order = [
-    "endpoint_only",
-    "midpoint_only",
-    "midpoint_plus_endpoint",
-    "dense",
-    "never",
-    "matched_random_one",
-]
-labels = ["endpoint", "midpoint", "mid + end", "dense", "never", "random one"]
-values = [
-    summary["conditions"]["DM"]["forced_reward"][name]["mean"]
-    for name in schedule_order
-]
-colors = [ORANGE, BLUE, VIOLET, MUTED, LIGHT, AQUA]
-bars = ax.barh(
-    np.arange(len(labels)), values, color=colors, edgecolor="white", height=0.68
-)
-ax.set_yticks(np.arange(len(labels)), labels)
+ax.text(-0.15, 1.03, "a", fontweight="bold", fontsize=10, transform=ax.transAxes)
+y = np.arange(len(labels))
+colors = [BLUE, BLUE, AQUA, AQUA, RED, RED, ORANGE]
+ax.scatter(endpoint_gaps, y, color=colors, s=34, zorder=3)
+for index, value in enumerate(endpoint_gaps):
+    ax.plot([0, value], [index, index], color=colors[index], linewidth=1.1, alpha=0.7)
+ax.axvline(0, color=MUTED, linewidth=0.8)
+ax.axvline(0.5, color=MUTED, linestyle="--", linewidth=0.8)
+ax.set_yticks(y, labels)
 ax.invert_yaxis()
-ax.set_xlim(0.45, 0.69)
-ax.set_xlabel("Expected prediction reward")
-ax.set_title("Forced schedules: endpoint is best in DM")
-for bar, value in zip(bars, values, strict=True):
-    ax.text(
-        value + 0.004,
-        bar.get_y() + bar.get_height() / 2,
-        f"{value:.3f}",
-        va="center",
-        fontsize=6.5,
-        color=INK,
-    )
+ax.set_xlim(-0.11, 1.06)
+ax.set_xlabel("Endpoint probability minus nonendpoint mean")
+ax.set_title("Final held-out encoding policy")
 
 ax = axes[1]
-ax.text(-0.18, 1.04, "b", fontweight="bold", fontsize=10, transform=ax.transAxes)
-methods = [
-    "learned",
-    "retrieval off",
-    "target removed",
-    "lure removed",
-    "content gate off",
-]
-per_seed = []
-for run in seeds:
-    dm = run["evaluation"]["DM"]
-    per_seed.append(
-        [
-            dm["learned"]["reward"]["mean"],
-            dm["retrieval_off_same_actions"]["reward"]["mean"],
-            dm["ablations"]["target_memory_removed"]["reward"]["mean"],
-            dm["ablations"]["lure_memory_removed"]["reward"]["mean"],
-            dm["ablations"]["content_gate_off"]["reward"]["mean"],
-        ]
-    )
-per_seed = np.asarray(per_seed)
-for row in per_seed:
-    ax.plot(
-        np.arange(len(methods)),
-        row,
-        color="#b7bec7",
-        linewidth=0.7,
-        alpha=0.65,
-        zorder=1,
-    )
+ax.text(-0.15, 1.03, "b", fontweight="bold", fontsize=10, transform=ax.transAxes)
+y = np.arange(len(reward_labels))
+ax.axvline(0, color=MUTED, linestyle=":", linewidth=0.8)
+ax.axvline(1, color=MUTED, linestyle="--", linewidth=0.8)
+for index in y:
+    low, high = sorted([learned_fraction[index], random_fraction[index]])
+    ax.plot([low, high], [index, index], color="#c5cbd2", linewidth=1.2, zorder=1)
 ax.scatter(
-    np.tile(np.arange(len(methods)), len(seeds)),
-    per_seed.T.flatten(order="F"),
-    color=BLUE,
-    s=10,
-    alpha=0.6,
-    zorder=2,
-)
-means = per_seed.mean(axis=0)
-ax.plot(
-    np.arange(len(methods)),
-    means,
-    color=RED,
-    marker="o",
-    linewidth=1.4,
-    markersize=4,
+    learned_fraction,
+    y,
+    color=AQUA,
+    s=32,
+    label="learned policy",
     zorder=3,
 )
-ax.set_xticks(
-    np.arange(len(methods)),
-    [
-        "learned",
-        "retrieval\noff",
-        "target\nremoved",
-        "lure\nremoved",
-        "content gate\noff",
-    ],
-)
-ax.set_ylabel("Expected prediction reward")
-ax.set_title("Paired DM causal ablations")
-ax.set_ylim(0.35, 0.52)
-ax.text(
-    0.03,
-    0.06,
-    "gray = model seeds\nred = across-seed mean",
-    transform=ax.transAxes,
-    fontsize=6.5,
+ax.scatter(
+    random_fraction,
+    y,
     color=INK,
+    marker="x",
+    s=30,
+    label="matched random one",
+    zorder=3,
+)
+ax.set_yticks(y, reward_labels)
+ax.invert_yaxis()
+ax.set_xlim(-0.10, 1.10)
+ax.set_xlabel("Fraction of forced-endpoint DM reward gain")
+ax.set_title("Prediction benefit does not imply boundary encoding")
+ax.legend(
+    frameon=False,
+    loc="lower center",
+    bbox_to_anchor=(0.5, -0.19),
+    ncol=2,
 )
 
 save_figure(fig, HERE / "fig_04_results")

@@ -49,6 +49,7 @@ assert not re.search(r'<(?:img|link|script)[^>]+(?:src|href)="(?!data:)', docume
 )
 assert "measured synthetic" in document.lower()
 assert "human review" in document.lower()
-assert "the complete success criterion therefore failed" in document.lower()
+assert "basic feasibility result is positive" in document.lower()
+assert "full-mixture claim remains unsupported" in document.lower()
 print(f"Built {path} ({path.stat().st_size:,} bytes)")
 PY

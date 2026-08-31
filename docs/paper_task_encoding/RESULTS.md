@@ -1,35 +1,38 @@
-# Results: learned encoding on the exact 2022 prediction task
+# Results: learning an encoding policy on the 2022 prediction task
 
 ## Outcome
 
-The main success criterion failed. Across 10 retained model seeds, learned
-endpoint-minus-nonendpoint encoding probability was -0.00030, with 95% bootstrap
-interval [-0.00092, 0.00026]; only 4 of 10 seeds had a positive difference. The
-model learned sparse, nearly time-uniform encoding rather than selective encoding at
-the event boundary.
+The basic feasibility result is positive. A neural policy using the exact
+accumulated situation state learned selective event-boundary encoding from sampled
+delayed prediction reward on newly generated DM sequences. On 128 unseen mappings,
+endpoint probability was 0.9993, mean probability per earlier time was 0.00002, and
+reward was 0.6684 versus 0.4849 for never encoding and 0.5129 for one random
+encoding. Removing the target memory reduced reward to 0.4831. The endpoint was not
+forced or supplied as a target.
 
-The episodic pathway was nevertheless functional. On unseen distant-memory trials,
-learned-policy expected reward was 0.5013 versus 0.4881 for never encoding, a paired
-benefit of 0.01319 [0.01023, 0.01580]. Disabling retrieval removed exactly that
-benefit. Removing target memories reduced reward to 0.4880, and disabling the
-content-match retrieval gate reduced it to 0.3789.
+A variable-delay, missing-observation DM diagnostic also reached endpoint
+probability 0.8928 and reward 0.7404, close to the forced-endpoint value of 0.7425,
+but it had not met the five-checkpoint convergence rule.
 
-Forced endpoint-only encoding achieved 0.6623 in distant memory, exceeding
-midpoint-only (0.5164), midpoint-plus-endpoint (0.5483), dense (0.5483), matched
-random one-encoding (0.5138), and never encoding (0.4881). These policies were
-imposed by the experimenter; they are a task and model precondition, not evidence
-that the actor learned a boundary policy.
+The stronger full-task result is negative. From-scratch sampled learning on the
+released 0.25 RM / 0.25 DM / 0.50 NM mixture produced endpoint probability 0.0027,
+below nonendpoint probability 0.0253. Exact counterfactual credit also failed
+(0.0069 versus 0.0212), and a DM curriculum produced a broad late-event policy.
+Forced endpoint encoding remained valuable in DM, so this is a
+discovery/local-optimum failure rather than an absent endpoint advantage.
 
-## Diagnosis
+## Diagnosis and scope
 
-The exact task makes complete endpoint memories useful but does not make the
-endpoint policy reliably discoverable from delayed reward. The shared policy sees no
-prospective label distinguishing a future target from a distractor at first
-presentation. Multiple sparse, early, and dense-late policies form easier solutions.
-Discrete dense initialization, continuous differentiable encoding strengths, and
-sparse discrete initialization all failed to produce selective endpoint encoding.
+Variable timing and missing observations are not the principal obstacle: DM-only
+learning succeeded with both. The full condition mixture is sufficient to block
+discovery, even with fixed duration. RM and NM comprise 75% of training and make
+episodic encoding unnecessary or slightly harmful, while the useful DM signal is
+sparse and delayed. Removing sampling variance does not by itself escape the
+nonboundary solution.
 
-The reported run is a diagnostic replication, not a preregistered confirmation,
-because the structured situation representation and conservative content gate were
-selected after exploratory failures. Complete methods, limitations, figures, and
-next steps are in [`experiment_report.html`](experiment_report.html).
+These are exploratory synthetic simulations. The decisive positive and negative
+neural runs currently use one seed each, the situation record is exact, and one
+memory slot is reserved for each earlier event. The result demonstrates basic
+computational feasibility, not a confirmed full-task effect or a human mechanism.
+Complete methods, learning curves, limitations, and next experiments are in
+[`experiment_report.html`](experiment_report.html).

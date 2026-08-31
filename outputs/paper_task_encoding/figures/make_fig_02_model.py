@@ -96,7 +96,7 @@ box(
     0.18,
     0.32,
     "Encoding actor",
-    "shared for a1 and b1\n$p_t$ = P(encode)\nencode or skip",
+    "shared for a1 and b1\n$p_t$ = P(encode now)\nfirst encoding ends choices",
     color=ORANGE,
 )
 box(
@@ -106,13 +106,13 @@ box(
     0.18,
     0.32,
     "Episodic store",
-    "state snapshots\n≤ 40 traces\nno eviction",
+    "one snapshot per event\ntwo total slots\ndebugging capacity",
     color=VIOLET,
 )
 ax.text(
     0.50,
     0.49,
-    "Actor input excludes boundary, countdown, and RM/DM/NM condition labels",
+    "Actor input excludes boundary, countdown, event identity, and RM/DM/NM labels",
     ha="center",
     va="center",
     fontsize=6.8,
@@ -167,31 +167,33 @@ arrow(
 ax = axes[1]
 ax.text(-0.02, 1.03, "b", fontweight="bold", fontsize=10, transform=ax.transAxes)
 ax.set_title(
-    "Staged optimization and the delayed learning signal", loc="left", fontweight="bold"
+    "The endpoint is learned from prediction outcomes, not supplied as a target",
+    loc="left",
+    fontweight="bold",
 )
 stages = [
     (
         0.015,
-        "1  Task + oracle",
-        "validate task\nand fixed schedules",
+        "1  Reward audit",
+        "enumerate encoding times\nand fixed baselines",
         BLUE,
     ),
     (
         0.265,
-        "2  Prediction + retrieval",
-        "verify endpoint memory\nimproves prediction",
+        "2  Exact credit",
+        "optimize probability-\nweighted future reward",
         AQUA,
     ),
     (
         0.515,
         "3  Forced exploration",
-        "random actions train\nthe value estimator",
+        "random encoding trains\nthe reward estimator",
         ORANGE,
     ),
     (
         0.765,
         "4  Free selection",
-        "actor chooses encoding\nlater b2 reward gives credit",
+        "sample encode or skip\nlater b2 reward gives credit",
         VIOLET,
     ),
 ]
@@ -211,8 +213,8 @@ arrow(
 ax.text(
     0.02,
     0.02,
-    "During held-out evaluation all model weights are frozen; only within-trial "
-    "episodic memories change.",
+    "Exact credit is a diagnostic. The stronger test uses only sampled delayed "
+    "reward. Evaluation freezes all weights and uses unseen mappings.",
     fontsize=7,
     color=INK,
 )

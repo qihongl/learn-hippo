@@ -134,3 +134,10 @@
   late-event policy improved DM reward to 0.659 over never 0.582 and random 0.601 but
   remained below forced endpoint 0.707. Adding a recurrent state is deferred because
   the simpler exact state has not solved the full mixed objective.
+- 2026-08-31: rebuilt the self-contained paper-style HTML around the complete
+  follow-up evidence. The report now defines the task and model from first
+  principles, explains missing observations without calling them a boundary mask,
+  distinguishes learned and forced endpoint policies, reports the original 600+400
+  epoch reference, shows checkpointed learning curves, and separates positive
+  DM-only feasibility from the negative full-mixture diagnosis. Four publication-
+  style figures are generated directly from versioned compact summaries.

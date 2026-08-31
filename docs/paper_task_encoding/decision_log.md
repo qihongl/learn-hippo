@@ -316,3 +316,18 @@
   step: it adds a representation-learning problem while the exact observable state
   already exhibits the mixed-objective failure. The report will separate the positive
   DM-only feasibility result from this negative full-task diagnosis.
+
+## 2026-08-31 — Reporting conclusion and next gate
+
+- The report's headline claim is deliberately two-part: learned boundary encoding is
+  computationally feasible in DM-only versions of the released task, but emergence
+  from the complete RM/DM/NM mixture is not supported.
+- A learned endpoint result means the free neural policy assigned its own probability
+  to the boundary; forced endpoint schedules remain labeled as baselines throughout.
+- Future relevance being unavailable at encoding remains a natural task constraint,
+  not a limitation. No future-target or condition label will be added to rescue the
+  mixed objective.
+- Multiseed DM confirmation and a full-mixture temporal-policy audit precede any
+  recurrent representation extension. This preserves the approved gate: do not add
+  representation complexity while the exact observable state still fails the mixed
+  objective.
