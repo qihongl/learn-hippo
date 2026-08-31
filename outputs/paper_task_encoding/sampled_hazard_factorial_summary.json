@@ -1,0 +1,53 @@
+{
+  "status": "exploratory_factorial_diagnostic",
+  "data_kind": "measured synthetic simulation",
+  "git_sha": "1b1cfd54a35540d6ba507129e1d73758d20b109d",
+  "free_policy_epochs": 100,
+  "dm_variable_delay_and_removal": {
+    "configuration": "configs/paper_task_encoding/sampled_hazard_dm_variable_diagnostic.yaml",
+    "configuration_sha256": "33869e0d175daaac4ea580898449beea4bcc62a424099d1f9791fb63945ecd49",
+    "seed": 720,
+    "evaluation_trials": 64,
+    "endpoint_probability": 0.8928450345993042,
+    "a1_endpoint_probability": 0.9018123149871826,
+    "b1_endpoint_probability": 0.8838777542114258,
+    "nonendpoint_probability": 0.005162244196981192,
+    "learned_reward": 0.7404353022575378,
+    "forced_endpoint_reward": 0.7425073981285095,
+    "never_reward": 0.6156762838363647,
+    "matched_random_one_reward": 0.6393478512763977,
+    "target_memory_removed_reward": 0.6155941486358643,
+    "distractor_memory_removed_reward": 0.7525995969772339,
+    "curve_endpoint_probability": {
+      "epoch_10": 0.033893,
+      "epoch_40": 0.404946,
+      "epoch_50": 0.654055,
+      "epoch_60": 0.002162,
+      "epoch_90": 0.171922,
+      "epoch_100": 0.892845
+    },
+    "runtime_seconds": 344.7035196660142
+  },
+  "full_mixture_fixed_duration": {
+    "configuration": "configs/paper_task_encoding/sampled_hazard_mixture_fixed_diagnostic.yaml",
+    "configuration_sha256": "c2c014fc4765aa322bc9a322c2090aef7136f2b689ee31c3465f76bc2b571e49",
+    "seed": 730,
+    "evaluation_trials_per_condition": 64,
+    "dm_endpoint_probability": 0.0031615502666682005,
+    "dm_nonendpoint_probability": 0.003773075994104147,
+    "never_probability": 0.940242350101471,
+    "dm_learned_reward": 0.4709431231021881,
+    "dm_forced_endpoint_reward": 0.6613543033599854,
+    "dm_never_reward": 0.4674517810344696,
+    "dm_matched_random_one_reward": 0.49542340636253357,
+    "curve_dm_endpoint_probability": {
+      "epoch_10": 0.019217,
+      "epoch_30": 0.022728,
+      "epoch_50": 0.020514,
+      "epoch_70": 0.011026,
+      "epoch_100": 0.003162
+    },
+    "runtime_seconds": 333.41395958402427
+  },
+  "diagnosis": "Variable delays and removed observations do not prevent learning when all trials are DM. The full RM/DM/NM mixture prevents discovery even when duration is fixed, identifying sampled credit from low-information mixture trials as the principal obstacle. The DM-variable endpoint trajectory is unstable and has not met the five-checkpoint convergence rule."
+}

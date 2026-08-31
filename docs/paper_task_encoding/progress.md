@@ -106,3 +106,9 @@
   linked pattern. The DM endpoint gap was negative at every 10-epoch checkpoint and
   showed no favorable late trend, so the prespecified extension criterion was not
   met. Factorial DM-variable-delay and mixture-fixed-duration diagnostics are next.
+- 2026-08-31: factorial diagnostics isolated the failure. DM-only training with the
+  released delays and feature removal reached endpoint probability 0.893 and reward
+  0.740 versus forced endpoint 0.743 after 100 epochs, although its curve remained
+  unstable. Conversely, the full mixture with fixed 16-step events moved toward
+  never encoding (endpoint 0.003, never 0.940). Thus variable timing is learnable;
+  the RM/NM mixture is sufficient to overwhelm sampled boundary credit.

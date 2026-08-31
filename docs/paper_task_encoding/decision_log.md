@@ -270,3 +270,21 @@
   trend through epoch 400. The extension rule is not met. Two 100-epoch factorial
   diagnostics will vary delay/removal and condition mixture separately; they are
   diagnostic rather than rescue tuning.
+
+## 2026-08-31 — Factorial diagnosis identifies the condition mixture
+
+- Holding DM constant while restoring released delays and feature removal produced a
+  strong boundary rule by epoch 100: endpoint probability 0.893 and reward within
+  0.0021 of the forced-endpoint ceiling. The curve had a collapse at epoch 60 and had
+  not met the five-checkpoint stability rule, so this is feasibility rather than a
+  converged final result.
+- Holding event duration fixed while restoring the full condition mixture failed.
+  The actor's endpoint probability fell from about 0.02 to 0.003 and never-encoding
+  probability reached 0.940, even though forced endpoint encoding improved DM reward
+  by 0.194.
+- Therefore variable timing and feature removal are not the principal obstacle. The
+  sampled actor cannot reliably extract the sparse DM advantage from the more common
+  RM/NM trials, where episodic encoding is unneeded or slightly harmful. The next
+  bounded test uses exact counterfactual credit on the unchanged full mixture; a
+  success would specifically diagnose sampling variance, while a failure would
+  implicate the shared neural representation or mixed objective.
