@@ -288,3 +288,17 @@
   bounded test uses exact counterfactual credit on the unchanged full mixture; a
   success would specifically diagnose sampling variance, while a failure would
   implicate the shared neural representation or mixed objective.
+
+## 2026-08-31 — Exact mixed credit does not escape the nonboundary basin
+
+- A fresh neural actor received exact probability-weighted rewards for all encoding-
+  time pairs on 256 full-mixture training examples. It still converged to low endpoint
+  probability: 0.0069 in held-out DM, below nonendpoint probability 0.0212.
+- The forced endpoint schedule remained substantially better than never in DM, and
+  its mixture-weighted reward was also better than never. Thus the failure is not an
+  absent endpoint optimum. Removing action-sampling variance was insufficient to
+  reach it from the boundary-neutral initialization.
+- A DM curriculum is now the narrowest justified intervention. It changes the order
+  of experience rather than policy inputs or task outcomes: first enter the verified
+  boundary basin using DM, then continue optimization on the unchanged full mixture.
+  Curriculum and from-scratch results will remain separate.

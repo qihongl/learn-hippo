@@ -117,3 +117,9 @@
   the unchanged full training-mode mixture, 256 unique counterfactual examples, and
   100 epochs; it distinguishes sampling variance from a mixed-objective or neural-
   representation failure without adding any policy input.
+- 2026-08-31: exact counterfactual credit also failed from scratch on the full
+  variable-delay mixture. At epoch 100, DM endpoint probability was 0.0069 versus
+  nonendpoint 0.0212; reward 0.626 was below matched random 0.637 and forced endpoint
+  0.738. Endpoint selectivity was absent at all checkpoints. Sampling variance is
+  therefore not the sole problem: the shared neural mixed objective has a strong
+  nonboundary basin despite a better endpoint solution.

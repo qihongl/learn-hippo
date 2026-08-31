@@ -1,0 +1,58 @@
+{
+  "experiment": "neural_counterfactual_full_mixture",
+  "status": "exploratory_mixed_objective_diagnostic",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/neural_counterfactual_full_mixture.yaml",
+  "configuration_sha256": "d4e493ea49cd5b54c838f8b62ec02213054c8e6c66c8b7a1e1ad9a84623be554",
+  "git_sha": "9f3e2f8eaefa465101986893ace88248411a783e",
+  "seed": 810,
+  "training_unique_examples": 256,
+  "training_example_exposures": 25600,
+  "evaluation_examples_per_condition": 64,
+  "final_evaluation": {
+    "RM": {
+      "learned_reward": 0.935976,
+      "endpoint_probability": 0.006396,
+      "nonendpoint_probability": 0.024092,
+      "endpoint_pair_reward": 0.931425,
+      "never_pair_reward": 0.941101
+    },
+    "DM": {
+      "learned_reward": 0.626015,
+      "endpoint_probability": 0.006946,
+      "nonendpoint_probability": 0.021170,
+      "endpoint_probability_gap": -0.014225,
+      "endpoint_pair_reward": 0.738260,
+      "never_pair_reward": 0.620996,
+      "matched_random_one_reward": 0.637420,
+      "target_memory_removed_reward": 0.620315,
+      "distractor_memory_removed_reward": 0.627995
+    },
+    "NM": {
+      "learned_reward": 0.613211,
+      "endpoint_probability": 0.006352,
+      "nonendpoint_probability": 0.024065,
+      "endpoint_pair_reward": 0.613236,
+      "never_pair_reward": 0.613250
+    }
+  },
+  "dm_curve": [
+    {"epoch": 10, "reward": 0.62513, "endpoint_probability": 0.00515},
+    {"epoch": 20, "reward": 0.62457, "endpoint_probability": 0.00440},
+    {"epoch": 30, "reward": 0.62401, "endpoint_probability": 0.00372},
+    {"epoch": 40, "reward": 0.62348, "endpoint_probability": 0.00317},
+    {"epoch": 50, "reward": 0.62417, "endpoint_probability": 0.00408},
+    {"epoch": 60, "reward": 0.62477, "endpoint_probability": 0.00499},
+    {"epoch": 70, "reward": 0.62392, "endpoint_probability": 0.00389},
+    {"epoch": 80, "reward": 0.62407, "endpoint_probability": 0.00413},
+    {"epoch": 90, "reward": 0.62583, "endpoint_probability": 0.00681},
+    {"epoch": 100, "reward": 0.62601, "endpoint_probability": 0.00695}
+  ],
+  "runtime_seconds": {
+    "training_bank_generation": 156.58751037498587,
+    "evaluation_bank_generation": 116.61521699998411,
+    "optimization_and_checkpoints": 5.175189166009659
+  },
+  "raw_record": "outputs/paper_task_encoding/neural_counterfactual/neural_counterfactual_full_mixture_seed810.json (retained locally; ignored by Git)",
+  "interpretation": "Exact counterfactual credit did not make the from-scratch full-mixture neural actor endpoint-selective. Forced endpoint remains globally advantageous, so the result identifies a strong nonboundary/local optimum in the mixed shared-policy objective rather than sampling variance alone."
+}
