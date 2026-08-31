@@ -40,6 +40,10 @@ deterministic, disjoint seed namespaces:
   training budget, metrics, and configuration hash are frozen;
 - sensitivity seeds are separate from the primary `released_code` run.
 
+The post-report optimizer-stability screen uses paired exploratory seeds 970--972
+and a fixed evaluation namespace beginning at 99,000,000. These remain separate
+from all prior development seeds and from any later ten- or twenty-seed confirmation.
+
 Every checkpoint for a model seed is evaluated on the same development trial bank,
 making changes over training paired rather than confounded by newly sampled trials.
 The final test bank is newly sampled. All model weights are frozen during every
