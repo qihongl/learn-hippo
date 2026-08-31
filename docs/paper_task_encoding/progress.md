@@ -69,3 +69,9 @@
   0.5145 for matched-random-one encoding. From update 800 to 1,000, endpoint
   probability changed by 0.0010 and reward by 0.00011, indicating practical
   convergence. The neural exact-state policy is therefore the next gate.
+- 2026-08-31: implemented vectorized exact-reward optimization for the shared neural
+  actor using only accumulated 80-dimensional situation states. A 16-mapping pilot
+  showed partial held-out selectivity (endpoint 0.236 versus nonendpoint 0.029) but
+  overfit its small bank. The declared development run therefore increases the bank
+  to 256 mappings, evaluates 128 disjoint mappings, and supplies the full 102,400
+  sampled-example exposures with held-out checks every 10 epochs.

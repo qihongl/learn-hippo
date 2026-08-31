@@ -173,3 +173,17 @@
   event, exact counterfactual credit, DM trials, and the zero-delay/no-removal
   evaluation form. It diagnoses a valid objective and optimizer. It does not yet show
   that a state-dependent neural policy can discover the rule.
+
+## 2026-08-31 — Neural exact-state development bank
+
+- The neural actor receives the accumulated 64 feature-value entries and 16 query-
+  context entries already produced by the structured model. It receives no separate
+  completion count, event identity, time, boundary, or future-relevance variable.
+- A first 16-mapping, 1,000-update pilot achieved training reward 0.701 but only
+  0.236 endpoint probability on 16 new mappings. This is recorded as a small-bank
+  overfitting diagnostic, not evidence of success.
+- The next declared run uses 256 unique training mappings and 128 fixed development
+  mappings. Its 6,400 batches of 16 give the approved 102,400 example exposures, but
+  the 256 exact counterfactual examples are reused. This is explicitly an
+  architecture-development approximation; it does not satisfy the later requirement
+  for 102,400 newly generated sampled-RL sequences.

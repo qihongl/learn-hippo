@@ -1,0 +1,35 @@
+experiment:
+  name: neural_counterfactual_development
+  status: exploratory_architecture_development
+  model_seeds: [510]
+
+task:
+  profile: released_code
+  condition: DM
+  evaluation_mode: true
+
+model:
+  policy_hidden_dim: 32
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+
+counterfactual_banks:
+  training_examples: 256
+  evaluation_examples: 128
+  training_seed_start: 41000000
+  evaluation_seed_start: 42000000
+  memory_capacity: 2
+
+optimization:
+  initial_probability: 0.05
+  updates: 6400
+  batch_size: 16
+  learning_rate: 0.003
+  gradient_clip: 10.0
+  checkpoint_interval: 160
+
+output:
+  directory: outputs/paper_task_encoding/neural_counterfactual
