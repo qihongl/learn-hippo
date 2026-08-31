@@ -55,6 +55,8 @@ def initialize_neural_hazard_policy(
         model.encoding_actor.bias,
         math.log(initial_probability / (1.0 - initial_probability)),
     )
+    if model.policy_mode == "progress_monotone":
+        nn.init.constant_(model.encoding_progress_slope_raw, -4.0)
 
 
 def build_counterfactual_example(
@@ -157,7 +159,7 @@ def train_neural_counterfactual(
     }
     actor_parameters = []
     for name, parameter in model.named_parameters():
-        is_actor = name.startswith("encoding_actor")
+        is_actor = name.startswith(("encoding_actor", "encoding_progress"))
         parameter.requires_grad_(is_actor)
         if is_actor:
             actor_parameters.append(parameter)
@@ -390,6 +392,12 @@ def _actor_logits(
     model: StructuredEpisodicPredictionModel,
     states: Tensor,
 ) -> Tensor:
+    if model.policy_mode == "progress_monotone":
+        flat_states = states.reshape(-1, model.hidden_dim)
+        flat_logits = torch.stack(
+            [model.encoding_policy(state).logit for state in flat_states]
+        )
+        return flat_logits.reshape(states.shape[:-1])
     hidden = model.encoding_actor_encoder(states)
     return model.encoding_actor(hidden).squeeze(-1)
 

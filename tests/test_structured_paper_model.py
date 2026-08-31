@@ -134,3 +134,29 @@ def test_forced_endpoint_schedule_beats_alternative_fixed_schedules() -> None:
         for schedule in schedules
         if schedule != "endpoint_only"
     )
+
+
+def test_progress_policy_uses_accumulated_observations_and_queries() -> None:
+    model = StructuredEpisodicPredictionModel(
+        n_features=16,
+        n_values=4,
+        policy_hidden_dim=8,
+        retrieval_temperature=0.05,
+        temporal_context_scale=2.0,
+        policy_mode="progress_monotone",
+    )
+    with torch.no_grad():
+        model.encoding_actor.bias.zero_()
+        model.encoding_progress_slope_raw.fill_(3.0)
+    partial = torch.zeros(model.hidden_dim)
+    partial[: model.situation_dim].reshape(16, 4)[:8, 0] = 1
+    partial[model.situation_dim : model.situation_dim + 8] = 2
+    complete = partial.clone()
+    complete[: model.situation_dim].reshape(16, 4)[8:, 0] = 1
+    complete[model.situation_dim :] = 2
+
+    partial_output = model.encoding_policy(partial)
+    complete_output = model.encoding_policy(complete)
+
+    assert complete_output.probability > partial_output.probability
+    assert model.observable_progress(complete) == 1

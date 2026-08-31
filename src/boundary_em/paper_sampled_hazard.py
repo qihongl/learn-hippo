@@ -216,7 +216,7 @@ def train_sampled_hazard_stage(
     actor_parameters = []
     critic_parameters = []
     for name, parameter in model.named_parameters():
-        is_actor = name.startswith("encoding_actor")
+        is_actor = name.startswith(("encoding_actor", "encoding_progress"))
         is_critic = name.startswith("encoding_critic")
         parameter.requires_grad_(is_critic or (is_actor and not forced_exploration))
         if is_actor:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import Literal
 
 import torch
 from torch import Tensor, nn
@@ -30,6 +31,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         content_match_threshold: float = 0.6,
         content_match_sharpness: float = 30.0,
         retrieval_strength: float = 0.2,
+        policy_mode: Literal["state_mlp", "progress_monotone"] = "state_mlp",
     ) -> None:
         super().__init__()
         if n_features != 16 or n_values != 4:
@@ -44,6 +46,8 @@ class StructuredEpisodicPredictionModel(nn.Module):
             raise ValueError("content_match_sharpness must be positive")
         if not 0 < retrieval_strength < 2:
             raise ValueError("retrieval_strength must fall between 0 and 2")
+        if policy_mode not in ("state_mlp", "progress_monotone"):
+            raise ValueError(f"unknown policy mode: {policy_mode}")
 
         self.n_features = n_features
         self.n_values = n_values
@@ -55,6 +59,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
         self.temporal_context_scale = temporal_context_scale
         self.content_match_threshold = content_match_threshold
         self.content_match_sharpness = content_match_sharpness
+        self.policy_mode = policy_mode
 
         self.logit_scale_log = nn.Parameter(torch.tensor(math.log(8.0)))
         self.dont_know_bias = nn.Parameter(torch.tensor(4.0))
@@ -76,6 +81,7 @@ class StructuredEpisodicPredictionModel(nn.Module):
             nn.Tanh(),
         )
         self.encoding_actor = nn.Linear(policy_hidden_dim, 1)
+        self.encoding_progress_slope_raw = nn.Parameter(torch.tensor(-4.0))
         self.encoding_critic = nn.Linear(policy_hidden_dim, 1)
         self.reset_policy_parameters()
 
@@ -207,10 +213,32 @@ class StructuredEpisodicPredictionModel(nn.Module):
             raise ValueError("situation_model must have shape [hidden_dim]")
         actor_hidden = self.encoding_actor_encoder(situation_model)
         critic_hidden = self.encoding_critic_encoder(situation_model)
-        logit = self.encoding_actor(actor_hidden).squeeze()
+        if self.policy_mode == "state_mlp":
+            logit = self.encoding_actor(actor_hidden).squeeze()
+        else:
+            slope = torch.nn.functional.softplus(
+                self.encoding_progress_slope_raw
+            )
+            logit = self.encoding_actor.bias.squeeze() + slope * (
+                self.observable_progress(situation_model) - 0.5
+            )
         value = self.encoding_critic(critic_hidden).squeeze()
         return EncodingPolicyOutput(
             probability=torch.sigmoid(logit),
             value=value,
             logit=logit,
         )
+
+    def observable_progress(self, situation_model: Tensor) -> Tensor:
+        """Measure accumulated feature and query evidence already in the state."""
+
+        if situation_model.shape != (self.hidden_dim,):
+            raise ValueError("situation_model must have shape [hidden_dim]")
+        situation = situation_model[: self.situation_dim].reshape(
+            self.n_features,
+            self.n_values,
+        )
+        observed_fraction = (situation.sum(dim=1) > 0).to(situation.dtype).mean()
+        query_context = situation_model[self.situation_dim :]
+        queried_fraction = (query_context > 0).to(situation.dtype).mean()
+        return 0.5 * (observed_fraction + queried_fraction)
