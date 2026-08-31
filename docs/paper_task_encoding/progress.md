@@ -191,3 +191,12 @@
   and registered both Slurm jobs in local provenance. The full raw run remains under
   `/scratch/gpfs/KNORMAN/qlu`; compact summaries and every seed trajectory are
   versioned for reporting.
+- 2026-09-01: locked and executed the selected constant-rate, batch-32 method on ten
+  fresh full-mixture seeds. The replication failed: mean endpoint probability was
+  0.7656 and only six seeds passed the individual stability rule, below the required
+  eight. Reward and causal memory dependence remained robust, separating useful
+  episodic information selection from selective boundary encoding.
+- 2026-09-01: all ten Della tasks completed cleanly in 61:56--1:47:07 using at most
+  0.38 GB each. All 40 result, log, and environment files were fetched and verified
+  by checksum before the locked audit. The current optimizer line stops; harder
+  memory and recurrent-model gates remain closed.

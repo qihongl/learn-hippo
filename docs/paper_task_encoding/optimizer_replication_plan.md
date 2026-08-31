@@ -69,3 +69,13 @@ diagnosis is reported. If it passes, the next experiment removes the privileged
 condition-centered retrospective label while keeping the task and successful
 optimizer fixed. Unreserved-memory training and recurrent situation learning remain
 later gates and are not implied by this result.
+
+## Outcome
+
+The replication failed. Mean endpoint probability was 0.7656 (SD 0.4084), below
+0.80, and six of ten seeds passed the individual criteria rather than the required
+eight. Two seeds ended near zero; one ended at 0.6824; one ended at 0.9742 but failed
+the final-five rule. The aggregate reward and memory-removal criteria passed, so the
+negative result is specific to reliable boundary timing rather than failure to use
+episodic memory. In accordance with the rule above, this optimizer line stops and no
+later architectural gate advances.

@@ -50,12 +50,13 @@ zero at epoch 400. A predeclared optimizer screen then crossed constant versus
 decaying learning rates with batches of 16 versus 32 sequences. Only the constant-
 rate, batch-32 cell passed all three paired seeds; its final endpoint probabilities
 were 0.9929, 0.9969, and 0.9965. However, two seeds had large earlier excursions,
-and three exploratory seeds are insufficient for confirmation. Forced endpoint
-encoding still improved DM prediction, so the obstacle is reliable discovery and
-retention of the solution, not an absent endpoint advantage. Differentiable
-episodic memory can therefore learn selective boundary encoding in a favorable
-version of the original task and can reach a stable final window in the full
-mixture, but the full-mixture claim awaits a predeclared ten-seed replication.
+and a locked ten-seed replication failed: mean endpoint probability was 0.7656 and
+only six seeds met the individual stability rule, below the required eight. Forced
+endpoint encoding still improved DM prediction, so the obstacle is reliable
+discovery and retention of the solution, not an absent endpoint advantage.
+Differentiable episodic memory can therefore learn selective boundary encoding in a
+favorable version of the original task, but the full-mixture claim remains
+unsupported after its locked replication.
 
 ## 1. Question, terminology, and answer
 
@@ -74,14 +75,14 @@ Our question is different: can later prediction outcomes teach a policy to assig
 more encoding probability to the endpoint than to earlier times on unseen
 situations?
 
-The answer has two levels:
+The answer has three levels:
 
 1. **Yes for basic feasibility.** Ten of ten fixed-duration DM policies learned
    endpoint-selective encoding from sampled delayed reward.
 2. **Not reliably with variable timing.** The released timing and missing-data
    rules yielded a mixture of successful and failed policies across ten seeds.
-3. **Not yet for the complete training distribution.** Exact and sampled methods
-   did not produce a stable result under the full recent/distant/no-memory mixture.
+3. **No for the tested complete training distribution.** The selected batch-32
+   method failed its locked ten-seed recent/distant/no-memory replication.
 
 Future relevance is deliberately unobservable during the first presentation of an
 event. This is a natural feature of episodic memory, not a task defect and not a
@@ -280,6 +281,7 @@ runs used repeated exposure to fixed synthetic banks and are labeled accordingly
 | Credit-assignment screen | released mixture; eight predeclared methods | 25 forced + 100 free epochs; fresh mappings | 2 paired per method | bounded method search |
 | Selected mixed method | released mixture; sampled reward | 25 forced + 400 free epochs; fresh mappings | 3 fresh | test stability at the reference budget |
 | Optimizer-stability screen | selected released-mixture method; constant/cosine rate × batch 16/32 | 25 forced + 400 free epochs; 102,400 fresh mappings in every cell | 3 paired per cell | test final-window retention without best-checkpoint selection |
+| Locked optimizer replication | constant rate, batch 32; released mixture | 25 forced + 400 free epochs; 102,400 fresh mappings | 10 fresh | test whether at least eight seeds retain selective boundary encoding |
 | Observable-progress policy | released mixture; sampled reward | 25 forced + 100 free epochs; fresh mappings | 2 paired | test a simple neural constraint |
 :::
 
@@ -429,7 +431,42 @@ black bars are means, and the dashed line is the 0.80 criterion. Only constant
 learning rate with batch 32 passed every seed and the final-five-checkpoint rule.
 Every mark is a measured synthetic simulation; no best checkpoint was selected.
 
-### 5.6 Progress, capacity, and recurrent-model gates
+### 5.6 The locked ten-seed optimizer replication fails
+
+We then froze the selected constant-rate, batch-32 cell and trained ten new seeds,
+980--989, on a new held-out trial namespace. No method was reselected and every run
+received the same 400 epochs and 102,400 sequences. The replication required the
+aggregate audit to pass and at least eight of ten individual seeds to meet the
+endpoint, event-specific, final-five-checkpoint, reward, and memory-removal rules.
+
+The replication failed both levels. Mean final endpoint probability was 0.7656 (SD
+0.4084), below 0.80, and only six seeds passed the individual rule. Seeds 981 and
+985 ended near zero, seed 982 ended at 0.6824, and seed 983 ended at 0.9742 but was
+not selective throughout its final five evaluations. The remaining six seeds ended
+between 0.9891 and 0.9986 and passed. Eight of ten trajectories had a post-epoch-200
+checkpoint drop greater than 0.08; thus a favorable endpoint at epoch 400 often
+followed large policy transitions rather than monotonic convergence.
+
+Prediction performance was much more reliable than boundary timing. Mean DM reward
+was 0.7261, compared with 0.6031 for never encoding, 0.6274 for one random encoding,
+and 0.7279 for forced endpoint encoding. The paired reward intervals were above
+zero. Removing the target memory reduced reward to 0.6013, while removing the
+distracting memory left reward at 0.7388. The policy therefore learned useful,
+memory-dependent information selection even in failed boundary seeds. Useful
+episodic memory is not sufficient evidence for selective event-boundary encoding.
+
+![](../../outputs/paper_task_encoding/figures/fig_06_replication.svg)
+
+**Figure 6. Locked ten-seed replication of the selected optimizer.** **a**, Every
+seed's held-out endpoint probability at ten-epoch checkpoints; the dark line is the
+ten-seed mean. The trajectories show repeated transitions between boundary and
+nonboundary solutions. **b**, Final endpoint probability for every fresh seed. Blue
+dots pass the full individual rule; red dots fail, including seed 983, whose final
+endpoint is high but whose final-five window is unstable. The horizontal dark line
+is the mean and the dashed line is the 0.80 threshold. All marks are measured
+synthetic simulations and use the final checkpoint.
+
+### 5.7 Progress, capacity, and recurrent-model gates
 
 A monotonic progress policy used two observable quantities already present in the
 situation state: the fraction of feature rows containing an observed value and the
@@ -444,8 +481,9 @@ capacity is sufficient: in the selected follow-up, forced endpoints achieved mea
 DM reward 0.7279 versus 0.6074 for never encoding. What remains untested is a
 *learned* policy that may spend both slots within one event. The approved gate
 required a stable full-mixture policy before adding that harder decision. Because
-the selected method failed, unreserved-capacity training and the recurrent neural
-situation model were formally deferred rather than treated as failed experiments.
+the locked replication failed, unreserved-capacity training and the recurrent
+neural situation model were formally deferred rather than treated as failed
+experiments.
 
 ::: {.concept-table}
 | Regime | Seeds | Endpoint $p$, mean (SD) | Learned DM reward | Never / random / forced endpoint | Outcome |
@@ -455,6 +493,7 @@ situation model were formally deferred rather than treated as failed experiments
 | Full mixture, exact temporal | 5 | 0.00015 (0.00018) | 0.6570 mixture reward | 0.6213 / 0.5973 / 0.6653 | endpoint optimum missed |
 | Selected full-mixture method | 3 | 0.6657 (0.5765) | 0.7209 | 0.6074 / 0.6288 / 0.7279 | two pass, one collapses |
 | Stability screen: constant rate, batch 32 | 3 | 0.9954 (0.0022) | 0.7328 | 0.6072 / 0.6330 / 0.7335 | passes exploratory all-seed rule |
+| Locked batch-32 replication | 10 | 0.7656 (0.4084) | 0.7261 | 0.6031 / 0.6274 / 0.7279 | fails; six of ten pass individually |
 | Observable-progress policy | 2 | 0.0210 (0.00005) | 0.6089 | 0.5940 / 0.6147 / 0.7198 | fails |
 :::
 
@@ -475,9 +514,10 @@ shows that the endpoint optimum exists but does not make its gradient basin easy
 reach. Retrospective condition-centered credit and gradual mixture training can
 reach it. Doubling the batch produced a stable final window in three new seeds, but
 large mid-training excursions remained and learning-rate decay sometimes preserved
-the wrong solution. The present problem is therefore both discovery and
-optimization stability; the batch-32 result is a candidate mechanism rather than a
-confirmed solution.
+the wrong solution. The ten-seed replication then showed that the three-seed window
+was optimistic: only six seeds passed and the mean missed the declared endpoint
+threshold. The present problem is therefore both discovery and optimization
+stability. Larger batches improve some runs but do not solve it reliably.
 
 Using the original simulation setting is therefore feasible and has already been
 done. The generator reproduces the original representation, sequence, memory
@@ -493,7 +533,7 @@ representation itself.
 | Exact situation recording | The model stores observed feature values perfectly instead of learning a recurrent representation from the 37-unit stream. | This isolates encoding-policy learning but overstates perceptual and relational competence. | Add a pretrained GRU or LSTM only after the full-mixture encoding objective is stable; require at least 99% decoding of observed values first. |
 | Functionally reserved traces | The store is global, but the decision procedure stops after one encoding in each event. | This assumes segmentation and prevents the policy from spending both slots within one event. | After a stable full-mixture result, repeat with two unreserved slots for the whole trial. |
 | DM-only reliability | All ten robust successes come from the condition where episodic memory is consistently useful. | This establishes feasibility but not reliable emergence under the original RM/DM/NM distribution. | Stabilize full-mixture learning without condition or future-target inputs. |
-| Optimizer result has only three development seeds | Constant rate with batch 32 passed the final-five rule in all three paired seeds, but two trajectories had large earlier excursions. | A favorable final window can overstate convergence, and three seeds cannot support a reliability claim. | Run ten fresh seeds with the selected cell, unchanged final-checkpoint rules, and no method reselection. |
+| Locked optimizer replication failed | Only six of ten batch-32 seeds passed individually; the mean endpoint probability was 0.7656, and large policy transitions remained common. | The favorable three-seed screen did not generalize, so the tested optimizer cannot support a reliable full-mixture claim. | Stop this optimizer line at the declared gate; any new objective or learning rule requires a separately approved, predeclared plan. |
 | Retrospective condition-centered credit | The selected learner uses the realized trial condition after the outcome to center reward, although the policy never sees it while encoding. | This is scientifically cleaner than prospective leakage but is a stronger learning signal than a condition-blind biological learner may possess. | Compare it with baselines learned only from observable post-outcome variables. |
 | Exact credit is privileged | Some diagnostic runs enumerate outcomes for actions that were not taken. | It locates objective and optimizer failures but is not a plausible online learning rule. | Keep sampled delayed reward as the primary mechanism and exact credit only as an audit. |
 | Retrieval gate was selected exploratorily | A fixed content-similarity threshold suppresses irrelevant memories. | The gate changes which encoding schedules are useful and makes the study nonconfirmatory. | Freeze it before confirmation or learn it on a disjoint retrieval objective. |
@@ -507,29 +547,32 @@ Future relevance being unavailable during $a1$ and $b1$ is intentionally absent
 from this table. It is a natural constraint that the policy must solve on average,
 not a limitation to eliminate.
 
-## 8. Most promising next experiments
+## 8. Decision and possible future research
 
-1. **Replicate the selected optimizer cell.** Run constant learning rate with batch
-   32 on ten fresh full-mixture seeds, retaining all checkpoints and the same
-   all-seed criteria. This tests whether the three-seed final-window result is
-   reliable without another method choice.
-2. **Remove privileged retrospective labels.** If stability is achieved, replace
-   the condition-centered baseline with a baseline computed from observable
-   prediction outcomes and retrieval matches. This asks whether the improvement
-   survives a more natural learning signal.
-3. **Remove the one-per-event decision rule.** Give the policy two unreserved slots
-   across $a1$ and $b1$ and test whether it still spends capacity at event
-   boundaries. Four- and 40-slot variants are secondary capacity sensitivities.
-4. **Add recurrent state learning.** Pretrain a GRU or LSTM for 600 epochs of 256
-   fresh sequences, freeze it after held-out decoding and forced-endpoint
-   preconditions pass, then train the encoding policy for 400 epochs.
-5. **Lock confirmation.** Commit the complete design before running 20 untouched
-   model seeds and 512 new trials per condition. Report every seed, including
-   failures, and run the paper-prose task profile separately.
+The current staged plan stops at the failed locked replication. It does not advance
+to removal of the condition-centered credit signal, unreserved memory, recurrent
+state learning, or a 20-seed confirmation. Adding those difficulties to a learner
+that already fails with the exact state would obscure the diagnosis.
 
-The recurrent model is not the immediate next implementation step. The exact state
-already fails under the full mixture, so adding a harder representation-learning
-problem would obscure the present diagnosis.
+The most informative next work, if separately approved, is diagnostic rather than
+another rescue search:
+
+1. **Analyze basin transitions.** Use the retained checkpoint trajectories to ask
+   which reward, gradient, and policy-entropy changes precede transitions into and
+   out of endpoint encoding. This analysis does not alter the task or select a best
+   checkpoint.
+2. **Predeclare a different learning objective.** The evidence now argues against
+   further tuning of batch size or the same condition-centered policy gradient. A
+   new plan could compare outcome-conditioned credit estimators or explicit
+   stability regularization, but must use new development and confirmation seeds.
+3. **Keep harder architectural tests gated.** Two unreserved slots and recurrent
+   situation learning remain scientifically important only after a simpler learner
+   passes the full-mixture reliability criterion.
+
+The firm conclusion is not that all differentiable episodic-memory systems must
+fail. It is that this tested learning rule does not reliably learn selective
+boundary encoding on the complete original mixture within the original 400-epoch
+reinforcement-learning budget.
 
 ## 9. Compute requirement and data placement
 
@@ -552,10 +595,17 @@ two-hour limit completed in 91:37 at 0.35 GB. The versioned script now requests 
 hours. Della therefore reduced parallel wall time, but per-core speed varied enough
 that 90 minutes was not a safe limit.
 
+The locked ten-seed batch-32 replication used 14.08 total CPU-hours. Individual
+tasks took 61:56--1:47:07 and peaked at 0.38 GB. All ten ran concurrently after a
+brief stagger, so compute wall time was about 1 hour 47 minutes. For these small
+models, Della was slower per CPU core than the M5 Pro and did not beat the laptop's
+earlier multiseed wall time; its practical value was leaving the laptop free and
+isolating ten independent runs. GPU use would not help this implementation.
+
 The intended remote layout is:
 
 - repository and small environment files:
-  `/home/<NetID>/learn-hippo`;
+  `/home/qlu/learn-hippo`;
 - active raw runs:
   `/scratch/gpfs/KNORMAN/qlu/learn-hippo/runs/<date>-<git-sha>`;
 - compact validated results: the research group's `/projects` space or TigerData,

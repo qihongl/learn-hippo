@@ -465,3 +465,18 @@
 - Per the rule committed before outcomes were opened, the batch-32 cell advances to
   ten fresh full-mixture seeds. No unreserved-memory or recurrent-model work begins
   before that replication passes.
+
+## 2026-09-01 — Locked batch-32 replication fails
+
+- All ten fresh seeds 980--989 completed the unchanged 400-epoch protocol. The
+  aggregate endpoint mean was 0.7656 (SD 0.4084), below the declared 0.80 threshold,
+  and six rather than eight seeds passed every individual criterion.
+- Seeds 981 and 985 ended near zero, seed 982 ended at 0.6824, and seed 983 ended at
+  0.9742 but did not remain selective through the final five checkpoints. Eight of
+  ten runs had a post-epoch-200 endpoint drop greater than 0.08.
+- Mean DM reward still exceeded never and matched-random encoding, and target-memory
+  removal eliminated the benefit. The model therefore learned useful episodic
+  information selection more reliably than boundary-selective timing.
+- The optimizer line stops at the predeclared gate. Condition-label removal,
+  unreserved memory, recurrent representation learning, and 20-seed confirmation do
+  not advance. Any new objective requires a separately approved plan and new seeds.

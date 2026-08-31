@@ -45,7 +45,15 @@ and 0.9965; mean DM reward was 0.7328 versus 0.6072 for never and 0.6330 for ran
 encoding, and target-memory removal reduced it to 0.6010. This is a positive
 three-seed development result, not confirmation. Two selected-cell trajectories
 had large earlier excursions, and each cosine cell retained a wrong solution in
-one seed. The selected cell therefore advances unchanged to ten fresh seeds.
+one seed. The selected cell therefore advanced unchanged to ten fresh seeds.
+
+That locked replication failed. Across fresh seeds 980--989, mean endpoint
+probability was 0.7656 (SD 0.4084), below 0.80, and only six seeds passed the full
+individual rule rather than the required eight. Two seeds ended near zero, one at
+0.6824, and one at 0.9742 but failed the final-five stability rule. Mean DM reward
+was nevertheless 0.7261 versus 0.6031 for never and 0.6274 for random encoding;
+target-memory removal reduced it to 0.6013. The learner reliably acquired useful
+episodic information selection, but not reliable event-boundary selectivity.
 
 Constraining encoding probability to increase with accumulated observed-feature and
 query progress did not help. With the otherwise selected credit and curriculum
@@ -65,11 +73,11 @@ itself escape the nonboundary solution.
 These are exploratory synthetic simulations. The fixed- and variable-duration DM
 results use ten seeds each; only the fixed-duration condition passes all criteria.
 The original selected full-mixture follow-up and the progress-policy screen failed.
-The batch-32 screen passed only three development seeds and still showed
-nonmonotonic trajectories. The memory store has two global slots, but the decision
-procedure permits only one trace per event, so unreserved-capacity training remains
-gated pending the ten-seed replication. The recurrent extension remains deferred.
-The result demonstrates basic computational feasibility and a candidate full-task
-optimizer, not a confirmed full-task effect or a human mechanism. Complete methods,
-learning curves, limitations, compute requirements, and next experiments are in
+The batch-32 screen passed three development seeds but failed its locked ten-seed
+replication and still showed nonmonotonic trajectories. The memory store has two
+global slots, but the decision procedure permits only one trace per event;
+unreserved-capacity and recurrent training remain gated. The result demonstrates
+basic fixed-duration DM feasibility, not a reliable full-task effect or a human
+mechanism. Complete methods, learning curves, limitations, compute requirements,
+and next decisions are in
 [`experiment_report.html`](experiment_report.html).

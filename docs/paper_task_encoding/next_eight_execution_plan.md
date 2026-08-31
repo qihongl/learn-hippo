@@ -149,5 +149,8 @@ with large artifacts below `/scratch/gpfs/KNORMAN/qlu`. A 12-task follow-up scre
 confirmed the throughput benefit but also showed substantial node-speed variation:
 eleven tasks completed in 42:43--54:50, while one unchanged seed required a
 successful 91:37 retry after the original 90-minute limit proved too short. Peak
-memory remained below 0.4 GB. The selected constant-rate, batch-32 cell now advances
-to ten fresh seeds; this does not retroactively change the eight-step outcomes.
+memory remained below 0.4 GB. The selected constant-rate, batch-32 cell advanced to
+ten fresh seeds without retroactively changing the eight-step outcomes. The locked
+replication failed with mean endpoint probability 0.7656 and
+six of ten individual passes, so the current optimizer line and later architectural
+gates stop.

@@ -1,0 +1,73 @@
+{
+  "experiment": "sampled_hazard_stability_replication_b32",
+  "seeds": [
+    980,
+    981,
+    982,
+    983,
+    984,
+    985,
+    986,
+    987,
+    988,
+    989
+  ],
+  "individual_seed_passes": 6,
+  "seed_passes": [
+    {
+      "seed": 980,
+      "passed": true
+    },
+    {
+      "seed": 981,
+      "passed": false
+    },
+    {
+      "seed": 982,
+      "passed": false
+    },
+    {
+      "seed": 983,
+      "passed": false
+    },
+    {
+      "seed": 984,
+      "passed": true
+    },
+    {
+      "seed": 985,
+      "passed": false
+    },
+    {
+      "seed": 986,
+      "passed": true
+    },
+    {
+      "seed": 987,
+      "passed": true
+    },
+    {
+      "seed": 988,
+      "passed": true
+    },
+    {
+      "seed": 989,
+      "passed": true
+    }
+  ],
+  "criteria": {
+    "exactly_ten_declared_seeds": true,
+    "aggregate_success_audit_passed": false,
+    "at_least_eight_individual_seed_passes": false
+  },
+  "passed": false,
+  "provenance": {
+    "mode": "measured",
+    "source": "versioned ten-seed sampled-hazard summary",
+    "timestamp_utc": "2026-08-31T20:10:14.438248+00:00",
+    "git_shas": [
+      "625249ed2bd2fba1e5546739479c7a1e95d84b5f"
+    ],
+    "note": "Measured synthetic simulations; no human data."
+  }
+}
