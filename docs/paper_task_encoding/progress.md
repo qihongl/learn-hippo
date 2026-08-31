@@ -88,3 +88,9 @@
   encoding in an event. Tests verify the one-encoding constraint, valid encoding-time
   distributions, actor freezing during forced value learning, actor updating during
   free learning, high seed safety, and reproducible checkpoint records.
+- 2026-08-31: the declared 400-epoch sampled-reward run succeeded on 128 unseen DM
+  mappings. Final endpoint probability was 0.9993 (0.9994 in `a1`, 0.9991 in `b1`)
+  versus nonendpoint probability 0.000021. Reward was 0.6684 versus 0.4849 for never
+  and 0.5129 for matched random; target-memory removal reduced it to 0.4831. The
+  endpoint preference first exceeded 0.90 at epoch 30. Large temporary excursions at
+  epochs 90 and 340 recovered, and the last five checkpoints all exceeded 0.99.

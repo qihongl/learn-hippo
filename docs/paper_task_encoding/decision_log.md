@@ -219,3 +219,21 @@
   discrete-policy diagnostic because the exact-reward run showed occasional large
   policy excursions. Entropy coefficient 0.001 preserves exploration without making
   dense repeated encoding possible.
+
+## 2026-08-31 — Sampled delayed reward learns the boundary rule
+
+- Seed 610 learned endpoint-selective encoding from sampled delayed prediction reward
+  on fresh training mappings. No counterfactual reward table, endpoint target, or
+  future relevance entered actor training. On new mappings, endpoint probability was
+  0.9993 and the endpoint gap was 0.9992.
+- Held-out reward exceeded never and matched-random-one encoding. Removing the target
+  memory erased the benefit; removing the distractor improved it. The same policy
+  encoded endpoints in both events despite their later roles being unobservable.
+- The rule emerged rapidly (endpoint probability 0.912 at epoch 30), but the path had
+  two large temporary failures at epochs 90 and 340. Both recovered under continued
+  training, and epochs 360–400 all exceeded 0.99. The final result is stable by the
+  prespecified five-checkpoint rule, but optimization robustness requires multiseed
+  evaluation.
+- This achieves the stronger Stage 2 goal in the simplified DM, zero-delay/no-removal,
+  one-per-event condition. The next gate restores the released-code training delays,
+  removed observations, and RM/DM/NM mixture while retaining the same online policy.

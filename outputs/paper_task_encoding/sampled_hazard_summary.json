@@ -1,0 +1,53 @@
+{
+  "experiment": "sampled_hazard_development",
+  "status": "exploratory_sampled_credit_development",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/sampled_hazard_development.yaml",
+  "configuration_sha256": "d783a22b179dcd97ca036b4b8c748ca0687358d97c74f9b81a5f36ad36b68991",
+  "git_sha": "27890e2e8f64c2135ad6a8a6b870b63f222354f8",
+  "seed": 610,
+  "forced_value_sequences": 6400,
+  "free_policy_sequences": 102400,
+  "evaluation_mappings": 128,
+  "final_evaluation": {
+    "learned_expected_reward": 0.6683748364448547,
+    "endpoint_probability": 0.9992626905441284,
+    "a1_endpoint_probability": 0.999445915222168,
+    "b1_endpoint_probability": 0.9990794062614441,
+    "mean_nonendpoint_probability": 0.000021002546418458223,
+    "never_probability": 0.000422200420871377,
+    "endpoint_probability_gap": 0.9992417097091675,
+    "endpoint_pair_reward": 0.668475866317749,
+    "never_pair_reward": 0.48489123582839966,
+    "matched_random_one_reward": 0.512913167476654,
+    "target_memory_removed_reward": 0.4831196665763855,
+    "distractor_memory_removed_reward": 0.6816965937614441
+  },
+  "held_out_curve": [
+    {"epoch": 10, "reward": 0.511643, "endpoint_probability": 0.032784},
+    {"epoch": 20, "reward": 0.636212, "endpoint_probability": 0.355408},
+    {"epoch": 30, "reward": 0.653411, "endpoint_probability": 0.912057},
+    {"epoch": 40, "reward": 0.665038, "endpoint_probability": 0.980549},
+    {"epoch": 50, "reward": 0.667014, "endpoint_probability": 0.989829},
+    {"epoch": 80, "reward": 0.667925, "endpoint_probability": 0.996853},
+    {"epoch": 90, "reward": 0.622308, "endpoint_probability": 0.000251},
+    {"epoch": 100, "reward": 0.668115, "endpoint_probability": 0.997952},
+    {"epoch": 200, "reward": 0.668432, "endpoint_probability": 0.999737},
+    {"epoch": 300, "reward": 0.668445, "endpoint_probability": 0.999828},
+    {"epoch": 330, "reward": 0.668457, "endpoint_probability": 0.999891},
+    {"epoch": 340, "reward": 0.650982, "endpoint_probability": 0.330940},
+    {"epoch": 350, "reward": 0.667446, "endpoint_probability": 0.986680},
+    {"epoch": 360, "reward": 0.668116, "endpoint_probability": 0.993343},
+    {"epoch": 370, "reward": 0.668301, "endpoint_probability": 0.998367},
+    {"epoch": 380, "reward": 0.667392, "endpoint_probability": 0.995480},
+    {"epoch": 390, "reward": 0.668331, "endpoint_probability": 0.998989},
+    {"epoch": 400, "reward": 0.668375, "endpoint_probability": 0.999263}
+  ],
+  "runtime_seconds": {
+    "evaluation_bank_generation": 52.523938708007336,
+    "forced_value_training": 25.23725962502067,
+    "free_policy_training": 707.4574981250043
+  },
+  "raw_record": "outputs/paper_task_encoding/sampled_hazard/sampled_hazard_development_seed610.json (retained locally; ignored by Git; approximately 4.5 MB)",
+  "interpretation": "A fresh shared neural actor learned selective endpoint encoding from sampled delayed prediction rewards on newly generated mappings. This is stronger than the counterfactual result, but it remains one exploratory seed, DM-only, exact accumulated state, one trace per event, and the zero-delay/no-removal task form."
+}
