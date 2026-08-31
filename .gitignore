@@ -121,3 +121,4 @@ src/task/EpisodicBandit.py
 # Learned-boundary experiment artifacts
 checkpoints/
 outputs/checkpoints/
+outputs/paper_task_encoding/neural_counterfactual/*.json

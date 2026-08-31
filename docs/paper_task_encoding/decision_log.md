@@ -187,3 +187,21 @@
   the 256 exact counterfactual examples are reused. This is explicitly an
   architecture-development approximation; it does not satisfy the later requirement
   for 102,400 newly generated sampled-RL sequences.
+
+## 2026-08-31 — Neural exact-state feasibility succeeds
+
+- Seed 510 learned a shared observation-dependent encoding rule with no endpoint
+  target: on 128 held-out mappings, endpoint probability was 0.9872 and nonendpoint
+  probability was 0.00034. Both `a1` and `b1` separately expressed the preference.
+- The learned expected reward exceeded never and matched-random-one encoding. Removing
+  the target memory erased the advantage; removing the distracting memory improved
+  reward. These interventions show that prediction benefit came from target memory,
+  while the shared policy still incurs a small distractor cost.
+- Held-out endpoint probability was above 0.88 for nearly all 10-epoch checkpoints
+  but briefly fell to 0.669 at epoch 280 before recovering. It stabilized from epoch
+  360 through 400, changing by less than 0.001. The result is therefore converged at
+  the final checkpoint but the optimization path is not monotonic.
+- This establishes the approved basic computational feasibility result only in the
+  Stage 2 debugging condition. The next decisive comparison is a fresh actor trained
+  from sampled delayed rewards; after that come variable delay/removal, the full
+  RM/DM/NM mixture, and two total memory slots.

@@ -1,0 +1,49 @@
+{
+  "experiment": "neural_counterfactual_development",
+  "status": "exploratory_architecture_development",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/neural_counterfactual_development.yaml",
+  "configuration_sha256": "7a52ae7c30cc575ec11b84c20a527cca6a08d66dc1354bcaa43b6dea7113c2ad",
+  "git_sha": "0a8907ec2f782c3eaf6042daae9fece136271c07",
+  "seed": 510,
+  "training_unique_mappings": 256,
+  "training_example_exposures": 102400,
+  "evaluation_mappings": 128,
+  "final_evaluation": {
+    "learned_expected_reward": 0.6611382365226746,
+    "endpoint_probability": 0.9872455596923828,
+    "a1_endpoint_probability": 0.9896356463432312,
+    "b1_endpoint_probability": 0.9848555326461792,
+    "mean_nonendpoint_probability": 0.0003360772388987243,
+    "never_probability": 0.007713370490819216,
+    "endpoint_probability_gap": 0.9869095087051392,
+    "endpoint_pair_reward": 0.6623801589012146,
+    "never_pair_reward": 0.48964744806289673,
+    "matched_random_one_reward": 0.5160743594169617,
+    "target_memory_removed_reward": 0.48687997460365295,
+    "distractor_memory_removed_reward": 0.6741902232170105
+  },
+  "held_out_curve": [
+    {"epoch": 10, "reward": 0.6614877581596375, "endpoint_probability": 0.9929964542388916},
+    {"epoch": 50, "reward": 0.6561529636383057, "endpoint_probability": 0.9653934240341187},
+    {"epoch": 100, "reward": 0.6622724533081055, "endpoint_probability": 0.9523530602455139},
+    {"epoch": 150, "reward": 0.6619874238967896, "endpoint_probability": 0.950248658657074},
+    {"epoch": 200, "reward": 0.6599568128585815, "endpoint_probability": 0.9042637348175049},
+    {"epoch": 250, "reward": 0.6599562168121338, "endpoint_probability": 0.9033543467521667},
+    {"epoch": 280, "reward": 0.6023609638214111, "endpoint_probability": 0.6685806512832642},
+    {"epoch": 300, "reward": 0.6616151332855225, "endpoint_probability": 0.96588134765625},
+    {"epoch": 350, "reward": 0.6613742113113403, "endpoint_probability": 0.9962219595909119},
+    {"epoch": 360, "reward": 0.6609275341033936, "endpoint_probability": 0.9876883029937744},
+    {"epoch": 370, "reward": 0.6610859036445618, "endpoint_probability": 0.9862165451049805},
+    {"epoch": 380, "reward": 0.6611104011535645, "endpoint_probability": 0.9865171909332275},
+    {"epoch": 390, "reward": 0.6611246466636658, "endpoint_probability": 0.9868327975273132},
+    {"epoch": 400, "reward": 0.6611382365226746, "endpoint_probability": 0.9872455596923828}
+  ],
+  "runtime_seconds": {
+    "training_bank_generation": 107.55446320801275,
+    "evaluation_bank_generation": 54.17457616599859,
+    "optimization_and_checkpoints": 3.6888378330040723
+  },
+  "raw_record": "outputs/paper_task_encoding/neural_counterfactual/neural_counterfactual_development_seed510.json (retained locally; ignored by Git; approximately 2.7 MB)",
+  "interpretation": "A shared neural policy learned selective endpoint encoding from exact delayed prediction reward on unseen mappings without an endpoint target. This is a positive basic feasibility result, but it uses one exploratory seed, exact accumulated state, counterfactual credit, a reused DM bank, one trace per event, and the zero-delay/no-removal evaluation form."
+}

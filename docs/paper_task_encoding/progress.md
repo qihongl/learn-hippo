@@ -75,3 +75,11 @@
   overfit its small bank. The declared development run therefore increases the bank
   to 256 mappings, evaluates 128 disjoint mappings, and supplies the full 102,400
   sampled-example exposures with held-out checks every 10 epochs.
+- 2026-08-31: the declared neural exact-state development run succeeded on 128
+  unseen DM mappings. At epoch 400, endpoint probability was 0.9872 (0.9896 in `a1`,
+  0.9849 in `b1`) versus mean nonendpoint probability 0.00034. Learned reward was
+  0.6611 versus 0.4896 for never and 0.5161 for matched random. Removing target
+  memory reduced reward to 0.4869; removing distractor memory raised it to 0.6742.
+  The last five checkpoints were stable, although an epoch-280 optimization
+  excursion makes the learning path non-monotonic. This is the first positive basic
+  feasibility result, not yet a multiseed or sampled-RL result.
