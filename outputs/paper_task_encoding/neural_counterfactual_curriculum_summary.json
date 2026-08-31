@@ -1,0 +1,61 @@
+{
+  "experiment": "neural_counterfactual_curriculum",
+  "status": "exploratory_dm_curriculum_diagnostic",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/neural_counterfactual_curriculum.yaml",
+  "configuration_sha256": "19e37ccceaefd7d3adc638738225ba543960eecaa1e213fcdb41691c7c5a4135",
+  "git_sha": "834cebb29687e58343cd5a92fd97a2564dd2bd78",
+  "seed": 820,
+  "dm_curriculum_examples": 128,
+  "full_mixture_examples": 256,
+  "epochs_per_stage": 100,
+  "dm_curriculum_curve": [
+    {"epoch": 10, "endpoint_probability": 0.33711, "dm_reward": 0.69494},
+    {"epoch": 20, "endpoint_probability": 0.32734, "dm_reward": 0.68823},
+    {"epoch": 40, "endpoint_probability": 0.27051, "dm_reward": 0.68763},
+    {"epoch": 60, "endpoint_probability": 0.25715, "dm_reward": 0.68727},
+    {"epoch": 70, "endpoint_probability": 0.36525, "dm_reward": 0.70044},
+    {"epoch": 100, "endpoint_probability": 0.34170, "dm_reward": 0.69742}
+  ],
+  "full_mixture_curve": [
+    {"epoch": 10, "endpoint_probability": 0.13094, "dm_reward": 0.69859},
+    {"epoch": 20, "endpoint_probability": 0.31537, "dm_reward": 0.69606},
+    {"epoch": 40, "endpoint_probability": 0.00782, "dm_reward": 0.68911},
+    {"epoch": 60, "endpoint_probability": 0.27158, "dm_reward": 0.70049},
+    {"epoch": 80, "endpoint_probability": 0.00781, "dm_reward": 0.66027},
+    {"epoch": 100, "endpoint_probability": 0.00781, "dm_reward": 0.65914}
+  ],
+  "final_evaluation": {
+    "RM": {
+      "learned_reward": 0.923683,
+      "endpoint_probability": 0.0,
+      "nonendpoint_probability": 0.058797,
+      "never_reward": 0.935411
+    },
+    "DM": {
+      "learned_reward": 0.659141,
+      "endpoint_probability": 0.0078125,
+      "a1_endpoint_probability": 0.0,
+      "b1_endpoint_probability": 0.015625,
+      "nonendpoint_probability": 0.058150,
+      "forced_endpoint_reward": 0.707219,
+      "never_reward": 0.582131,
+      "matched_random_one_reward": 0.600565
+    },
+    "NM": {
+      "learned_reward": 0.595955,
+      "endpoint_probability": 0.0,
+      "nonendpoint_probability": 0.059259,
+      "never_reward": 0.595979
+    }
+  },
+  "runtime_seconds": {
+    "full_mixture_bank_generation": 146.862726249994,
+    "dm_curriculum_bank_generation": 75.03229066700442,
+    "evaluation_bank_generation": 109.73438954199082,
+    "dm_curriculum_optimization": 5.275661291001597,
+    "full_mixture_optimization": 5.0580494169844314
+  },
+  "raw_record": "outputs/paper_task_encoding/neural_counterfactual/neural_counterfactual_curriculum_seed820.json (retained locally; ignored by Git)",
+  "interpretation": "The DM curriculum improved later DM reward but did not establish selective endpoint encoding on variable-delay examples, and full-mixture continuation converged to a broad late-event policy. Curriculum did not solve the boundary selectivity criterion."
+}

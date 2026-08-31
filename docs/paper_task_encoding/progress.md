@@ -128,3 +128,9 @@
   the unchanged full mixture. Tests verify that curriculum and mixture histories and
   held-out checkpoints remain separately serialized; no policy input or reward is
   altered.
+- 2026-08-31: the DM-to-mixture exact curriculum failed the selectivity criterion.
+  DM pretraining produced endpoint probabilities of only 0.26–0.37; after mixture
+  continuation, endpoint probability was 0.0078 versus nonendpoint 0.0582. The final
+  late-event policy improved DM reward to 0.659 over never 0.582 and random 0.601 but
+  remained below forced endpoint 0.707. Adding a recurrent state is deferred because
+  the simpler exact state has not solved the full mixed objective.

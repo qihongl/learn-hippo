@@ -302,3 +302,17 @@
   of experience rather than policy inputs or task outcomes: first enter the verified
   boundary basin using DM, then continue optimization on the unchanged full mixture.
   Curriculum and from-scratch results will remain separate.
+
+## 2026-08-31 — DM curriculum produces a late-event policy, not a boundary policy
+
+- Exact DM curriculum training on variable-delay trials never reached the declared
+  endpoint threshold. It preferred a distribution over several late observations,
+  with held-out endpoint probability between 0.26 and 0.37 across checkpoints.
+- Full-mixture continuation preserved useful late-event memories but reduced final
+  endpoint probability to 0.0078. DM reward remained above never and matched random,
+  showing that the model learned adaptive information selection, but not the proposed
+  selective boundary-encoding rule.
+- A recurrent situation model is therefore not the next rational implementation
+  step: it adds a representation-learning problem while the exact observable state
+  already exhibits the mixed-objective failure. The report will separate the positive
+  DM-only feasibility result from this negative full-task diagnosis.
