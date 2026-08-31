@@ -147,3 +147,9 @@
   observations early. Mean endpoint probability was 0.00015. This separates the
   existence of an endpoint optimum from its accessibility under gradient
   optimization and motivates only bounded credit/initialization interventions.
+- 2026-08-31: completed ten fresh 400-epoch fixed-duration DM replications. Every
+  seed learned selective endpoint encoding and was stable over its last five held-
+  out checkpoints. Mean endpoint probability was 0.999895 and mean reward exceeded
+  never and matched-random encoding with paired bootstrap intervals above zero.
+  Target-memory removal eliminated the benefit. The full predeclared success audit
+  passed for this debugging condition.

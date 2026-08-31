@@ -349,3 +349,19 @@
   make it a reliably reachable solution. The next intervention is restricted to
   initialization, retrospective credit assignment, and curriculum order. No policy
   input or task outcome will change.
+
+## 2026-08-31 — Fixed-duration DM learning replicates across ten seeds
+
+- Ten fresh actors received 25 forced-exploration epochs and 400 sampled free-policy
+  epochs on newly generated fixed-duration DM mappings. No seed was removed and all
+  checkpoint evaluations used unseen mappings with frozen weights.
+- Mean endpoint probability was 0.999895 (SD 0.000034), and all ten seeds met the
+  endpoint and endpoint-gap thresholds at each of their last five checkpoints. The
+  bootstrap interval for the endpoint gap was [0.999875, 0.999915].
+- Mean learned reward was 0.6616, versus 0.4870 for never and 0.5139 for matched
+  random encoding. Paired bootstrap intervals were [0.1718, 0.1775] above never and
+  [0.1455, 0.1498] above matched random. Target-memory removal reduced reward to
+  0.4833, whereas distractor removal preserved the benefit.
+- This passes every declared criterion for the one-trace-per-event, fixed-duration
+  DM debugging condition. It does not resolve variable duration, the RM/DM/NM
+  mixture, or unreserved memory capacity.

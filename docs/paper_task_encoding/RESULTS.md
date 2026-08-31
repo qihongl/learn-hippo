@@ -2,13 +2,14 @@
 
 ## Outcome
 
-The basic feasibility result is positive. A neural policy using the exact
-accumulated situation state learned selective event-boundary encoding from sampled
-delayed prediction reward on newly generated DM sequences. On 128 unseen mappings,
-endpoint probability was 0.9993, mean probability per earlier time was 0.00002, and
-reward was 0.6684 versus 0.4849 for never encoding and 0.5129 for one random
-encoding. Removing the target memory reduced reward to 0.4831. The endpoint was not
-forced or supplied as a target.
+The basic fixed-duration feasibility result is positive across ten fresh model
+seeds. A neural policy using the exact accumulated situation state learned selective
+event-boundary encoding from sampled delayed prediction reward on newly generated
+DM sequences. Mean endpoint probability was 0.999895 and all ten seeds met the
+five-checkpoint stability rule. Mean reward was 0.6616 versus 0.4870 for never
+encoding and 0.5139 for one random encoding. Removing the target memory reduced
+reward to 0.4833. Bootstrap intervals for the endpoint gap and both reward
+advantages were above zero. The endpoint was not forced or supplied as a target.
 
 A variable-delay, missing-observation DM diagnostic also reached endpoint
 probability 0.8928 and reward 0.7404, close to the forced-endpoint value of 0.7425,
@@ -30,9 +31,10 @@ episodic encoding unnecessary or slightly harmful, while the useful DM signal is
 sparse and delayed. Removing sampling variance does not by itself escape the
 nonboundary solution.
 
-These are exploratory synthetic simulations. The decisive positive and negative
-neural runs currently use one seed each, the situation record is exact, and one
-memory slot is reserved for each earlier event. The result demonstrates basic
-computational feasibility, not a confirmed full-task effect or a human mechanism.
-Complete methods, learning curves, limitations, and next experiments are in
+These are exploratory synthetic simulations. The fixed-duration DM result now uses
+ten seeds, but the variable-DM replication and stronger full-mixture interventions
+remain in progress. The situation record is exact and one memory slot is reserved
+for each earlier event. The result demonstrates basic computational feasibility,
+not a confirmed full-task effect or a human mechanism. Complete methods, learning
+curves, limitations, and next experiments are in
 [`experiment_report.html`](experiment_report.html).
