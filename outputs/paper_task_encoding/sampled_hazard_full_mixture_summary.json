@@ -1,0 +1,61 @@
+{
+  "experiment": "sampled_hazard_full_mixture",
+  "status": "exploratory_full_task_development",
+  "data_kind": "measured synthetic simulation",
+  "configuration": "configs/paper_task_encoding/sampled_hazard_full_mixture.yaml",
+  "configuration_sha256": "b5219c2781486885b203af390e2b20da32114f2896ab6871f1aa4b8781553cc5",
+  "git_sha": "52ddac16f4331141f6a7d7124cab25b48b15f30f",
+  "seed": 710,
+  "forced_value_sequences": 6400,
+  "free_policy_sequences": 102400,
+  "evaluation_mappings_per_condition": 64,
+  "final_evaluation": {
+    "RM": {
+      "learned_reward": 0.935438,
+      "endpoint_probability": 0.002838,
+      "nonendpoint_probability": 0.023317,
+      "endpoint_pair_reward": 0.922025,
+      "never_pair_reward": 0.935942,
+      "matched_random_one_reward": 0.758782
+    },
+    "DM": {
+      "learned_reward": 0.584984,
+      "endpoint_probability": 0.002666,
+      "nonendpoint_probability": 0.025313,
+      "endpoint_probability_gap": -0.022647,
+      "endpoint_pair_reward": 0.704005,
+      "never_pair_reward": 0.582598,
+      "matched_random_one_reward": 0.609172,
+      "target_memory_removed_reward": 0.582533,
+      "distractor_memory_removed_reward": 0.585098
+    },
+    "NM": {
+      "learned_reward": 0.622265,
+      "endpoint_probability": 0.002691,
+      "nonendpoint_probability": 0.024845,
+      "endpoint_pair_reward": 0.621431,
+      "never_pair_reward": 0.622551,
+      "matched_random_one_reward": 0.617907
+    }
+  },
+  "dm_held_out_curve": [
+    {"epoch": 10, "reward": 0.5987, "endpoint_probability": 0.0199, "nonendpoint_probability": 0.0334},
+    {"epoch": 20, "reward": 0.5879, "endpoint_probability": 0.0059, "nonendpoint_probability": 0.0124},
+    {"epoch": 50, "reward": 0.5852, "endpoint_probability": 0.0029, "nonendpoint_probability": 0.0072},
+    {"epoch": 100, "reward": 0.5870, "endpoint_probability": 0.0049, "nonendpoint_probability": 0.0097},
+    {"epoch": 200, "reward": 0.5911, "endpoint_probability": 0.0097, "nonendpoint_probability": 0.0173},
+    {"epoch": 300, "reward": 0.5832, "endpoint_probability": 0.0008, "nonendpoint_probability": 0.0283},
+    {"epoch": 360, "reward": 0.5834, "endpoint_probability": 0.0008, "nonendpoint_probability": 0.0336},
+    {"epoch": 370, "reward": 0.5838, "endpoint_probability": 0.0013, "nonendpoint_probability": 0.0304},
+    {"epoch": 380, "reward": 0.5837, "endpoint_probability": 0.0012, "nonendpoint_probability": 0.0305},
+    {"epoch": 390, "reward": 0.5841, "endpoint_probability": 0.0016, "nonendpoint_probability": 0.0290},
+    {"epoch": 400, "reward": 0.5850, "endpoint_probability": 0.0027, "nonendpoint_probability": 0.0253}
+  ],
+  "runtime_seconds": {
+    "evaluation_bank_generation": 114.21876120800152,
+    "forced_value_training": 30.25566358299693,
+    "free_policy_training": 779.5847997500096
+  },
+  "raw_record": "outputs/paper_task_encoding/sampled_hazard/sampled_hazard_full_mixture_seed710.json (retained locally; ignored by Git; approximately 4.9 MB)",
+  "interpretation": "The sampled actor failed after restoring the full released training distribution. Forced endpoint encoding remained beneficial in DM, but the learned policy converged to low endpoint probability and an early delay-linked pattern. RM and NM favor little or no episodic encoding, making this an optimization/local-credit failure rather than absence of a shared endpoint optimum."
+}

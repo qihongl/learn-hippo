@@ -250,3 +250,23 @@
 - This remains the one-trace-per-event capacity gate. It asks whether the successful
   sampled learner survives the exact task distribution before removing the reserved
   event slots.
+
+## 2026-08-31 — Full task fails through an early delay-linked policy
+
+- Seed 710 did not learn endpoint encoding on the released full mixture. Held-out DM
+  endpoint probability was 0.0027, lower than nonendpoint probability 0.0253, and its
+  reward was below matched-random-one and forced endpoint encoding.
+- The negative result is not explained by endpoint encoding lacking value in DM:
+  forced endpoint reward was 0.7040 versus 0.5826 for never encoding. In RM, however,
+  never encoding slightly beat endpoint encoding; NM was nearly indifferent. The
+  weighted shared endpoint schedule remains better overall, but its informative DM
+  advantage competes with more frequent conditions that reward using working memory
+  or avoiding irrelevant episodic traces.
+- The learned time distribution depends strongly on delay. With zero delay it mostly
+  never encodes; with positive delays it places substantial probability on the first
+  few steps and almost none on the endpoint. Thus restoring both delay cues and the
+  condition mixture reintroduced a nonboundary local solution.
+- DM endpoint selectivity was already absent at epoch 10 and did not show a favorable
+  trend through epoch 400. The extension rule is not met. Two 100-epoch factorial
+  diagnostics will vary delay/removal and condition mixture separately; they are
+  diagnostic rather than rescue tuning.

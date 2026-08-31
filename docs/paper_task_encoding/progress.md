@@ -99,3 +99,10 @@
   length. The next declared fresh actor restores training-mode delays, feature
   removal, random penalties, and the full 0.25 RM / 0.25 DM / 0.50 NM mixture; held-
   out banks retain these manipulations separately in all three conditions.
+- 2026-08-31: the full released-task run failed after its fixed 400 epochs. On held-
+  out variable-delay DM trials, endpoint probability was 0.0027 versus nonendpoint
+  0.0253; learned reward 0.5850 was below matched random 0.6092 and forced endpoint
+  0.7040. RM and NM favored near-no encoding, and the actor learned an early delay-
+  linked pattern. The DM endpoint gap was negative at every 10-epoch checkpoint and
+  showed no favorable late trend, so the prespecified extension criterion was not
+  met. Factorial DM-variable-delay and mixture-fixed-duration diagnostics are next.
