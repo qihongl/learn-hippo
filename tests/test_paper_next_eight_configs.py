@@ -78,7 +78,12 @@ def test_temporal_mixture_audit_uses_five_new_random_initializations() -> None:
 
 def test_credit_factorial_is_paired_and_has_all_eight_cells() -> None:
     paths = sorted(CONFIG_DIRECTORY.glob("sampled_hazard_credit_*.yaml"))
-    configs = [yaml.safe_load(path.read_text()) for path in paths]
+    configs = [
+        config
+        for path in paths
+        if (config := yaml.safe_load(path.read_text()))["experiment"]["status"]
+        == "exploratory_credit_factorial"
+    ]
 
     assert len(configs) == 8
     cells = {

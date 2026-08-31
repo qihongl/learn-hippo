@@ -30,22 +30,26 @@ label. Soft content-based retrieval was differentiable, and the discrete encodin
 choice was learned either from exact expected reward or from sampled delayed
 prediction reward.
 
-The basic feasibility result is positive. On distant-memory (DM) trials alone, a
-fresh policy trained on 102,400 newly generated sequences assigned probability
-0.9993 to endpoint encoding and 0.00002 on average to each earlier time. On unseen
-mappings its prediction reward was 0.6684, compared with 0.4849 for never encoding
-and 0.5129 for one random encoding. Removing the target memory reduced reward to
-0.4831. A separate variable-delay, missing-observation run reached endpoint
-probability 0.8928 by epoch 100, although its learning curve had not stabilized.
+The basic feasibility result is positive and reproducible in a simplified
+distant-memory (DM) condition. Across ten fresh policies, each trained on 102,400
+newly generated sequences, mean endpoint-encoding probability was 0.999895 and all
+ten were stable over their final five evaluations. On unseen mappings, mean
+prediction reward was 0.6616, compared with 0.4870 for never encoding and 0.5139
+for one random encoding. Removing the relevant memory reduced reward to 0.4833.
+Restoring the released variable delays and missing observations made discovery
+unreliable: seven of ten policies finished above 0.80 endpoint probability, six
+were stable, and the mean was 0.7055 (SD 0.4346).
 
-The full-task result is negative. With the released 0.25 recent-memory, 0.25 DM,
-and 0.50 no-relevant-memory mixture, sampled learning produced endpoint probability
-0.0027, below the nonendpoint mean of 0.0253. Exact reward computation also failed
-(0.0069 versus 0.0212), and a DM-first curriculum produced a broad late-event
-policy rather than boundary encoding. Forced endpoint encoding still strongly
-improved DM prediction, so the failure is not an absent endpoint advantage. It is a
-failure to discover that solution under the mixed objective. Thus differentiable
-episodic memory can learn boundary-selective encoding in a theoretically favorable
+The full-task result remains negative. The endpoint was the best deterministic
+shared encoding time in five exact audits of the released 0.25 recent-memory, 0.25
+DM, and 0.50 no-relevant-memory mixture, yet gradient optimization converged one or
+two steps early. A bounded credit-assignment screen found a promising method, but a
+400-epoch follow-up was unstable: two of three fresh policies ended near 1.0
+endpoint probability, while the third collapsed from 0.999 at epoch 390 to nearly
+zero at epoch 400. A progress-constrained policy also failed. Forced endpoint
+encoding still improved DM prediction, so the obstacle is reliable discovery and
+retention of the solution, not an absent endpoint advantage. Differentiable
+episodic memory can therefore learn selective boundary encoding in a favorable
 version of the original task, but the full-mixture claim remains unsupported.
 
 ## 1. Question, terminology, and answer
@@ -67,11 +71,12 @@ situations?
 
 The answer has two levels:
 
-1. **Yes for basic feasibility.** Neural policies learned endpoint-selective
-   encoding in DM-only versions of the exact task, including one run with the
-   released variable timing and missing observations.
-2. **Not yet for the complete training distribution.** From-scratch sampled and
-   exact-reward policies failed under the full recent/distant/no-memory mixture.
+1. **Yes for basic feasibility.** Ten of ten fixed-duration DM policies learned
+   endpoint-selective encoding from sampled delayed reward.
+2. **Not reliably with variable timing.** The released timing and missing-data
+   rules yielded a mixture of successful and failed policies across ten seeds.
+3. **Not yet for the complete training distribution.** Exact and sampled methods
+   did not produce a stable result under the full recent/distant/no-memory mixture.
 
 Future relevance is deliberately unobservable during the first presentation of an
 event. This is a natural feature of episodic memory, not a task defect and not a
@@ -204,10 +209,13 @@ in that event. Thus $p_t$ is the probability of encoding now given survival to t
 $t$. The resulting distribution includes every possible first-encoding time plus a
 final “never encode” outcome. The same parameters control $a1$ and $b1$.
 
-The debugging memory has two slots and permits at most one trace from each event.
-This does **not** force the endpoint—the policy can choose any time or never—but it
-does assume that event segmentation is available and reserves capacity across
-events. Removing that assumption is a later test.
+The memory store has two global first-in, first-out slots: a third trace would evict
+the oldest, regardless of which event produced it. The current decision procedure,
+however, stops offering encoding choices within an event after that event's first
+encoding. It therefore permits at most one trace from $a1$ and one from $b1$ and
+functionally protects room for both. This does **not** force the endpoint—the policy
+can choose any time or never—but it assumes that event segmentation is available.
+A deterministic test confirms that the store itself has no event-specific slots.
 
 ### 3.3 Differentiable retrieval
 
@@ -250,163 +258,179 @@ reinforcement-learning epochs. The paper states that 1,000 total epochs were cho
 curves converged; it did not define a formal stopping test. Those phases trained a
 different model, so they are a reference budget rather than a direct equivalence.
 
-Our exact-state model needs no supervised representation pretraining. Sampled runs
-used 25 epochs (6,400 fresh sequences) of forced exploration for the value network,
-then 400 epochs (102,400 fresh sequences) of free policy learning. Exact-credit runs
-used repeated exposure to fixed synthetic banks and are labeled accordingly.
+Our exact-state model needs no supervised representation pretraining. Primary
+sampled runs used 25 epochs (6,400 fresh sequences) of random forced exploration for
+the value network, then 400 epochs (102,400 fresh sequences) of free policy
+learning. The encoding policy was unchanged during forced exploration. Exact-credit
+runs used repeated exposure to fixed synthetic banks and are labeled accordingly.
 
 ::: {.concept-table}
 | Experiment | Training distribution and credit | Policy exposure | Seeds | Purpose |
 |---|---|---:|---:|---|
-| Temporal audit | fixed-duration DM, exact credit | 1,000 updates on 32 mappings | 3 | verify endpoint optimum and optimizer |
+| Temporal audit | fixed-duration DM, exact credit | 1,000 updates on 32 mappings | 3 | verify the DM endpoint optimum |
 | Neural exact-credit DM | fixed-duration DM, exact credit | 400 epochs; 256 mappings reused | 1 | test neural realizability |
-| Neural sampled-reward DM | fixed-duration DM, sampled reward | 25 forced + 400 free epochs; fresh mappings | 1 | basic delayed-reward test |
-| Variable-timing DM | released delay/removal, sampled reward | 25 forced + 100 free epochs; fresh mappings | 1 | timing and missing-information diagnostic |
-| Full mixture, sampled | released RM/DM/NM mixture | 25 forced + 400 free epochs; fresh mappings | 1 | complete-distribution test |
-| Full mixture, exact | released mixture, exact credit | 100 epochs; 256 examples reused | 1 | remove action-sampling variance |
-| DM curriculum | 100 DM + 100 full-mixture epochs, exact credit | fixed banks reused | 1 | test initialization in a favorable regime |
+| Fixed-duration DM replication | DM, sampled reward | 25 forced + 400 free epochs; fresh mappings | 10 | test basic reliability |
+| Variable-timing DM replication | released delay/removal, sampled reward | 25 forced + 400 free epochs; fresh mappings | 10 | test temporal reliability |
+| Exact mixed temporal audit | fixed-duration RM/DM/NM mixture | 1,000 exact-reward updates | 5 | test the mixed objective and its accessibility |
+| Credit-assignment screen | released mixture; eight predeclared methods | 25 forced + 100 free epochs; fresh mappings | 2 paired per method | bounded method search |
+| Selected mixed method | released mixture; sampled reward | 25 forced + 400 free epochs; fresh mappings | 3 fresh | test stability at the reference budget |
+| Observable-progress policy | released mixture; sampled reward | 25 forced + 100 free epochs; fresh mappings | 2 paired | test a simple neural constraint |
 :::
 
 Fixed held-out banks were evaluated every 10 epochs without changing training random
-streams. The final checkpoint, not the best checkpoint, is reported. A development
-run counted as operationally stable only if all success criteria held for five
-successive checkpoints. The 400-epoch budget was chosen before the main sampled
-runs to match the original reinforcement-learning exposure. Extension to 800 epochs
-was allowed only if epochs 301--400 still showed a prespecified favorable trend.
+streams. The final checkpoint, not the best checkpoint, is reported. A run counted
+as operationally stable only if the boundary criteria held for five successive
+checkpoints. The 400-epoch budget was fixed before the main sampled runs to match
+the original reinforcement-learning exposure, not chosen after inspecting a peak.
+This rule is consequential: one selected full-mixture seed was successful through
+epoch 390 and collapsed at epoch 400. Its final failure is retained. Further
+training is not interpreted as a likely cure when a curve has settled in a wrong
+basin or continues to make catastrophic transitions at a constant learning rate;
+such a curve has either converged to the wrong solution or has not converged at all.
 
 ## 5. Results
 
-### 5.1 The reward surface favors a shared endpoint rule in DM
+### 5.1 Fixed-duration DM gives a reproducible feasibility result
 
-The directly parameterized temporal audit learned endpoint encoding without an
-endpoint target. Across seeds 410--412, mean endpoint probability was 0.9979 and
-mean nonendpoint probability per earlier time was 0.00014. Learned reward was
-0.6551, compared with 0.4896 for never encoding and 0.5145 for one random encoding.
-For every seed, the best single time shared across $a1$ and $b1$ was the endpoint.
+A directly parameterized temporal audit first established that endpoint encoding is
+the best shared encoding time in fixed-duration DM. The stronger neural test then
+used only sampled delayed rewards and new situation mappings. Across ten fresh
+seeds, mean endpoint probability was 0.999895 (SD 0.000034), and mean probability at
+an earlier time was 0.00000035. Every seed expressed the preference separately in
+$a1$ and $b1$ and satisfied the final-five-checkpoint stability rule.
 
-When event identity was allowed to differ retrospectively, the oracle instead chose
-never encoding for distracting $a1$ and endpoint encoding for useful $b1$. This
-matters: a shared online policy cannot know those future roles. The temporal result
-establishes that a shared endpoint solution nevertheless exists in DM.
+The learning curve also converged. Mean endpoint probability rose from 0.107 at
+epoch 10 to 0.899 at epoch 40, 0.985 at epoch 50, and 0.998 at epoch 100. It was
+0.9998 or higher at every checkpoint from epoch 360 through 400, with shrinking
+between-seed variability. The original 400-epoch reference budget was therefore
+more than sufficient in this debugging condition.
 
-### 5.2 A neural policy learns the boundary from sampled delayed reward
+On 128 unseen DM mappings per seed, mean reward was 0.6616, nearly identical to
+forced endpoint encoding (0.6616), and exceeded never encoding (0.4870) and one
+random encoding (0.5139). Removing the relevant $b1$ memory reduced reward to
+0.4833; removing the distracting $a1$ memory increased it to 0.6763. Paired
+bootstrap intervals for endpoint preference and both reward advantages excluded
+zero. The benefit therefore depended on relevant episodic retrieval rather than an
+endpoint label or memorized mapping.
 
-With fixed-duration DM training, the fresh sampled-reward policy reached endpoint
-probability 0.9993 and mean nonendpoint probability 0.00002 on 128 unseen mappings.
-Its reward was 0.6684; forced endpoint reward was 0.6685, never-encoding reward was
-0.4849, and matched-random reward was 0.5129. Removing $b1$ target memories reduced
-reward to 0.4831, whereas removing distracting $a1$ memories increased it to
-0.6817. The benefit therefore came from retrieving the useful target trace, not
-from a direct boundary label or memorized situation mapping.
+### 5.2 Variable timing permits the solution but makes discovery unreliable
 
-The policy emerged by epoch 30 but temporarily collapsed at epochs 90 and 340. It
-recovered without intervention, and endpoint probability exceeded 0.99 at each of
-the final five checkpoints (epochs 360--400). It therefore met the operational
-stability rule, although one seed cannot establish optimization reliability.
-
-The exact-credit neural model independently reached endpoint probability 0.9872
-and reward 0.6611 on 128 unseen mappings. This supports realizability but is weaker
-evidence about learning because its 256 training mappings were reused and its
-credit signal was privileged.
-
-### 5.3 Delay and missing observations do not eliminate feasibility
-
-A sampled DM-only diagnostic restored the released 0--4 delays and
-missing-observation rule. At epoch 100, endpoint probability was 0.8928, nonendpoint
-probability was 0.0052, and reward was 0.7404 versus 0.7425 for forced endpoint,
-0.6157 for never, and 0.6393 for random encoding. Removing the target memory again
-erased the benefit. However, endpoint probability collapsed near zero at epoch 60
-and recovered only late, so this run had **not** converged by the five-checkpoint
-rule. It shows feasibility under variable timing, not a stable final estimate.
+The ten-seed variable-duration replication restored delays of zero through four and
+the released missing-observation rule. Mean endpoint probability increased from
+0.049 at epoch 10 to 0.739 at epoch 200, but it did not settle: it was 0.7055 at
+epoch 400 with SD 0.4346. Seven seeds finished above 0.80 and six satisfied the
+five-checkpoint stability rule; the remaining endpoints were 0.211, 0.046, and
+0.000. The mean reward still reached 0.7291, above never (0.6097) and random
+encoding (0.6343), because several nonboundary late policies were useful.
 
 ![](../../outputs/paper_task_encoding/figures/fig_03_learning.svg)
 
-**Figure 3. Held-out learning curves.** **a**, Endpoint probability during policy
-training. Fixed-duration DM models learned the endpoint with exact or sampled
-credit. Full-mixture models did not. The horizontal line marks the declared 0.80
-criterion. **b**, Prediction reward expressed as the fraction of the available gain
-from never encoding (0) to forced endpoint encoding (1). Reward can improve while
-the encoding policy remains nonboundary, so reward alone is not the target measure.
-Every curve is a measured synthetic simulation from one exploratory model seed;
-lines do not show uncertainty intervals.
+**Figure 3. Learning and reliability on unseen mappings.** **a**, Mean held-out
+endpoint probability at ten-epoch checkpoints; shading is one between-seed standard
+deviation. The fixed-duration DM curve converges, whereas variable DM remains
+heterogeneous. The selected full-mixture method appears successful near the end but
+loses one seed at the final checkpoint. **b**, Final seed-level values; horizontal
+bars are means. The dashed line is the predeclared 0.80 criterion. Every mark is a
+measured synthetic simulation, and the final rather than best checkpoint is used.
 
-### 5.4 The full RM/DM/NM mixture blocks discovery
+### 5.3 The mixed objective contains an endpoint optimum that gradients miss
 
-The from-scratch sampled policy trained for the full 400 epochs and failed. On new
-DM trials, endpoint probability was 0.0027, below nonendpoint probability 0.0253.
-Reward was 0.5850, compared with 0.5826 for never encoding, 0.6092 for random
-encoding, and 0.7040 for forced endpoint. The policy had therefore not discovered
-the valuable boundary solution.
+The full task uses 25% RM, 25% DM, and 50% NM trials. In five fixed-duration exact
+audits, endpoint encoding was the best deterministic shared time on every held-out
+reward table. Its mean mixture reward was 0.6653, compared with 0.6213 for never
+encoding. Nevertheless, all five gradient runs converged one or two observations
+early: mean endpoint probability was 0.00015 and mean probability at an earlier time
+was 0.06665. Thus the full-mixture failure is not simply that the endpoint is
+worthless; the smoother late solutions are easier for this optimizer to reach.
 
-The curve plateaued at a wrong solution. Endpoint probability was below
-nonendpoint probability at every checkpoint; over the last five checkpoints it
-ranged from 0.0008 to 0.0027 while reward remained approximately 0.583--0.585.
-The prespecified extension rule was not met. This does not prove that unlimited
-training could never succeed, but the measured curve had converged operationally to
-a nonboundary basin rather than continuing toward the endpoint.
+Earlier neural controls agree. From-scratch sampled learning ended with endpoint
+probability 0.0027, and neural exact credit ended at 0.0069. A DM-first exact
+curriculum improved prediction by spreading encoding across late observations but
+ended at 0.0078. These are forms of useful information selection, not selective
+event-boundary encoding.
 
-A factorial diagnostic identified the condition mixture, not variable timing, as
-the principal obstacle. DM-only learning worked with variable delay and missing
-observations. Conversely, the full mixture failed even when duration was fixed.
-RM prediction is already supported by working memory, and NM has no relevant
-episodic trace; together they comprise 75% of training and favor little or no
-encoding.
+### 5.4 Better retrospective credit helps, but is not stable
 
-Action-sampling noise was not the whole explanation. Exact credit on the unchanged
-full mixture ended with endpoint probability 0.0069 and nonendpoint probability
-0.0212, although forced endpoint DM reward was 0.7383 versus 0.6210 for never.
-Thus a strong nonboundary local solution remains even when every encoding-time
-outcome is known.
+We crossed three factors in a bounded eight-method screen: low (0.05) versus neutral
+(0.50) initial encoding probability; an ordinary learned value baseline versus a
+**condition-centered baseline**, which subtracts the recent average reward for the
+condition observed after the trial; and direct mixture training versus gradual
+**annealing**, which changes the training distribution from DM-only to the unchanged
+mixture over 100 epochs. The condition is used only after $b2$ to assign credit; it
+is never an input to the encoding policy.
 
-### 5.5 A DM-first curriculum learns useful late encoding, not the boundary
+No method passed both paired seeds. Low initialization, condition-centered credit,
+and annealing was the only promising combination: its two endpoints were 0.859 and
+0.714 at epoch 100, whereas its direct-mixture counterpart was effectively zero.
+We therefore extended only this predeclared selection to 400 epochs on three fresh
+seeds.
 
-The exact-credit curriculum first trained for 100 epochs on variable-timing DM and
-then 100 epochs on the full mixture. During DM training, endpoint probability stayed
-between about 0.26 and 0.37 while reward improved through a distribution of late
-encodings. After mixture training, endpoint probability was 0.0078 and nonendpoint
-probability 0.0582. DM reward (0.6591) remained above never (0.5821) and random
-(0.6006), but below forced endpoint (0.7072). This is **adaptive information
-selection**, not selective event-boundary encoding.
+Two follow-up seeds ended with stable endpoint probabilities of 0.9979 and 0.9991.
+The third reached 0.9991 at epoch 390 but shifted during the final ten epochs to a
+broad policy centered one to four steps before the endpoint; its final endpoint
+probability was $1.6\times10^{-8}$. The three-seed final mean was 0.6657 (SD 0.5765),
+below the 0.80 criterion. Mean reward was 0.7209 versus 0.6074 for never and 0.6288
+for random encoding, and target-memory removal erased this benefit. The result is
+promising evidence that the credit intervention can discover boundary encoding, but
+it is not a stable full-task solution. Additional epochs at the same constant
+learning rate would not address the observed catastrophic transition.
 
 ![](../../outputs/paper_task_encoding/figures/fig_04_results.svg)
 
-**Figure 4. Outcome across training regimes.** **a**, Final endpoint probability
-minus mean nonendpoint probability. DM-only regimes learned a boundary rule; all
-full-mixture regimes failed. The temporal audit is the mean of three seeds; every
-other point is one exploratory seed. **b**, Learned and matched-random DM reward
-relative to the gain between never encoding (0) and forced endpoint encoding (1)
-within the same trial bank. Curriculum can recover prediction reward without
-learning the boundary, demonstrating why policy timing and task performance must be
-reported separately. All quantitative marks are measured synthetic simulations.
+**Figure 4. Why the full-mixture result remains negative.** **a**, Exact shared
+temporal policies for five random initializations. Thin lines are seeds and the dark
+line is their mean. Although the dashed endpoint is the best deterministic time,
+optimization concentrates one or two observations earlier. **b**, Final endpoint
+probability in the eight 100-epoch credit methods and the selected 400-epoch
+follow-up. Dots are seeds and black bars are means. “Centered” means retrospective
+condition-centered reward; “annealed” means gradual DM-to-mixture training. The
+selected method discovers the endpoint but does not retain it reliably.
+
+### 5.5 Progress, capacity, and recurrent-model gates
+
+A monotonic progress policy used two observable quantities already present in the
+situation state: the fraction of feature rows containing an observed value and the
+fraction of queries seen. It received no time or endpoint input. Both paired seeds
+remained near 0.021 endpoint probability through all 100 epochs, so this simple
+constraint did not solve credit assignment.
+
+The two memory slots are globally shared and first-in, first-out; a test in which
+$a1$ encodes twice and $b1$ encodes once leaves the newest $a1$ trace and the $b1$
+trace. Forced endpoint baselines already use this same two-slot store and show that
+capacity is sufficient: in the selected follow-up, forced endpoints achieved mean
+DM reward 0.7279 versus 0.6074 for never encoding. What remains untested is a
+*learned* policy that may spend both slots within one event. The approved gate
+required a stable full-mixture policy before adding that harder decision. Because
+the selected method failed, unreserved-capacity training and the recurrent neural
+situation model were formally deferred rather than treated as failed experiments.
 
 ::: {.concept-table}
-| Regime | Endpoint $p$ | Nonendpoint $p$ | Learned DM reward | Never / random / forced endpoint | Outcome |
+| Regime | Seeds | Endpoint $p$, mean (SD) | Learned DM reward | Never / random / forced endpoint | Outcome |
 |---|---:|---:|---:|---:|---|
-| Temporal audit, exact | 0.9979 | 0.00014 | 0.6551 | 0.4896 / 0.5145 / 0.6554 | objective passes |
-| Neural DM, exact | 0.9872 | 0.00034 | 0.6611 | 0.4896 / 0.5161 / 0.6624 | basic feasibility |
-| Neural DM, sampled | 0.9993 | 0.00002 | 0.6684 | 0.4849 / 0.5129 / 0.6685 | delayed-reward feasibility |
-| Neural DM, variable timing | 0.8928 | 0.00516 | 0.7404 | 0.6157 / 0.6393 / 0.7425 | positive but unstable |
-| Full mixture, sampled | 0.0027 | 0.02531 | 0.5850 | 0.5826 / 0.6092 / 0.7040 | fails |
-| Full mixture, exact | 0.0069 | 0.02117 | 0.6260 | 0.6210 / 0.6374 / 0.7383 | fails |
-| DM curriculum then mixture | 0.0078 | 0.05815 | 0.6591 | 0.5821 / 0.6006 / 0.7072 | useful but nonboundary |
+| Fixed-duration DM, sampled | 10 | 0.9999 (0.00003) | 0.6616 | 0.4870 / 0.5139 / 0.6616 | passes all criteria |
+| Variable-duration DM, sampled | 10 | 0.7055 (0.4346) | 0.7291 | 0.6097 / 0.6343 / 0.7307 | useful but unreliable |
+| Full mixture, exact temporal | 5 | 0.00015 (0.00018) | 0.6570 mixture reward | 0.6213 / 0.5973 / 0.6653 | endpoint optimum missed |
+| Selected full-mixture method | 3 | 0.6657 (0.5765) | 0.7209 | 0.6074 / 0.6288 / 0.7279 | two pass, one collapses |
+| Observable-progress policy | 2 | 0.0210 (0.00005) | 0.6089 | 0.5940 / 0.6147 / 0.7198 | fails |
 :::
 
 ## 6. Interpretation
 
-The study demonstrates the requested mechanism at its basic level. A neural policy
-coupled to differentiable episodic retrieval learned to encode selectively at event
-boundaries from delayed prediction reward, generalized to unseen situation mappings,
-and causally depended on the target memory. The endpoint was not forced or supplied
-as a supervised label.
+The study demonstrates the requested mechanism at its basic level with an
+across-seed result. A neural policy coupled to differentiable episodic retrieval
+learned selective event-boundary encoding from delayed prediction reward, generalized
+to unseen situation mappings, and causally depended on the relevant memory. The
+endpoint was neither forced nor supplied as a supervised label.
 
-The result does not yet support the stronger claim that the same policy will emerge
-under the complete original training mixture. That failure is scientifically
-informative. Forced endpoint encoding remains valuable in DM, but most training
-trials provide weak or adverse memory credit. The shared policy must extract a
-relatively sparse delayed advantage while easier policies—never encoding, early
-encoding, or a broad late distribution—are locally available. Exact enumeration
-does not remove the basin, so merely lowering policy-gradient variance is
-insufficient.
+The result does not support the stronger claim that the same policy emerges
+reliably under the complete original training mixture. Forced endpoint encoding
+remains valuable in DM, but most training trials provide weak or adverse encoding
+credit. The shared policy must extract a sparse delayed advantage while easier
+never-encoding and broad late-encoding policies are available. Exact enumeration
+shows that the endpoint optimum exists but does not make its gradient basin easy to
+reach. Retrospective condition-centered credit and gradual mixture training can
+reach it, yet constant-rate sampled optimization can leave it abruptly. The present
+problem is therefore both discovery and optimization stability.
 
 Using the original simulation setting is therefore feasible and has already been
 done. The generator reproduces the original representation, sequence, memory
@@ -419,16 +443,17 @@ representation itself.
 ::: {.limitations-table}
 | Limitation | What it means | Why it is important | Proposed next step |
 |---|---|---|---|
-| Most neural results use one exploratory seed | The positive and negative neural outcomes have no across-seed uncertainty estimate. | The learning curves contain large temporary collapses; one trajectory may not represent the method. | Freeze the DM configurations and run at least 10 seeds, retaining every seed and checkpoint. |
-| Exact situation recording | The model stores observed feature values perfectly instead of learning a recurrent representation from the 37-unit stream. | This isolates encoding policy learning but overstates perceptual and relational competence. | Add a pretrained GRU/LSTM only after the full-mixture encoding objective is made learnable; require at least 99% decoding of observed values first. |
-| One trace is reserved per event | After the first encoding, the event stops offering actions, and two slots guarantee room for both earlier events. | This assumes segmentation and removes competition for limited capacity across event boundaries. | Repeat with two unreserved slots for the whole trial, then compare four and larger capacities. |
-| DM-only success | The strongest learned boundary result comes from the condition where episodic memory is consistently useful. | It establishes feasibility but not emergence under the original RM/DM/NM distribution. | Diagnose and solve the full-mixture objective without adding condition or future-target inputs. |
-| Exact credit is privileged | Some runs enumerate outcomes for actions that were not taken. | It is useful for diagnosis but is not a plausible online learning rule. | Treat sampled delayed reward as the primary mechanism and exact credit only as an audit. |
-| Retrieval gate was selected exploratorily | A fixed content-similarity threshold suppresses irrelevant memories. | The gate changes which encoding schedules are useful and makes the study nonconfirmatory. | Freeze it before multiseed replication or learn it on a disjoint retrieval objective. |
-| Released code and prose differ | The primary profile uses delay 0--4 and about 15% mean removal; the prose states delay 0--3 and independent 30% removal. | “Exact task” has two nonidentical definitions. | Run the already implemented `paper_text` profile as a separately labeled sensitivity. |
-| Recurrent extension is deferred | The original neural situation learner has not been reintroduced. | A positive exact-state result does not show that a fully neural system can learn both representation and encoding. | Reintroduce recurrence after the simpler full-mixture gate; adding it now would confound two failures. |
+| Exact situation recording | The model stores observed feature values perfectly instead of learning a recurrent representation from the 37-unit stream. | This isolates encoding-policy learning but overstates perceptual and relational competence. | Add a pretrained GRU or LSTM only after the full-mixture encoding objective is stable; require at least 99% decoding of observed values first. |
+| Functionally reserved traces | The store is global, but the decision procedure stops after one encoding in each event. | This assumes segmentation and prevents the policy from spending both slots within one event. | After a stable full-mixture result, repeat with two unreserved slots for the whole trial. |
+| DM-only reliability | All ten robust successes come from the condition where episodic memory is consistently useful. | This establishes feasibility but not reliable emergence under the original RM/DM/NM distribution. | Stabilize full-mixture learning without condition or future-target inputs. |
+| Unstable selected method | Two full-mixture seeds passed, but one changed from an endpoint to a late policy in the final ten epochs. | A useful policy that is not retained cannot support a reliable learning claim. | Predeclare a small optimizer-stability screen using learning-rate decay and larger batches; report final checkpoints only. |
+| Retrospective condition-centered credit | The selected learner uses the realized trial condition after the outcome to center reward, although the policy never sees it while encoding. | This is scientifically cleaner than prospective leakage but is a stronger learning signal than a condition-blind biological learner may possess. | Compare it with baselines learned only from observable post-outcome variables. |
+| Exact credit is privileged | Some diagnostic runs enumerate outcomes for actions that were not taken. | It locates objective and optimizer failures but is not a plausible online learning rule. | Keep sampled delayed reward as the primary mechanism and exact credit only as an audit. |
+| Retrieval gate was selected exploratorily | A fixed content-similarity threshold suppresses irrelevant memories. | The gate changes which encoding schedules are useful and makes the study nonconfirmatory. | Freeze it before confirmation or learn it on a disjoint retrieval objective. |
+| Released code and prose differ | The primary profile uses delay 0--4 and about 15% mean removal; the prose states delay 0--3 and independent 30% removal. | “Exact task” has two nonidentical definitions. | Run the implemented `paper_text` profile as a separately labeled sensitivity. |
+| Recurrent extension is deferred | The original neural situation learner has not been reintroduced. | An exact-state result does not show that a fully neural system can learn representation and encoding. | Reintroduce recurrence only after the simpler full-mixture and unreserved-capacity gates pass. |
 | Synthetic model only | The stimuli are abstract feature vectors and retrieval is a mathematical analogue. | Feasibility cannot establish human gaze, hippocampal encoding, or a biological learning rule. | Derive differentiating behavioral predictions and test human data separately. |
-| Exploratory, not preregistered | Architecture and optimization choices followed observed failures. | The reported curves measure model behavior, not researcher degrees of freedom. | Lock code, budgets, seed namespaces, and criteria before a 20-seed confirmation. |
+| Exploratory, not preregistered | Credit and optimization choices followed observed failures. | The results do not account for researcher degrees of freedom. | Lock code, budgets, seed namespaces, and criteria before a 20-seed confirmation. |
 :::
 
 Future relevance being unavailable during $a1$ and $b1$ is intentionally absent
@@ -437,37 +462,65 @@ not a limitation to eliminate.
 
 ## 8. Most promising next experiments
 
-1. **Confirm the basic result.** Run the fixed-duration and variable-timing DM
-   sampled configurations for at least 10 seeds through 400 epochs. Require a
-   positive endpoint gap, a reward advantage over never and random encoding,
-   target-memory dependence, and five-checkpoint stability. This distinguishes a robust
-   mechanism from a lucky trajectory.
-2. **Audit the mixed objective with the simplest policy.** Optimize the shared
-   temporal policy on the full RM/DM/NM mixture. If even the 16-parameter schedule
-   misses the endpoint, the mixed objective or its local geometry—not situation
-   representation—is the first target.
-3. **Improve credit without leaking future relevance.** Compare condition-centered
-   retrospective advantages, multiple random initializations, and gradual mixture
-   annealing. These methods may use realized outcomes after $b2$ to assign credit,
-   but the encoding policy must still receive only the current situation state.
-4. **Test a progress-based neural policy.** Constrain the policy to learn a monotonic
-   dependence on observable situation and query completeness, rather than supplying
-   an endpoint flag. This encodes the hypothesis that more complete event models
-   should be preferred while leaving the threshold to optimization.
-5. **Remove reserved memory slots.** After a full-mixture boundary solution exists,
-   use two unreserved slots across the entire trial and test whether the policy still
-   spends capacity at boundaries.
-6. **Add recurrent state learning.** Pretrain a GRU or LSTM for 600 epochs of 256
-   fresh sequences, freeze it after the held-out decoding and forced-endpoint
+1. **Stabilize the selected full-mixture method.** Cross a predeclared learning-rate
+   decay with a larger sampled batch while keeping the task, policy inputs, final
+   checkpoint rule, and 400-epoch exposure fixed. The aim is to prevent transitions
+   like seed 960's epoch-390 collapse, not to preserve a best checkpoint.
+2. **Remove privileged retrospective labels.** If stability is achieved, replace
+   the condition-centered baseline with a baseline computed from observable
+   prediction outcomes and retrieval matches. This asks whether the improvement
+   survives a more natural learning signal.
+3. **Remove the one-per-event decision rule.** Give the policy two unreserved slots
+   across $a1$ and $b1$ and test whether it still spends capacity at event
+   boundaries. Four- and 40-slot variants are secondary capacity sensitivities.
+4. **Add recurrent state learning.** Pretrain a GRU or LSTM for 600 epochs of 256
+   fresh sequences, freeze it after held-out decoding and forced-endpoint
    preconditions pass, then train the encoding policy for 400 epochs.
-7. **Lock confirmation.** Commit the successful design before running 20 untouched
-   model seeds and 512 new trials per condition. Report all seeds, including failures.
+5. **Lock confirmation.** Commit the complete design before running 20 untouched
+   model seeds and 512 new trials per condition. Report every seed, including
+   failures, and run the paper-prose task profile separately.
 
 The recurrent model is not the immediate next implementation step. The exact state
 already fails under the full mixture, so adding a harder representation-learning
 problem would obscure the present diagnosis.
 
-## 9. Reproducibility and provenance
+## 9. Compute requirement and data placement
+
+These models are small and CPU-bound. On the 48 GB Apple M5 Pro laptop, one
+fixed-duration 400-epoch seed took 21.4 minutes on average (range 16.0--25.0; 3.57
+total process-hours for ten seeds). One variable-duration seed took 28.1 minutes on
+average (24.2--30.0; 4.68 total process-hours). The three selected full-mixture
+seeds took 24.4 minutes each. A live process used approximately 0.30--0.36 GB of
+memory, so memory and GPU capacity are not constraints. The ten-seed batches took
+about 56 and 78 minutes of wall time, respectively, when several single-threaded
+processes shared the laptop with other experiments. Six to eight concurrent seeds
+are a reasonable local setting; a complete 20-seed replication should take roughly
+one to two hours of wall time after the code is frozen.
+
+Della is useful for throughput, not necessity. The versioned Slurm array requests
+one CPU, 4 GB, and 90 minutes per seed, allows ten seeds at once, and writes each
+seed to a distinct directory. A submitted array would probably need two roughly
+30-minute compute waves for 20 seeds, plus an unpredictable queue delay. No Della
+job was submitted in this study because the local remote-compute configuration does
+not contain a Della login, research-group name, NetID, or Python environment; these
+account-specific values were not guessed.
+
+The intended remote layout is:
+
+- repository and small environment files:
+  `/home/<NetID>/learn-hippo`;
+- active raw runs:
+  `/scratch/gpfs/<ResearchGroup>/<NetID>/learn-hippo/runs/<date>-<git-sha>`;
+- compact validated results: the research group's `/projects` space or TigerData,
+  plus a fresh immutable local results directory.
+
+Della scratch is temporary and not backed up. Each completed run should therefore
+copy back every seed JSON, Slurm log, configuration hash, Git commit, Python version,
+and package record before scratch cleanup. The ready-to-fill submission instructions
+are in [`scripts/della/README.md`](../../scripts/della/README.md); the scientific
+configuration does not need to be edited when account paths are supplied.
+
+## 10. Reproducibility and provenance
 
 The implementation, deterministic tests, YAML configurations, compact summaries,
 and checkpoint curves are versioned. Large raw per-step JSON records are retained

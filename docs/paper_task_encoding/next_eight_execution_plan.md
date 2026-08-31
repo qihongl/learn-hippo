@@ -122,3 +122,26 @@ The projected exploratory budget is at most 24 CPU-hours for Steps 1–4, anothe
 CPU-hours for Steps 5–7, and up to 72 CPU-hours for the recurrent extension. Any
 projected overrun pauses the relevant stage rather than reducing seeds or evaluation
 trials silently.
+
+## Execution outcome
+
+All eight decision steps were executed through their declared gates. Step 1 froze
+the configuration, seed, output, and Della contracts. Step 2 passed across all ten
+fixed-duration DM seeds. Step 3 failed the reliability criterion despite useful
+memory in all ten variable-duration seeds. Step 4 showed that the endpoint is the
+best deterministic shared time in the full mixture, but five exact optimizations
+stopped one or two observations early. Step 5 found a promising credit intervention,
+then rejected it at 400 epochs because one of three fresh policies catastrophically
+left the endpoint solution at the final checkpoint. Step 6's observable-progress
+policy failed. Step 7 verified global two-slot storage and the capacity sufficiency
+of forced endpoints; learned unreserved selection was gated off by Step 5. Step 8
+therefore records the full-task optimization diagnosis and formally defers recurrent
+state learning and locked confirmation.
+
+Measured laptop costs replaced the advance estimates. The fixed ten-seed batch used
+3.57 total process-hours (21.4 minutes per seed), the variable batch 4.68 hours
+(28.1 minutes per seed), and the selected full-mixture follow-up 1.22 hours (24.4
+minutes per seed). Processes used about 0.30--0.36 GB each. The workload fits the
+48 GB laptop; Della is useful only to reduce wall time for future locked seed arrays.
+No Della submission was attempted because the account-specific login, research
+group, NetID, and Python environment are not configured locally.

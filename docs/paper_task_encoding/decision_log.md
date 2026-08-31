@@ -418,3 +418,34 @@
 - Variable duration therefore does not make boundary learning impossible, but the
   sampled optimizer is not reliable enough for the declared claim. This negative
   multiseed result replaces the earlier single-seed 100-epoch feasibility result.
+
+## 2026-08-31 — Selected full-mixture method fails the stability gate
+
+- The single selected factorial cell received the declared 400-epoch budget on
+  three fresh seeds. No checkpoint or seed was selected for reporting.
+- Seeds 961 and 962 finished with endpoint probabilities 0.9979 and 0.9991 and met
+  the final-five-checkpoint rule. Seed 960 reached 0.9991 at epoch 390 but changed
+  to a broad pre-endpoint policy during the last ten epochs; its endpoint
+  probability at epoch 400 was effectively zero.
+- The final mean endpoint probability was 0.6657 (SD 0.5765), below the 0.80
+  criterion. Mean reward was 0.7209 versus 0.6074 for never and 0.6288 for random
+  encoding, and target-memory removal erased the gain. Reward is therefore not a
+  substitute for temporal selectivity.
+- The full-mixture result remains negative. Additional constant-rate epochs are not
+  authorized because the observed problem is catastrophic policy instability, not
+  insufficient exposure along a favorable convergent curve.
+
+## 2026-08-31 — Capacity and recurrent extensions are formally gated
+
+- The memory implementation is a global two-slot FIFO store. A deterministic test
+  verifies that multiple `a1` encodings compete with a later `b1` encoding; slots
+  are not labeled or reserved by the store.
+- The current sampled decision procedure nevertheless stops after the first
+  encoding in each event, so the learned policy has not been tested with two fully
+  unreserved choices. Forced endpoint, never, and random baselines already use the
+  global two-slot store and confirm that two endpoint traces fit and improve DM
+  reward.
+- The approved plan required stable full-mixture learning before training the harder
+  unreserved policy, and required both results before recurrent state learning.
+  Because the selected method failed, the unreserved actor, recurrent pretraining,
+  and locked 20-seed confirmation are deferred rather than misreported as failed.

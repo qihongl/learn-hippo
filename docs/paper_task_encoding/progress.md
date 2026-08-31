@@ -166,3 +166,18 @@
   endpoint probability was 0.7055 with large between-seed variability; seven seeds
   finished above 0.80 and six were stable over the last five checkpoints. All seeds
   gained reward from episodic memory, but the full policy success audit failed.
+- 2026-08-31: completed the selected 400-epoch full-mixture follow-up on three fresh
+  seeds. Two policies finished stably at endpoint probabilities 0.9979 and 0.9991.
+  The third was at 0.9991 at epoch 390 but collapsed to effectively zero at epoch
+  400. The final mean was 0.6657, so the predeclared audit failed despite a reliable
+  prediction-reward benefit.
+- 2026-08-31: verified that the underlying two-slot memory is global FIFO rather
+  than event-specific. Forced endpoint evaluation shows that two slots suffice, but
+  training a policy that can spend both within one event was gated on stable
+  full-mixture learning and was therefore deferred.
+- 2026-08-31: applied the recurrent-state gate. Because the exact situation-state
+  model did not pass both the stable full-mixture and unreserved-capacity criteria,
+  the 600-epoch recurrent pretraining and 20-seed confirmation were not run.
+- 2026-08-31: rebuilt the paper-style report with multiseed learning curves,
+  seed-level outcomes, the exact mixed-objective audit, the credit factorial, actual
+  laptop runtimes, Della placement instructions, and explicit limitations.
