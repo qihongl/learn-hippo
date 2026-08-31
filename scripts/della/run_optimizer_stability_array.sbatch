@@ -3,7 +3,7 @@
 #SBATCH --account=knorman
 #SBATCH --qos=short
 #SBATCH --array=0-11%12
-#SBATCH --time=01:30:00
+#SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
 #SBATCH --output=slurm-logs/em-stability-%A_%a.out

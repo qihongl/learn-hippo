@@ -48,3 +48,7 @@ sbatch --export=ALL,LEARN_HIPPO_REPO,LEARN_HIPPO_RUN_ROOT,LEARN_HIPPO_PYTHON \
 
 For the KNORMAN allocation, use a fresh directory below
 `/scratch/gpfs/KNORMAN/qlu/learn-hippo/runs/<date>-<git-sha>/optimizer-stability`.
+The stability array requests two hours per task: the first Della run showed that
+identical CPU-only workloads can vary from about 43 minutes to more than 90 minutes
+across nodes, despite using less than 0.4 GB of memory. A timed-out task should be
+rerun with the same manifest index and configuration rather than changing its seed.
