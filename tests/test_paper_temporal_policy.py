@@ -86,6 +86,16 @@ def test_temporal_policy_learns_endpoint_from_reward_without_target() -> None:
     assert len(result.history) == 200
 
 
+def test_random_temporal_initialization_is_seeded_and_not_time_uniform() -> None:
+    torch.manual_seed(17)
+    first = TemporalHazardPolicy(n_steps=4, initialization="random")
+    torch.manual_seed(17)
+    second = TemporalHazardPolicy(n_steps=4, initialization="random")
+
+    torch.testing.assert_close(first.logits, second.logits)
+    assert first.logits.std() > 0
+
+
 def test_real_counterfactual_matrix_matches_forced_endpoint_rollout() -> None:
     model = _model()
     trial = generate_trial(

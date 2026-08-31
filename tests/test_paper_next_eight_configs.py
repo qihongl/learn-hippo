@@ -65,3 +65,12 @@ def test_della_manifest_matches_every_declared_replication_seed() -> None:
         )
 
     assert records == expected
+
+
+def test_temporal_mixture_audit_uses_five_new_random_initializations() -> None:
+    config = _load("temporal_hazard_full_mixture.yaml")
+
+    assert config["experiment"]["model_seeds"] == list(range(930, 935))
+    assert config["task"]["conditions"] == ["RM", "DM", "NM", "NM"]
+    assert config["task"]["evaluation_mode"] is True
+    assert config["optimization"]["initialization"] == "random"

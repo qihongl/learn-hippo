@@ -1,0 +1,33 @@
+experiment:
+  name: temporal_hazard_mixture_smoke
+  status: behavior_test_only
+  model_seeds: [0]
+
+task:
+  profile: released_code
+  conditions: [RM, DM, NM, NM]
+  evaluation_mode: true
+
+model:
+  policy_hidden_dim: 8
+  retrieval_temperature: 0.05
+  temporal_context_scale: 2.0
+  content_match_threshold: 0.6
+  content_match_sharpness: 30.0
+  retrieval_strength: 0.2
+
+counterfactual_banks:
+  training_trials_per_condition: 1
+  evaluation_trials_per_condition: 1
+  training_seed_start: 93000000
+  evaluation_seed_start: 94000000
+  memory_capacity: 2
+
+optimization:
+  n_steps: 16
+  initialization: random
+  updates: 2
+  learning_rate: 0.05
+
+output:
+  directory: outputs/paper_task_encoding/temporal_hazard

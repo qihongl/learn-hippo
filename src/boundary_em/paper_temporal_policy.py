@@ -22,7 +22,9 @@ class TemporalHazardPolicy(nn.Module):
         n_steps: int,
         *,
         initial_logit: float = 0.0,
-        initialization: Literal["constant", "uniform_time"] = "constant",
+        initialization: Literal[
+            "constant", "uniform_time", "random"
+        ] = "constant",
     ) -> None:
         super().__init__()
         if n_steps < 1:
@@ -33,6 +35,10 @@ class TemporalHazardPolicy(nn.Module):
             remaining_outcomes = torch.arange(n_steps + 1, 1, -1)
             hazards = 1.0 / remaining_outcomes
             logits = torch.logit(hazards)
+        elif initialization == "random":
+            remaining_outcomes = torch.arange(n_steps + 1, 1, -1)
+            hazards = 1.0 / remaining_outcomes
+            logits = torch.logit(hazards) + 0.25 * torch.randn(n_steps)
         else:
             raise ValueError(f"unknown initialization: {initialization}")
         self.logits = nn.Parameter(logits)
