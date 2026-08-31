@@ -22,6 +22,14 @@ below nonendpoint probability 0.0253. Exact counterfactual credit also failed
 Forced endpoint encoding remained valuable in DM, so this is a
 discovery/local-optimum failure rather than an absent endpoint advantage.
 
+A predeclared two-seed, eight-cell credit screen found one promising but not yet
+successful intervention. Low initial encoding, a condition-centered retrospective
+reward baseline, and gradual DM-to-mixture training reached mean endpoint
+probability 0.7869 at epoch 100 (individual seeds 0.8593 and 0.7144). The matched
+direct-mixture cell reached zero. No cell passed both seeds, so the screen is not a
+positive full-task result; only the selected cell proceeds to the fixed 400-epoch
+budget.
+
 ## Diagnosis and scope
 
 Variable timing and missing observations are not the principal obstacle: DM-only
@@ -32,9 +40,9 @@ sparse and delayed. Removing sampling variance does not by itself escape the
 nonboundary solution.
 
 These are exploratory synthetic simulations. The fixed-duration DM result now uses
-ten seeds, but the variable-DM replication and stronger full-mixture interventions
-remain in progress. The situation record is exact and one memory slot is reserved
-for each earlier event. The result demonstrates basic computational feasibility,
-not a confirmed full-task effect or a human mechanism. Complete methods, learning
-curves, limitations, and next experiments are in
+ten seeds, but the variable-DM replication and selected 400-epoch full-mixture
+intervention remain in progress. The situation record is exact and one memory slot
+is reserved for each earlier event. The result demonstrates basic computational
+feasibility, not a confirmed full-task effect or a human mechanism. Complete
+methods, learning curves, limitations, and next experiments are in
 [`experiment_report.html`](experiment_report.html).

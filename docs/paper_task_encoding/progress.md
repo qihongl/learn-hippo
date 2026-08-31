@@ -153,3 +153,8 @@
   never and matched-random encoding with paired bootstrap intervals above zero.
   Target-memory removal eliminated the benefit. The full predeclared success audit
   passed for this debugging condition.
+- 2026-08-31: completed the paired eight-cell full-mixture credit screen. No cell
+  passed both seeds. Low initialization plus condition-centered retrospective credit
+  and gradual DM-to-mixture training was uniquely promising, reaching mean endpoint
+  probability 0.7869 at epoch 100; its direct-mixture counterpart reached zero. The
+  selected cell alone advances to the standard 400-epoch budget.

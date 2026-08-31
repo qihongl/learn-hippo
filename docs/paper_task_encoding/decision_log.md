@@ -365,3 +365,21 @@
 - This passes every declared criterion for the one-trace-per-event, fixed-duration
   DM debugging condition. It does not resolve variable duration, the RM/DM/NM
   mixture, or unreserved memory capacity.
+
+## 2026-08-31 — Bounded credit factorial identifies a promising curriculum
+
+- Eight paired 100-epoch cells crossed low (0.05) versus neutral (0.50) initial
+  encoding probability, the ordinary state critic versus a condition-centered
+  retrospective reward baseline, and direct mixture versus gradual DM-to-mixture
+  training. Conditions were used only to assign delayed credit after reward; the
+  online policy still received no condition or future-relevance input.
+- No cell passed both model seeds. The factorial is therefore a negative screen, not
+  evidence that the full task is solved.
+- The clearly best cell combined low initialization, condition-centered credit, and
+  gradual mixture training. Its mean endpoint probability was 0.7869 at epoch 100
+  (seed values 0.8593 and 0.7144), and its endpoint gap was 0.7760. The same credit
+  method trained directly on the mixture reached endpoint probability 0.0000.
+- The selected curve rose from mean endpoint probability 0.1509 at epoch 70 to
+  0.8094 at epoch 90 and 0.7869 at epoch 100. Because the favorable trend occurs at
+  the end of the screen, only this cell receives a fresh 400-epoch exploratory run;
+  the other seven cells stop.

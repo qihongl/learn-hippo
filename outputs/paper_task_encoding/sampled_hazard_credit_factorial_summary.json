@@ -1,0 +1,2298 @@
+{
+  "task": "Lu-Hasson-Norman 2022 variable-duration condition mixture",
+  "dataset": "controlled synthetic generator (released_code)",
+  "metrics": [
+    "endpoint_probability",
+    "endpoint_probability_gap",
+    "learned_expected_reward",
+    "endpoint_pair_reward",
+    "never_pair_reward",
+    "matched_random_one_reward"
+  ],
+  "seeds": [
+    940,
+    941
+  ],
+  "provenance": {
+    "mode": "measured",
+    "source": "outputs/paper_task_encoding/sampled_hazard/sampled_hazard_credit_*_seed*.json",
+    "timestamp_utc": "2026-08-31T13:49:47.448511+00:00",
+    "git_shas": [
+      "459083f61b8bb04eb12178e71903f2fc4bdb80af",
+      "4e0e64f96836c9fb41b38f873cb2892bd8f23e81",
+      "86c3d15b22d2f5ae5218181970807a50920e6b28"
+    ],
+    "note": "Measured synthetic simulations; two-seed exploratory screen."
+  },
+  "summary": {
+    "sampled_hazard_credit_low_centered_annealed": {
+      "endpoint_probability": {
+        "mean": 0.7868711650371552,
+        "std": 0.10244318366179181,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": 0.7759864628314972,
+        "std": 0.1075538262185258,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.7167929410934448,
+        "std": 0.004408223179451429,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_low_centered_fixed": {
+      "endpoint_probability": {
+        "mean": 4.526537622950855e-06,
+        "std": 3.4912135782974403e-06,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.0459836907684803,
+        "std": 0.00032825019291497044,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.5940321385860443,
+        "std": 0.02228704275831821,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_low_critic_annealed": {
+      "endpoint_probability": {
+        "mean": 0.22054187208414078,
+        "std": 0.16727370838562794,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": 0.1752994768321514,
+        "std": 0.17763419927137133,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.713251143693924,
+        "std": 0.007157588548362579,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_low_critic_fixed": {
+      "endpoint_probability": {
+        "mean": 0.0045781678054481745,
+        "std": 0.000478149081638759,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.0076323579996824265,
+        "std": 0.0005932300636809931,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.5978775024414062,
+        "std": 0.021817906187543448,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_neutral_centered_annealed": {
+      "endpoint_probability": {
+        "mean": 0.005458637475385331,
+        "std": 0.007564417115730198,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.04692377895116806,
+        "std": 0.0013301334655795602,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.6021855175495148,
+        "std": 0.033649158767279065,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_neutral_centered_fixed": {
+      "endpoint_probability": {
+        "mean": 0.00022000711760483682,
+        "std": 4.383329867777428e-05,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.04592892713844776,
+        "std": 0.00011509514074915581,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.5941745638847351,
+        "std": 0.022179273266675854,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_neutral_critic_annealed": {
+      "endpoint_probability": {
+        "mean": 0.0001785170023822502,
+        "std": 0.00024957299578786985,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.05891588144004345,
+        "std": 5.7385568425614155e-05,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.5939902663230896,
+        "std": 0.02492842790134445,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    },
+    "sampled_hazard_credit_neutral_critic_fixed": {
+      "endpoint_probability": {
+        "mean": 5.8782382438948844e-05,
+        "std": 7.595488619299507e-05,
+        "n_seeds": 2
+      },
+      "endpoint_probability_gap": {
+        "mean": -0.059067510068416595,
+        "std": 0.00034082575883940847,
+        "n_seeds": 2
+      },
+      "learned_expected_reward": {
+        "mean": 0.5935423374176025,
+        "std": 0.024348402972137525,
+        "n_seeds": 2
+      },
+      "endpoint_pair_reward": {
+        "mean": 0.7197565734386444,
+        "std": 0.0078072400713095,
+        "n_seeds": 2
+      },
+      "never_pair_reward": {
+        "mean": 0.5939915180206299,
+        "std": 0.0222672758863666,
+        "n_seeds": 2
+      },
+      "matched_random_one_reward": {
+        "mean": 0.614741712808609,
+        "std": 0.024747997242869312,
+        "n_seeds": 2
+      }
+    }
+  },
+  "cells": [
+    {
+      "name": "sampled_hazard_credit_low_centered_annealed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_low_centered_annealed.yaml",
+      "configuration_sha256": "3f6e53e7ab841c5fa47e94c070893bc152489bc5d635e3a37dcc20afddb318d0",
+      "factors": {
+        "initial_probability": 0.05,
+        "advantage_mode": "condition_centered",
+        "condition_schedule": "dm_to_mixture"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.7868711650371552,
+          "std": 0.10244318366179181,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": 0.7759864628314972,
+          "std": 0.1075538262185258,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.7167929410934448,
+          "std": 0.004408223179451429,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.8593094348907471,
+          "endpoint_probability_gap": 0.8520385026931763,
+          "learned_expected_reward": 0.713675856590271,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": true
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.7144328951835632,
+          "endpoint_probability_gap": 0.6999344229698181,
+          "learned_expected_reward": 0.7199100255966187,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 0.03229459561407566,
+            "std": 0.0034092506735121223,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.009186698123812675,
+            "std": 0.0012642658438911285,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6157291829586029,
+            "std": 0.01923687533158481,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.07595383003354073,
+            "std": 0.020164796153468844,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.024621721357107162,
+            "std": 0.023215469342384373,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6863732635974884,
+            "std": 0.002904634358825284,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.03348492842633277,
+            "std": 0.04617603438033874,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.023272231221199036,
+            "std": 0.049212657028268075,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6966769099235535,
+            "std": 0.01795430458454979,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.003700604080222547,
+            "std": 0.003987502306995175,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05520251393318176,
+            "std": 0.003988013831441751,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.70187908411026,
+            "std": 0.010188157690538414,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 0.11622600210830569,
+            "std": 0.16265802853963826,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.06441627442836761,
+            "std": 0.17316586941758733,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.70771524310112,
+            "std": 0.0011616935855057722,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 0.02999222173639282,
+            "std": 0.042339692900553214,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.02730121836066246,
+            "std": 0.045192811789488474,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7005621194839478,
+            "std": 0.012370942974917616,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.15087337729255523,
+            "std": 0.21335672572214467,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.10109486617147923,
+            "std": 0.22684155369926115,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6976345479488373,
+            "std": 0.01909922372434823,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.4210802868474275,
+            "std": 0.5913594031394342,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.3875787239521742,
+            "std": 0.6276081337540219,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7098768055438995,
+            "std": 0.0036436372006153,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.8094426989555359,
+            "std": 0.14805926571416306,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.8028541505336761,
+            "std": 0.15309256880387956,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7118175625801086,
+            "std": 0.0010163291049916988,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.7868711650371552,
+            "std": 0.10244318366179181,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.7759864628314972,
+            "std": 0.1075538262185258,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7167929410934448,
+            "std": 0.004408223179451429,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_low_centered_fixed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_low_centered_fixed.yaml",
+      "configuration_sha256": "5d272e27dc5162b5a432abb9065dd165c145025d14d49d138e72e55ae1a44931",
+      "factors": {
+        "initial_probability": 0.05,
+        "advantage_mode": "condition_centered",
+        "condition_schedule": "fixed"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 4.526537622950855e-06,
+          "std": 3.4912135782974403e-06,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.0459836907684803,
+          "std": 0.00032825019291497044,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.5940321385860443,
+          "std": 0.02228704275831821,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 6.9951984187355265e-06,
+          "endpoint_probability_gap": -0.04575158283114433,
+          "learned_expected_reward": 0.578272819519043,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 2.057876827166183e-06,
+          "endpoint_probability_gap": -0.04621579870581627,
+          "learned_expected_reward": 0.6097914576530457,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 0.012980762403458357,
+            "std": 0.000574065759954188,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.017793919891119003,
+            "std": 0.00013495420893188268,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6045879423618317,
+            "std": 0.023314077162831674,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.005111843114718795,
+            "std": 0.002670651190233246,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.016980464570224285,
+            "std": 0.003389982978297564,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5989576578140259,
+            "std": 0.021093654742732244,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.001562632380228024,
+            "std": 0.0021227836581853843,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.027750018052756786,
+            "std": 0.023344982656591306,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.595475435256958,
+            "std": 0.021119280026626868,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.0001382398577334243,
+            "std": 0.0001692483116269831,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.03926609456539154,
+            "std": 0.008511366395956751,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5936607122421265,
+            "std": 0.023072702161409785,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 2.0075883185199928e-05,
+            "std": 1.2142404415653147e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04488973319530487,
+            "std": 0.0009891654611264274,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.594023197889328,
+            "std": 0.022475101996373818,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 9.418603895028355e-06,
+            "std": 3.616231886350236e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.045513786375522614,
+            "std": 0.00043436015239721004,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5941104292869568,
+            "std": 0.022398436878932504,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 6.47322258373606e-06,
+            "std": 1.2746752768580475e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04596585966646671,
+            "std": 6.671055865864946e-05,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5940515697002411,
+            "std": 0.022350853086963704,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 4.781217285199091e-06,
+            "std": 8.751927889116123e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04600520804524422,
+            "std": 0.0001741138995545671,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5940425097942352,
+            "std": 0.022309380588028983,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 4.400535999593558e-06,
+            "std": 1.6498051233164148e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.046025387942790985,
+            "std": 0.0002577701254926279,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.594039648771286,
+            "std": 0.022292943317109733,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 4.526537622950855e-06,
+            "std": 3.4912135782974403e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0459836907684803,
+            "std": 0.00032825019291497044,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5940321385860443,
+            "std": 0.02228704275831821,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_low_critic_annealed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_low_critic_annealed.yaml",
+      "configuration_sha256": "8a65122086e04bab19779b8a1eb420e6191e85d3aa3d020abdab45468761d9f4",
+      "factors": {
+        "initial_probability": 0.05,
+        "advantage_mode": "critic",
+        "condition_schedule": "dm_to_mixture"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.22054187208414078,
+          "std": 0.16727370838562794,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": 0.1752994768321514,
+          "std": 0.17763419927137133,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.713251143693924,
+          "std": 0.007157588548362579,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.1022614985704422,
+          "endpoint_probability_gap": 0.04969312995672226,
+          "learned_expected_reward": 0.7081899642944336,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.33882224559783936,
+          "endpoint_probability_gap": 0.30090582370758057,
+          "learned_expected_reward": 0.7183123230934143,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 0.02430396992713213,
+            "std": 0.0024217407932787633,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.011322311125695705,
+            "std": 0.002122993394321419,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6099309921264648,
+            "std": 0.02197165789091119,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.07846613600850105,
+            "std": 0.03952590985775164,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.03745385631918907,
+            "std": 0.05540288057289649,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6510336101055145,
+            "std": 0.03862577434574841,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.05400882847607136,
+            "std": 0.05103207589238864,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0011022984981536865,
+            "std": 0.05494697811255415,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6974260807037354,
+            "std": 0.00011295355400919601,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.028485701244790107,
+            "std": 0.038567368280289616,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.027440208941698074,
+            "std": 0.04274556556741554,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6931084990501404,
+            "std": 0.006556195166960632,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 0.06813124800100923,
+            "std": 0.09630325908813861,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.014233164489269257,
+            "std": 0.10345735274079731,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6861136555671692,
+            "std": 0.030230838618803005,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 0.025815745582804084,
+            "std": 0.026589058842972472,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.03160364739596844,
+            "std": 0.028081820862615126,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6996276378631592,
+            "std": 0.010345618316575114,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.2506024055182934,
+            "std": 0.23508094384759906,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.21115654334425926,
+            "std": 0.2541380839437092,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7033421695232391,
+            "std": 0.0007570838398011895,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.26167092213108845,
+            "std": 0.3699846276421995,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.2212793119251728,
+            "std": 0.396238217283629,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6907777190208435,
+            "std": 0.026612784555233818,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.0501088336459361,
+            "std": 0.06877637795965039,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.00589388981461525,
+            "std": 0.07282783654521764,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.7066611647605896,
+            "std": 0.011905894648448411,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.22054187208414078,
+            "std": 0.16727370838562794,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.1752994768321514,
+            "std": 0.17763419927137133,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.713251143693924,
+            "std": 0.007157588548362579,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_low_critic_fixed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_low_critic_fixed.yaml",
+      "configuration_sha256": "23a5f4fac1a9f5f955b3a24b98bfc07ea578da20a8be5fad77634741294b2dac",
+      "factors": {
+        "initial_probability": 0.05,
+        "advantage_mode": "critic",
+        "condition_schedule": "fixed"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.0045781678054481745,
+          "std": 0.000478149081638759,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.0076323579996824265,
+          "std": 0.0005932300636809931,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.5978775024414062,
+          "std": 0.021817906187543448,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.004916270263493061,
+          "endpoint_probability_gap": -0.007212880998849869,
+          "learned_expected_reward": 0.5824499130249023,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.004240065347403288,
+          "endpoint_probability_gap": -0.008051835000514984,
+          "learned_expected_reward": 0.6133050918579102,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 0.017835835926234722,
+            "std": 0.0029885632221896496,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.015157136134803295,
+            "std": 0.0029342122268568196,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6073212325572968,
+            "std": 0.02151533396208374,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.006982726976275444,
+            "std": 0.0029793936484604983,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.008696818724274635,
+            "std": 0.0002636772697292329,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.59998619556427,
+            "std": 0.01994692328844784,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.004391913418658078,
+            "std": 0.0008789987028388873,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0054553356021642685,
+            "std": 0.0010737199417733766,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.597883015871048,
+            "std": 0.022841695284721575,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.003925091936253011,
+            "std": 0.0007257102855325118,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.005979700013995171,
+            "std": 0.0005614315835685396,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5974441766738892,
+            "std": 0.022736033135504763,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 0.003707782132551074,
+            "std": 0.0005832982246838518,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0059743712190538645,
+            "std": 0.0013150735404987574,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5972595810890198,
+            "std": 0.022614565918096366,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 0.003287149709649384,
+            "std": 0.00016272256129160902,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.005412207450717688,
+            "std": 0.0011774900926187536,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5969288349151611,
+            "std": 0.0222757895497658,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.003106291522271931,
+            "std": 0.0003313310287594406,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.005590867716819048,
+            "std": 0.0008918859249517282,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5967584848403931,
+            "std": 0.021878091887217004,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.005597723531536758,
+            "std": 0.0031922577885899117,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.006694276351481676,
+            "std": 0.0005440848626837668,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5987703800201416,
+            "std": 0.01955226019899183,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.005243122577667236,
+            "std": 0.002753790788004794,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0067326463758945465,
+            "std": 0.0001465959587440012,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5984817445278168,
+            "std": 0.019882565050771704,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.0045781678054481745,
+            "std": 0.000478149081638759,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.0076323579996824265,
+            "std": 0.0005932300636809931,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5978775024414062,
+            "std": 0.021817906187543448,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_neutral_centered_annealed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_neutral_centered_annealed.yaml",
+      "configuration_sha256": "55399da5d053ceb8036d85cd211cc2daf44d604516ae72c7ef6944cec2b5b9c8",
+      "factors": {
+        "initial_probability": 0.5,
+        "advantage_mode": "condition_centered",
+        "condition_schedule": "dm_to_mixture"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.005458637475385331,
+          "std": 0.007564417115730198,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.04692377895116806,
+          "std": 0.0013301334655795602,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.6021855175495148,
+          "std": 0.033649158767279065,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.00010978683712892234,
+          "endpoint_probability_gap": -0.04598323255777359,
+          "learned_expected_reward": 0.578391969203949,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.010807488113641739,
+          "endpoint_probability_gap": -0.04786432534456253,
+          "learned_expected_reward": 0.6259790658950806,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 0.0017926462169270962,
+            "std": 0.0018785953854946658,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.057036977261304855,
+            "std": 0.0019261004402357296,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5956875681877136,
+            "std": 0.026375919266602595,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.004168157349340618,
+            "std": 0.0028530632444967764,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.048167357221245766,
+            "std": 0.006433381884577919,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6016523241996765,
+            "std": 0.03156352196871748,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.0013952445005998015,
+            "std": 0.0008655248822055609,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05117005296051502,
+            "std": 0.008504109235478782,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6010652780532837,
+            "std": 0.03147981832757484,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.06511659821262583,
+            "std": 0.09136574994050486,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.016812819987535477,
+            "std": 0.08821090414773151,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6062557399272919,
+            "std": 0.0390249892948436,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 0.04399319851654582,
+            "std": 0.06174845052757775,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.005973273888230324,
+            "std": 0.056264327912144745,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6050304174423218,
+            "std": 0.037462479179999224,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 0.026010557558038272,
+            "std": 0.03638961071569515,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.025099406018853188,
+            "std": 0.02925545781131767,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6055363714694977,
+            "std": 0.03823810763314521,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.017968554275284987,
+            "std": 0.02517068766760257,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.033653803169727325,
+            "std": 0.017402338919738997,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6061515510082245,
+            "std": 0.039236145005883176,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.09612765981000848,
+            "std": 0.1357403309213321,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": 0.04946477338671684,
+            "std": 0.1349600515387575,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6083019077777863,
+            "std": 0.04229752349432048,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.0010460810153745115,
+            "std": 0.0012947785981698094,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05156944505870342,
+            "std": 0.008013814946751551,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6005290448665619,
+            "std": 0.03131397047868447,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.005458637475385331,
+            "std": 0.007564417115730198,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04692377895116806,
+            "std": 0.0013301334655795602,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.6021855175495148,
+            "std": 0.033649158767279065,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_neutral_centered_fixed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_neutral_centered_fixed.yaml",
+      "configuration_sha256": "686512041f5a75a005307aa9d24ff4318c9ab821c001046a637db32bd5d36af4",
+      "factors": {
+        "initial_probability": 0.5,
+        "advantage_mode": "condition_centered",
+        "condition_schedule": "fixed"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.00022000711760483682,
+          "std": 4.383329867777428e-05,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.04592892713844776,
+          "std": 0.00011509514074915581,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.5941745638847351,
+          "std": 0.022179273266675854,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.00025100194034166634,
+          "endpoint_probability_gap": -0.04584754258394241,
+          "learned_expected_reward": 0.5784914493560791,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.0001890122948680073,
+          "endpoint_probability_gap": -0.04601031169295311,
+          "learned_expected_reward": 0.6098576784133911,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 3.926353087990719e-06,
+            "std": 2.3275794203316713e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05913221649825573,
+            "std": 0.00024852679477858246,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5934661328792572,
+            "std": 0.02445752116293223,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 0.0018436972459312528,
+            "std": 0.002257989955896971,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05380585975944996,
+            "std": 0.007388545375668182,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5958890318870544,
+            "std": 0.021256425871681316,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 0.001609107363037765,
+            "std": 0.0005232062029665557,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.044091006740927696,
+            "std": 0.0013399879255970137,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5951710641384125,
+            "std": 0.022499800049601202,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 0.0007058216724544764,
+            "std": 0.0002582884000204103,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04529491439461708,
+            "std": 0.0006216396737553677,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5945144295692444,
+            "std": 0.022326450061675895,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 0.0004933489108225331,
+            "std": 0.00015793339925488408,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.045784683898091316,
+            "std": 1.741981932515889e-05,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5943498313426971,
+            "std": 0.02227566310922027,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 0.00041381563642062247,
+            "std": 6.989211065380922e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.045780761167407036,
+            "std": 0.00010693445720623395,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.594308465719223,
+            "std": 0.022233094792224264,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.00029720481688855216,
+            "std": 0.00011337396264923741,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04592786356806755,
+            "std": 0.0002417648597706159,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.594233512878418,
+            "std": 0.02211967762288145,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.0003562928468454629,
+            "std": 0.00014091152602818961,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.045886775478720665,
+            "std": 0.00024237862325205578,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5942747294902802,
+            "std": 0.02208903686401403,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.0002629581285873428,
+            "std": 1.997386072227462e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04588294215500355,
+            "std": 0.0001885729027718357,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5941989123821259,
+            "std": 0.022201484655841094,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.00022000711760483682,
+            "std": 4.383329867777428e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.04592892713844776,
+            "std": 0.00011509514074915581,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5941745638847351,
+            "std": 0.022179273266675854,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_neutral_critic_annealed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_neutral_critic_annealed.yaml",
+      "configuration_sha256": "469f31a14f5b10bb355fd56bf579288f6e1a80a95e009710a4103d9d404fc7cb",
+      "factors": {
+        "initial_probability": 0.5,
+        "advantage_mode": "critic",
+        "condition_schedule": "dm_to_mixture"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 0.0001785170023822502,
+          "std": 0.00024957299578786985,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.05891588144004345,
+          "std": 5.7385568425614155e-05,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.5939902663230896,
+          "std": 0.02492842790134445,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 2.0422446596057853e-06,
+          "endpoint_probability_gap": -0.058956459164619446,
+          "learned_expected_reward": 0.576363205909729,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 0.00035499176010489464,
+          "endpoint_probability_gap": -0.05887530371546745,
+          "learned_expected_reward": 0.6116173267364502,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 6.625673904636642e-06,
+            "std": 4.856797901866108e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912918224930763,
+            "std": 0.0002516957109509953,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933516621589661,
+            "std": 0.024662902755725816,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 6.6835723373515066e-06,
+            "std": 1.4402895739676352e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912911519408226,
+            "std": 0.0002509897512384378,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933682918548584,
+            "std": 0.024655737791478966,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 6.172158464323729e-06,
+            "std": 8.313931480320508e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912969075143337,
+            "std": 0.00025020740036295434,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933532416820526,
+            "std": 0.024680140816766772,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 7.250947646753048e-06,
+            "std": 3.868617782814871e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912846513092518,
+            "std": 0.00025159297800775,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933845341205597,
+            "std": 0.02463386357710181,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 8.070592002695776e-06,
+            "std": 2.057382113655159e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912753753364086,
+            "std": 0.00024881128600603097,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933972895145416,
+            "std": 0.02467381878949014,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 9.063241350304452e-06,
+            "std": 8.834293221189488e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912636034190655,
+            "std": 0.00024110368108460123,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5934136509895325,
+            "std": 0.02465919383305686,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 0.0003468636593879637,
+            "std": 0.00048705406099520813,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05869509279727936,
+            "std": 0.0003693328335009644,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5939613282680511,
+            "std": 0.025301301070120328,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 0.00013638646487379447,
+            "std": 7.867803075827099e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05896886810660362,
+            "std": 0.00015622783071775646,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5938986539840698,
+            "std": 0.024696704528231556,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 2.900612639678002e-05,
+            "std": 3.737934995173124e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05910173058509827,
+            "std": 0.00020601379552125004,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5936511754989624,
+            "std": 0.02465455767972066,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 0.0001785170023822502,
+            "std": 0.00024957299578786985,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05891588144004345,
+            "std": 5.7385568425614155e-05,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5939902663230896,
+            "std": 0.02492842790134445,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    },
+    {
+      "name": "sampled_hazard_credit_neutral_critic_fixed",
+      "configuration": "configs/paper_task_encoding/sampled_hazard_credit_neutral_critic_fixed.yaml",
+      "configuration_sha256": "9c1731cf5399284eeaf34e13ba11e620f33d1e884652b2ad4968c0829a322293",
+      "factors": {
+        "initial_probability": 0.5,
+        "advantage_mode": "critic",
+        "condition_schedule": "fixed"
+      },
+      "seeds": [
+        940,
+        941
+      ],
+      "summary": {
+        "endpoint_probability": {
+          "mean": 5.8782382438948844e-05,
+          "std": 7.595488619299507e-05,
+          "n_seeds": 2
+        },
+        "endpoint_probability_gap": {
+          "mean": -0.059067510068416595,
+          "std": 0.00034082575883940847,
+          "n_seeds": 2
+        },
+        "learned_expected_reward": {
+          "mean": 0.5935423374176025,
+          "std": 0.024348402972137525,
+          "n_seeds": 2
+        },
+        "endpoint_pair_reward": {
+          "mean": 0.7197565734386444,
+          "std": 0.0078072400713095,
+          "n_seeds": 2
+        },
+        "never_pair_reward": {
+          "mean": 0.5939915180206299,
+          "std": 0.0222672758863666,
+          "n_seeds": 2
+        },
+        "matched_random_one_reward": {
+          "mean": 0.614741712808609,
+          "std": 0.024747997242869312,
+          "n_seeds": 2
+        }
+      },
+      "runs": [
+        {
+          "seed": 940,
+          "endpoint_probability": 0.00011249059753026813,
+          "endpoint_probability_gap": -0.0588265098631382,
+          "learned_expected_reward": 0.5763254165649414,
+          "endpoint_pair_reward": 0.7142360210418701,
+          "never_pair_reward": 0.5782461762428284,
+          "matched_random_one_reward": 0.5972422361373901,
+          "screen_passed": false
+        },
+        {
+          "seed": 941,
+          "endpoint_probability": 5.0741673476295546e-06,
+          "endpoint_probability_gap": -0.05930851027369499,
+          "learned_expected_reward": 0.6107592582702637,
+          "endpoint_pair_reward": 0.7252771258354187,
+          "never_pair_reward": 0.6097368597984314,
+          "matched_random_one_reward": 0.6322411894798279,
+          "screen_passed": false
+        }
+      ],
+      "learning_curve": [
+        {
+          "epoch": 10.0,
+          "endpoint_probability": {
+            "mean": 6.3059715103008784e-06,
+            "std": 1.7799480523768865e-07,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059129536151885986,
+            "std": 0.0002513479994507804,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933544933795929,
+            "std": 0.024654937001357256,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 20.0,
+          "endpoint_probability": {
+            "mean": 6.371787549142027e-06,
+            "std": 1.1400710946219156e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059129463508725166,
+            "std": 0.00025242537826584017,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933358371257782,
+            "std": 0.024659151686208348,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 30.0,
+          "endpoint_probability": {
+            "mean": 4.592256345858914e-06,
+            "std": 2.514871825752986e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059131473302841187,
+            "std": 0.00025397690912664744,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933129489421844,
+            "std": 0.024595762826047963,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 40.0,
+          "endpoint_probability": {
+            "mean": 5.424782330010203e-06,
+            "std": 1.3373447260198112e-06,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059130534529685974,
+            "std": 0.00025264928339855427,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933261215686798,
+            "std": 0.024612031509573168,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 50.0,
+          "endpoint_probability": {
+            "mean": 2.1861682853341335e-05,
+            "std": 2.5500995837829384e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05911142937839031,
+            "std": 0.00028070591361665007,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5934096574783325,
+            "std": 0.024461609407237787,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 60.0,
+          "endpoint_probability": {
+            "mean": 2.392088435954065e-05,
+            "std": 2.8227313507209186e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05910914205014706,
+            "std": 0.0002837299499973067,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5934062302112579,
+            "std": 0.024478425999793635,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 70.0,
+          "endpoint_probability": {
+            "mean": 1.2212487717988552e-05,
+            "std": 1.0738113238273975e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.05912277474999428,
+            "std": 0.0002633967297688323,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5933733880519867,
+            "std": 0.02456356263378564,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 80.0,
+          "endpoint_probability": {
+            "mean": 1.4945364227969549e-05,
+            "std": 1.4136406765293938e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059119606390595436,
+            "std": 0.00026734536263869663,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5934081375598907,
+            "std": 0.024533132609160773,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 90.0,
+          "endpoint_probability": {
+            "mean": 0.00025108650174843206,
+            "std": 0.0003488615449789333,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.058826031163334846,
+            "std": 0.0006833979777139871,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5937915444374084,
+            "std": 0.023966636818325848,
+            "n_seeds": 2
+          }
+        },
+        {
+          "epoch": 100.0,
+          "endpoint_probability": {
+            "mean": 5.8782382438948844e-05,
+            "std": 7.595488619299507e-05,
+            "n_seeds": 2
+          },
+          "endpoint_probability_gap": {
+            "mean": -0.059067510068416595,
+            "std": 0.00034082575883940847,
+            "n_seeds": 2
+          },
+          "learned_expected_reward": {
+            "mean": 0.5935423374176025,
+            "std": 0.024348402972137525,
+            "n_seeds": 2
+          }
+        }
+      ],
+      "screen_passed": false
+    }
+  ],
+  "selected_cell": "sampled_hazard_credit_low_centered_annealed",
+  "selection_rule": "Most seeds meeting all screen thresholds, then mean endpoint probability, then mean DM reward. Selection is exploratory.",
+  "factorial_passed": false
+}
