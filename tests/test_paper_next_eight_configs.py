@@ -100,3 +100,19 @@ def test_credit_factorial_is_paired_and_has_all_eight_cells() -> None:
         config["training"]["free_policy"]["updates"] == 1_600
         for config in configs
     )
+
+
+def test_progress_policy_screen_is_paired_to_the_selected_credit_cell() -> None:
+    config = _load("sampled_hazard_progress_annealed.yaml")
+
+    assert config["experiment"]["model_seeds"] == [940, 941]
+    assert config["model"]["policy_mode"] == "progress_monotone"
+    assert config["policy"]["initial_probability"] == 0.05
+    assert (
+        config["training"]["free_policy"]["advantage_mode"]
+        == "condition_centered"
+    )
+    assert (
+        config["training"]["free_policy"]["condition_schedule"]
+        == "dm_to_mixture"
+    )
